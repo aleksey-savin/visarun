@@ -15,7 +15,7 @@ const users = [
   },
   {
     id: '3',
-    name: 'Bob Smith',
+    name: 'Bob Smithh',
     email: 'bob.smith@example.com',
   },
   {
