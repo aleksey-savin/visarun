@@ -5,22 +5,22 @@ const trpc = initTRPC.create();
 const users = [
   {
     id: '1',
-    title: 'John Doe',
+    name: 'John Doe',
     email: 'john.doe@example.com',
   },
   {
     id: '2',
-    title: 'Jane Doe',
+    name: 'Jane Doe',
     email: 'jane.doe@example.com',
   },
   {
     id: '3',
-    title: 'Bob Smith',
+    name: 'Bob Smith',
     email: 'bob.smith@example.com',
   },
   {
     id: '4',
-    title: 'Alice Johnson',
+    name: 'Alice Johnson',
     email: 'alice.johnson@example.com',
   },
 ];
