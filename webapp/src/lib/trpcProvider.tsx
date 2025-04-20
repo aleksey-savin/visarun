@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
-import { TrpcRouter } from '@visarun/backend/src/trpc';
+import { type AppRouter } from '@visarun/backend/src/router';
 import { createTRPCReact } from '@trpc/react-query';
 
-export const trpc = createTRPCReact<typeof TrpcRouter>();
+// Use the type AppRouter, not the value
+export const trpc = createTRPCReact<AppRouter>();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,7 +18,7 @@ const queryClient = new QueryClient({
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: 'http://localhost:3000/trpc',
+      url: 'http://localhost:3001/trpc',
     }),
   ],
 });

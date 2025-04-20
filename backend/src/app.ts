@@ -1,13 +1,26 @@
 import express from 'express';
-import * as trpc from '@trpc/server/adapters/express';
-import { TrpcRouter } from './trpc.ts';
+import cors from 'cors';
 
-const app = express();
+import { appRouter } from './router/index.ts';
+import { applyTrpcToExpressApp } from './lib/trpc.ts';
+import { AppContext, createAppContext } from './lib/ctx.ts';
 
-app.use('/trpc', trpc.createExpressMiddleware({ router: TrpcRouter }));
+(async () => {
+  let ctx: AppContext | null = null;
+  try {
+    ctx = createAppContext();
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
+    const app = express();
 
-export type TrpcRouter = typeof TrpcRouter;
+    app.use(cors());
+
+    applyTrpcToExpressApp(app, ctx, appRouter);
+
+    app.listen(3001, () => {
+      console.log('Server is running on port 3001');
+    });
+  } catch (error) {
+    console.error(error);
+    await ctx?.stop();
+  }
+})();

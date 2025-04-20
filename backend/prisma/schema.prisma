@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+enum UserRole {
+  client
+  manager
+  admin
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  firstName     String
+  middleName    String?
+  lastName      String
+  password      String
+  role          UserRole       @default(client)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  exchangeRates ExchangeRate[] // Связь с курсами валют
+}
+
+model ExchangeRate {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // RUB ↔ VND
+  rubToVnd Float // Сколько VND дают за 1 RUB
+  vndToRub Float // Сколько RUB дают за 1000 VND
+
+  // USDT ↔ VND
+  usdtToVnd Float // Сколько VND дают за 1 USDT
+  vndToUsdt Float // Сколько VND берут за 1 USDT
+
+  // USDT ↔ RUB
+  usdtToRub Float // Сколько RUB дают за 1 USDT
+  rubToUsdt Float // Сколько RUB берут за 1 USDT
+
+  // Связь с пользователем, создавшим запись
+  createdBy User   @relation(fields: [userId], references: [id])
+  userId    String
+
+  // Индекс для улучшения производительности при поиске по userId
+  @@index([userId])
+}
