@@ -1,4 +1,3 @@
-# Base stage for shared dependencies
 FROM node:20-alpine AS base
 
 # Install pnpm
@@ -14,19 +13,36 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
 COPY ./backend/package.json ./backend/
 COPY ./webapp/package.json ./webapp/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies WITHOUT running prisma generate yet
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# Now copy the source code including prisma schema
+COPY . .
+
+# Generate Prisma client
+RUN cd backend && pnpm prisma generate
+
+# Backend development stage
+FROM base AS backend-dev
+WORKDIR /app
+EXPOSE 3001
+CMD ["pnpm", "--filter", "@visarun/backend", "run", "dev"]
+
+# webapp development stage
+FROM base AS webapp-dev
+WORKDIR /app
+EXPOSE 5173
+# Configure Vite to listen on all interfaces and use proper host
+CMD ["pnpm", "--filter", "@visarun/webapp", "run", "dev", "--", "--host", "0.0.0.0"]
 
 # Backend build stage
 FROM base AS backend-build
 WORKDIR /app
-COPY . .
 RUN pnpm --filter @visarun/backend run build
 
 # Frontend build stage
 FROM base AS webapp-build
 WORKDIR /app
-COPY . .
 # Set production environment variables if needed
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
@@ -36,11 +52,18 @@ RUN pnpm --filter @visarun/webapp run build
 FROM node:20-alpine AS backend-prod
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=backend-build /app/backend/dist ./dist
+
+# Install production dependencies
 COPY --from=backend-build /app/backend/package.json ./
-COPY --from=backend-build /app/backend/node_modules ./node_modules
-# You might need to copy migrations, configs, etc.
-# COPY --from=backend-build /app/backend/prisma ./prisma
+RUN npm install --only=production
+
+# Copy build artifacts and prisma directory
+COPY --from=backend-build /app/backend/dist ./dist
+COPY --from=backend-build /app/backend/prisma ./prisma
+
+# Generate Prisma client in production
+RUN npx prisma generate
+
 EXPOSE 3001
 CMD ["node", "dist/main.js"]
 
