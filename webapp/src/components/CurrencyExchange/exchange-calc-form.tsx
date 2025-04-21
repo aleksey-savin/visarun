@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 const FormSchema = z.object({
   clientRubles: z.string().optional(),
@@ -155,7 +155,6 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 Client transfers to us:
-                {direction === 'clientToUs' && <ArrowRight className="text-primary" size={20} />}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -233,7 +232,6 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 We transfer to client:
-                {direction === 'usToClient' && <ArrowRight className="text-primary" size={20} />}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
