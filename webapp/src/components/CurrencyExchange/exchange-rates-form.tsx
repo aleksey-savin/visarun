@@ -13,8 +13,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle, AlertCircle } from 'lucide-react';
+import { trpc } from '@/lib/trpcProvider';
 
 const ExchangeRatesSchema = z.object({
   // RUB to VND
@@ -45,70 +48,119 @@ const ExchangeRatesSchema = z.object({
 
 type ExchangeRatesFormValues = z.infer<typeof ExchangeRatesSchema>;
 
-export function ExchangeRatesForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+interface ExchangeRatesFormProps {
+  onRatesUpdated?: () => void;
+  initialValues?: {
+    rubToVnd: number;
+    vndToRub: number;
+    usdtToVnd: number;
+    vndToUsdt: number;
+    usdtToRub: number;
+    rubToUsdt: number;
+  };
+}
+
+export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRatesFormProps) {
+  const [formStatus, setFormStatus] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({
+    type: null,
+    message: '',
+  });
+
+  const saveExchangeRate = trpc.exchangeRates.saveExchangeRate.useMutation({
+    onSuccess: () => {
+      setFormStatus({
+        type: 'success',
+        message: 'Exchange rates updated successfully!',
+      });
+      if (onRatesUpdated) {
+        onRatesUpdated();
+      }
+    },
+    onError: error => {
+      setFormStatus({
+        type: 'error',
+        message: `Failed to update exchange rates: ${error.message}`,
+      });
+    },
+  });
 
   const form = useForm<ExchangeRatesFormValues>({
     resolver: zodResolver(ExchangeRatesSchema),
     defaultValues: {
-      rubToVnd: '',
-      vndToRub: '',
-      usdtToVnd: '',
-      vndToUsdt: '',
-      usdtToRub: '',
-      rubToUsdt: '',
+      rubToVnd: initialValues ? initialValues.rubToVnd.toString() : '',
+      vndToRub: initialValues ? initialValues.vndToRub.toString() : '',
+      usdtToVnd: initialValues ? initialValues.usdtToVnd.toString() : '',
+      vndToUsdt: initialValues ? initialValues.vndToUsdt.toString() : '',
+      usdtToRub: initialValues ? initialValues.usdtToRub.toString() : '',
+      rubToUsdt: initialValues ? initialValues.rubToUsdt.toString() : '',
     },
   });
 
   async function onSubmit(data: ExchangeRatesFormValues) {
     try {
-      setIsSubmitting(true);
+      setFormStatus({ type: null, message: '' });
 
-      // Convert string values to numbers and create data object with timestamp
-      const ratesData = {
+      // Convert string values to numbers and submit
+      saveExchangeRate.mutate({
         rubToVnd: parseFloat(data.rubToVnd),
         vndToRub: parseFloat(data.vndToRub),
         usdtToVnd: parseFloat(data.usdtToVnd),
         vndToUsdt: parseFloat(data.vndToUsdt),
         usdtToRub: parseFloat(data.usdtToRub),
         rubToUsdt: parseFloat(data.rubToUsdt),
-        timestamp: new Date().toISOString(),
-      };
-
-      // In a real application, you would send this data to your backend
-      // For now, we'll just simulate the API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      console.log('Saving exchange rates:', ratesData);
-
-      // Display success message
+      });
     } catch (error) {
       console.error('Error saving exchange rates:', error);
-    } finally {
-      setIsSubmitting(false);
+      setFormStatus({
+        type: 'error',
+        message: 'Failed to update exchange rates. Please try again.',
+      });
     }
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Set Currency Exchange Rates</CardTitle>
-        <CardDescription>Configure exchange rates between USDT, RUB, and VND</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Card className="w-full max-w-2xl mx-auto border-none shadow-none">
+      <CardContent className="p-5">
+        {formStatus.type && (
+          <Alert
+            variant={formStatus.type === 'success' ? 'default' : 'destructive'}
+            className="mb-6"
+          >
+            <div className="flex items-center gap-2">
+              {formStatus.type === 'success' ? (
+                <CheckCircle className="h-4 w-4" />
+              ) : (
+                <AlertCircle className="h-4 w-4" />
+              )}
+              <AlertDescription>{formStatus.message}</AlertDescription>
+            </div>
+          </Alert>
+        )}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <h3 className="text-md font-medium mb-2">RUB ↔ VND</h3>
-              <div className="grid grid-cols-1 gap-4">
+            <div className="bg-muted/40 p-4 rounded-md">
+              <h3 className="text-md font-medium mb-3 flex items-center">
+                <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
+                  RUB ↔ VND
+                </span>
+                Russian Ruble to Vietnamese Dong
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="rubToVnd"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>For 1 RUB we give X VND</FormLabel>
+                      <FormLabel className="flex items-center gap-1">
+                        <span className="font-semibold">1 RUB</span> ={' '}
+                        <span className="text-muted-foreground">X VND</span>
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 290" {...field} />
+                        <Input placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -120,9 +172,12 @@ export function ExchangeRatesForm() {
                   name="vndToRub"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>For 1000 VND we give X RUB</FormLabel>
+                      <FormLabel className="flex items-center gap-1">
+                        <span className="font-semibold">1 VND</span> ={' '}
+                        <span className="text-muted-foreground">X RUB</span>
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 3" {...field} />
+                        <Input placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -133,17 +188,25 @@ export function ExchangeRatesForm() {
 
             <Separator />
 
-            <div>
-              <h3 className="text-md font-medium mb-2">USDT ↔ VND</h3>
-              <div className="grid grid-cols-1 gap-4">
+            <div className="bg-muted/40 p-4 rounded-md">
+              <h3 className="text-md font-medium mb-3 flex items-center">
+                <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
+                  USDT ↔ VND
+                </span>
+                Tether to Vietnamese Dong
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="usdtToVnd"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>For 1 USDT we give X VND</FormLabel>
+                      <FormLabel className="flex items-center gap-1">
+                        <span className="font-semibold">1 USDT</span> ={' '}
+                        <span className="text-muted-foreground">X VND</span>
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 25100" {...field} />
+                        <Input placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -155,9 +218,12 @@ export function ExchangeRatesForm() {
                   name="vndToUsdt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>For X VND we give 1 USDT</FormLabel>
+                      <FormLabel className="flex items-center gap-1">
+                        <span className="font-semibold">1 VND</span> ={' '}
+                        <span className="text-muted-foreground">X USDT</span>
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 26300" {...field} />
+                        <Input placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -168,17 +234,25 @@ export function ExchangeRatesForm() {
 
             <Separator />
 
-            <div>
-              <h3 className="text-md font-medium mb-2">USDT ↔ RUB</h3>
-              <div className="grid grid-cols-1 gap-4">
+            <div className="bg-muted/40 p-4 rounded-md">
+              <h3 className="text-md font-medium mb-3 flex items-center">
+                <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
+                  USDT ↔ RUB
+                </span>
+                Tether to Russian Ruble
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="usdtToRub"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>For 1 USDT we give X RUB</FormLabel>
+                      <FormLabel className="flex items-center gap-1">
+                        <span className="font-semibold">1 USDT</span> ={' '}
+                        <span className="text-muted-foreground">X RUB</span>
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 90" {...field} />
+                        <Input placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -190,9 +264,12 @@ export function ExchangeRatesForm() {
                   name="rubToUsdt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>For X RUB we give 1 USDT</FormLabel>
+                      <FormLabel className="flex items-center gap-1">
+                        <span className="font-semibold">1 RUB</span> ={' '}
+                        <span className="text-muted-foreground">X USDT</span>
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 95" {...field} />
+                        <Input placeholder="" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -201,8 +278,8 @@ export function ExchangeRatesForm() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Save Exchange Rates'}
+            <Button type="submit" className="w-full" disabled={saveExchangeRate.isPending}>
+              {saveExchangeRate.isPending ? 'Saving...' : 'Save Exchange Rates'}
             </Button>
           </form>
         </Form>

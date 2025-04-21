@@ -1,8 +1,7 @@
-import crypto from 'crypto';
-
 import { trpc } from '../../lib/trpc.ts';
 import { UserRole } from '@prisma/client';
 import { zCreateUserTrpcInput } from './input.ts';
+import { hashPassword } from '../../utils/getPasswordHash.ts';
 
 export const createUserRouter = trpc.procedure
   .input(zCreateUserTrpcInput)
@@ -15,7 +14,8 @@ export const createUserRouter = trpc.procedure
       throw new Error('User already exists');
     }
 
-    const hashedPassword = crypto.createHash('sha256').update(input.password).digest('hex');
+    // Use the same password hashing function that's used for verification
+    const hashedPassword = await hashPassword(input.password);
 
     const user = await ctx.prisma.user.create({
       data: {
@@ -27,5 +27,15 @@ export const createUserRouter = trpc.procedure
         password: hashedPassword,
       },
     });
-    return { user };
+
+    return {
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+      },
+    };
   });

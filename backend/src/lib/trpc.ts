@@ -1,22 +1,62 @@
 import { initTRPC } from '@trpc/server';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { type Express } from 'express';
-import { AppContext } from './ctx.ts';
+import { type Request } from 'express';
+import { AppContext, createAppContext } from './ctx.ts';
+import { expressHandler } from 'trpc-playground/handlers/express';
+import { verifyToken, type TokenPayload } from '../utils/jwt.ts';
 
-// Create the tRPC instance without the circular import
 export const trpc = initTRPC.context<AppContext>().create();
 
-// Use a generic parameter with a type constraint that matches router objects
-export const applyTrpcToExpressApp = <TRouter extends ReturnType<typeof trpc.router>>(
+// Export middleware
+export const middleware = trpc.middleware;
+export const router = trpc.router;
+export const procedure = trpc.procedure;
+
+// Helper function to extract and verify JWT from the request
+const getUserFromRequest = (req: Request): TokenPayload | undefined => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return undefined;
+
+  const token = authHeader.split(' ')[1]; // Bearer token format
+  if (!token) return undefined;
+
+  // Use the existing verifyToken function from utils/jwt.ts
+  const payload = verifyToken(token);
+  return payload || undefined;
+};
+
+export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
-  appContext: AppContext,
   router: TRouter
 ) => {
   app.use(
     '/trpc',
     trpcExpress.createExpressMiddleware({
       router,
-      createContext: () => appContext,
+      createContext: ({ req, res }) => {
+        // Create base context
+        const ctx = createAppContext({ req, res });
+
+        // Add user info if authenticated
+        if (req) {
+          const user = getUserFromRequest(req);
+          if (user) {
+            ctx.user = user;
+          }
+        }
+
+        return ctx;
+      },
+    })
+  );
+
+  app.use(
+    '/trpc-playground',
+    await expressHandler({
+      trpcApiEndpoint: '/trpc',
+      playgroundEndpoint: '/trpc-playground',
+      router,
     })
   );
 };

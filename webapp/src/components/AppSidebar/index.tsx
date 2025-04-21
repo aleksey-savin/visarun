@@ -1,5 +1,7 @@
-import { LayoutDashboardIcon, Users, CircleDollarSign } from 'lucide-react';
+import { Users, CircleDollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+import { useAuth } from '@/lib/auth';
 
 import {
   Sidebar,
@@ -11,28 +13,34 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { getAllUsersRoute, getCurrencyExchangeRoute, getDashboardRoute } from '@/lib/routes';
+import { getAllUsersRoute, getCurrencyExchangeRoute } from '@/lib/routes';
 
 // Menu items.
-const items = [
-  {
-    title: 'Dashboard',
-    url: getDashboardRoute(),
-    icon: LayoutDashboardIcon,
-  },
-  {
-    title: 'Currency Exchange',
-    url: getCurrencyExchangeRoute(),
-    icon: CircleDollarSign,
-  },
-  {
-    title: 'Users',
-    url: getAllUsersRoute(),
-    icon: Users,
-  },
-];
 
 export function AppSidebar() {
+  const { userRole } = useAuth();
+  const items = [
+    /* {
+      title: 'Dashboard',
+      url: getDashboardRoute(),
+      icon: LayoutDashboardIcon,
+    }, */
+    {
+      title: 'Currency Exchange',
+      url: getCurrencyExchangeRoute(),
+      icon: CircleDollarSign,
+    },
+    // Only show Users menu item if user is an admin
+    ...(userRole === 'admin'
+      ? [
+          {
+            title: 'Users',
+            url: getAllUsersRoute(),
+            icon: Users,
+          },
+        ]
+      : []),
+  ];
   return (
     <Sidebar>
       <SidebarContent>

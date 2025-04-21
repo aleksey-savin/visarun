@@ -1,8 +1,8 @@
-import crypto from 'crypto';
-import { trpc } from '../../lib/trpc.ts';
+import { procedure } from '../../lib/trpc.ts';
 import { zSignUpTrpcInput } from './input.ts';
+import { hashPassword } from '../../utils/getPasswordHash.ts';
 
-export const signupTrpcRoute = trpc.procedure
+export const signupTrpcRoute = procedure
   .input(zSignUpTrpcInput)
   .mutation(async ({ ctx, input }) => {
     const existingUser = await ctx.prisma.user.findUnique({
@@ -15,7 +15,7 @@ export const signupTrpcRoute = trpc.procedure
       throw new Error('User already exists');
     }
 
-    const hashedPassword = crypto.createHash('sha256').update(input.password).digest('hex');
+    const hashedPassword = await hashPassword(input.password);
 
     const newUser = await ctx.prisma.user.create({
       data: {
@@ -27,5 +27,6 @@ export const signupTrpcRoute = trpc.procedure
       },
     });
 
-    return newUser;
+    // Don't return the password
+    return { ...newUser, password: undefined };
   });

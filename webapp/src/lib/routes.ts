@@ -9,6 +9,7 @@ export const getDashboardRoute = () => '/';
 export const getCurrencyExchangeRoute = () => '/currency-exchange';
 export const getAllUsersRoute = () => '/users';
 export const getCreateUserRoute = () => '/users/create';
+export const getSignInRoute = () => '/sign-in';
 
 export const viewUserRouteParams = getRouteParams({ id: true });
 export type ViewUserRouteParams = typeof viewUserRouteParams;
