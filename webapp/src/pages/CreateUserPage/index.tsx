@@ -29,7 +29,7 @@ const formSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
-  middleName: z.string().min(1).max(100).optional(),
+  //middleName: z.string().min(1).max(100).optional(),
   // Make role non-optional in the frontend schema
   role: z.enum(['client', 'manager', 'admin']),
   password: z.string().min(8).max(100),
@@ -40,7 +40,7 @@ interface FormData {
   email: string;
   firstName: string;
   lastName: string;
-  middleName?: string;
+  //middleName?: string;
   role: 'client' | 'manager' | 'admin';
   password: string;
 }
@@ -54,7 +54,7 @@ const CreateUserPage = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: '',
-      middleName: '',
+      //middleName: '',
       lastName: '',
       email: '',
       role: 'manager',
@@ -69,7 +69,7 @@ const CreateUserPage = () => {
 
       await createUserMutation.mutateAsync({
         firstName: values.firstName,
-        middleName: values.middleName,
+        //middleName: values.middleName,
         lastName: values.lastName,
         email: values.email,
         role: values.role,
@@ -109,7 +109,7 @@ const CreateUserPage = () => {
               )}
             />
 
-            <FormField
+            {/*<FormField
               control={form.control}
               name="middleName"
               render={({ field }) => (
@@ -121,7 +121,7 @@ const CreateUserPage = () => {
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
 
             <FormField
               control={form.control}

@@ -1,0 +1,53 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-prod
+      args:
+        - NODE_ENV=production
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      - postgres
+    restart: always
+
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: webapp-prod
+      args:
+        - VITE_API_URL=https://api.yourdomain.com # Use your production API URL
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+    # You might need volume mounts for SSL certificates
+    # volumes:
+    #   - ./certs:/etc/nginx/certs
+
+  postgres:
+    image: postgres:17
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    restart: always
+    # Consider not exposing the port in production
+    # Comment this out if you don't need direct access from host
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
