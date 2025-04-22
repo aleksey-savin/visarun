@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { User } from '@prisma/client';
+import { type User } from '@prisma/client';
 
 // Load secret from environment variable
 const JWT_SECRET = process.env.JWT_SECRET || 'development-secret-key';

@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
       target: webapp-prod
       args:
-        - VITE_API_URL=https://api.yourdomain.com # Use your production API URL
+        - VITE_API_URL=http://backend:3001 # Use your production API URL
     ports:
       - "80:80"
       - "443:443"
