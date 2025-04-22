@@ -26,7 +26,7 @@ export const TrpcProvider = ({ children }: { children: React.ReactNode }) => {
     trpc.createClient({
       links: [
         httpBatchLink({
-          url: `${process.env.VITE_API_URL}/trpc`,
+          url: `${process.env.VITE_API_URL}/api/trpc`,
           // Include authorization header with token if authenticated
           headers: () => {
             const token = auth.getAccessToken();
