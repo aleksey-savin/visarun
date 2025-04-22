@@ -127,10 +127,10 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
       form.setValue('clientUsdt', formatNumber(numValue / rates.usdtToRub));
     } else if (field === 'ourDongs') {
       form.setValue('clientRubles', formatNumber(numValue / rates.rubToVnd));
-      form.setValue('clientUsdt', formatNumber(numValue / rates.vndToUsdt));
+      form.setValue('clientUsdt', formatNumber(numValue / rates.usdtToVnd));
     } else if (field === 'ourUsdt') {
       form.setValue('clientRubles', formatNumber(numValue / rates.rubToUsdt));
-      form.setValue('clientDongs', formatNumber(numValue / rates.usdtToVnd));
+      form.setValue('clientDongs', formatNumber(numValue / rates.vndToUsdt));
     }
   };
 
