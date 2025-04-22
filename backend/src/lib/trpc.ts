@@ -3,7 +3,6 @@ import * as trpcExpress from '@trpc/server/adapters/express';
 import { type Express } from 'express';
 import { type Request } from 'express';
 import { AppContext, createAppContext } from './ctx.ts';
-import { expressHandler } from 'trpc-playground/handlers/express';
 import { verifyToken, type TokenPayload } from '../utils/jwt.ts';
 
 export const trpc = initTRPC.context<AppContext>().create();
@@ -48,15 +47,6 @@ export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof tr
 
         return ctx;
       },
-    })
-  );
-
-  app.use(
-    '/trpc-playground',
-    await expressHandler({
-      trpcApiEndpoint: '/trpc',
-      playgroundEndpoint: '/trpc-playground',
-      router,
     })
   );
 };

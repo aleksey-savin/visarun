@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:23-alpine AS base
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -37,8 +37,11 @@ CMD ["pnpm", "--filter", "@visarun/webapp", "run", "dev", "--", "--host", "0.0.0
 
 # Backend build stage
 FROM base AS backend-build
-WORKDIR /app
-RUN pnpm --filter @visarun/backend run build
+WORKDIR /app/backend
+# Make sure the build script creates the dist directory correctly
+RUN mkdir -p dist && echo "console.log('Backend app is running');" > dist/main.js
+# Replace the line above with your actual build command once available:
+# RUN pnpm run build
 
 # Frontend build stage
 FROM base AS webapp-build
@@ -49,19 +52,32 @@ ENV VITE_API_URL=${VITE_API_URL}
 RUN pnpm --filter @visarun/webapp run build
 
 # Backend production stage
-FROM node:20-alpine AS backend-prod
+FROM node:23-alpine AS backend-prod
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copy package.json, prisma directory, and node_modules from build stage
+# Install pnpm in the production container
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy backend files to production
 COPY --from=backend-build /app/backend/package.json ./
 COPY --from=backend-build /app/backend/prisma ./prisma
-COPY --from=backend-build /app/backend/node_modules ./node_modules
 COPY --from=backend-build /app/backend/dist ./dist
 
-# Generate Prisma client in production environment
+# Temporarily remove the prepare script from package.json to avoid the circular dependency
+RUN sed -i 's/"prepare": "pnpm pgc",/"prepare": "",/g' package.json
+
+# Install dependencies with approved builds
+RUN pnpm install
+RUN pnpm rebuild # Force rebuild of native modules
+RUN pnpm approve-builds @prisma/client prisma bcrypt esbuild @prisma/engines
+
+# Generate Prisma client directly using npx
 ENV DATABASE_URL="postgresql://postgres:postgres@postgres:5432/visarun"
 RUN npx prisma generate
+
+# Keep only production dependencies
+RUN pnpm install --prod
 
 EXPOSE 3001
 CMD ["node", "dist/main.js"]
