@@ -49,14 +49,15 @@
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not(.dark) {
+    /* Only apply if not explicitly set to dark */
     color: #213547;
     background-color: #ffffff;
   }
-  a:hover {
+  :root:not(.dark) a:hover {
     color: #747bff;
   }
-  button {
+  :root:not(.dark) button {
     background-color: #f9f9f9;
   }
 }
