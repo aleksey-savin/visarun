@@ -1,6 +1,6 @@
-import { trpc } from '../../lib/trpc.ts';
-import { verifyPassword } from '../../utils/getPasswordHash.ts';
-import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.ts';
+import { trpc } from '../../lib/trpc.js';
+import { verifyPassword } from '../../utils/getPasswordHash.js';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.js';
 import { z } from 'zod';
 
 export const signinSchema = z.object({

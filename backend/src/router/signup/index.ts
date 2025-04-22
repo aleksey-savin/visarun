@@ -1,6 +1,6 @@
-import { procedure } from '../../lib/trpc.ts';
-import { zSignUpTrpcInput } from './input.ts';
-import { hashPassword } from '../../utils/getPasswordHash.ts';
+import { procedure } from '../../lib/trpc.js';
+import { zSignUpTrpcInput } from './input.js';
+import { hashPassword } from '../../utils/getPasswordHash.js';
 
 export const signupTrpcRoute = procedure
   .input(zSignUpTrpcInput)

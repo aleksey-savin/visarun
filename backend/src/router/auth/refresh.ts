@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { verifyToken, generateAccessToken } from '../../utils/jwt.ts';
-import { procedure } from '../../lib/trpc.ts';
+import { verifyToken, generateAccessToken } from '../../utils/jwt.js';
+import { procedure } from '../../lib/trpc.js';
 import { TRPCError } from '@trpc/server';
 
 export const refreshTokenSchema = z.object({

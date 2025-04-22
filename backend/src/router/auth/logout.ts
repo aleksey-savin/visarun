@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { procedure } from '../../lib/trpc.ts';
+import { procedure } from '../../lib/trpc.js';
 
 export const logoutSchema = z.object({
   refreshToken: z.string(),

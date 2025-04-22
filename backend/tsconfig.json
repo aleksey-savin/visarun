@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
-    "allowImportingTsExtensions": true,
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,

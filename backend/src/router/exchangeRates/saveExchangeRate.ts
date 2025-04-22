@@ -1,4 +1,4 @@
-import { trpc } from '../../lib/trpc.ts';
+import { trpc } from '../../lib/trpc.js';
 import { z } from 'zod';
 
 export const saveExchangeRateTrpcInput = z.object({

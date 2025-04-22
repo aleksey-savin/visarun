@@ -1,7 +1,7 @@
-import { trpc } from '../../lib/trpc.ts';
+import { trpc } from '../../lib/trpc.js';
 import { UserRole } from '@prisma/client';
-import { zCreateUserTrpcInput } from './input.ts';
-import { hashPassword } from '../../utils/getPasswordHash.ts';
+import { zCreateUserTrpcInput } from './input.js';
+import { hashPassword } from '../../utils/getPasswordHash.js';
 
 export const createUserRouter = trpc.procedure
   .input(zCreateUserTrpcInput)

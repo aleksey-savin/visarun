@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { type Request, type Response } from 'express';
-import { type TokenPayload } from '../utils/jwt.ts';
+import { type TokenPayload } from '../utils/jwt.js';
 
 const prisma = new PrismaClient();
 

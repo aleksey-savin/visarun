@@ -1,12 +1,12 @@
-import { trpc } from '../lib/trpc.ts';
-import { getAllUsersTrpcRoute } from './getAllUsers/index.ts';
-import { getUserTrpcRoute } from './getUser/index.ts';
-import { createUserRouter } from './createUser/index.ts';
-import { signupTrpcRoute } from './signup/index.ts';
-import { signinTrpcRoute } from './auth/signin.ts';
-import { exchangeRatesRouter } from './exchangeRates/index.ts';
-import { refreshTokenRoute } from './auth/refresh.ts';
-import { logoutTrpcRoute } from './auth/logout.ts';
+import { trpc } from '../lib/trpc.js';
+import { getAllUsersTrpcRoute } from './getAllUsers/index.js';
+import { getUserTrpcRoute } from './getUser/index.js';
+import { createUserRouter } from './createUser/index.js';
+import { signupTrpcRoute } from './signup/index.js';
+import { signinTrpcRoute } from './auth/signin.js';
+import { exchangeRatesRouter } from './exchangeRates/index.js';
+import { refreshTokenRoute } from './auth/refresh.js';
+import { logoutTrpcRoute } from './auth/logout.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({

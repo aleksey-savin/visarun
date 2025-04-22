@@ -1,6 +1,6 @@
 import { TRPCError } from '@trpc/server';
-import { middleware } from '../lib/trpc.ts';
-import { verifyToken, TokenPayload } from '../utils/jwt.ts';
+import { middleware } from '../lib/trpc.js';
+import { verifyToken, type TokenPayload } from '../utils/jwt.js';
 
 // Extend the context with user information when authenticated
 export interface AuthContext {

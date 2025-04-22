@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import { appRouter } from './router/index.ts';
-import { applyTrpcToExpressApp } from './lib/trpc.ts';
-import { createAppContext } from './lib/ctx.ts';
+import { appRouter } from './router/index.js';
+import { applyTrpcToExpressApp } from './lib/trpc.js';
+import { createAppContext } from './lib/ctx.js';
 
 (async () => {
   try {

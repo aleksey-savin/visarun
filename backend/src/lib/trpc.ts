@@ -2,8 +2,8 @@ import { initTRPC } from '@trpc/server';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import { type Express } from 'express';
 import { type Request } from 'express';
-import { AppContext, createAppContext } from './ctx.ts';
-import { verifyToken, type TokenPayload } from '../utils/jwt.ts';
+import { AppContext, createAppContext } from './ctx.js';
+import { verifyToken, type TokenPayload } from '../utils/jwt.js';
 
 export const trpc = initTRPC.context<AppContext>().create();
 

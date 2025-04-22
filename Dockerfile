@@ -35,13 +35,12 @@ EXPOSE 5173
 # Configure Vite to listen on all interfaces and use proper host
 CMD ["pnpm", "--filter", "@visarun/webapp", "run", "dev", "--", "--host", "0.0.0.0"]
 
-# Backend build stage
 FROM base AS backend-build
-WORKDIR /app/backend
-# Make sure the build script creates the dist directory correctly
-RUN mkdir -p dist && echo "console.log('Backend app is running');" > dist/main.js
-# Replace the line above with your actual build command once available:
-# RUN pnpm run build
+WORKDIR /app
+# Install build dependencies
+RUN cd backend && pnpm add -D @swc/cli @swc/core
+# Use the new build script
+RUN pnpm --filter @visarun/backend run build
 
 # Frontend build stage
 FROM base AS webapp-build
@@ -56,31 +55,24 @@ FROM node:23-alpine AS backend-prod
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install pnpm in the production container
+# Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy backend files to production
-COPY --from=backend-build /app/backend/package.json ./
-COPY --from=backend-build /app/backend/prisma ./prisma
+# Copy backend package.json and built files
+COPY --from=backend-build /app/backend/package.json ./package.json
 COPY --from=backend-build /app/backend/dist ./dist
+COPY --from=backend-build /app/backend/prisma ./prisma
 
-# Temporarily remove the prepare script from package.json to avoid the circular dependency
-RUN sed -i 's/"prepare": "pnpm pgc",/"prepare": "",/g' package.json
-
-# Install dependencies with approved builds
-RUN pnpm install
-RUN pnpm rebuild # Force rebuild of native modules
-RUN pnpm approve-builds @prisma/client prisma bcrypt esbuild @prisma/engines
-
-# Generate Prisma client directly using npx
-ENV DATABASE_URL="postgresql://postgres:postgres@postgres:5432/visarun"
-RUN npx prisma generate
-
-# Keep only production dependencies
+# Install production dependencies only
 RUN pnpm install --prod
 
+# Generate Prisma client
+ENV DATABASE_URL=${DATABASE_URL:-"postgresql://postgres:postgres@postgres:5432/visarun"}
+RUN npx prisma generate
+
 EXPOSE 3001
-CMD ["node", "dist/main.js"]
+# Fixed path to match the actual build output location
+CMD ["node", "--trace-warnings", "dist/src/app.js"]
 
 # Frontend production stage
 FROM nginx:alpine AS webapp-prod
