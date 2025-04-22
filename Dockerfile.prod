@@ -53,15 +53,14 @@ FROM node:20-alpine AS backend-prod
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install production dependencies
+# Copy package.json, prisma directory, and node_modules from build stage
 COPY --from=backend-build /app/backend/package.json ./
-RUN npm install --only=production
-
-# Copy build artifacts and prisma directory
-COPY --from=backend-build /app/backend/dist ./dist
 COPY --from=backend-build /app/backend/prisma ./prisma
+COPY --from=backend-build /app/backend/node_modules ./node_modules
+COPY --from=backend-build /app/backend/dist ./dist
 
-# Generate Prisma client in production
+# Generate Prisma client in production environment
+ENV DATABASE_URL="postgresql://postgres:postgres@postgres:5432/visarun"
 RUN npx prisma generate
 
 EXPOSE 3001
