@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .pnpm-store
+node-compile-cache
 
 # Editor directories and files
 .vscode/*
