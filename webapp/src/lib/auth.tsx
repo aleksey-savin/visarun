@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       // Call the refresh token endpoint
-      const response = await fetch('http://localhost:3001/trpc/refreshToken', {
+      const response = await fetch(`${process.env.VITE_API_URL}/trpc/refreshToken`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -181,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Call logout endpoint to invalidate the refresh token on the server
     if (refreshToken) {
       try {
-        await fetch('http://localhost:3001/trpc/logout', {
+        await fetch(`${process.env.VITE_API_URL}/trpc/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
