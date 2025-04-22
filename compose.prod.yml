@@ -21,10 +21,9 @@ services:
       dockerfile: Dockerfile
       target: webapp-prod
       args:
-        - VITE_API_URL=https://app.visarunvietnam.com/api # Use your production API URL
+        - VITE_API_URL="https://app.visarunvietnam.com/api" # Use your production API URL
     ports:
       - "80:80"
-      - "443:443"
     restart: always
     # You might need volume mounts for SSL certificates
     # volumes:
