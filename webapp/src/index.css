@@ -134,6 +134,23 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+:root:not(.dark) {
+  /* These values need to ensure your buttons are visible in light mode */
+  --button-bg: var(--primary);
+  --button-text: var(--primary-foreground);
+}
+
+.dark {
+  --button-bg: var(--primary);
+  --button-text: var(--primary-foreground);
+}
+
+/* Apply these button-specific variables to buttons with the default variant */
+:root:not(.dark) [data-slot='button'] {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

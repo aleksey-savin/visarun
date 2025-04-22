@@ -15,6 +15,11 @@ type ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
+// Helper function to get the current system theme
+const getSystemTheme = (): 'dark' | 'light' => {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
@@ -25,6 +30,7 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
 
+  // Apply the correct theme class immediately during initial render
   useEffect(() => {
     const root = window.document.documentElement;
 
@@ -32,9 +38,7 @@ export function ThemeProvider({
     root.classList.remove('light', 'dark');
 
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
+      const systemTheme = getSystemTheme();
       root.classList.add(systemTheme);
     } else {
       root.classList.add(theme);
@@ -42,28 +46,21 @@ export function ThemeProvider({
   }, [theme]);
 
   useEffect(() => {
-    // Save theme to localStorage when it changes
     localStorage.setItem(storageKey, theme);
   }, [theme, storageKey]);
 
-  // Add listener for system theme changes
   useEffect(() => {
-    // Only set up the listener if theme is 'system'
     if (theme !== 'system') return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    // Handler function to apply theme when system preference changes
     const handleSystemThemeChange = () => {
       const root = window.document.documentElement;
       root.classList.remove('light', 'dark');
-      root.classList.add(mediaQuery.matches ? 'dark' : 'light');
+      root.classList.add(getSystemTheme());
     };
 
-    // Add event listener
     mediaQuery.addEventListener('change', handleSystemThemeChange);
-
-    // Clean up event listener
     return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
   }, [theme]);
 
@@ -81,8 +78,6 @@ export function ThemeProvider({
 
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
-
   if (context === undefined) throw new Error('useTheme must be used within a ThemeProvider');
-
   return context;
 };
