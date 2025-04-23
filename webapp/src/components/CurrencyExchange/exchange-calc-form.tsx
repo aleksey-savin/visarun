@@ -55,12 +55,6 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
 
   const [direction, setDirection] = useState<'clientToUs' | 'usToClient'>('clientToUs');
 
-  // Function to format numbers for display
-  const formatNumber = (value: number): string => {
-    if (isNaN(value) || !isFinite(value)) return '0';
-    return value.toLocaleString('ru-RU', { maximumFractionDigits: 4 });
-  };
-
   // Reset all form fields
   const resetForm = () => {
     form.reset();
@@ -86,6 +80,11 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
 
     setDirection('clientToUs');
     const numValue = parseFloat(value);
+
+    const formatNumber = (value: number): string => {
+      if (isNaN(value) || !isFinite(value)) return '0';
+      return value.toLocaleString('ru-RU', { maximumFractionDigits: 4 });
+    };
 
     // Calculate what we transfer to client
     if (field === 'clientRubles') {
@@ -121,16 +120,21 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
     setDirection('usToClient');
     const numValue = parseFloat(value);
 
+    const formatNumber = (value: number): string => {
+      if (isNaN(value) || !isFinite(value)) return '0';
+      return value.toLocaleString('ru-RU', { maximumFractionDigits: 4 });
+    };
+
     // Calculate what client transfers to us
     if (field === 'ourRubles') {
-      form.setValue('clientDongs', formatNumber(numValue / rates.vndToRub));
-      form.setValue('clientUsdt', formatNumber(numValue / rates.usdtToRub));
+      form.setValue('clientDongs', formatNumber(numValue * rates.rubToVnd));
+      form.setValue('clientUsdt', formatNumber(numValue * rates.rubToUsdt));
     } else if (field === 'ourDongs') {
-      form.setValue('clientRubles', formatNumber(numValue / rates.rubToVnd));
-      form.setValue('clientUsdt', formatNumber(numValue / rates.usdtToVnd));
+      form.setValue('clientRubles', formatNumber(numValue * rates.vndToRub));
+      form.setValue('clientUsdt', formatNumber(numValue * rates.vndToUsdt));
     } else if (field === 'ourUsdt') {
-      form.setValue('clientRubles', formatNumber(numValue / rates.rubToUsdt));
-      form.setValue('clientDongs', formatNumber(numValue / rates.vndToUsdt));
+      form.setValue('clientRubles', formatNumber(numValue * rates.usdtToRub));
+      form.setValue('clientDongs', formatNumber(numValue * rates.usdtToVnd));
     }
   };
 
@@ -303,24 +307,6 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
               />
             </CardContent>
           </Card>
-        </div>
-
-        <div className="mt-4 bg-muted p-4 rounded-md">
-          <h3 className="font-medium mb-2">Current Exchange Rates:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <p>1 RUB = {formatNumber(rates.rubToVnd)} VND</p>
-              <p>1 RUB = {formatNumber(rates.rubToUsdt)} USDT</p>
-            </div>
-            <div>
-              <p>1 VND = {formatNumber(rates.vndToRub)} RUB</p>
-              <p>1 VND = {formatNumber(rates.vndToUsdt)} USDT</p>
-            </div>
-            <div>
-              <p>1 USDT = {formatNumber(rates.usdtToRub)} RUB</p>
-              <p>1 USDT = {formatNumber(rates.usdtToVnd)} VND</p>
-            </div>
-          </div>
         </div>
       </div>
     </Form>
