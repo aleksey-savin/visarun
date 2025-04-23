@@ -70,7 +70,7 @@ const CurrencyExchangePage = () => {
   const rates = latestRates?.exchangeRate;
 
   return (
-    <div className="container mx-auto px-20 py-8 max-w-6xl">
+    <div className="container mx-auto  py-8 max-w-6xl">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-center mb-2">Currency Exchange</h1>
         <p className="text-center text-muted-foreground mb-4">Convert between RUB, VND, USDT</p>
@@ -90,12 +90,12 @@ const CurrencyExchangePage = () => {
           />
 
           <div className="mt-6">
-            <div className="flex justify-center items-center gap-2">
-              <Badge variant="outline" className="px-3 py-1 text-sm">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
+              <Badge variant="outline" className="px-3 py-1 text-sm w-full sm:w-auto text-center">
                 Rates updated:{' '}
                 {rates?.createdAt ? formatLastUpdated(new Date(rates.createdAt)) : 'N/A'}
               </Badge>
-              <Badge variant="outline" className="px-3 py-1 text-sm">
+              <Badge variant="outline" className="px-3 py-1 text-sm w-full sm:w-auto text-center">
                 By:{' '}
                 {rates?.createdBy
                   ? `${rates.createdBy.firstName} ${rates.createdBy.lastName}`
@@ -105,7 +105,7 @@ const CurrencyExchangePage = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleRefresh}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 w-full sm:w-auto justify-center"
               >
                 <RefreshCw className="h-3 w-3" />
                 <span>Refresh</span>
