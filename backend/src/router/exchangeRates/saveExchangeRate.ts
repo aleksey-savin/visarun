@@ -1,4 +1,4 @@
-import { trpc } from '../../lib/trpc.js';
+import { adminProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
 export const saveExchangeRateTrpcInput = z.object({
@@ -10,7 +10,7 @@ export const saveExchangeRateTrpcInput = z.object({
   rubToUsdt: z.number().positive(),
 });
 
-export const saveExchangeRateTrpcRoute = trpc.procedure
+export const saveExchangeRateTrpcRoute = adminProcedure
   .input(saveExchangeRateTrpcInput)
   .mutation(async ({ ctx, input }) => {
     // Ensure user is authenticated and is admin or manager

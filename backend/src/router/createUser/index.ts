@@ -1,9 +1,9 @@
-import { trpc } from '../../lib/trpc.js';
+import { adminProcedure } from '../../lib/trpc.js';
 import { UserRole } from '@prisma/client';
 import { zCreateUserTrpcInput } from './input.js';
 import { hashPassword } from '../../utils/getPasswordHash.js';
 
-export const createUserRouter = trpc.procedure
+export const createUserRouter = adminProcedure
   .input(zCreateUserTrpcInput)
   .mutation(async ({ input, ctx }) => {
     const existingUser = await ctx.prisma.user.findUnique({

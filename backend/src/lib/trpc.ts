@@ -25,6 +25,21 @@ const getUserFromRequest = (req: Request): TokenPayload | undefined => {
   return payload || undefined;
 };
 
+export const isAdmin = trpc.middleware(async ({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new Error('Not authenticated');
+  }
+
+  if (ctx.user.role !== 'admin') {
+    throw new Error('Not authorized. Admin access required');
+  }
+
+  return next({ ctx });
+});
+
+// Create an admin procedure
+export const adminProcedure = trpc.procedure.use(isAdmin);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

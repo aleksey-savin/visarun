@@ -14,11 +14,49 @@ import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, ArrowLeft, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 const ViewUserPage = () => {
   const { id } = useParams() as ViewUserRouteParams;
   const navigate = useNavigate();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Query to get user details
   const { data, error, isLoading, isError } = trpc.getUser.useQuery({ id });
+
+  // Mutation to delete user
+  const deleteUserMutation = trpc.deleteUser.useMutation({
+    onSuccess: () => {
+      toast.success('User deleted successfully', {
+        description: 'The user has been permanently removed.',
+      });
+      navigate(getAllUsersRoute());
+    },
+    onError: error => {
+      toast.error('Failed to delete user', {
+        description: error.message,
+      });
+    },
+  });
+
+  // Function to handle user deletion
+  const handleDeleteUser = () => {
+    console.log(id);
+    deleteUserMutation.mutate({ id });
+    setIsDeleteDialogOpen(false);
+  };
 
   // Function to format dates in a readable format
   const formatDate = (date: string | Date) => {
@@ -94,16 +132,19 @@ const ViewUserPage = () => {
       )}
 
       {data?.user && (
-        <Card className="w-full max-w-3xl min-w-xl">
+        <Card className="w-full max-w-3xl">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">
                 {`${data.user.firstName} ${data.user.middleName ? data.user.middleName + ' ' : ''}${data.user.lastName}`}
               </CardTitle>
+            </div>
+            <div className="py-3">
               <Badge className={getRoleBadgeColor(data.user.role)}>
                 {data.user.role.charAt(0).toUpperCase() + data.user.role.slice(1)}
               </Badge>
             </div>
+
             <CardDescription className="flex items-center gap-1">
               <Mail className="h-3 w-3" />
               {data.user.email}
@@ -129,14 +170,30 @@ const ViewUserPage = () => {
               </div>
             </div>
           </CardContent>
-
           <CardFooter className="pt-2 flex justify-between">
-            <div className="space-x-2">
-              <Button variant="outline" onClick={() => navigate(getAllUsersRoute())}>
-                Back to All Users
-              </Button>
-              {/* <Button variant="outline">Edit User</Button>
-              <Button variant="destructive">Delete User</Button> */}
+            <div className="space-x-4 space-y-2">
+              <Button variant="outline">Edit User</Button>
+
+              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={deleteUserMutation.isLoading}>
+                    {deleteUserMutation.isLoading ? 'Deleting...' : 'Delete User'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the user account
+                      for {data.user.firstName} {data.user.lastName}.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteUser}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardFooter>
         </Card>
