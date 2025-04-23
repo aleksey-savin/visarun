@@ -53,7 +53,6 @@ const ViewUserPage = () => {
 
   // Function to handle user deletion
   const handleDeleteUser = () => {
-    console.log(id);
     deleteUserMutation.mutate({ id });
     setIsDeleteDialogOpen(false);
   };
@@ -176,8 +175,8 @@ const ViewUserPage = () => {
 
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={deleteUserMutation.isLoading}>
-                    {deleteUserMutation.isLoading ? 'Deleting...' : 'Delete User'}
+                  <Button variant="destructive" disabled={deleteUserMutation.isPending}>
+                    {deleteUserMutation.isPending ? 'Deleting...' : 'Delete User'}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
