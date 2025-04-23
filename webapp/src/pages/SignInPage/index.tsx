@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,10 +28,22 @@ type FormData = z.infer<typeof formSchema>;
 
 const SignInPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const signInMutation = trpc.signin.useMutation();
   const { isAuthenticated, login, isAuthLoading } = useAuth();
+
+  // Get the path they were trying to access, or default to dashboard
+  const from =
+    (location.state as { from?: { pathname: string } })?.from?.pathname || getDashboardRoute();
+
+  // Effect to handle redirect after authentication is confirmed
+  useEffect(() => {
+    if (isAuthenticated && !isAuthLoading) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, isAuthLoading, navigate, from]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -50,10 +62,8 @@ const SignInPage = () => {
     );
   }
 
-  // If already authenticated, redirect to dashboard
-  if (isAuthenticated) {
-    return <Navigate to={getDashboardRoute()} />;
-  }
+  // We handle the redirect in useEffect now instead of here
+  // This allows for a smoother experience and preserves the 'from' state
 
   async function onSubmit(values: FormData) {
     try {
@@ -76,7 +86,9 @@ const SignInPage = () => {
           result.user.role,
           result.user.id
         );
-        navigate(getDashboardRoute());
+
+        // Navigate to the original destination or dashboard
+        navigate(from, { replace: true });
       }
     } catch (err) {
       console.error('Login error:', err);
