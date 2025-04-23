@@ -70,7 +70,7 @@ const CurrencyExchangePage = () => {
   const rates = latestRates?.exchangeRate;
 
   return (
-    <div className="container mx-auto  py-8 max-w-6xl">
+    <div className="container mx-auto pt-8 max-w-6xl">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-center mb-2">Currency Exchange</h1>
         <p className="text-center text-muted-foreground mb-4">Convert between RUB, VND, USDT</p>
