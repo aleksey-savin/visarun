@@ -77,6 +77,19 @@ const CurrencyExchangePage = () => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
+          <h2 className="text-2xl font-semibold mb-6 text-center">Currency Calculator</h2>
+          <CurrencyExchangeForm
+            rates={{
+              rubToVnd: rates?.rubToVnd || 1,
+              vndToRub: rates?.vndToRub || 1,
+              usdtToVnd: rates?.usdtToVnd || 1,
+              vndToUsdt: rates?.vndToUsdt || 1,
+              usdtToRub: rates?.usdtToRub || 1,
+              rubToUsdt: rates?.rubToUsdt || 1,
+            }}
+          />
+        </div>
+        <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
           <h2 className="text-2xl font-semibold mb-6 text-center">Current Exchange Rates</h2>
           <ExchangeRatesDisplay
             rates={{
@@ -112,20 +125,6 @@ const CurrencyExchangePage = () => {
               </Button>
             </div>
           </div>
-        </div>
-
-        <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
-          <h2 className="text-2xl font-semibold mb-6 text-center">Currency Calculator</h2>
-          <CurrencyExchangeForm
-            rates={{
-              rubToVnd: rates?.rubToVnd || 1,
-              vndToRub: rates?.vndToRub || 1,
-              usdtToVnd: rates?.usdtToVnd || 1,
-              vndToUsdt: rates?.vndToUsdt || 1,
-              usdtToRub: rates?.usdtToRub || 1,
-              rubToUsdt: rates?.rubToUsdt || 1,
-            }}
-          />
         </div>
       </div>
 

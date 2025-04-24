@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -44,6 +44,8 @@ const ExchangeRatesSchema = z.object({
   rubToUsdt: z.string().refine(val => !isNaN(parseFloat(val)), {
     message: 'Must be a valid number',
   }),
+  // Exchange Rate for RUB-USDT pair
+  exchangeRate: z.string().optional(),
 });
 
 type ExchangeRatesFormValues = z.infer<typeof ExchangeRatesSchema>;
@@ -59,6 +61,15 @@ interface ExchangeRatesFormProps {
     rubToUsdt: number;
   };
 }
+
+// Helper function to round to nearest 0.1 in our favor
+const roundInOurFavor = (value: number, isUsdtToRub: boolean): number => {
+  const multiplier = 10; // For rounding to 0.1
+  // Round down for USDT to RUB (buying USDT), round up for RUB to USDT (selling USDT)
+  return isUsdtToRub
+    ? Math.ceil(value * multiplier) / multiplier
+    : Math.floor(value * multiplier) / multiplier;
+};
 
 export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRatesFormProps) {
   const [formStatus, setFormStatus] = useState<{
@@ -90,14 +101,35 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
   const form = useForm<ExchangeRatesFormValues>({
     resolver: zodResolver(ExchangeRatesSchema),
     defaultValues: {
-      rubToVnd: initialValues ? initialValues.rubToVnd.toString() : '',
+      rubToVnd: initialValues ? (initialValues.rubToVnd * 10000).toString() : '',
       vndToRub: initialValues ? (initialValues.vndToRub * 1000).toString() : '',
       usdtToVnd: initialValues ? initialValues.usdtToVnd.toString() : '',
       vndToUsdt: initialValues ? (initialValues.vndToUsdt * 1000).toString() : '',
       usdtToRub: initialValues ? initialValues.usdtToRub.toString() : '',
-      rubToUsdt: initialValues ? (initialValues.rubToUsdt * 1000).toString() : '',
+      rubToUsdt: initialValues ? initialValues.rubToUsdt.toString() : '',
+      exchangeRate: '',
     },
   });
+
+  // Watch the exchange rate field value
+  const exchangeRate = useWatch({
+    control: form.control,
+    name: 'exchangeRate',
+  });
+
+  // Update USDT-RUB rates based on the exchange rate
+  useEffect(() => {
+    if (exchangeRate && !isNaN(parseFloat(exchangeRate))) {
+      const rate = parseFloat(exchangeRate);
+      // Calculate values based on the formula
+      const usdtToRubValue = roundInOurFavor(rate * 0.97, true); // Exchange Rate * 0.97
+      const rubToUsdtValue = roundInOurFavor(rate * 1.03, false); // Exchange Rate * 1.03
+
+      // Update the form fields
+      form.setValue('usdtToRub', usdtToRubValue.toString());
+      form.setValue('rubToUsdt', rubToUsdtValue.toString());
+    }
+  }, [exchangeRate, form]);
 
   async function onSubmit(data: ExchangeRatesFormValues) {
     try {
@@ -105,12 +137,12 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
 
       // Convert string values to numbers and submit
       saveExchangeRate.mutate({
-        rubToVnd: parseFloat(data.rubToVnd),
+        rubToVnd: parseFloat(data.rubToVnd) / 10000,
         vndToRub: parseFloat(data.vndToRub) / 1000,
         usdtToVnd: parseFloat(data.usdtToVnd),
-        vndToUsdt: parseFloat(data.vndToUsdt) / 1000,
+        vndToUsdt: parseFloat(data.vndToUsdt),
         usdtToRub: parseFloat(data.usdtToRub),
-        rubToUsdt: parseFloat(data.rubToUsdt) / 1000,
+        rubToUsdt: parseFloat(data.rubToUsdt),
       });
     } catch (error) {
       console.error('Error saving exchange rates:', error);
@@ -155,11 +187,11 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">1 RUB</span> ={' '}
+                          <span className="font-semibold">10K RUB</span> ={' '}
                           <span className="text-muted-foreground">X VND</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} />
+                          <Input type="number" placeholder="" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -172,11 +204,11 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">1 000 VND</span> ={' '}
+                          <span className="font-semibold">1M VND</span> ={' '}
                           <span className="text-muted-foreground">X RUB</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} />
+                          <Input type="number" placeholder="" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -205,7 +237,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                           <span className="text-muted-foreground">X VND</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} />
+                          <Input type="number" placeholder="" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -218,11 +250,11 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">1 000 VND</span> ={' '}
-                          <span className="text-muted-foreground">X USDT</span>
+                          <span className="font-semibold">X VND</span> ={' '}
+                          <span className="text-muted-foreground">1 USDT</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} />
+                          <Input type="number" placeholder="" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -240,6 +272,31 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                   </span>
                   Tether to Russian Ruble
                 </h3>
+
+                {/* Exchange Rate field */}
+                <div className="mb-4">
+                  <FormField
+                    control={form.control}
+                    name="exchangeRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1 font-medium text-primary">
+                          <span className="font-semibold">Market Rate</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter market rate"
+                            {...field}
+                            className="border-primary/50"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -251,7 +308,13 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                           <span className="text-muted-foreground">X RUB</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} />
+                          <Input
+                            type="number"
+                            placeholder=""
+                            {...field}
+                            readOnly={!!exchangeRate}
+                            className={exchangeRate ? 'bg-muted cursor-not-allowed' : ''}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -263,17 +326,29 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">1 000 RUB</span> ={' '}
-                          <span className="text-muted-foreground">X USDT</span>
+                          <span className="font-semibold">X RUB</span> ={' '}
+                          <span className="text-muted-foreground">1 USDT</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="" {...field} />
+                          <Input
+                            type="number"
+                            placeholder=""
+                            {...field}
+                            readOnly={!!exchangeRate}
+                            className={exchangeRate ? 'bg-muted cursor-not-allowed' : ''}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+                {exchangeRate && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Rates are automatically calculated as Exchange Rate × 0.97 (for USDT to RUB) and
+                    Exchange Rate × 1.03 (for RUB to USDT) with 0.1 rounding in our favor.
+                  </p>
+                )}
               </div>
 
               <Button type="submit" className="w-full" disabled={saveExchangeRate.isPending}>

@@ -60,6 +60,11 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
     form.reset();
   };
 
+  const formatNumber = (value: number): string => {
+    if (isNaN(value) || !isFinite(value)) return '0';
+    return value.toLocaleString('ru-RU', { maximumFractionDigits: 4 });
+  };
+
   // Handle client input changes
   const handleClientInputChange = (field: FormField, value: string) => {
     // Update the input field
@@ -81,21 +86,19 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
     setDirection('clientToUs');
     const numValue = parseFloat(value);
 
-    const formatNumber = (value: number): string => {
-      if (isNaN(value) || !isFinite(value)) return '0';
-      return value.toLocaleString('ru-RU', { maximumFractionDigits: 4 });
-    };
-
     // Calculate what we transfer to client
     if (field === 'clientRubles') {
-      form.setValue('ourDongs', formatNumber(numValue * rates.rubToVnd));
-      form.setValue('ourUsdt', formatNumber(numValue * rates.rubToUsdt));
+      form.setValue('ourDongs', formatNumber(Math.floor(numValue * rates.rubToVnd * 10) / 10));
+      form.setValue('ourUsdt', formatNumber(Math.floor((numValue / rates.rubToUsdt) * 10) / 10));
     } else if (field === 'clientDongs') {
-      form.setValue('ourRubles', formatNumber(numValue * rates.vndToRub));
-      form.setValue('ourUsdt', formatNumber(numValue * rates.vndToUsdt));
+      form.setValue(
+        'ourRubles',
+        formatNumber(Math.floor(((numValue * rates.vndToRub) / 1000) * 10) / 10)
+      );
+      form.setValue('ourUsdt', formatNumber(Math.floor((numValue / rates.vndToUsdt) * 10) / 10));
     } else if (field === 'clientUsdt') {
-      form.setValue('ourRubles', formatNumber(numValue * rates.usdtToRub));
-      form.setValue('ourDongs', formatNumber(numValue * rates.usdtToVnd));
+      form.setValue('ourRubles', formatNumber(Math.floor(numValue * rates.usdtToRub * 10) / 10));
+      form.setValue('ourDongs', formatNumber(Math.floor(numValue * rates.usdtToVnd * 10) / 10));
     }
   };
 
@@ -127,14 +130,17 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
 
     // Calculate what client transfers to us
     if (field === 'ourRubles') {
-      form.setValue('clientDongs', formatNumber(numValue * rates.rubToVnd));
-      form.setValue('clientUsdt', formatNumber(numValue * rates.rubToUsdt));
+      form.setValue(
+        'clientDongs',
+        formatNumber(Math.ceil((numValue / rates.vndToRub) * 1000 * 10) / 10)
+      );
+      form.setValue('clientUsdt', formatNumber(Math.ceil((numValue / rates.usdtToRub) * 10) / 10));
     } else if (field === 'ourDongs') {
-      form.setValue('clientRubles', formatNumber(numValue * rates.vndToRub));
-      form.setValue('clientUsdt', formatNumber(numValue * rates.vndToUsdt));
+      form.setValue('clientRubles', formatNumber(Math.ceil((numValue / rates.rubToVnd) * 10) / 10));
+      form.setValue('clientUsdt', formatNumber(Math.ceil((numValue / rates.usdtToVnd) * 10) / 10));
     } else if (field === 'ourUsdt') {
-      form.setValue('clientRubles', formatNumber(numValue * rates.usdtToRub));
-      form.setValue('clientDongs', formatNumber(numValue * rates.usdtToVnd));
+      form.setValue('clientRubles', formatNumber(Math.ceil(numValue * rates.rubToUsdt * 10) / 10));
+      form.setValue('clientDongs', formatNumber(Math.ceil(numValue * rates.vndToUsdt * 10) / 10));
     }
   };
 
