@@ -1,0 +1,155 @@
+import { useState } from 'react';
+
+import { trpc } from '@/lib/trpcProvider';
+
+import { ExchangeRatesDisplay } from '@/components/CurrencyExchange/exchange-rates-display';
+import { CurrencyExchangeForm } from '@/components/CurrencyExchange/exchange-calc-form';
+
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { AlertDescription } from '@/components/ui/alert';
+
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import SignInForm from '../../components/SignIn/sign-in-form';
+
+const HomePage = () => {
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+
+  const {
+    data: latestRates,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = trpc.exchangeRates.getLatestExchangeRate.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
+
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  const formatLastUpdated = (date: Date) => {
+    return date.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  // If there are no rates yet or if loading, show placeholder or loading state
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="flex flex-col items-center justify-center h-64">
+          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading exchange rates...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>Error loading exchange rates: {error.message}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const rates = latestRates?.exchangeRate;
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header with login button */}
+      <header className="w-full px-6 py-4 border-b flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Visarun Vietnam</h1>
+        <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline">Sign In</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <SignInForm onSuccess={() => setShowLoginDialog(false)} />
+          </DialogContent>
+        </Dialog>
+      </header>
+      <main className="container mx-auto px-4 pt-8 pb-12">
+        {/* Page Heading */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-center mb-2">Currency Exchange</h1>
+          <p className="text-center text-muted-foreground mb-4">Convert between RUB, VND, USDT</p>
+        </div>
+
+        <div className="flex flex-col items-center gap-8 max-w-xl mx-auto">
+          {/* Current Exchange Rates Section */}
+          <section className="w-full">
+            <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
+              <h2 className="text-2xl font-semibold mb-6 text-center">Current Exchange Rates</h2>
+              <ExchangeRatesDisplay
+                rates={{
+                  rubToVnd: rates?.rubToVnd || 1,
+                  vndToRub: rates?.vndToRub || 1,
+                  usdtToVnd: rates?.usdtToVnd || 1,
+                  vndToUsdt: rates?.vndToUsdt || 1,
+                  usdtToRub: rates?.usdtToRub || 1,
+                  rubToUsdt: rates?.rubToUsdt || 1,
+                }}
+              />
+              <div className="mt-6">
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="px-3 py-1 text-sm w-full sm:w-auto text-center"
+                  >
+                    Rates updated:{' '}
+                    {rates?.createdAt ? formatLastUpdated(new Date(rates.createdAt)) : 'N/A'}
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefresh}
+                    className="flex items-center gap-1 w-full sm:w-auto justify-center"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    <span>Refresh</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Exchange Calculator Section */}
+          <section className="w-full">
+            <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
+              <h2 className="text-2xl font-semibold mb-6 text-center">Currency Calculator</h2>
+              <CurrencyExchangeForm
+                isClient={true}
+                rates={{
+                  rubToVnd: rates?.rubToVnd || 1,
+                  vndToRub: rates?.vndToRub || 1,
+                  usdtToVnd: rates?.usdtToVnd || 1,
+                  vndToUsdt: rates?.vndToUsdt || 1,
+                  usdtToRub: rates?.usdtToRub || 1,
+                  rubToUsdt: rates?.rubToUsdt || 1,
+                }}
+              />
+            </div>
+          </section>
+        </div>
+      </main>
+      {/* Footer */}
+      <footer className="w-full mt-6 px-6 py-4 border-t text-center text-sm text-muted-foreground">
+        © {new Date().getFullYear()} Visarun Vietnam. All rights reserved.
+      </footer>
+    </div>
+  );
+};
+
+export default HomePage;

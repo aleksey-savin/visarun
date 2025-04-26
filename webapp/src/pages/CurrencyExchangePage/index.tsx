@@ -79,6 +79,7 @@ const CurrencyExchangePage = () => {
         <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
           <h2 className="text-2xl font-semibold mb-6 text-center">Currency Calculator</h2>
           <CurrencyExchangeForm
+            isClient={false}
             rates={{
               rubToVnd: rates?.rubToVnd || 1,
               vndToRub: rates?.vndToRub || 1,

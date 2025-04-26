@@ -30,6 +30,7 @@ const FormSchema = z.object({
 type FormField = keyof z.infer<typeof FormSchema>;
 
 interface ExchangeCalcFormProps {
+  isClient: boolean;
   rates: {
     rubToVnd: number;
     vndToRub: number;
@@ -40,7 +41,7 @@ interface ExchangeCalcFormProps {
   };
 }
 
-export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
+export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -164,7 +165,7 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
           <Card className={direction === 'clientToUs' ? 'ring-2 ring-primary/50' : ''}>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
-                Client transfers to us:
+                {isClient ? 'You transfer to us:' : 'Client transfers to us:'}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -241,7 +242,7 @@ export function CurrencyExchangeForm({ rates }: ExchangeCalcFormProps) {
           <Card className={direction === 'usToClient' ? 'ring-2 ring-primary/50' : ''}>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
-                We transfer to client:
+                {isClient ? 'We transfer to you:' : 'We transfer to user:'}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
       target: webapp-prod
       args:
-        - VITE_API_URL=https://app.visarunvietnam.com # Use your production API URL
+        - VITE_API_URL=https://visarunvietnam.com # Use your production API URL
     ports:
       - "80:80"
     restart: always

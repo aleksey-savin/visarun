@@ -7,7 +7,7 @@ import ViewUserPage from './pages/ViewUserPage';
 import CreateUserPage from './pages/CreateUserPage';
 // import DashboardPage from './pages/DashboardPage';
 import CurrencyExchangePage from './pages/CurrencyExchangePage';
-import SignInPage from './pages/SignInPage';
+import HomePage from './pages/HomePage';
 
 import {
   getAllUsersRoute,
@@ -32,7 +32,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               {/* Public routes */}
-              <Route path={getSignInRoute()} element={<SignInPage />} />
+              <Route path={getSignInRoute()} element={<HomePage />} />
 
               {/* Protected routes */}
               <Route
