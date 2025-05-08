@@ -62,7 +62,7 @@ export function ExchangeRatesDisplay({ rates }: ExchangeRatesDisplayProps) {
             <div className="flex justify-between items-center bg-background/60 px-2 py-1 rounded">
               <span className="text-muted-foreground">{formatNumber(1)} USDT</span>
               <span className="font-medium">
-                {formatNumber(Math.floor(1 * rates.usdtToRub * 10) / 10)} VND
+                {formatNumber(Math.floor(1 * rates.usdtToVnd * 10) / 10)} VND
               </span>
             </div>
           </div>
@@ -94,7 +94,7 @@ export function ExchangeRatesDisplay({ rates }: ExchangeRatesDisplayProps) {
             <div className="flex justify-between items-center bg-background/60 px-2 py-1 rounded">
               <span className="text-muted-foreground">{formatNumber(1)} USDT</span>
               <span className="font-medium">
-                {formatNumber(Math.floor(1 * rates.usdtToVnd * 10) / 10)} RUB
+                {formatNumber(Math.floor(1 * rates.usdtToRub * 10) / 10)} RUB
               </span>
             </div>
           </div>

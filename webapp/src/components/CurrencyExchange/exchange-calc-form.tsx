@@ -89,17 +89,23 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
 
     // Calculate what we transfer to client
     if (field === 'clientRubles') {
-      form.setValue('ourDongs', formatNumber(Math.floor(numValue * rates.rubToVnd * 10) / 10));
-      form.setValue('ourUsdt', formatNumber(Math.floor((numValue / rates.rubToUsdt) * 10) / 10));
+      form.setValue(
+        'ourDongs',
+        formatNumber(Math.floor((numValue * rates.rubToVnd) / 10000) * 10000)
+      );
+      form.setValue('ourUsdt', formatNumber(Math.floor(numValue / rates.rubToUsdt / 0.5) * 0.5));
     } else if (field === 'clientDongs') {
       form.setValue(
         'ourRubles',
-        formatNumber(Math.floor(((numValue * rates.vndToRub) / 1000) * 10) / 10)
+        formatNumber(Math.floor((numValue * rates.vndToRub) / 1000 / 50) * 50)
       );
-      form.setValue('ourUsdt', formatNumber(Math.floor((numValue / rates.vndToUsdt) * 10) / 10));
+      form.setValue('ourUsdt', formatNumber(Math.floor(numValue / rates.vndToUsdt / 0.5) * 0.5));
     } else if (field === 'clientUsdt') {
-      form.setValue('ourRubles', formatNumber(Math.floor(numValue * rates.usdtToRub * 10) / 10));
-      form.setValue('ourDongs', formatNumber(Math.floor(numValue * rates.usdtToVnd * 10) / 10));
+      form.setValue('ourRubles', formatNumber(Math.floor((numValue * rates.usdtToRub) / 50) * 50));
+      form.setValue(
+        'ourDongs',
+        formatNumber(Math.floor((numValue * rates.usdtToVnd) / 10000) * 10000)
+      );
     }
   };
 
@@ -133,15 +139,21 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
     if (field === 'ourRubles') {
       form.setValue(
         'clientDongs',
-        formatNumber(Math.ceil((numValue / rates.vndToRub) * 1000 * 10) / 10)
+        formatNumber(Math.ceil(((numValue / rates.vndToRub) * 1000) / 10000) * 10000)
       );
-      form.setValue('clientUsdt', formatNumber(Math.ceil((numValue / rates.usdtToRub) * 10) / 10));
+      form.setValue('clientUsdt', formatNumber(Math.ceil(numValue / rates.usdtToRub / 0.5) * 0.5));
     } else if (field === 'ourDongs') {
-      form.setValue('clientRubles', formatNumber(Math.ceil((numValue / rates.rubToVnd) * 10) / 10));
-      form.setValue('clientUsdt', formatNumber(Math.ceil((numValue / rates.usdtToVnd) * 10) / 10));
+      form.setValue('clientRubles', formatNumber(Math.ceil(numValue / rates.rubToVnd / 50) * 50));
+      form.setValue('clientUsdt', formatNumber(Math.ceil(numValue / rates.usdtToVnd / 0.5) * 0.5));
     } else if (field === 'ourUsdt') {
-      form.setValue('clientRubles', formatNumber(Math.ceil(numValue * rates.rubToUsdt * 10) / 10));
-      form.setValue('clientDongs', formatNumber(Math.ceil(numValue * rates.vndToUsdt * 10) / 10));
+      form.setValue(
+        'clientRubles',
+        formatNumber(Math.ceil((numValue * rates.rubToUsdt) / 50) * 50)
+      );
+      form.setValue(
+        'clientDongs',
+        formatNumber(Math.ceil((numValue * rates.vndToUsdt) / 10000) * 10000)
+      );
     }
   };
 

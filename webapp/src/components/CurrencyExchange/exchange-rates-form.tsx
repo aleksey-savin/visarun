@@ -104,7 +104,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
       rubToVnd: initialValues ? (initialValues.rubToVnd * 10000).toString() : '',
       vndToRub: initialValues ? (initialValues.vndToRub * 1000).toString() : '',
       usdtToVnd: initialValues ? initialValues.usdtToVnd.toString() : '',
-      vndToUsdt: initialValues ? (initialValues.vndToUsdt * 1000).toString() : '',
+      vndToUsdt: initialValues ? initialValues.vndToUsdt.toString() : '',
       usdtToRub: initialValues ? initialValues.usdtToRub.toString() : '',
       rubToUsdt: initialValues ? initialValues.rubToUsdt.toString() : '',
       exchangeRate: '',
