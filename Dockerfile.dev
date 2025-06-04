@@ -10,8 +10,8 @@ WORKDIR /app
 FROM base AS backend-dev
 WORKDIR /app
 EXPOSE 3001
-# Mount volumes and ensure node_modules are available
-CMD ["sh", "-c", "cd /app && pnpm install && pnpm --filter @visarun/backend run dev"]
+# Mount volumes, run migrations, and ensure node_modules are available
+CMD ["sh", "-c", "cd /app && pnpm install && cd /app/backend && pnpm run pmd && cd /app && pnpm --filter @visarun/backend run dev"]
 
 # webapp development stage
 FROM base AS webapp-dev

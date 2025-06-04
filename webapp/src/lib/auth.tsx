@@ -25,6 +25,9 @@ interface AuthContextType {
   userId: string | null;
   refreshAuth: () => Promise<boolean>;
   isAuthLoading: boolean;
+  isPasswordChangeRequired: boolean;
+  passwordChangeCompleted: () => void;
+  user: { id: string; email: string; role: UserRole } | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -40,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isPasswordChangeRequired, setIsPasswordChangeRequired] = useState(false);
 
   // Function to get and validate the stored access token
   const getAccessToken = (): string | null => {
@@ -200,6 +204,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAuthState();
   };
 
+  // Check if password change is required (for default admin)
+  useEffect(() => {
+    if (isAuthenticated && userEmail === 'admin@admin.com' && userRole === 'admin') {
+      setIsPasswordChangeRequired(true);
+    }
+  }, [isAuthenticated, userEmail, userRole]);
+
+  // Function to mark password change as completed
+  const passwordChangeCompleted = () => {
+    setIsPasswordChangeRequired(false);
+  };
+
+  // Create user object for easier access
+  const user =
+    isAuthenticated && userEmail && userRole && userId
+      ? { id: userId, email: userEmail, role: userRole as UserRole }
+      : null;
+
   return (
     <AuthContext.Provider
       value={{
@@ -212,6 +234,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userId,
         refreshAuth,
         isAuthLoading,
+        isPasswordChangeRequired,
+        passwordChangeCompleted,
+        user,
       }}
     >
       {children}

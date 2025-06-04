@@ -6,14 +6,28 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { getSignInRoute } from '@/lib/routes';
+import { useState, useEffect } from 'react';
+import { ForcedPasswordChange } from '@/components/ChangePassword/forced-password-change';
 
 export default function Layout() {
-  const { logout, userEmail } = useAuth();
+  const { logout, userEmail, isPasswordChangeRequired, passwordChangeCompleted } = useAuth();
   const navigate = useNavigate();
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+
+  useEffect(() => {
+    if (isPasswordChangeRequired) {
+      setShowPasswordDialog(true);
+    }
+  }, [isPasswordChangeRequired]);
 
   const handleLogout = () => {
     logout();
     navigate(getSignInRoute());
+  };
+
+  const handlePasswordChangeSuccess = () => {
+    passwordChangeCompleted();
+    setShowPasswordDialog(false);
   };
 
   return (
@@ -36,6 +50,14 @@ export default function Layout() {
           </div>
         </div>
       </main>
+
+      {isPasswordChangeRequired && (
+        <ForcedPasswordChange
+          isOpen={showPasswordDialog}
+          onOpenChange={setShowPasswordDialog}
+          onSuccess={handlePasswordChangeSuccess}
+        />
+      )}
     </SidebarProvider>
   );
 }

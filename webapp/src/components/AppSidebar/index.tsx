@@ -46,7 +46,7 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="flex justify-between pt-10">
-            <div className="text-3xl font-medium">Visarun</div>
+            <div className="text-2xl font-medium">Visarun Vietnam</div>
           </SidebarGroupLabel>
           <SidebarGroupContent className="pt-10">
             <SidebarMenu>

@@ -12,7 +12,7 @@ import { RefreshCw } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { AlertDescription } from '@/components/ui/alert';
 
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
 import SignInForm from '../../components/SignIn/sign-in-form';
 
 const HomePage = () => {
@@ -22,7 +22,6 @@ const HomePage = () => {
     data: latestRates,
     isLoading,
     isError,
-    error,
     refetch,
   } = trpc.exchangeRates.getLatestExchangeRate.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -54,32 +53,24 @@ const HomePage = () => {
     );
   }
 
-  if (isError) {
-    return (
+  // Get rates or null
+  const rates = latestRates?.exchangeRate;
+
+  // We will always render the header with login, but conditionally render content
+  let mainContent;
+
+  if (isError || !rates) {
+    mainContent = (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <Alert variant="destructive" className="mb-6">
-          <AlertDescription>Error loading exchange rates: {error.message}</AlertDescription>
+          <AlertDescription>
+            Exchange rates are not available yet. Please try again later.
+          </AlertDescription>
         </Alert>
       </div>
     );
-  }
-
-  const rates = latestRates?.exchangeRate;
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header with login button */}
-      <header className="w-full px-6 py-4 border-b flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Visarun Vietnam</h1>
-        <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
-          <DialogTrigger asChild>
-            <Button variant="outline">Sign In</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <SignInForm onSuccess={() => setShowLoginDialog(false)} />
-          </DialogContent>
-        </Dialog>
-      </header>
+  } else {
+    mainContent = (
       <main className="container mx-auto px-4 pt-8 pb-12">
         {/* Page Heading */}
         <div className="mb-8">
@@ -94,12 +85,12 @@ const HomePage = () => {
               <h2 className="text-2xl font-semibold mb-6 text-center">Current Exchange Rates</h2>
               <ExchangeRatesDisplay
                 rates={{
-                  rubToVnd: rates?.rubToVnd || 1,
-                  vndToRub: rates?.vndToRub || 1,
-                  usdtToVnd: rates?.usdtToVnd || 1,
-                  vndToUsdt: rates?.vndToUsdt || 1,
-                  usdtToRub: rates?.usdtToRub || 1,
-                  rubToUsdt: rates?.rubToUsdt || 1,
+                  rubToVnd: rates.rubToVnd,
+                  vndToRub: rates.vndToRub,
+                  usdtToVnd: rates.usdtToVnd,
+                  vndToUsdt: rates.vndToUsdt,
+                  usdtToRub: rates.usdtToRub,
+                  rubToUsdt: rates.rubToUsdt,
                 }}
               />
               <div className="mt-6">
@@ -109,7 +100,7 @@ const HomePage = () => {
                     className="px-3 py-1 text-sm w-full sm:w-auto text-center"
                   >
                     Rates updated:{' '}
-                    {rates?.createdAt ? formatLastUpdated(new Date(rates.createdAt)) : 'N/A'}
+                    {rates.createdAt ? formatLastUpdated(new Date(rates.createdAt)) : 'N/A'}
                   </Badge>
                   <Button
                     variant="outline"
@@ -132,20 +123,39 @@ const HomePage = () => {
               <CurrencyExchangeForm
                 isClient={true}
                 rates={{
-                  rubToVnd: rates?.rubToVnd || 1,
-                  vndToRub: rates?.vndToRub || 1,
-                  usdtToVnd: rates?.usdtToVnd || 1,
-                  vndToUsdt: rates?.vndToUsdt || 1,
-                  usdtToRub: rates?.usdtToRub || 1,
-                  rubToUsdt: rates?.rubToUsdt || 1,
+                  rubToVnd: rates.rubToVnd,
+                  vndToRub: rates.vndToRub,
+                  usdtToVnd: rates.usdtToVnd,
+                  vndToUsdt: rates.vndToUsdt,
+                  usdtToRub: rates.usdtToRub,
+                  rubToUsdt: rates.rubToUsdt,
                 }}
               />
             </div>
           </section>
         </div>
       </main>
-      {/* Footer */}
-      <footer className="w-full mt-6 px-6 py-4 border-t text-center text-sm text-muted-foreground">
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="w-full px-6 py-4 border-b flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Visarun Vietnam</h1>
+        <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline">Sign In</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogTitle className="text-xl font-semibold mb-4"></DialogTitle>
+            <SignInForm onSuccess={() => setShowLoginDialog(false)} />
+          </DialogContent>
+        </Dialog>
+      </header>
+
+      {mainContent}
+
+      <footer className="w-full mt-auto px-6 py-4 border-t text-center text-sm text-muted-foreground">
         © {new Date().getFullYear()} Visarun Vietnam. All rights reserved.
       </footer>
     </div>

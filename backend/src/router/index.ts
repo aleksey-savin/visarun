@@ -8,6 +8,7 @@ import { signinTrpcRoute } from './auth/signin.js';
 import { exchangeRatesRouter } from './exchangeRates/index.js';
 import { refreshTokenRoute } from './auth/refresh.js';
 import { logoutTrpcRoute } from './auth/logout.js';
+import { changePasswordTrpcRoute, forceChangePasswordTrpcRoute } from './auth/changePassword.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
@@ -20,6 +21,8 @@ export const appRouter = trpc.router({
   exchangeRates: trpc.router(exchangeRatesRouter),
   refreshToken: refreshTokenRoute,
   logout: logoutTrpcRoute,
+  changePassword: changePasswordTrpcRoute,
+  forceChangePassword: forceChangePasswordTrpcRoute,
 });
 
 // Export type definition of API

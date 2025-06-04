@@ -16,7 +16,8 @@ export const getLatestExchangeRateTrpcRoute = trpc.procedure.query(async ({ ctx 
   });
 
   if (!latestRate) {
-    throw new Error('No exchange rates found');
+    // Return null instead of throwing an error when no rates exist
+    return { exchangeRate: null };
   }
 
   return { exchangeRate: latestRate };
