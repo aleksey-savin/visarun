@@ -1,7 +1,7 @@
 import { saveExchangeRateTrpcRoute } from './saveExchangeRate.js';
 import { getLatestExchangeRateTrpcRoute } from './getLatestExchangeRate.js';
 
-export const exchangeRatesRouter = {
+export const exchangeRatesRoute = {
   saveExchangeRate: saveExchangeRateTrpcRoute,
   getLatestExchangeRate: getLatestExchangeRateTrpcRoute,
 };

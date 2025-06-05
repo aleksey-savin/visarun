@@ -8,6 +8,8 @@ import CreateUserPage from './pages/CreateUserPage';
 // import DashboardPage from './pages/DashboardPage';
 import CurrencyExchangePage from './pages/CurrencyExchangePage';
 import HomePage from './pages/HomePage';
+import TelegramChannelsPage from './pages/TelegramChannelsPage';
+import ViewTelegramChannelPage from './pages/ViewTelegramChannelPage';
 
 import {
   getAllUsersRoute,
@@ -17,6 +19,9 @@ import {
   getCreateUserRoute,
   getSignInRoute,
   viewUserRouteParams,
+  getTelegramChannelsRoute,
+  getViewTelegramChannelRoute,
+  viewTelegramChannelRouteParams,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -32,6 +37,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               {/* Public routes */}
+              <Route path="/" element={<HomePage />} />
               <Route path={getSignInRoute()} element={<HomePage />} />
 
               {/* Protected routes */}
@@ -47,10 +53,15 @@ const App = () => {
                 <Route path={getCreateUserRoute()} element={<CreateUserPage />} />
                 <Route path={getViewUserRoute(viewUserRouteParams)} element={<ViewUserPage />} />
                 <Route path={getCurrencyExchangeRoute()} element={<CurrencyExchangePage />} />
+                <Route path={getTelegramChannelsRoute()} element={<TelegramChannelsPage />} />
+                <Route
+                  path={getViewTelegramChannelRoute(viewTelegramChannelRouteParams)}
+                  element={<ViewTelegramChannelPage />}
+                />
               </Route>
 
               {/* Fallback route */}
-              <Route path="*" element={<Navigate to={getSignInRoute()} replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
         </TrpcProvider>

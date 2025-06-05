@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "TelegramChannel" ALTER COLUMN "chatId" SET DATA TYPE TEXT,
+ALTER COLUMN "fromId" SET DATA TYPE TEXT;

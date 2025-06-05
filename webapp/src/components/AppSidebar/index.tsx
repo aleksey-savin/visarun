@@ -1,5 +1,5 @@
-import { Users, CircleDollarSign } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Users, CircleDollarSign, MessageCircle } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/lib/auth';
 
@@ -13,12 +13,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { getAllUsersRoute, getCurrencyExchangeRoute } from '@/lib/routes';
+import { getAllUsersRoute, getCurrencyExchangeRoute, getTelegramChannelsRoute } from '@/lib/routes';
 
 // Menu items.
 
 export function AppSidebar() {
   const { userRole } = useAuth();
+  const location = useLocation();
   const items = [
     /* {
       title: 'Dashboard',
@@ -30,6 +31,7 @@ export function AppSidebar() {
       url: getCurrencyExchangeRoute(),
       icon: CircleDollarSign,
     },
+
     // Only show Users menu item if user is an admin
     ...(userRole === 'admin'
       ? [
@@ -40,6 +42,11 @@ export function AppSidebar() {
           },
         ]
       : []),
+    {
+      title: 'Telegram Channels',
+      url: getTelegramChannelsRoute(),
+      icon: MessageCircle,
+    },
   ];
   return (
     <Sidebar>
@@ -52,7 +59,12 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map(item => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={
+                      location.pathname === item.url || location.pathname.startsWith(`${item.url}/`)
+                    }
+                  >
                     <Link to={item.url}>
                       <item.icon />
                       <span>{item.title}</span>

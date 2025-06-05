@@ -5,7 +5,6 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { getSignInRoute } from '@/lib/routes';
 import { useState, useEffect } from 'react';
 import { ForcedPasswordChange } from '@/components/ChangePassword/forced-password-change';
 
@@ -22,7 +21,7 @@ export default function Layout() {
 
   const handleLogout = () => {
     logout();
-    navigate(getSignInRoute());
+    navigate('/');
   };
 
   const handlePasswordChangeSuccess = () => {

@@ -18,6 +18,7 @@ services:
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_NAME=${POSTGRES_DB}
       - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
     depends_on:
       - postgres
     restart: unless-stopped

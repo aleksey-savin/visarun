@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { trpc } from '@/lib/trpcProvider';
+import { useAuth } from '@/lib/auth';
+import { getCurrencyExchangeRoute } from '@/lib/routes';
 
 import { ExchangeRatesDisplay } from '@/components/CurrencyExchange/exchange-rates-display';
 import { CurrencyExchangeForm } from '@/components/CurrencyExchange/exchange-calc-form';
@@ -17,6 +20,23 @@ import SignInForm from '../../components/SignIn/sign-in-form';
 
 const HomePage = () => {
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, isAuthLoading } = useAuth();
+
+  // Open login dialog automatically if we're on the sign-in route
+  useEffect(() => {
+    if (location.pathname === '/sign-in') {
+      setShowLoginDialog(true);
+    }
+  }, [location.pathname]);
+
+  // Redirect to currency exchange page if user is already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isAuthLoading) {
+      navigate(getCurrencyExchangeRoute(), { replace: true });
+    }
+  }, [isAuthenticated, isAuthLoading, navigate]);
 
   const {
     data: latestRates,

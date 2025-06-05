@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { trpc } from '@/lib/trpcProvider';
-import { getDashboardRoute } from '@/lib/routes';
+import { getCurrencyExchangeRoute } from '@/lib/routes';
 import { useAuth } from '@/lib/auth';
 import { Loader2 } from 'lucide-react';
 
@@ -71,8 +71,8 @@ const SignInForm = ({ onSuccess }: SignInFormProps) => {
           onSuccess();
         }
 
-        // Navigate to dashboard
-        navigate(getDashboardRoute(), { replace: true });
+        // Navigate to currency exchange page
+        navigate(getCurrencyExchangeRoute(), { replace: true });
       }
     } catch (err) {
       console.error('Login error:', err);

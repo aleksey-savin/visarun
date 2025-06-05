@@ -5,13 +5,26 @@ import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogTitle,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogHeader,
+} from '../ui/alert-dialog';
+
+import {
   Form,
   FormControl,
   FormField,
+  FormDescription,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -86,6 +99,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
         type: 'success',
         message: 'Exchange rates updated successfully!',
       });
+      setIsSubmitDialogOpen(false);
       if (onRatesUpdated) {
         onRatesUpdated();
       }
@@ -131,6 +145,13 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
     }
   }, [exchangeRate, form]);
 
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [broadcastToTelegram, setBroadcastToTelegram] = useState<boolean>(true);
+
+  const toggleBroadcastToTelegram = () => {
+    setBroadcastToTelegram(!broadcastToTelegram);
+  };
+
   async function onSubmit(data: ExchangeRatesFormValues) {
     try {
       setFormStatus({ type: null, message: '' });
@@ -143,6 +164,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
         vndToUsdt: parseFloat(data.vndToUsdt),
         usdtToRub: parseFloat(data.usdtToRub),
         rubToUsdt: parseFloat(data.rubToUsdt),
+        broadcastToTelegram: broadcastToTelegram,
       });
     } catch (error) {
       console.error('Error saving exchange rates:', error);
@@ -172,7 +194,11 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
           )}
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form
+              id="exchangeRatesForm"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6"
+            >
               <div className="bg-muted/40 p-4 rounded-md">
                 <h3 className="text-md font-medium mb-3 flex items-center">
                   <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
@@ -351,9 +377,46 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={saveExchangeRate.isPending}>
-                {saveExchangeRate.isPending ? 'Saving...' : 'Save Exchange Rates'}
-              </Button>
+              <AlertDialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+                <AlertDialogTrigger asChild className="w-full">
+                  <Button variant="default" disabled={saveExchangeRate.isPending}>
+                    {saveExchangeRate.isPending ? 'Saving...' : `Save Exchange Rates`}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirm?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      <div className="space-y-4">
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                          <div className="space-y-0.5">
+                            <FormLabel>Send to Telegram</FormLabel>
+                            <FormDescription>
+                              Broadcast exchange rates to active Telegram channels & groups
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={broadcastToTelegram}
+                              onCheckedChange={toggleBroadcastToTelegram}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <Button
+                      type="submit"
+                      form="exchangeRatesForm"
+                      disabled={saveExchangeRate.isPending}
+                    >
+                      {saveExchangeRate.isPending ? 'Saving...' : 'Save Exchange Rates'}
+                    </Button>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </form>
           </Form>
         </CardContent>

@@ -40,6 +40,21 @@ export const isAdmin = trpc.middleware(async ({ ctx, next }) => {
 // Create an admin procedure
 export const adminProcedure = trpc.procedure.use(isAdmin);
 
+const isTelegramBot = trpc.middleware(async ({ ctx, next }) => {
+  // Get the X-Telegram-Bot-Id header from the request
+  const telegramBotId = ctx.req?.headers['x-telegram-bot-id'];
+
+  if (!telegramBotId || telegramBotId !== process.env.TELEGRAM_BOT_USERNAME) {
+    throw new Error(
+      `Unauthorized: Only requests from${process.env.TELEGRAM_BOT_USERNAME} are allowed`
+    );
+  }
+
+  return next({ ctx });
+});
+
+export const telegramBotProcedure = trpc.procedure.use(isTelegramBot);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

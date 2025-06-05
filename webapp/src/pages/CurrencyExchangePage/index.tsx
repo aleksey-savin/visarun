@@ -15,14 +15,17 @@ const CurrencyExchangePage = () => {
   const isAdmin = userRole === 'admin';
   const [isOpen, setIsOpen] = useState(false);
 
-  // Fetch the latest exchange rates
+  // Fetch the latest exchange rates with auto-refresh every 30 seconds
   const {
     data: latestRates,
     isLoading,
     isError,
     refetch,
+    isFetching,
   } = trpc.exchangeRates.getLatestExchangeRate.useQuery(undefined, {
     refetchOnWindowFocus: false,
+    refetchInterval: 5000, // Refetch every 10 seconds
+    staleTime: 1000, // Consider data stale after 15 seconds
   });
 
   const handleRefresh = () => {
@@ -149,8 +152,7 @@ const CurrencyExchangePage = () => {
                     variant="outline"
                     className="px-3 py-1 text-sm w-full sm:w-auto text-center"
                   >
-                    Rates updated:{' '}
-                    {rates?.createdAt ? formatLastUpdated(new Date(rates.createdAt)) : 'N/A'}
+                    {`Rates updated: ${rates?.createdAt ? formatLastUpdated(new Date(rates.createdAt)) : 'N/A'}`}
                   </Badge>
                   <Badge
                     variant="outline"
@@ -166,8 +168,9 @@ const CurrencyExchangePage = () => {
                     size="sm"
                     onClick={handleRefresh}
                     className="flex items-center gap-1 w-full sm:w-auto justify-center"
+                    disabled={isFetching}
                   >
-                    <RefreshCw className="h-3 w-3" />
+                    <RefreshCw className={`h-3 w-3 ${isFetching ? 'animate-spin' : ''}`} />
                     <span>Refresh</span>
                   </Button>
                 </div>

@@ -14,6 +14,19 @@ services:
     depends_on:
       - postgres
     restart: always
+    
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - API_URL=https://visarunvietnam.com/api
+      - LOG_LEVEL=info
+    depends_on:
+      - backend
+    restart: always
 
   webapp:
     build:

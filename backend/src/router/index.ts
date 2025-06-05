@@ -5,10 +5,11 @@ import { createUserRouter } from './createUser/index.js';
 import { deleteUserRouter } from './deleteUser/index.js';
 import { signupTrpcRoute } from './signup/index.js';
 import { signinTrpcRoute } from './auth/signin.js';
-import { exchangeRatesRouter } from './exchangeRates/index.js';
+import { exchangeRatesRoute } from './exchangeRates/index.js';
 import { refreshTokenRoute } from './auth/refresh.js';
 import { logoutTrpcRoute } from './auth/logout.js';
 import { changePasswordTrpcRoute, forceChangePasswordTrpcRoute } from './auth/changePassword.js';
+import { telegramRoute } from './telegramChannel/index.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
@@ -18,11 +19,12 @@ export const appRouter = trpc.router({
   deleteUser: deleteUserRouter,
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,
-  exchangeRates: trpc.router(exchangeRatesRouter),
+  exchangeRates: exchangeRatesRoute,
   refreshToken: refreshTokenRoute,
   logout: logoutTrpcRoute,
   changePassword: changePasswordTrpcRoute,
   forceChangePassword: forceChangePasswordTrpcRoute,
+  telegramChannel: telegramRoute,
 });
 
 // Export type definition of API
