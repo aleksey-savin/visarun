@@ -70,17 +70,26 @@ enum TelegramChannelStatus {
 }
 
 model TelegramChannel {
-  id            String                @id @default(uuid())
-  chatId        String                @unique
-  chatTitle     String
-  chatUsername  String
-  chatType      String
-  fromId        String
-  fromIsBot     Boolean
-  fromFirstName String
-  fromLastName  String
-  fromUsername  String
-  status        TelegramChannelStatus @default(active)
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
+  id                String                @id @default(uuid())
+  chatId            String                @unique
+  chatTitle         String
+  chatUsername      String
+  chatType          String
+  fromId            String
+  fromIsBot         Boolean
+  fromFirstName     String
+  fromLastName      String
+  fromUsername      String
+  status            TelegramChannelStatus @default(active)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  messageTemplateId String?
+  messageTemplate   MessageTemplate?      @relation(fields: [messageTemplateId], references: [id])
+}
+
+model MessageTemplate {
+  id               String            @id @default(uuid())
+  title            String
+  body             String
+  telegramChannels TelegramChannel[]
 }

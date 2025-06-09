@@ -14,15 +14,15 @@ export const saveExchangeRateTrpcInput = z.object({
 export const saveExchangeRateTrpcRoute = adminProcedure
   .input(saveExchangeRateTrpcInput)
   .mutation(async ({ ctx, input }) => {
-    // Ensure user is authenticated and is admin or manager
+    // Проверяем аутентификацию и роль
     if (!ctx.user) {
       throw new Error('Authentication required');
     }
-
     if (ctx.user.role !== 'admin') {
       throw new Error('Not authorized');
     }
 
+    // Сохраняем курс в БД
     const exchangeRate = await ctx.prisma.exchangeRate.create({
       data: {
         rubToVnd: input.rubToVnd,
@@ -36,8 +36,7 @@ export const saveExchangeRateTrpcRoute = adminProcedure
     });
 
     if (input.broadcastToTelegram) {
-      // After saving, broadcast to all active Telegram channels
-      // Get all active telegram channels
+      // Получаем все активные каналы
       const channels = await ctx.prisma.telegramChannel.findMany({
         where: { status: 'active' },
       });
@@ -45,35 +44,65 @@ export const saveExchangeRateTrpcRoute = adminProcedure
       let broadcastResult = { success: false, message: 'No broadcast attempted' };
 
       if (channels.length > 0) {
-        // Helper function to safely format numbers
-        const formatNumber = (value: number, decimals: number): string => {
+        // Удобная функция для форматирования чисел с разделителями
+        const formatNumber = (value: number): string => {
           try {
-            return value.toFixed(decimals);
+            // Здесь мы будем форматировать по-русски, с пробелами как разделитель тысяч
+            return value.toLocaleString('ru-RU');
           } catch (e) {
             console.error(`Error formatting value ${value}:`, e);
             return String(value);
           }
         };
 
-        // Format the rates with safe number formatting
-        const formattedRates = [
-          `RUB/VND: ${formatNumber(exchangeRate.rubToVnd, 2)}`,
-          `VND/RUB: ${formatNumber(exchangeRate.vndToRub, 4)}`,
-          `USDT/VND: ${formatNumber(exchangeRate.usdtToVnd, 0)}`,
-          `VND/USDT: ${formatNumber(exchangeRate.vndToUsdt, 6)}`,
-          `USDT/RUB: ${formatNumber(exchangeRate.usdtToRub, 2)}`,
-          `RUB/USDT: ${formatNumber(exchangeRate.rubToUsdt, 4)}`,
+        // Достаём дату и время создания записи
+        const createdAt = new Date(exchangeRate.createdAt);
+        // Форматируем время "09:00" (пример) и дату "05 июня"
+        // Если нужно всегда «09:00», можно захардкодить; если нужно текущее время, то так:
+        const timeString = new Intl.DateTimeFormat('ru-RU', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(createdAt);
+        const dateString = new Intl.DateTimeFormat('ru-RU', {
+          day: '2-digit',
+          month: 'long',
+        }).format(createdAt);
+
+        // Рассчитываем, сколько vnd за 10 000 ₽ и сколько ₽ за 1 000 000 vnd
+        const baseRub = 10000;
+        const baseVnd = baseRub * exchangeRate.rubToVnd;
+        const baseVndRound = Math.round(baseVnd);
+
+        const baseVndAmount = 1000000;
+        const baseRubFromVnd = baseVndAmount * exchangeRate.vndToRub;
+        const baseRubFromVndRound = Math.round(baseRubFromVnd);
+
+        // Составляем сообщение по нужному шаблону
+        const messageText = [
+          `🔴Курс валют, актуальный на ${timeString} на ${dateString} :`,
+          ``,
+          `За ваши ${formatNumber(baseRub)} ₽ отправим ${formatNumber(baseVndRound)} vnd,`,
+          `За ваш ${formatNumber(baseVndAmount)} vnd отправим ${formatNumber(baseRubFromVndRound)} ₽`,
+          ``,
+          `⚠️ Расписание визаранов в Камбоджу (Ford Transit, 15 мест) :`,
+          `⚫️среда, суббота – за штампами`,
+          `⚫️четверг – за визами на 90 дней`,
+          ``,
+          `Изменения в расписании!`,
+          `Теперь за визами ездим по четвергам, чтобы избежать очередей на границе. Расписание поездок за штампами остается то же.`,
+          ``,
+          `Подробная информация <a href="https://t.me/visarunvungtau/4693">ТУТ</a>`,
+          `Визаран из Нячанга и Муйне в Камбоджу <a href="https://t.me/VisarunNT">ТУТ</a>`,
+          ``,
+          `➡️Запись – @visarunviet`,
+          ``,
+          `🔴 Будьте в курсе всех новостей! Подписывайтесь:`,
+          `👉 <a href="https://www.facebook.com/share/1AM8sVfu9T/?mibextid=wwXIfr">Фейсбук</a> | <a href="https://t.me/visarunvungtau">Телеграм</a> | <a href="https://www.instagram.com/visarunsaigon?igsh=dnQzZmx1bXYwd3Zx">Инстаграм</a>`,
         ].join('\n');
 
-        // Create message text
-        const dateString = new Date(exchangeRate.createdAt).toLocaleString();
-        const messageText = `Exchange rates updated (${dateString}):\n\n${formattedRates}`;
-
-        // Check for bot token
         const botToken = process.env.TELEGRAM_BOT_TOKEN;
         if (botToken) {
           try {
-            // Send message to each channel
             const results = await Promise.allSettled(
               channels.map(async channel => {
                 try {
@@ -87,6 +116,7 @@ export const saveExchangeRateTrpcRoute = adminProcedure
                       body: JSON.stringify({
                         chat_id: channel.chatId,
                         text: messageText,
+                        parse_mode: 'HTML', // или 'HTML', если нужны какие-то стили
                       }),
                     }
                   );
@@ -112,7 +142,6 @@ export const saveExchangeRateTrpcRoute = adminProcedure
               })
             );
 
-            // Count successful and failed broadcasts
             const successful = results.filter(
               r => r.status === 'fulfilled' && r.value.success
             ).length;
@@ -142,6 +171,7 @@ export const saveExchangeRateTrpcRoute = adminProcedure
         broadcastResult,
       };
     }
+
     return {
       exchangeRate,
       broadcastResult: {
