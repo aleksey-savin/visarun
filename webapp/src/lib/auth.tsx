@@ -76,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = localStorage.getItem(USER_DATA_KEY);
 
         if (token && userData) {
+          console.log(userData);
           const parsedUserData = JSON.parse(userData);
           setIsAuthenticated(true);
           setUserEmail(parsedUserData.email);

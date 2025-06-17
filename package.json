@@ -5,6 +5,7 @@
   "scripts": {
     "back": "pnpm --filter @visarun/backend",
     "web": "pnpm --filter @visarun/webapp",
+    "telegram-bot": "pnpm --filter @visarun/telegram-bot",
     "dev": "pnpm -r --parallel dev",
     "types": "concurrently 'pnpm back types' 'pnpm web types'",
     "lint": "pnpm -r --parallel lint",

@@ -1,60 +1,15 @@
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-      target: backend-dev
-    ports:
-      - "3001:3001"
-    volumes:
-      - .:/app:cached
-      - backend_node_modules:/app/node_modules
-      - backend_package_node_modules:/app/backend/node_modules
-    environment:
-      - NODE_ENV=development
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
-      - DB_NAME=${POSTGRES_DB}
-      - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
-    depends_on:
-      - postgres
-    restart: unless-stopped
-
-  webapp:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-      target: webapp-dev
-    ports:
-      - "5173:5173"
-    volumes:
-      - .:/app:cached
-      - webapp_node_modules:/app/node_modules
-      - webapp_package_node_modules:/app/webapp/node_modules
-    environment:
-      - VITE_API_URL=http://localhost:3001
-    depends_on:
-      - backend
-    restart: unless-stopped
-
-  postgres:
+  db:
     image: postgres:17
+    restart: always
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - 5432:${DB_PORT}
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    restart: unless-stopped
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:
-  backend_node_modules:
-  backend_package_node_modules:
-  webapp_node_modules:
-  webapp_package_node_modules:
+  pgdata:
