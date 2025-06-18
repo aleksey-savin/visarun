@@ -1,4 +1,0 @@
-export * from '@trpc/client';
-export { getMutationKey, getQueryKey } from './internals/getQueryKey.mjs';
-export { createTRPCReact } from './createTRPCReact.mjs';
-export { createTRPCQueryUtils } from './createTRPCQueryUtils.mjs';
