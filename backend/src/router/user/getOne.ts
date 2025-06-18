@@ -6,6 +6,9 @@ export const getUserTrpcRoute = trpc.procedure
   .query(async ({ ctx, input }) => {
     const user = await ctx.prisma.user.findUnique({
       where: { id: input.id },
+      include: {
+        roleModel: true,
+      },
     });
     if (!user) {
       throw new Error(`User ${input.id} not found`);

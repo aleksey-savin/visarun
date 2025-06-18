@@ -2,14 +2,16 @@ import './App.css';
 import { TrpcProvider } from './lib/trpcProvider';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import AllUsersPage from './pages/AllUsersPage';
-import ViewUserPage from './pages/ViewUserPage';
-import CreateUserPage from './pages/CreateUserPage';
+import AllUsersPage from './pages/Users/getAll';
+import ViewUserPage from './pages/Users/view';
+import CreateUserPage from './pages/Users/create';
+
+import AllRolesPage from './pages/Roles/getAll';
 // import DashboardPage from './pages/DashboardPage';
-import CurrencyExchangePage from './pages/CurrencyExchangePage';
+import CurrencyExchangePage from './pages/CurrencyExchange';
 import HomePage from './pages/HomePage';
-import TelegramChannelsPage from './pages/TelegramChannelsPage';
-import ViewTelegramChannelPage from './pages/ViewTelegramChannelPage';
+import TelegramChannelsPage from './pages/Telegram/getAll';
+import ViewTelegramChannelPage from './pages/Telegram/view';
 
 import {
   getAllUsersRoute,
@@ -17,6 +19,7 @@ import {
   getDashboardRoute,
   getViewUserRoute,
   getCreateUserRoute,
+  getAllRolesRoute,
   getSignInRoute,
   viewUserRouteParams,
   getTelegramChannelsRoute,
@@ -52,6 +55,9 @@ const App = () => {
                 <Route path={getAllUsersRoute()} element={<AllUsersPage />} />
                 <Route path={getCreateUserRoute()} element={<CreateUserPage />} />
                 <Route path={getViewUserRoute(viewUserRouteParams)} element={<ViewUserPage />} />
+
+                <Route path={getAllRolesRoute()} element={<AllRolesPage />} />
+
                 <Route path={getCurrencyExchangeRoute()} element={<CurrencyExchangePage />} />
                 <Route path={getTelegramChannelsRoute()} element={<TelegramChannelsPage />} />
                 <Route

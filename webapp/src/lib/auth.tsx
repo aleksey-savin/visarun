@@ -1,8 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
-export type UserRole = 'client' | 'manager' | 'admin';
-
 interface AuthTokens {
   accessToken: string;
   refreshToken: string;
@@ -17,17 +15,17 @@ interface TokenPayload {
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (tokens: AuthTokens, email: string, role: UserRole, id: string) => void;
+  login: (tokens: AuthTokens, email: string, role: string, id: string) => void;
   logout: () => void;
   getAccessToken: () => string | null;
   userEmail: string | null;
-  userRole: UserRole | null;
+  userRole: string | null;
   userId: string | null;
   refreshAuth: () => Promise<boolean>;
   isAuthLoading: boolean;
   isPasswordChangeRequired: boolean;
   passwordChangeCompleted: () => void;
-  user: { id: string; email: string; role: UserRole } | null;
+  user: { id: string; email: string; role: string } | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -40,7 +38,7 @@ const USER_DATA_KEY = 'visarun_user_data';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isPasswordChangeRequired, setIsPasswordChangeRequired] = useState(false);
@@ -162,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(USER_DATA_KEY);
   };
 
-  const login = (tokens: AuthTokens, email: string, role: UserRole, id: string) => {
+  const login = (tokens: AuthTokens, email: string, role: string, id: string) => {
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
     localStorage.setItem(
@@ -220,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Create user object for easier access
   const user =
     isAuthenticated && userEmail && userRole && userId
-      ? { id: userId, email: userEmail, role: userRole as UserRole }
+      ? { id: userId, email: userEmail, role: userRole }
       : null;
 
   return (

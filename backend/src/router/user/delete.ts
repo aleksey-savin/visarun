@@ -1,7 +1,7 @@
 import { adminProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
-export const deleteUserRouter = adminProcedure
+export const deleteUserTrpcRoute = adminProcedure
   .input(z.object({ id: z.string() }))
   .mutation(async ({ input, ctx }) => {
     console.log(input.id);

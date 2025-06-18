@@ -23,6 +23,17 @@ export async function initDefaultAdmin(): Promise<void> {
       // Hash the default password
       const hashedPassword = await hashPassword(DEFAULT_ADMIN_PASSWORD);
 
+      const adminRole = await prisma.role.upsert({
+        where: { name: 'admin' },
+        update: {},
+        create: {
+          name: 'admin',
+          description: 'Администратор системы',
+          isSystem: true,
+          isActive: true,
+        },
+      });
+
       // Create the default admin user
       await prisma.user.create({
         data: {
@@ -30,7 +41,9 @@ export async function initDefaultAdmin(): Promise<void> {
           firstName: DEFAULT_ADMIN_FIRST_NAME,
           lastName: DEFAULT_ADMIN_LAST_NAME,
           password: hashedPassword,
-          role: 'admin',
+          roleModel: {
+            connect: { id: adminRole.id },
+          },
         },
       });
 

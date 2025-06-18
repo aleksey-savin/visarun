@@ -16,7 +16,6 @@ import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -34,10 +33,10 @@ const ViewUserPage = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Query to get user details
-  const { data, error, isLoading, isError } = trpc.getUser.useQuery({ id });
+  const { data, error, isLoading, isError } = trpc.user.getOne.useQuery({ id });
 
   // Mutation to delete user
-  const deleteUserMutation = trpc.deleteUser.useMutation({
+  const deleteUserMutation = trpc.user.delete.useMutation({
     onSuccess: () => {
       toast.success('User deleted successfully', {
         description: 'The user has been permanently removed.',
@@ -73,6 +72,8 @@ const ViewUserPage = () => {
         return 'bg-green-100 text-green-800 hover:bg-green-100';
     }
   };
+
+  const userRole = data?.user.roleModel?.name || 'Unknown';
 
   return (
     <div className="space-y-6">
@@ -139,8 +140,8 @@ const ViewUserPage = () => {
               </CardTitle>
             </div>
             <div className="py-3">
-              <Badge className={getRoleBadgeColor(data.user.role)}>
-                {data.user.role.charAt(0).toUpperCase() + data.user.role.slice(1)}
+              <Badge className={getRoleBadgeColor(data.user.role || '')}>
+                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
               </Badge>
             </div>
 
@@ -172,7 +173,6 @@ const ViewUserPage = () => {
           <CardFooter className="pt-2 flex justify-between">
             <div className="space-x-4 space-y-2">
               <Button variant="outline">Edit User</Button>
-
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" disabled={deleteUserMutation.isPending}>
@@ -189,7 +189,9 @@ const ViewUserPage = () => {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteUser}>Delete</AlertDialogAction>
+                    <Button variant="destructive" onClick={handleDeleteUser}>
+                      Delete
+                    </Button>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>

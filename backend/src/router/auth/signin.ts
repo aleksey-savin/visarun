@@ -16,6 +16,7 @@ export const signinTrpcRoute = trpc.procedure
       where: {
         email: input.email,
       },
+      include: { roleModel: true },
     });
 
     if (!user) {
@@ -41,7 +42,7 @@ export const signinTrpcRoute = trpc.procedure
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role,
+        role: user.roleModel?.name,
       },
     };
   });

@@ -92,7 +92,7 @@ export const api = {
 
   getUser: async (userId) => {
     try {
-      return await trpc.getUser.query({ id: userId });
+      return await trpc.user.getOne.query({ id: userId });
     } catch (error) {
       console.error(`Error fetching user ${userId}:`, error);
       throw error;
@@ -135,7 +135,8 @@ export const api = {
     },
     broadcastExchangeRates: async (options = {}) => {
       try {
-        const response = await trpc.exchangeRates.broadcastExchangeRates.mutate(options);
+        const response =
+          await trpc.exchangeRates.broadcastExchangeRates.mutate(options);
         console.log("Exchange rates broadcast response:", response);
         return response;
       } catch (error) {

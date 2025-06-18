@@ -22,7 +22,9 @@ type User = {
   middleName?: string | null;
   lastName: string;
   email: string;
-  role: 'client' | 'manager' | 'admin';
+  roleModel: {
+    name: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -41,7 +43,8 @@ const getRoleBadgeColor = (role: string) => {
 
 const AllUsersPage = () => {
   const navigate = useNavigate();
-  const { data, error, isLoading, isError } = trpc.getAllUsers.useQuery();
+  const { data, error, isLoading, isError } = trpc.user.getAll.useQuery();
+  console.log(data);
 
   const formatName = (user: User) => {
     return `${user.firstName} ${user.middleName ? user.middleName + ' ' : ''}${user.lastName}`;
@@ -86,7 +89,9 @@ const AllUsersPage = () => {
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell className="capitalize">
-                      <Badge className={getRoleBadgeColor(user.role)}>{user.role}</Badge>
+                      <Badge className={getRoleBadgeColor(user.roleModel?.name || '')}>
+                        {user.roleModel?.name}
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -118,7 +123,9 @@ const AllUsersPage = () => {
                     </div>
                   </div>
                   <div className="flex justify-end pt-2">
-                    <Badge className={getRoleBadgeColor(user.role)}>{user.role}</Badge>
+                    <Badge className={getRoleBadgeColor(user.roleModel?.name || '')}>
+                      {user.roleModel?.name}
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>

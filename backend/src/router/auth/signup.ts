@@ -1,6 +1,14 @@
+import { z } from 'zod';
 import { procedure } from '../../lib/trpc.js';
-import { zSignUpTrpcInput } from './input.js';
 import { hashPassword } from '../../utils/getPasswordHash.js';
+
+export const zSignUpTrpcInput = z.object({
+  email: z.string().email(),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  middleName: z.string().min(1).max(100).optional(),
+  password: z.string().min(8).max(100),
+});
 
 export const signupTrpcRoute = procedure
   .input(zSignUpTrpcInput)

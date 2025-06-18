@@ -30,25 +30,27 @@ const formSchema = z.object({
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
   //middleName: z.string().min(1).max(100).optional(),
-  // Make role non-optional in the frontend schema
-  role: z.enum(['client', 'manager', 'admin']),
+  roleId: z.string().uuid(), // Use roleId instead of role
   password: z.string().min(8).max(100),
 });
 
-// Use explicit interface instead of inferred type
+// Use explicit interface for form data
 interface FormData {
   email: string;
   firstName: string;
   lastName: string;
   //middleName?: string;
-  role: 'client' | 'manager' | 'admin';
+  roleId: string;
   password: string;
 }
 
 const CreateUserPage = () => {
   const navigate = useNavigate();
+
+  const { data: rolesData } = trpc.role.getAll.useQuery();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const createUserMutation = trpc.createUser.useMutation();
+  const createUserMutation = trpc.user.create.useMutation();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -57,7 +59,7 @@ const CreateUserPage = () => {
       //middleName: '',
       lastName: '',
       email: '',
-      role: 'manager',
+      roleId: '',
       password: '',
     },
   });
@@ -72,7 +74,7 @@ const CreateUserPage = () => {
         //middleName: values.middleName,
         lastName: values.lastName,
         email: values.email,
-        role: values.role,
+        roleId: values.roleId,
         password: values.password,
       });
       navigate(getAllUsersRoute());
@@ -167,26 +169,29 @@ const CreateUserPage = () => {
 
             <FormField
               control={form.control}
-              name="role"
+              name="roleId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
+                    <FormControl className="w-full">
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      {rolesData?.roles.map(role => (
+                        <SelectItem key={role.id} value={role.id}>
+                          {role.name}
+                          {role.description && ` - ${role.description}`}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <div className="flex gap-4">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Creating...' : 'Create User'}

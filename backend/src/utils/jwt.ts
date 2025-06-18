@@ -13,23 +13,29 @@ export interface TokenPayload {
   role: string;
 }
 
+type UserWithRole = User & {
+  roleModel?: {
+    name: string;
+  } | null;
+};
+
 // Function to generate access token
-export function generateAccessToken(user: User): string {
+export function generateAccessToken(user: UserWithRole): string {
   const payload: TokenPayload = {
-    id: user.id, // Changed from userId to id
+    id: user.id,
     email: user.email,
-    role: user.role,
+    role: user.roleModel?.name || 'client',
   };
 
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
 // Function to generate refresh token
-export function generateRefreshToken(user: User): string {
+export function generateRefreshToken(user: UserWithRole): string {
   const payload: TokenPayload = {
     id: user.id, // Changed from userId to id
     email: user.email,
-    role: user.role,
+    role: user.roleModel?.name || 'client',
   };
 
   return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN });

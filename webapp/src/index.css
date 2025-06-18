@@ -138,6 +138,9 @@
   /* These values need to ensure your buttons are visible in light mode */
   --button-bg: var(--primary);
   --button-text: var(--primary-foreground);
+
+  --destructive-button-bg: oklch(0.704 0.191 22.216);
+  --destructive-button-text: white;
 }
 
 .dark {
@@ -149,6 +152,12 @@
 :root:not(.dark) [data-slot='button'] {
   background-color: var(--button-bg);
   color: var(--button-text);
+}
+
+/* Apply destructive styles to destructive variant buttons */
+:root:not(.dark) [data-variant='destructive'] {
+  background-color: var(--destructive-button-bg) !important;
+  color: var(--destructive-button-text) !important;
 }
 
 @layer base {

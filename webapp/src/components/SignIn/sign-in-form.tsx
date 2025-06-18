@@ -62,7 +62,7 @@ const SignInForm = ({ onSuccess }: SignInFormProps) => {
             refreshToken: result.refreshToken,
           },
           values.email,
-          result.user.role,
+          result.user.role || 'client',
           result.user.id
         );
 

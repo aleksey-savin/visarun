@@ -2,20 +2,24 @@ import { useState } from 'react';
 import { Users, CircleDollarSign, MessageCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { useAuth } from '@/lib/auth';
+// import { useAuth } from '@/lib/auth';
 
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
+  SidebarHeader,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 
 import {
+  getAllRolesRoute,
   getAllUsersRoute,
   getCurrencyExchangeRoute,
   getTelegramChannelsRoute,
@@ -23,7 +27,7 @@ import {
 } from '@/lib/routes';
 
 export function AppSidebar() {
-  const { userRole } = useAuth();
+  // const { userRole } = useAuth();
   const location = useLocation();
   const [isTelegramOpen, setTelegramOpen] = useState(false);
 
@@ -33,18 +37,22 @@ export function AppSidebar() {
     location.pathname.startsWith(`${getTelegramChannelsRoute()}/`);
   //location.pathname === getTelegramTemplatesRoute() ||
   //location.pathname.startsWith(`${getTelegramTemplatesRoute()}/`);
+  //
+  const [isUsersManagementOpen, setUsersManagementOpen] = useState(false);
+
+  const isOnUsersManagementSubpage = location.pathname === getAllUsersRoute();
 
   return (
     <Sidebar>
+      <SidebarHeader>
+        <SidebarGroupLabel className="flex justify-between pt-10">
+          <div className="text-2xl font-medium">Visarun Vietnam</div>
+        </SidebarGroupLabel>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="flex justify-between pt-10">
-            <div className="text-2xl font-medium">Visarun Vietnam</div>
-          </SidebarGroupLabel>
-
           <SidebarGroupContent className="pt-10">
             <SidebarMenu>
-              {/* Currency Exchange */}
               <SidebarMenuItem key="Currency Exchange">
                 <SidebarMenuButton
                   asChild
@@ -59,24 +67,63 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Administration</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {/* User management (коллапсируемый пункт без ссылки) */}
+              <SidebarMenuItem key="UsersManagement">
+                <SidebarMenuButton
+                  onClick={() => setUsersManagementOpen(prev => !prev)}
+                  isActive={isOnUsersManagementSubpage}
+                  className="flex items-center justify-between px-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    <span>Users Management</span>
+                  </div>
+                  {isUsersManagementOpen ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </SidebarMenuButton>
 
-              {/* Users (только для admin) */}
-              {userRole === 'admin' && (
-                <SidebarMenuItem key="Users">
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      location.pathname === getAllUsersRoute() ||
-                      location.pathname.startsWith(`${getAllUsersRoute()}/`)
-                    }
-                  >
-                    <Link to={getAllUsersRoute()} className="flex items-center gap-2">
-                      <Users className="w-5 h-5" />
-                      <span>Users</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
+                {/* Вложенные пункты, показываются только при isTelegramOpen */}
+                {isUsersManagementOpen && (
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem key="Users">
+                      <SidebarMenuButton
+                        asChild
+                        isActive={
+                          location.pathname === getAllUsersRoute() ||
+                          location.pathname.startsWith(`${getAllUsersRoute()}/`)
+                        }
+                      >
+                        <Link to={getAllUsersRoute()}>
+                          <span>Users</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuItem key="Users">
+                      <SidebarMenuButton
+                        asChild
+                        isActive={
+                          location.pathname === getAllRolesRoute() ||
+                          location.pathname.startsWith(`${getAllRolesRoute()}/`)
+                        }
+                      >
+                        <Link to={getAllRolesRoute()}>
+                          <span>Roles</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenuSub>
+                )}
+              </SidebarMenuItem>
 
               {/* Telegram (коллапсируемый пункт без ссылки) */}
               <SidebarMenuItem key="Telegram">
@@ -98,9 +145,9 @@ export function AppSidebar() {
 
                 {/* Вложенные пункты, показываются только при isTelegramOpen */}
                 {isTelegramOpen && (
-                  <SidebarMenu className="pl-6 mt-2">
+                  <SidebarMenuSub>
                     {/* Channels & groups */}
-                    <SidebarMenuItem key="Channels & groups">
+                    <SidebarMenuSubItem key="Channels & groups">
                       <SidebarMenuButton
                         asChild
                         isActive={
@@ -108,14 +155,14 @@ export function AppSidebar() {
                           location.pathname.startsWith(`${getTelegramChannelsRoute()}/`)
                         }
                       >
-                        <Link to={getTelegramChannelsRoute()} className="flex items-center gap-2">
+                        <Link to={getTelegramChannelsRoute()}>
                           <span>Telegram Channels &amp; Groups</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuSubItem>
 
                     {/* Message templates */}
-                    <SidebarMenuItem key="Message templates">
+                    <SidebarMenuSubItem key="Message templates">
                       <SidebarMenuButton
                         asChild
                         //isActive={
@@ -123,12 +170,12 @@ export function AppSidebar() {
                         // location.pathname.startsWith(`${getTelegramTemplatesRoute()}/`)
                         //}
                       >
-                        <Link to={'.'} className="flex items-center gap-2">
+                        <Link to={'.'}>
                           <span>Message templates</span>
                         </Link>
                       </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
                 )}
               </SidebarMenuItem>
             </SidebarMenu>
