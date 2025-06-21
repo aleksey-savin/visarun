@@ -4,6 +4,7 @@ import { type Express } from 'express';
 import { type Request } from 'express';
 import { type AppContext, createAppContext } from './ctx.js';
 import { verifyToken, type TokenPayload } from '../utils/jwt.js';
+import { hasPermission } from '../utils/permissions.js';
 
 export const trpc = initTRPC.context<AppContext>().create();
 
@@ -25,20 +26,54 @@ const getUserFromRequest = (req: Request): TokenPayload | undefined => {
   return payload || undefined;
 };
 
-export const isAdmin = trpc.middleware(async ({ ctx, next }) => {
-  if (!ctx.user) {
-    throw new Error('Not authenticated');
-  }
+// Permission-based middleware factory
+export const requirePermission = (permission: string) =>
+  trpc.middleware(async ({ ctx, next }) => {
+    if (!ctx.user) {
+      throw new Error('Not authenticated');
+    }
 
-  if (ctx.user.role !== 'admin') {
-    throw new Error('Not authorized. Admin access required');
-  }
+    if (!hasPermission(ctx.user.permissions || [], permission)) {
+      throw new Error(`Permission required: ${permission}`);
+    }
 
-  return next({ ctx });
-});
+    return next({ ctx });
+  });
 
-// Create an admin procedure
-export const adminProcedure = trpc.procedure.use(isAdmin);
+// Convenience middleware for common permissions
+export const requireUserManagement = requirePermission('users.create');
+export const requireRoleManagement = requirePermission('roles.create');
+export const requireExchangeRateManagement = requirePermission('exchangeRates.create');
+export const requireTelegramManagement = requirePermission('telegram.channels.manage');
+
+// Specific permission-based procedures
+export const userCreateProcedure = trpc.procedure.use(requirePermission('users.create'));
+export const userReadProcedure = trpc.procedure.use(requirePermission('users.read'));
+export const userUpdateProcedure = trpc.procedure.use(requirePermission('users.update'));
+export const userDeleteProcedure = trpc.procedure.use(requirePermission('users.delete'));
+
+export const roleCreateProcedure = trpc.procedure.use(requirePermission('roles.create'));
+export const roleReadProcedure = trpc.procedure.use(requirePermission('roles.read'));
+export const roleUpdateProcedure = trpc.procedure.use(requirePermission('roles.update'));
+export const roleDeleteProcedure = trpc.procedure.use(requirePermission('roles.delete'));
+export const roleAssignProcedure = trpc.procedure.use(requirePermission('roles.assign'));
+
+export const exchangeRateCreateProcedure = trpc.procedure.use(
+  requirePermission('exchangeRates.create')
+);
+export const exchangeRateBroadcastProcedure = trpc.procedure.use(
+  requirePermission('exchangeRates.broadcast')
+);
+
+export const telegramReadProcedure = trpc.procedure.use(
+  requirePermission('telegram.channels.read')
+);
+export const telegramManageProcedure = trpc.procedure.use(
+  requirePermission('telegram.channels.manage')
+);
+
+// Legacy admin procedure - now uses global.fullAccess permission
+export const adminProcedure = trpc.procedure.use(requirePermission('global.fullAccess'));
 
 const isTelegramBot = trpc.middleware(async ({ ctx, next }) => {
   // Get the X-Telegram-Bot-Id header from the request

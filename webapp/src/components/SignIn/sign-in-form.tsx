@@ -62,8 +62,10 @@ const SignInForm = ({ onSuccess }: SignInFormProps) => {
             refreshToken: result.refreshToken,
           },
           values.email,
-          result.user.role || 'client',
-          result.user.id
+          result.user.roles && result.user.roles.length > 0 ? result.user.roles[0] : 'client',
+          result.user.id,
+          result.user.permissions || [],
+          result.user.mustChangePassword || false
         );
 
         // Call the success callback if provided

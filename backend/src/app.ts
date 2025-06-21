@@ -3,7 +3,6 @@ import cors from 'cors';
 import { appRouter } from './router/index.js';
 import { applyTrpcToExpressApp } from './lib/trpc.js';
 import { createAppContext } from './lib/ctx.js';
-import { initDefaultAdmin } from './utils/initDefaultAdmin.js';
 
 (async () => {
   try {
@@ -11,8 +10,9 @@ import { initDefaultAdmin } from './utils/initDefaultAdmin.js';
 
     app.use(cors());
 
-    // Initialize default admin user if no users exist
-    await initDefaultAdmin();
+    // System initialization note
+    console.log('⚠️  Note: To initialize system with default data, run:');
+    console.log('  pnpm prisma:seed');
 
     // Simple health check endpoint
     app.get('/trpc/health', (req, res) => {

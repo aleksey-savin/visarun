@@ -1,4 +1,4 @@
-import { adminProcedure } from '../../lib/trpc.js';
+import { exchangeRateCreateProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
 export const saveExchangeRateTrpcInput = z.object({
@@ -11,15 +11,18 @@ export const saveExchangeRateTrpcInput = z.object({
   broadcastToTelegram: z.boolean().default(false),
 });
 
-export const saveExchangeRateTrpcRoute = adminProcedure
+export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
   .input(saveExchangeRateTrpcInput)
   .mutation(async ({ ctx, input }) => {
     // Проверяем аутентификацию и роль
     if (!ctx.user) {
       throw new Error('Authentication required');
     }
-    if (ctx.user.role !== 'admin') {
-      throw new Error('Not authorized');
+    if (
+      !ctx.user.permissions.includes('global.fullAccess') &&
+      !ctx.user.permissions.includes('exchangeRates.create')
+    ) {
+      throw new Error('Permission required: exchangeRates.create or global.fullAccess');
     }
 
     // Сохраняем курс в БД

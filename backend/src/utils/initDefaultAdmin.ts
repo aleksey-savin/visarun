@@ -1,60 +1,13 @@
-import { PrismaClient } from '@prisma/client';
-import { hashPassword } from './getPasswordHash.js';
-
-const DEFAULT_ADMIN_EMAIL = 'admin@admin.com';
-const DEFAULT_ADMIN_PASSWORD = 'admin';
-const DEFAULT_ADMIN_FIRST_NAME = 'Admin';
-const DEFAULT_ADMIN_LAST_NAME = 'User';
-
 /**
- * Initialize a default admin user if no users exist in the database.
- * This should be run when the application starts up.
+ * This function has been deprecated. System initialization is now handled by the Prisma seed command.
+ * To initialize the system with default data, run: `pnpm prisma:seed`
  */
 export async function initDefaultAdmin(): Promise<void> {
-  const prisma = new PrismaClient();
-
-  try {
-    // Check if any users exist
-    const userCount = await prisma.user.count();
-
-    if (userCount === 0) {
-      console.log('No users found. Creating default admin user...');
-
-      // Hash the default password
-      const hashedPassword = await hashPassword(DEFAULT_ADMIN_PASSWORD);
-
-      const adminRole = await prisma.role.upsert({
-        where: { name: 'admin' },
-        update: {},
-        create: {
-          name: 'admin',
-          description: 'Администратор системы',
-          isSystem: true,
-          isActive: true,
-        },
-      });
-
-      // Create the default admin user
-      await prisma.user.create({
-        data: {
-          email: DEFAULT_ADMIN_EMAIL,
-          firstName: DEFAULT_ADMIN_FIRST_NAME,
-          lastName: DEFAULT_ADMIN_LAST_NAME,
-          password: hashedPassword,
-          roleModel: {
-            connect: { id: adminRole.id },
-          },
-        },
-      });
-
-      console.log(
-        `Default admin user created with email: ${DEFAULT_ADMIN_EMAIL} and password: ${DEFAULT_ADMIN_PASSWORD}`
-      );
-      console.log('IMPORTANT: Log in and change the default password immediately!');
-    }
-  } catch (error) {
-    console.error('Error initializing default admin user:', error);
-  } finally {
-    await prisma.$disconnect();
-  }
+  console.log('⚠️  Warning: initDefaultAdmin is deprecated!');
+  console.log('System initialization is now handled by the Prisma seed command.');
+  console.log('To initialize the system with default data, run:');
+  console.log('  pnpm prisma:seed');
+  console.log(
+    'This ensures all permissions, roles, and the default admin user are properly created.'
+  );
 }

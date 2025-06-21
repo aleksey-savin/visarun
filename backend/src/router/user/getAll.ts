@@ -11,9 +11,20 @@ export const getAllUsersTrpcRoute = trpc.procedure.query(async ({ ctx }) => {
       email: true,
       createdAt: true,
       updatedAt: true,
-      roleModel: {
+      roleAssignments: {
         select: {
-          name: true,
+          id: true,
+          assignedAt: true,
+          role: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
+        },
+        orderBy: {
+          assignedAt: 'desc',
         },
       },
     },

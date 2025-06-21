@@ -13,7 +13,25 @@ export const refreshTokenRoute = procedure
     // Verify the token exists in database first
     const storedToken = await ctx.prisma.refreshToken.findUnique({
       where: { token: input.refreshToken },
-      include: { user: true },
+      include: {
+        user: {
+          include: {
+            roleAssignments: {
+              include: {
+                role: {
+                  include: {
+                    permissions: {
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!storedToken || storedToken.expiresAt < new Date()) {
@@ -47,6 +65,14 @@ export const refreshTokenRoute = procedure
     // Generate a new access token
     const accessToken = generateAccessToken(storedToken.user);
 
+    // Extract permissions from role assignments
+    const permissions = new Set<string>();
+    for (const assignment of storedToken.user.roleAssignments) {
+      for (const rolePermission of assignment.role.permissions) {
+        permissions.add(rolePermission.permission.code);
+      }
+    }
+
     return {
       accessToken,
       user: {
@@ -54,7 +80,9 @@ export const refreshTokenRoute = procedure
         email: storedToken.user.email,
         firstName: storedToken.user.firstName,
         lastName: storedToken.user.lastName,
-        role: storedToken.user.role,
+        roles: storedToken.user.roleAssignments.map(assignment => assignment.role.name),
+        permissions: Array.from(permissions),
+        mustChangePassword: storedToken.user.mustChangePassword,
       },
     };
   });

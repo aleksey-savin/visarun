@@ -16,7 +16,21 @@ export const signinTrpcRoute = trpc.procedure
       where: {
         email: input.email,
       },
-      include: { roleModel: true },
+      include: {
+        roleAssignments: {
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -34,6 +48,14 @@ export const signinTrpcRoute = trpc.procedure
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    // Extract permissions from role assignments
+    const permissions = new Set<string>();
+    for (const assignment of user.roleAssignments) {
+      for (const rolePermission of assignment.role.permissions) {
+        permissions.add(rolePermission.permission.code);
+      }
+    }
+
     return {
       accessToken,
       refreshToken,
@@ -42,7 +64,9 @@ export const signinTrpcRoute = trpc.procedure
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.roleModel?.name,
+        roles: user.roleAssignments.map(assignment => assignment.role.name),
+        permissions: Array.from(permissions),
+        mustChangePassword: user.mustChangePassword,
       },
     };
   });

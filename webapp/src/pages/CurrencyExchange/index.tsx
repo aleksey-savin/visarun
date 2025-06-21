@@ -11,8 +11,8 @@ import { trpc } from '@/lib/trpcProvider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const CurrencyExchangePage = () => {
-  const { userRole } = useAuth();
-  const isAdmin = userRole === 'admin';
+  const { hasPermission } = useAuth();
+  const canCreateExchangeRates = hasPermission('exchangeRates.create');
   const [isOpen, setIsOpen] = useState(false);
 
   // Fetch the latest exchange rates with auto-refresh every 30 seconds
@@ -61,7 +61,7 @@ const CurrencyExchangePage = () => {
   let mainContent;
 
   // If there's an error but we're admin, show the form to add rates
-  if (isError && isAdmin) {
+  if (isError && canCreateExchangeRates) {
     mainContent = (
       <div className="mb-6">
         <h2 className="text-2xl font-semibold mb-4">Set Initial Exchange Rates</h2>
@@ -86,7 +86,7 @@ const CurrencyExchangePage = () => {
     );
   }
   // If rates is null but no error (this can happen with our backend change)
-  else if (!rates && isAdmin) {
+  else if (!rates && canCreateExchangeRates) {
     mainContent = (
       <div className="mb-6">
         <h2 className="text-2xl font-semibold mb-4">Set Initial Exchange Rates</h2>
@@ -178,7 +178,7 @@ const CurrencyExchangePage = () => {
             </div>
           </div>
 
-          {isAdmin && (
+          {canCreateExchangeRates && (
             <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mt-6">
               <Collapsible
                 open={isOpen}

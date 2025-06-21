@@ -10,6 +10,7 @@ export const getAllRolesTrpcRoute = trpc.procedure.query(async ({ ctx }) => {
       id: true,
       name: true,
       description: true,
+      isSystem: true,
     },
   });
 

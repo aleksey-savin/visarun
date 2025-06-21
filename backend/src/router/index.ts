@@ -9,11 +9,13 @@ import { logoutTrpcRoute } from './auth/logout.js';
 import { changePasswordTrpcRoute, forceChangePasswordTrpcRoute } from './auth/changePassword.js';
 import { telegramRoute } from './telegramChannel/index.js';
 import { roleRoute } from './role/index.js';
+import { permissionRoute } from './permission/index.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
   user: userRoutes,
   role: roleRoute,
+  permission: permissionRoute,
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,
   exchangeRates: exchangeRatesRoute,

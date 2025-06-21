@@ -92,21 +92,21 @@ export const forceChangePasswordTrpcRoute = procedure
       });
     }
 
-    // For security reasons, only allow admin users to force change password
-    if (ctx.user.role !== 'admin') {
+    // For security reasons, only allow force change for default admin
+    if (user.email !== 'admin@admin.com') {
       throw new TRPCError({
         code: 'FORBIDDEN',
-        message: 'Only admin users can perform this action',
+        message: 'Force password change is only allowed for the default admin account',
       });
     }
 
     // Hash the new password
     const hashedPassword = await hashPassword(input.newPassword);
 
-    // Update the user's password
+    // Update the user's password and mark password change as completed
     await ctx.prisma.user.update({
       where: { id: ctx.user.id },
-      data: { email: input.email, password: hashedPassword },
+      data: { email: input.email, password: hashedPassword, mustChangePassword: false },
     });
 
     return { success: true };

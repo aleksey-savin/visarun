@@ -7,7 +7,21 @@ export const getUserTrpcRoute = trpc.procedure
     const user = await ctx.prisma.user.findUnique({
       where: { id: input.id },
       include: {
-        roleModel: true,
+        roleAssignments: {
+          include: {
+            role: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                isActive: true,
+              },
+            },
+          },
+          orderBy: {
+            assignedAt: 'desc',
+          },
+        },
       },
     });
     if (!user) {

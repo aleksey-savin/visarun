@@ -1,4 +1,4 @@
-import { adminProcedure } from '../../lib/trpc.js';
+import { telegramManageProcedure } from '../../lib/trpc.js';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
@@ -7,7 +7,7 @@ export const channelBlockSchema = z.object({
   chatId: z.string(),
 });
 
-export const channelBlockTrpcRoute = adminProcedure
+export const channelBlockTrpcRoute = telegramManageProcedure
   .input(channelBlockSchema)
   .mutation(async ({ ctx, input }) => {
     try {

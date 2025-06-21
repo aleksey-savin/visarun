@@ -13,8 +13,8 @@
     "types": "tsc --noEmit --project tsconfig.json",
     "pmd": "prisma migrate dev",
     "pgc": "prisma generate",
-    "prepare": "pnpm pgc",
-    "gen:permissions": "ts-node src/scripts/generatePermissionsSQL.ts",
+    "prisma:seed": "ts-node --esm src/utils/seed.ts",
+    "prepare": "pnpm pgc && pnpm prisma:seed",
     "build": "rm -rf dist && swc src -d dist --extensions '.ts,.tsx' && cp -r prisma dist/ && echo '{\"type\":\"module\"}' > dist/package.json"
   },
   "keywords": [],

@@ -1,7 +1,12 @@
-import { zodResolver } from '@hookform/resolvers/zod';
+// src/pages/users/EditUserPage.tsx
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from 'react-router-dom';
+
+import { trpc } from '@/lib/trpcProvider';
+import { getAllUsersRoute } from '@/lib/routes';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,82 +21,108 @@ import { Input } from '@/components/ui/input';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { UserPlus, Shield } from 'lucide-react';
-import { trpc } from '@/lib/trpcProvider';
-import { getAllUsersRoute } from '@/lib/routes';
-import { useState } from 'react';
+import { UserCheck, Shield } from 'lucide-react';
 
-// Define the exact schema from backend, enforcing non-optional roles
+// Schema for form validation
 const formSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1).max(100),
   lastName: z.string().min(1).max(100),
-  //middleName: z.string().min(1).max(100).optional(),
+  middleName: z.string().optional(),
   roleIds: z.array(z.string().uuid()).min(1, 'At least one role must be selected'),
-  password: z.string().min(8).max(100),
+  password: z.string().optional(),
 });
 
-// Use explicit interface for form data
-interface FormData {
-  email: string;
-  firstName: string;
-  lastName: string;
-  //middleName?: string;
-  roleIds: string[];
-  password: string;
-}
+type FormData = z.infer<typeof formSchema>;
 
-const CreateUserPage = () => {
+export default function EditUserPage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data: rolesData } = trpc.role.getAll.useQuery();
+  // 2) Подгружаем пользователя (с roleModel!) и список ролей
+  const { data: userData, isLoading: isUserLoading } = trpc.user.getOne.useQuery(
+    { id: id! },
+    {
+      retry: 1,
+    }
+  );
+  const { data: rolesData, isLoading: isRolesLoading } = trpc.role.getAll.useQuery(undefined, {
+    retry: 1,
+  });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const createUserMutation = trpc.user.create.useMutation();
+  const editMutation = trpc.user.edit.useMutation();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: '',
-      //middleName: '',
-      lastName: '',
       email: '',
+      firstName: '',
+      lastName: '',
+      middleName: '',
       roleIds: [],
       password: '',
     },
   });
 
+  useEffect(() => {
+    if (!userData) return;
+
+    const roleIds = userData.user.roleAssignments?.map(assignment => assignment.role.id) || [];
+
+    form.reset({
+      email: userData.user.email,
+      firstName: userData.user.firstName,
+      lastName: userData.user.lastName,
+      middleName: userData.user.middleName || '',
+      roleIds: roleIds,
+      password: '',
+    });
+
+    setTimeout(() => {
+      form.setValue('roleIds', roleIds);
+    }, 0);
+  }, [userData, form]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   async function onSubmit(values: FormData) {
     try {
       setIsSubmitting(true);
+      setError(null);
 
-      await createUserMutation.mutateAsync({
-        firstName: values.firstName,
-        //middleName: values.middleName,
-        lastName: values.lastName,
+      await editMutation.mutateAsync({
+        id: id!,
         email: values.email,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        middleName: values.middleName || undefined,
         roleIds: values.roleIds,
-        password: values.password,
+        password: values.password && values.password.trim() !== '' ? values.password : undefined,
       });
       navigate(getAllUsersRoute());
-    } catch (error) {
-      console.error('Error creating user:', error);
-      if (error instanceof Error) {
-        alert(`Failed to create user: ${error.message}`);
-      } else {
-        alert('Failed to create user due to an unknown error');
-      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setError(`Failed to update user: ${msg}`);
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  if (isUserLoading || isRolesLoading) return <div>Loading user data...</div>;
+
   return (
     <div className="container mx-auto py-6 space-y-8">
       <div className="flex items-center gap-3">
-        <UserPlus className="h-8 w-8 text-primary" />
-        <h1 className="text-4xl font-bold">Create New User</h1>
+        <UserCheck className="h-8 w-8 text-primary" />
+        <h1 className="text-4xl font-bold">Edit User</h1>
       </div>
+
+      {error && (
+        <div className="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
@@ -100,6 +131,7 @@ const CreateUserPage = () => {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* First Name */}
                   <FormField
                     control={form.control}
                     name="firstName"
@@ -114,6 +146,7 @@ const CreateUserPage = () => {
                     )}
                   />
 
+                  {/* Last Name */}
                   <FormField
                     control={form.control}
                     name="lastName"
@@ -129,6 +162,22 @@ const CreateUserPage = () => {
                   />
                 </div>
 
+                {/* Middle Name (Optional) */}
+                <FormField
+                  control={form.control}
+                  name="middleName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Middle Name (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter middle name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Email */}
                 <FormField
                   control={form.control}
                   name="email"
@@ -145,23 +194,29 @@ const CreateUserPage = () => {
 
                 <Separator />
 
+                {/* New Password */}
                 <FormField
                   control={form.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>New Password</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter password" type="password" {...field} />
+                        <Input
+                          placeholder="Leave empty to keep current password"
+                          type="password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* Action Buttons */}
                 <div className="flex gap-4 pt-4">
                   <Button type="submit" disabled={isSubmitting} className="min-w-32">
-                    {isSubmitting ? 'Creating...' : 'Create User'}
+                    {isSubmitting ? 'Saving…' : 'Save Changes'}
                   </Button>
                   <Button
                     type="button"
@@ -181,7 +236,7 @@ const CreateUserPage = () => {
           <div className="bg-card border rounded-lg p-6">
             <div className="flex items-center gap-2 mb-6">
               <Shield className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-semibold">Assign Roles</h2>
+              <h2 className="text-xl font-semibold">User Roles</h2>
             </div>
 
             <Form {...form}>
@@ -252,8 +307,8 @@ const CreateUserPage = () => {
 
             <div className="mt-6 p-4 bg-muted/30 rounded-lg">
               <p className="text-sm text-muted-foreground">
-                💡 <strong>Tip:</strong> Select at least one role for this user. Multiple roles can
-                be assigned to provide different permissions.
+                💡 <strong>Tip:</strong> Users can have multiple roles. Each role provides different
+                permissions and access levels.
               </p>
             </div>
           </div>
@@ -261,6 +316,4 @@ const CreateUserPage = () => {
       </div>
     </div>
   );
-};
-
-export default CreateUserPage;
+}

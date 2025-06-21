@@ -4,7 +4,7 @@ This repository contains the code for **VisaRun**, a full‑stack application fo
 
 - `backend` – Express API using tRPC and Prisma
 - `webapp` – React + Vite front‑end
-- `telegram-bot` – Telegraf based bot for Telegram
+- `telegram-bot` – Node.js Telegram bot using node-telegram-bot-api
 
 ## Development
 
@@ -13,6 +13,28 @@ Install dependencies with [pnpm](https://pnpm.io):
 ```bash
 pnpm install
 ```
+
+### System Initialization
+
+Before running the application for the first time, you need to initialize the database with required data:
+
+```bash
+cd backend
+pnpm prisma:seed
+```
+
+This will create:
+- System permissions
+- System roles (admin, client) with proper constraints
+- Default admin user (if no users exist)
+
+The default admin credentials are:
+- Email: admin@admin.com
+- Password: admin
+
+**Important:** Change the default password after first login!
+
+### Running the Application
 
 To start both the API and the web client in development mode run:
 

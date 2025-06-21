@@ -1,11 +1,11 @@
-import { adminProcedure } from '../../lib/trpc.js';
+import { telegramManageProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
 export const channelDeleteTrpcInput = z.object({
   chatId: z.string(),
 });
 
-export const channelDeleteTrpcRoute = adminProcedure
+export const channelDeleteTrpcRoute = telegramManageProcedure
   .input(channelDeleteTrpcInput)
   .mutation(async ({ ctx, input }) => {
     const existingChannel = await ctx.prisma.telegramChannel.findFirst({

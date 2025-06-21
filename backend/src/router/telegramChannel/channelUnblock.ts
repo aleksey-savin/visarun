@@ -1,4 +1,4 @@
-import { adminProcedure } from '../../lib/trpc.js';
+import { telegramManageProcedure } from '../../lib/trpc.js';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
@@ -11,7 +11,7 @@ export const channelUnblockSchema = z.object({
  * Handler for when a Telegram bot is removed from a channel
  * Updates the channel status to "removed" in the database
  */
-export const channelUnblockTrpcRoute = adminProcedure
+export const channelUnblockTrpcRoute = telegramManageProcedure
   .input(channelUnblockSchema)
   .mutation(async ({ ctx, input }) => {
     try {

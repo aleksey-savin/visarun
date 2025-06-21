@@ -22,9 +22,15 @@ type User = {
   middleName?: string | null;
   lastName: string;
   email: string;
-  roleModel: {
-    name: string;
-  } | null;
+  roleAssignments: {
+    id: string;
+    assignedAt: string;
+    role: {
+      id: string;
+      name: string;
+      description: string | null;
+    };
+  }[];
   createdAt: string;
   updatedAt: string;
 };
@@ -44,7 +50,6 @@ const getRoleBadgeColor = (role: string) => {
 const AllUsersPage = () => {
   const navigate = useNavigate();
   const { data, error, isLoading, isError } = trpc.user.getAll.useQuery();
-  console.log(data);
 
   const formatName = (user: User) => {
     return `${user.firstName} ${user.middleName ? user.middleName + ' ' : ''}${user.lastName}`;
@@ -89,9 +94,19 @@ const AllUsersPage = () => {
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell className="capitalize">
-                      <Badge className={getRoleBadgeColor(user.roleModel?.name || '')}>
-                        {user.roleModel?.name}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {user.roleAssignments.map(assignment => (
+                          <Badge
+                            key={assignment.id}
+                            className={getRoleBadgeColor(assignment.role.name)}
+                          >
+                            {assignment.role.name}
+                          </Badge>
+                        ))}
+                        {user.roleAssignments.length === 0 && (
+                          <Badge variant="outline">No roles</Badge>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -123,9 +138,19 @@ const AllUsersPage = () => {
                     </div>
                   </div>
                   <div className="flex justify-end pt-2">
-                    <Badge className={getRoleBadgeColor(user.roleModel?.name || '')}>
-                      {user.roleModel?.name}
-                    </Badge>
+                    <div className="flex flex-wrap gap-1">
+                      {user.roleAssignments.map(assignment => (
+                        <Badge
+                          key={assignment.id}
+                          className={getRoleBadgeColor(assignment.role.name)}
+                        >
+                          {assignment.role.name}
+                        </Badge>
+                      ))}
+                      {user.roleAssignments.length === 0 && (
+                        <Badge variant="outline">No roles</Badge>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

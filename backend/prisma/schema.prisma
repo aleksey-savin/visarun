@@ -40,7 +40,6 @@ model Role {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  User      User[]
 }
 
 model Permission {
@@ -84,13 +83,10 @@ model User {
   middleName String?
   lastName   String
   password   String
+  mustChangePassword Boolean @default(false)
 
   // Старая жёстко зашитая роль (оставляем до финальной чистки)
   role UserRole?
-
-  // Новая гибкая связь на таблицу Role
-  roleId    String?
-  roleModel Role?   @relation(fields: [roleId], references: [id])
 
   // Таймстемпы
   createdAt DateTime @default(now())

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { type ViewUserRouteParams, getAllUsersRoute } from '../../lib/routes';
+import { type ViewUserRouteParams, getAllUsersRoute, getEditUserRoute } from '../../lib/routes';
 import { trpc } from '../../lib/trpcProvider';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,8 +73,6 @@ const ViewUserPage = () => {
     }
   };
 
-  const userRole = data?.user.roleModel?.name || 'Unknown';
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -140,9 +138,17 @@ const ViewUserPage = () => {
               </CardTitle>
             </div>
             <div className="py-3">
-              <Badge className={getRoleBadgeColor(data.user.role || '')}>
-                {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-              </Badge>
+              <div className="flex flex-wrap gap-2">
+                {data.user.roleAssignments && data.user.roleAssignments.length > 0 ? (
+                  data.user.roleAssignments.map(assignment => (
+                    <Badge key={assignment.id} className={getRoleBadgeColor(assignment.role.name)}>
+                      {assignment.role.name.charAt(0).toUpperCase() + assignment.role.name.slice(1)}
+                    </Badge>
+                  ))
+                ) : (
+                  <Badge variant="outline">No roles assigned</Badge>
+                )}
+              </div>
             </div>
 
             <CardDescription className="flex items-center gap-1">
@@ -172,7 +178,12 @@ const ViewUserPage = () => {
           </CardContent>
           <CardFooter className="pt-2 flex justify-between">
             <div className="space-x-4 space-y-2">
-              <Button variant="outline">Edit User</Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate(getEditUserRoute({ id: data.user.id }))}
+              >
+                Edit User
+              </Button>
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" disabled={deleteUserMutation.isPending}>

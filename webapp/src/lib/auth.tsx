@@ -9,13 +9,21 @@ interface AuthTokens {
 interface TokenPayload {
   userId: string;
   email: string;
-  role: string;
+  roles: string[];
+  permissions: string[];
   exp: number;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (tokens: AuthTokens, email: string, role: string, id: string) => void;
+  login: (
+    tokens: AuthTokens,
+    email: string,
+    role: string,
+    id: string,
+    permissions?: string[],
+    mustChangePassword?: boolean
+  ) => void;
   logout: () => void;
   getAccessToken: () => string | null;
   userEmail: string | null;
@@ -25,7 +33,9 @@ interface AuthContextType {
   isAuthLoading: boolean;
   isPasswordChangeRequired: boolean;
   passwordChangeCompleted: () => void;
-  user: { id: string; email: string; role: string } | null;
+  user: { id: string; email: string; roles: string[]; permissions: string[] } | null;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -38,7 +48,9 @@ const USER_DATA_KEY = 'visarun_user_data';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[] | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null); // Keep for backward compatibility
+  const [userPermissions, setUserPermissions] = useState<string[] | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isPasswordChangeRequired, setIsPasswordChangeRequired] = useState(false);
@@ -74,12 +86,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = localStorage.getItem(USER_DATA_KEY);
 
         if (token && userData) {
-          console.log(userData);
           const parsedUserData = JSON.parse(userData);
           setIsAuthenticated(true);
           setUserEmail(parsedUserData.email);
-          setUserRole(parsedUserData.role);
+          setUserRoles(parsedUserData.roles || []);
+          setUserRole(
+            parsedUserData.roles && parsedUserData.roles.length > 0 ? parsedUserData.roles[0] : null
+          );
+          setUserPermissions(parsedUserData.permissions || []);
           setUserId(parsedUserData.id);
+          setIsPasswordChangeRequired(parsedUserData.mustChangePassword || false);
         } else {
           // Try to refresh the token if we have a refresh token
           const refreshSuccess = await refreshAuth();
@@ -133,14 +149,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         JSON.stringify({
           id: user.id,
           email: user.email,
-          role: user.role,
+          roles: user.roles || [],
+          permissions: user.permissions || [],
+          mustChangePassword: user.mustChangePassword || false,
         })
       );
 
       setIsAuthenticated(true);
       setUserEmail(user.email);
-      setUserRole(user.role);
+      setUserRoles(user.roles || []);
+      setUserRole(user.roles && user.roles.length > 0 ? user.roles[0] : null);
+      setUserPermissions(user.permissions || []);
       setUserId(user.id);
+      setIsPasswordChangeRequired(user.mustChangePassword || false);
 
       return true;
     } catch (error) {
@@ -154,13 +175,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsAuthenticated(false);
     setUserEmail(null);
     setUserRole(null);
+    setUserRoles(null);
+    setUserPermissions(null);
     setUserId(null);
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_DATA_KEY);
   };
 
-  const login = (tokens: AuthTokens, email: string, role: string, id: string) => {
+  const login = (
+    tokens: AuthTokens,
+    email: string,
+    role: string,
+    id: string,
+    permissions: string[] = [],
+    mustChangePassword: boolean = false
+  ) => {
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
     localStorage.setItem(
@@ -168,14 +198,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       JSON.stringify({
         id,
         email,
-        role,
+        roles: [role],
+        permissions,
+        mustChangePassword,
       })
     );
 
     setIsAuthenticated(true);
     setUserEmail(email);
     setUserRole(role);
+    setUserRoles([role]);
+    setUserPermissions(permissions);
     setUserId(id);
+    setIsPasswordChangeRequired(mustChangePassword);
   };
 
   const logout = async () => {
@@ -203,22 +238,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAuthState();
   };
 
-  // Check if password change is required (for default admin)
-  useEffect(() => {
-    if (isAuthenticated && userEmail === 'admin@admin.com' && userRole === 'admin') {
-      setIsPasswordChangeRequired(true);
-    }
-  }, [isAuthenticated, userEmail, userRole]);
+  // Password change requirement is now handled by the mustChangePassword field
+  // which is set during login and refresh
 
   // Function to mark password change as completed
   const passwordChangeCompleted = () => {
     setIsPasswordChangeRequired(false);
   };
 
+  // Permission checking functions
+  const hasPermission = (permission: string): boolean => {
+    if (!userPermissions) return false;
+    // Check for global full access first
+    if (userPermissions.includes('global.fullAccess')) {
+      return true;
+    }
+    return userPermissions.includes(permission);
+  };
+
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    if (!userPermissions) return false;
+    // Check for global full access first
+    if (userPermissions.includes('global.fullAccess')) {
+      return true;
+    }
+    return permissions.some(permission => userPermissions.includes(permission));
+  };
+
   // Create user object for easier access
   const user =
-    isAuthenticated && userEmail && userRole && userId
-      ? { id: userId, email: userEmail, role: userRole }
+    isAuthenticated && userEmail && userRoles && userPermissions && userId
+      ? { id: userId, email: userEmail, roles: userRoles, permissions: userPermissions }
       : null;
 
   return (
@@ -236,6 +286,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isPasswordChangeRequired,
         passwordChangeCompleted,
         user,
+        hasPermission,
+        hasAnyPermission,
       }}
     >
       {children}
