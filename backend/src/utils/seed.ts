@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from './getPasswordHash.ts';
+import { citizenships } from './citizenships.ts';
 
 const prisma = new PrismaClient();
 
@@ -51,6 +52,46 @@ async function main() {
       description: 'Broadcast messages to Telegram',
       category: 'telegram',
     },
+
+    // Countries management
+    { code: 'countries.create', description: 'Create countries', category: 'countries' },
+    { code: 'countries.read', description: 'View countries', category: 'countries' },
+    { code: 'countries.update', description: 'Edit countries', category: 'countries' },
+    { code: 'countries.delete', description: 'Delete countries', category: 'countries' },
+
+    // Citizenships management
+    { code: 'citizenships.create', description: 'Create citizenships', category: 'citizenships' },
+    { code: 'citizenships.read', description: 'View citizenships', category: 'citizenships' },
+    { code: 'citizenships.update', description: 'Edit citizenships', category: 'citizenships' },
+    { code: 'citizenships.delete', description: 'Delete citizenships', category: 'citizenships' },
+
+    // Visa nationality surcharges management
+    {
+      code: 'visaNationalitySurcharge.create',
+      description: 'Create nationality surcharges',
+      category: 'visaNationalitySurcharge',
+    },
+    {
+      code: 'visaNationalitySurcharge.read',
+      description: 'View nationality surcharges',
+      category: 'visaNationalitySurcharge',
+    },
+    {
+      code: 'visaNationalitySurcharge.update',
+      description: 'Edit nationality surcharges',
+      category: 'visaNationalitySurcharge',
+    },
+    {
+      code: 'visaNationalitySurcharge.delete',
+      description: 'Delete nationality surcharges',
+      category: 'visaNationalitySurcharge',
+    },
+
+    // Cities management
+    { code: 'cities.create', description: 'Create cities', category: 'cities' },
+    { code: 'cities.read', description: 'View cities', category: 'cities' },
+    { code: 'cities.update', description: 'Edit cities', category: 'cities' },
+    { code: 'cities.delete', description: 'Delete cities', category: 'cities' },
   ];
 
   const permissionsResult = await prisma.permission.createMany({
@@ -137,6 +178,15 @@ async function main() {
   });
 
   console.log(`Created ${contactMethodsResult.count} contact methods`);
+
+  // Create citizenships
+  console.log('Creating citizenships...');
+  const citizenshipsResult = await prisma.citizenship.createMany({
+    data: citizenships,
+    skipDuplicates: true,
+  });
+
+  console.log(`Created ${citizenshipsResult.count} citizenships`);
 
   const userCount = await prisma.user.count();
 

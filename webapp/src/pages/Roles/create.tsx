@@ -221,9 +221,6 @@ const CreateRolePage = () => {
                                 >
                                   {permission.description || permission.code}
                                 </label>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {permission.code}
-                                </p>
                               </div>
                               {isChecked && (
                                 <div className="ml-2">

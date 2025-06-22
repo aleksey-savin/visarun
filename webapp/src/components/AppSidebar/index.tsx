@@ -6,6 +6,8 @@ import {
   ChevronDown,
   ChevronRight,
   Send,
+  Globe,
+  UserCheck,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -31,6 +33,10 @@ import {
   getCurrencyExchangeRoute,
   getTelegramChannelsRoute,
   getAllContactMethodsRoute,
+  // New entity routes
+  getAllCountriesRoute,
+  getAllCitizenshipsRoute,
+
   //getTelegramTemplatesRoute,
 } from '@/lib/routes';
 
@@ -47,8 +53,15 @@ export function AppSidebar() {
   //location.pathname.startsWith(`${getTelegramTemplatesRoute()}/`);
   //
   const [isUsersManagementOpen, setUsersManagementOpen] = useState(false);
+  const [isVisaManagementOpen, setVisaManagementOpen] = useState(false);
 
   const isOnUsersManagementSubpage = location.pathname === getAllUsersRoute();
+
+  const isOnVisaManagementSubpage =
+    location.pathname === getAllCountriesRoute() ||
+    location.pathname.startsWith(`${getAllCountriesRoute()}/`) ||
+    location.pathname === getAllCitizenshipsRoute() ||
+    location.pathname.startsWith(`${getAllCitizenshipsRoute()}/`);
 
   // Permission checks
   const canAccessExchangeRates = hasPermission('exchangeRates.create');
@@ -57,9 +70,24 @@ export function AppSidebar() {
   const canReadTelegram = hasPermission('telegram.channels.read');
   const canManageContactMethods = hasPermission('global.fullAccess');
 
+  // New entity permissions
+  const canReadCountries =
+    hasPermission('countries.read') ||
+    hasPermission('countries.create') ||
+    hasPermission('countries.update') ||
+    hasPermission('countries.delete');
+  const canReadCitizenships =
+    hasPermission('citizenships.read') ||
+    hasPermission('citizenships.create') ||
+    hasPermission('citizenships.update') ||
+    hasPermission('citizenships.delete');
+
   // Check if user has any admin permissions
   const hasAnyAdminPermission =
     canReadUsers || canReadRoles || canReadTelegram || canManageContactMethods;
+
+  // Check if user has any visa management permissions
+  const hasAnyVisaPermission = canReadCountries || canReadCitizenships;
 
   return (
     <Sidebar>
@@ -91,6 +119,71 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {hasAnyVisaPermission && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Visa Management</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {/* Visa Management (collapsible section) */}
+                <SidebarMenuItem key="VisaManagement">
+                  <SidebarMenuButton
+                    onClick={() => setVisaManagementOpen(prev => !prev)}
+                    isActive={isOnVisaManagementSubpage}
+                    className="flex items-center justify-between px-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-5 h-5" />
+                      <span>Visa Management</span>
+                    </div>
+                    {isVisaManagementOpen ? (
+                      <ChevronDown className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </SidebarMenuButton>
+
+                  {/* Nested visa management items */}
+                  {isVisaManagementOpen && (
+                    <SidebarMenuSub>
+                      {canReadCountries && (
+                        <SidebarMenuSubItem key="Countries">
+                          <SidebarMenuButton
+                            asChild
+                            isActive={
+                              location.pathname === getAllCountriesRoute() ||
+                              location.pathname.startsWith(`${getAllCountriesRoute()}/`)
+                            }
+                          >
+                            <Link to={getAllCountriesRoute()}>
+                              <Globe className="w-4 h-4" />
+                              <span>Countries</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuSubItem>
+                      )}
+                      {canReadCitizenships && (
+                        <SidebarMenuSubItem key="Citizenships">
+                          <SidebarMenuButton
+                            asChild
+                            isActive={
+                              location.pathname === getAllCitizenshipsRoute() ||
+                              location.pathname.startsWith(`${getAllCitizenshipsRoute()}/`)
+                            }
+                          >
+                            <Link to={getAllCitizenshipsRoute()}>
+                              <UserCheck className="w-4 h-4" />
+                              <span>Citizenships</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuSubItem>
+                      )}
+                    </SidebarMenuSub>
+                  )}
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
         {hasAnyAdminPermission && (
           <SidebarGroup>
             <SidebarGroupLabel>Administration</SidebarGroupLabel>

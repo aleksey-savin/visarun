@@ -2,7 +2,7 @@ import { getCreateUserRoute } from '../../lib/routes';
 import { trpc } from '../../lib/trpcProvider';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PlusIcon, User, Mail, UsersIcon, MessageCircle, Phone } from 'lucide-react';
+import { PlusIcon, User, Mail, UsersIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -86,7 +86,6 @@ const AllUsersPage = () => {
                   <TableHead className="w-[100px]">Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Contacts</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -112,35 +111,6 @@ const AllUsersPage = () => {
                         ))}
                         {user.roleAssignments.length === 0 && (
                           <Badge variant="outline">No roles</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        {user.contactMethods && user.contactMethods.length > 0 ? (
-                          <>
-                            {user.contactMethods.slice(0, 3).map(contact => (
-                              <Badge key={contact.id} variant="secondary" className="text-xs">
-                                {contact.method.name === 'email' && (
-                                  <Mail className="h-3 w-3 mr-1" />
-                                )}
-                                {contact.method.name === 'phone' && (
-                                  <Phone className="h-3 w-3 mr-1" />
-                                )}
-                                {!['email', 'phone'].includes(contact.method.name) && (
-                                  <MessageCircle className="h-3 w-3 mr-1" />
-                                )}
-                                {contact.method.name}
-                              </Badge>
-                            ))}
-                            {user.contactMethods.length > 3 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{user.contactMethods.length - 3}
-                              </Badge>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">No contacts</span>
                         )}
                       </div>
                     </TableCell>
@@ -174,22 +144,6 @@ const AllUsersPage = () => {
                     </div>
                   </div>
                   <div className="flex justify-between items-end pt-2">
-                    <div className="flex flex-wrap gap-1">
-                      {user.contactMethods && user.contactMethods.length > 0 ? (
-                        user.contactMethods.slice(0, 2).map(contact => (
-                          <Badge key={contact.id} variant="secondary" className="text-xs">
-                            {contact.method.name === 'email' && <Mail className="h-3 w-3 mr-1" />}
-                            {contact.method.name === 'phone' && <Phone className="h-3 w-3 mr-1" />}
-                            {!['email', 'phone'].includes(contact.method.name) && (
-                              <MessageCircle className="h-3 w-3 mr-1" />
-                            )}
-                            {contact.method.name}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-muted-foreground text-xs">No contacts</span>
-                      )}
-                    </div>
                     <div className="flex flex-wrap gap-1">
                       {user.roleAssignments.map(assignment => (
                         <Badge

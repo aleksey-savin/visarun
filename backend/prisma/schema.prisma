@@ -106,6 +106,65 @@ model UserContactMethod {
   @@index([contactMethodId])
 }
 
+model Citizenship {
+  id          String                     @id @default(uuid())
+  name        String
+  favourite   Boolean                    @default(false)
+  visaFree    VisaFree[]
+  blacklisted Blacklisted[]
+  surcharges  VisaNationalitySurcharge[]
+}
+
+model Country {
+  id                 String        @id @default(uuid())
+  name               String
+  eVisaAvailable     Boolean       @default(false)
+  multivisaAvailable Boolean       @default(false)
+  cities             City[]
+  visaFree           VisaFree[]
+  blacklisted        Blacklisted[]
+}
+
+model City {
+  id        String  @id @default(uuid())
+  name      String
+  countryId String
+  country   Country @relation(fields: [countryId], references: [id])
+  isActive  Boolean @default(true)
+}
+
+model VisaFree {
+  citizenshipId String
+  countryId     String
+  stampDuration Int
+
+  citizenship Citizenship @relation(fields: [citizenshipId], references: [id])
+  country     Country     @relation(fields: [countryId], references: [id])
+
+  @@id([citizenshipId, countryId])
+}
+
+model Blacklisted {
+  citizenshipId String
+  countryId     String
+
+  citizenship Citizenship @relation(fields: [citizenshipId], references: [id])
+  country     Country     @relation(fields: [countryId], references: [id])
+
+  @@id([citizenshipId, countryId])
+}
+
+model VisaNationalitySurcharge {
+  id              String  @id @default(uuid())
+  citizenshipId   String
+  visaTypeId      String
+  surchargeAmount Float
+  note            String?
+
+  citizenship Citizenship @relation(fields: [citizenshipId], references: [id])
+  // visaType    VisaType    @relation(fields: [visaTypeId], references: [id])
+}
+
 model ExchangeRate {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())

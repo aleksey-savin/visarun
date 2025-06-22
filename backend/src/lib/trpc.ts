@@ -90,6 +90,44 @@ const isTelegramBot = trpc.middleware(async ({ ctx, next }) => {
 
 export const telegramBotProcedure = trpc.procedure.use(isTelegramBot);
 
+// Country management procedures
+export const countryCreateProcedure = trpc.procedure.use(requirePermission('countries.create'));
+export const countryReadProcedure = trpc.procedure.use(requirePermission('countries.read'));
+export const countryUpdateProcedure = trpc.procedure.use(requirePermission('countries.update'));
+export const countryDeleteProcedure = trpc.procedure.use(requirePermission('countries.delete'));
+
+// Citizenship management procedures
+export const citizenshipCreateProcedure = trpc.procedure.use(
+  requirePermission('citizenships.create')
+);
+export const citizenshipReadProcedure = trpc.procedure.use(requirePermission('citizenships.read'));
+export const citizenshipUpdateProcedure = trpc.procedure.use(
+  requirePermission('citizenships.update')
+);
+export const citizenshipDeleteProcedure = trpc.procedure.use(
+  requirePermission('citizenships.delete')
+);
+
+// Visa nationality surcharge management procedures
+export const visaNationalitySurchargeCreateProcedure = trpc.procedure.use(
+  requirePermission('visaNationalitySurcharge.create')
+);
+export const visaNationalitySurchargeReadProcedure = trpc.procedure.use(
+  requirePermission('visaNationalitySurcharge.read')
+);
+export const visaNationalitySurchargeUpdateProcedure = trpc.procedure.use(
+  requirePermission('visaNationalitySurcharge.update')
+);
+export const visaNationalitySurchargeDeleteProcedure = trpc.procedure.use(
+  requirePermission('visaNationalitySurcharge.delete')
+);
+
+// City management procedures
+export const cityCreateProcedure = trpc.procedure.use(requirePermission('cities.create'));
+export const cityReadProcedure = trpc.procedure.use(requirePermission('cities.read'));
+export const cityUpdateProcedure = trpc.procedure.use(requirePermission('cities.update'));
+export const cityDeleteProcedure = trpc.procedure.use(requirePermission('cities.delete'));
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

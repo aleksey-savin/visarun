@@ -18,6 +18,18 @@ import TelegramChannelsPage from './pages/Telegram/getAll';
 import ViewTelegramChannelPage from './pages/Telegram/view';
 import ContactMethodsPage from './pages/ContactMethods/getAll';
 
+// Countries pages
+import AllCountriesPage from './pages/Countries/getAll';
+import ViewCountryPage from './pages/Countries/view';
+import CreateCountryPage from './pages/Countries/create';
+import EditCountryPage from './pages/Countries/edit';
+
+// Citizenships pages
+import AllCitizenshipsPage from './pages/Citizenships/getAll';
+import ViewCitizenshipPage from './pages/Citizenships/view';
+import CreateCitizenshipPage from './pages/Citizenships/create';
+import EditCitizenshipPage from './pages/Citizenships/edit';
+
 import {
   getAllUsersRoute,
   getCurrencyExchangeRoute,
@@ -39,6 +51,20 @@ import {
   viewTelegramChannelRouteParams,
   getAccessDeniedRoute,
   getAllContactMethodsRoute,
+  // Countries routes
+  getAllCountriesRoute,
+  getViewCountryRoute,
+  getCreateCountryRoute,
+  getEditCountryRoute,
+  editCountryRouteParams,
+  viewCountryRouteParams,
+  // Citizenships routes
+  getAllCitizenshipsRoute,
+  getViewCitizenshipRoute,
+  getCreateCitizenshipRoute,
+  getEditCitizenshipRoute,
+  editCitizenshipRouteParams,
+  viewCitizenshipRouteParams,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -46,6 +72,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/lib/auth';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PermissionRoute } from '@/components/PermissionRoute';
+import { Toaster } from '@/components/ui/sonner';
 import AccessDeniedPage from '@/pages/AccessDenied';
 
 const App = () => {
@@ -175,12 +202,81 @@ const App = () => {
                     </PermissionRoute>
                   }
                 />
+
+                {/* Countries Management Routes */}
+                <Route
+                  path={getAllCountriesRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="countries.read">
+                      <AllCountriesPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateCountryRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="countries.create">
+                      <CreateCountryPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewCountryRoute(viewCountryRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="countries.read">
+                      <ViewCountryPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditCountryRoute(editCountryRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="countries.update">
+                      <EditCountryPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Citizenships Management Routes */}
+                <Route
+                  path={getAllCitizenshipsRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="citizenships.read">
+                      <AllCitizenshipsPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateCitizenshipRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="citizenships.create">
+                      <CreateCitizenshipPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewCitizenshipRoute(viewCitizenshipRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="citizenships.read">
+                      <ViewCitizenshipPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditCitizenshipRoute(editCitizenshipRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="citizenships.update">
+                      <EditCitizenshipPage />
+                    </PermissionRoute>
+                  }
+                />
               </Route>
 
               {/* Fallback route */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
+          <Toaster />
         </TrpcProvider>
       </AuthProvider>
     </ThemeProvider>

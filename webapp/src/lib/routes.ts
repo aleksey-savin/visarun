@@ -37,3 +37,25 @@ export const getAllContactMethodsRoute = () => '/contact-methods';
 export const viewUserRouteParams = getRouteParams({ id: true });
 export type ViewUserRouteParams = typeof viewUserRouteParams;
 export const getViewUserRoute = ({ id }: ViewUserRouteParams) => `/users/${id}`;
+
+// Countries routes
+export const getAllCountriesRoute = () => '/countries';
+export const getCreateCountryRoute = () => '/countries/create';
+export const editCountryRouteParams = getRouteParams({ id: true });
+export type EditCountryRouteParams = typeof editCountryRouteParams;
+export const getEditCountryRoute = ({ id }: EditCountryRouteParams) => `/countries/edit/${id}`;
+export const viewCountryRouteParams = getRouteParams({ id: true });
+export type ViewCountryRouteParams = typeof viewCountryRouteParams;
+export const getViewCountryRoute = ({ id }: ViewCountryRouteParams) => `/countries/view/${id}`;
+
+// Citizenships routes
+export const getAllCitizenshipsRoute = () => '/citizenships';
+export const getCreateCitizenshipRoute = () => '/citizenships/create';
+export const editCitizenshipRouteParams = getRouteParams({ id: true });
+export type EditCitizenshipRouteParams = typeof editCitizenshipRouteParams;
+export const getEditCitizenshipRoute = ({ id }: EditCitizenshipRouteParams) =>
+  `/citizenships/edit/${id}`;
+export const viewCitizenshipRouteParams = getRouteParams({ id: true });
+export type ViewCitizenshipRouteParams = typeof viewCitizenshipRouteParams;
+export const getViewCitizenshipRoute = ({ id }: ViewCitizenshipRouteParams) =>
+  `/citizenships/view/${id}`;
