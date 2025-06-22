@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, ArrowLeft, Mail } from 'lucide-react';
+import { CalendarIcon, ArrowLeft, Mail, Phone, MessageCircle, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -175,6 +175,53 @@ const ViewUserPage = () => {
                 </p>
               </div>
             </div>
+
+            {/* Contact Methods Section */}
+            {data.user.contactMethods && data.user.contactMethods.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-500">Contact Methods</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {data.user.contactMethods.map(contactMethod => (
+                    <div
+                      key={contactMethod.id}
+                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex-shrink-0">
+                        {contactMethod.method.name === 'email' && (
+                          <Mail className="h-4 w-4 text-blue-600" />
+                        )}
+                        {contactMethod.method.name === 'phone' && (
+                          <Phone className="h-4 w-4 text-green-600" />
+                        )}
+                        {['telegram', 'whatsapp', 'viber', 'line', 'wechat', 'skype'].includes(
+                          contactMethod.method.name
+                        ) && <MessageCircle className="h-4 w-4 text-purple-600" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 capitalize">
+                          {contactMethod.method.name}
+                        </p>
+                        <p className="text-sm text-gray-600 truncate">
+                          {contactMethod.url ? (
+                            <a
+                              href={contactMethod.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1"
+                            >
+                              {contactMethod.value}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          ) : (
+                            contactMethod.value
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="pt-2 flex justify-between">
             <div className="space-x-4 space-y-2">

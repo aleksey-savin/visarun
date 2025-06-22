@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Users, CircleDollarSign, MessageCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  Users,
+  CircleDollarSign,
+  MessageCircle,
+  ChevronDown,
+  ChevronRight,
+  Send,
+} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/lib/auth';
@@ -23,6 +30,7 @@ import {
   getAllUsersRoute,
   getCurrencyExchangeRoute,
   getTelegramChannelsRoute,
+  getAllContactMethodsRoute,
   //getTelegramTemplatesRoute,
 } from '@/lib/routes';
 
@@ -47,9 +55,11 @@ export function AppSidebar() {
   const canReadUsers = hasPermission('users.read');
   const canReadRoles = hasPermission('roles.read');
   const canReadTelegram = hasPermission('telegram.channels.read');
+  const canManageContactMethods = hasPermission('global.fullAccess');
 
   // Check if user has any admin permissions
-  const hasAnyAdminPermission = canReadUsers || canReadRoles || canReadTelegram;
+  const hasAnyAdminPermission =
+    canReadUsers || canReadRoles || canReadTelegram || canManageContactMethods;
 
   return (
     <Sidebar>
@@ -152,7 +162,7 @@ export function AppSidebar() {
                       className="flex items-center justify-between px-2"
                     >
                       <div className="flex items-center gap-2">
-                        <MessageCircle className="w-5 h-5" />
+                        <Send className="w-5 h-5" />
                         <span>Messengers</span>
                       </div>
                       {isTelegramOpen ? (
@@ -196,6 +206,24 @@ export function AppSidebar() {
                         </SidebarMenuSubItem>
                       </SidebarMenuSub>
                     )}
+                  </SidebarMenuItem>
+                )}
+
+                {/* Contact Methods Management */}
+                {canManageContactMethods && (
+                  <SidebarMenuItem key="ContactMethods">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        location.pathname === getAllContactMethodsRoute() ||
+                        location.pathname.startsWith(`${getAllContactMethodsRoute()}/`)
+                      }
+                    >
+                      <Link to={getAllContactMethodsRoute()}>
+                        <MessageCircle className="w-5 h-5" />
+                        <span>Contact Methods</span>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
               </SidebarMenu>

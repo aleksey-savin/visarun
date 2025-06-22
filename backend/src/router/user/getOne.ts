@@ -22,6 +22,20 @@ export const getUserTrpcRoute = trpc.procedure
             assignedAt: 'desc',
           },
         },
+        contactMethods: {
+          include: {
+            method: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
       },
     });
     if (!user) {

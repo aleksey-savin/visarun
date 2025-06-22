@@ -32,6 +32,8 @@ export const getViewTelegramChannelRoute = ({ id }: ViewTelegramChannelRoutePara
 export const getSignInRoute = () => '/sign-in';
 export const getAccessDeniedRoute = () => '/access-denied';
 
+export const getAllContactMethodsRoute = () => '/contact-methods';
+
 export const viewUserRouteParams = getRouteParams({ id: true });
 export type ViewUserRouteParams = typeof viewUserRouteParams;
 export const getViewUserRoute = ({ id }: ViewUserRouteParams) => `/users/${id}`;

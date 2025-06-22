@@ -27,6 +27,20 @@ export const getAllUsersTrpcRoute = trpc.procedure.query(async ({ ctx }) => {
           assignedAt: 'desc',
         },
       },
+      contactMethods: {
+        include: {
+          method: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
     },
   });
 

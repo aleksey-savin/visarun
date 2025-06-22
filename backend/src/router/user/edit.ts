@@ -125,7 +125,7 @@ export const editUserTrpcRoute = userUpdateProcedure
       }
     }
 
-    // Get user with roles
+    // Get user with roles and contact methods
     const userWithRoles = await ctx.prisma.user.findUnique({
       where: { id: input.id },
       include: {
@@ -140,6 +140,20 @@ export const editUserTrpcRoute = userUpdateProcedure
             },
           },
         },
+        contactMethods: {
+          include: {
+            method: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
       },
     });
 
@@ -151,6 +165,7 @@ export const editUserTrpcRoute = userUpdateProcedure
         lastName: updatedUser.lastName,
         email: updatedUser.email,
         roles: userWithRoles?.roleAssignments.map(assignment => assignment.role) || [],
+        contactMethods: userWithRoles?.contactMethods || [],
       },
     };
   });

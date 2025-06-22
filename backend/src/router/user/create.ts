@@ -53,7 +53,7 @@ export const createUserTrpcRoute = userCreateProcedure
       })),
     });
 
-    // Get user with assigned roles
+    // Get user with assigned roles and contact methods
     const userWithRoles = await ctx.prisma.user.findUnique({
       where: { id: user.id },
       include: {
@@ -68,6 +68,20 @@ export const createUserTrpcRoute = userCreateProcedure
             },
           },
         },
+        contactMethods: {
+          include: {
+            method: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
       },
     });
 
@@ -79,6 +93,7 @@ export const createUserTrpcRoute = userCreateProcedure
         lastName: user.lastName,
         email: user.email,
         roles: userWithRoles?.roleAssignments.map(assignment => assignment.role) || [],
+        contactMethods: userWithRoles?.contactMethods || [],
       },
     };
   });

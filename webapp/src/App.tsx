@@ -16,6 +16,7 @@ import CurrencyExchangePage from './pages/CurrencyExchange';
 import HomePage from './pages/HomePage';
 import TelegramChannelsPage from './pages/Telegram/getAll';
 import ViewTelegramChannelPage from './pages/Telegram/view';
+import ContactMethodsPage from './pages/ContactMethods/getAll';
 
 import {
   getAllUsersRoute,
@@ -37,6 +38,7 @@ import {
   getViewTelegramChannelRoute,
   viewTelegramChannelRouteParams,
   getAccessDeniedRoute,
+  getAllContactMethodsRoute,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -160,6 +162,16 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="telegram.channels.read">
                       <ViewTelegramChannelPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Contact Methods Management Routes */}
+                <Route
+                  path={getAllContactMethodsRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="global.fullAccess">
+                      <ContactMethodsPage />
                     </PermissionRoute>
                   }
                 />

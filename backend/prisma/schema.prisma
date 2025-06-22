@@ -7,19 +7,13 @@ datasource db {
   url      = env("DB_URL")
 }
 
-enum UserRole {
-  client
-  manager
-  admin
-}
-
 model RefreshToken {
   id        String   @id @default(uuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -30,16 +24,14 @@ model Role {
   description String?
   isSystem    Boolean              @default(false)
   isActive    Boolean              @default(true)
+  createdById String?              @default(uuid())
+  updatedById String?              @default(uuid())
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @default(now()) @updatedAt
+  createdBy   User?                @relation("RoleCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User?                @relation("RoleUpdatedBy", fields: [updatedById], references: [id])
   permissions RolePermission[]
   assignments UserRoleAssignment[]
-
-  createdBy   User?   @relation("RoleCreatedBy", fields: [createdById], references: [id])
-  createdById String? @default(uuid())
-  updatedBy   User?   @relation("RoleUpdatedBy", fields: [updatedById], references: [id])
-  updatedById String? @default(uuid())
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Permission {
@@ -47,19 +39,17 @@ model Permission {
   code        String           @unique
   description String?
   category    String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @default(now()) @updatedAt
   roles       RolePermission[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model RolePermission {
   roleId       String
   permissionId String
-  assignedAt   DateTime @default(now())
-
-  role       Role       @relation(fields: [roleId], references: [id])
-  permission Permission @relation(fields: [permissionId], references: [id])
+  assignedAt   DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  role         Role       @relation(fields: [roleId], references: [id])
 
   @@id([roleId, permissionId])
 }
@@ -69,75 +59,71 @@ model UserRoleAssignment {
   userId     String
   roleId     String
   assignedAt DateTime @default(now())
-  assignedBy String? // если нужно хранить, кто назначил
-
-  user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
+  assignedBy String?
+  role       Role     @relation(fields: [roleId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 }
 
 model User {
-  // Основные поля
-  id         String  @id @default(uuid())
-  email      String  @unique
-  firstName  String
-  middleName String?
-  lastName   String
-  password   String
-  mustChangePassword Boolean @default(false)
+  id                 String               @id @default(uuid())
+  email              String               @unique
+  firstName          String
+  middleName         String?
+  lastName           String
+  role               UserRole?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @default(now()) @updatedAt
+  password           String
+  mustChangePassword Boolean              @default(false)
+  exchangeRates      ExchangeRate[]
+  refreshTokens      RefreshToken[]
+  rolesCreated       Role[]               @relation("RoleCreatedBy")
+  rolesUpdated       Role[]               @relation("RoleUpdatedBy")
+  contactMethods     UserContactMethod[]
+  roleAssignments    UserRoleAssignment[]
+}
 
-  // Старая жёстко зашитая роль (оставляем до финальной чистки)
-  role UserRole?
+model ContactMethod {
+  id          String              @id @default(uuid())
+  name        String              @unique
+  description String?
+  assignments UserContactMethod[]
+}
 
-  // Таймстемпы
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+model UserContactMethod {
+  id              String        @id @default(uuid())
+  userId          String
+  contactMethodId String
+  value           String
+  url             String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  method          ContactMethod @relation(fields: [contactMethodId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
 
-  // Связи на другие модели
-  exchangeRates ExchangeRate[] // курсы обмена, если есть
-  refreshTokens RefreshToken[] // токены обновления
-
-  // Назначенные роли
-  roleAssignments UserRoleAssignment[]
-
-  // Обратные реляции для полей createdBy/updatedBy
-  // для модели Role
-  rolesCreated Role[] @relation("RoleCreatedBy")
-  rolesUpdated Role[] @relation("RoleUpdatedBy")
+  @@unique([userId, contactMethodId])
+  @@index([userId])
+  @@index([contactMethodId])
 }
 
 model ExchangeRate {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-
-  // RUB ↔ VND
-  rubToVnd Float // Сколько VND дают за 1 RUB
-  vndToRub Float // Сколько RUB дают за 1000 VND
-
-  // USDT ↔ VND
-  usdtToVnd Float // Сколько VND дают за 1 USDT
-  vndToUsdt Float // Сколько VND берут за 1 USDT
-
-  // USDT ↔ RUB
-  usdtToRub Float // Сколько RUB дают за 1 USDT
-  rubToUsdt Float // Сколько RUB берут за 1 USDT
-
-  // Связь с пользователем, создавшим запись
-  createdBy User   @relation(fields: [userId], references: [id])
+  rubToVnd  Float
+  vndToRub  Float
+  usdtToVnd Float
+  vndToUsdt Float
+  usdtToRub Float
+  rubToUsdt Float
   userId    String
+  createdBy User     @relation(fields: [userId], references: [id])
 
-  // Индекс для улучшения производительности при поиске по userId
   @@index([userId])
-}
-
-enum TelegramChannelStatus {
-  active
-  blocked
-  kicked
-  insufficient_permissions
 }
 
 model TelegramChannel {
   id                String                @id @default(uuid())
+  createdAt         DateTime              @default(now())
   chatId            String                @unique
   chatTitle         String
   chatUsername      String
@@ -148,7 +134,6 @@ model TelegramChannel {
   fromLastName      String
   fromUsername      String
   status            TelegramChannelStatus @default(active)
-  createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
   messageTemplateId String?
   messageTemplate   MessageTemplate?      @relation(fields: [messageTemplateId], references: [id])
@@ -159,4 +144,17 @@ model MessageTemplate {
   title            String
   body             String
   telegramChannels TelegramChannel[]
+}
+
+enum UserRole {
+  client
+  manager
+  admin
+}
+
+enum TelegramChannelStatus {
+  active
+  blocked
+  kicked
+  insufficient_permissions
 }

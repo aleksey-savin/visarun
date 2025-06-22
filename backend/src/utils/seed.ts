@@ -122,6 +122,22 @@ async function main() {
 
   console.log('Role permissions configured.');
 
+  // Create basic contact methods
+  console.log('Creating basic contact methods...');
+  const contactMethods = [
+    { name: 'phone', description: 'Phone number' },
+    { name: 'telegram', description: 'Telegram messenger contact' },
+    { name: 'whatsapp', description: 'WhatsApp messenger contact' },
+    { name: 'wechat', description: 'WeChat messenger contact' },
+  ];
+
+  const contactMethodsResult = await prisma.contactMethod.createMany({
+    data: contactMethods,
+    skipDuplicates: true,
+  });
+
+  console.log(`Created ${contactMethodsResult.count} contact methods`);
+
   const userCount = await prisma.user.count();
 
   if (userCount === 0) {
