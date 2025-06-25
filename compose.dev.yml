@@ -92,6 +92,7 @@ services:
       - DB_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-visarun}
     volumes:
       - ./telegram-bot:/app
+      - /app/node_modules
     depends_on:
       - backend
       - db
