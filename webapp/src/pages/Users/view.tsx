@@ -11,7 +11,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, ArrowLeft, Mail, Phone, MessageCircle, ExternalLink } from 'lucide-react';
+import {
+  CalendarIcon,
+  ArrowLeft,
+  Mail,
+  Phone,
+  MessageCircle,
+  ExternalLink,
+  User,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -24,16 +32,32 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { ClientProfileForm } from '../../components/client/ClientProfileForm';
+import { ClientInfo } from '../../components/client/ClientInfo';
 
 const ViewUserPage = () => {
   const { id } = useParams() as ViewUserRouteParams;
   const navigate = useNavigate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
 
   // Query to get user details
   const { data, error, isLoading, isError } = trpc.user.getOne.useQuery({ id });
+
+  // Query to get all client profiles for this user
+  const { data: clientsData, refetch: refetchClients } = trpc.client.getAllByUserId.useQuery({
+    userId: id,
+  });
 
   // Mutation to delete user
   const deleteUserMutation = trpc.user.delete.useMutation({
@@ -71,6 +95,12 @@ const ViewUserPage = () => {
       default:
         return 'bg-green-100 text-green-800 hover:bg-green-100';
     }
+  };
+
+  const handleClientProfileSuccess = () => {
+    setIsClientDialogOpen(false);
+    refetchClients();
+    toast.success('Client profile created successfully');
   };
 
   return (
@@ -231,6 +261,30 @@ const ViewUserPage = () => {
               >
                 Edit User
               </Button>
+
+              {/* Client Profile Section */}
+              <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default">
+                    <User className="h-4 w-4 mr-2" />
+                    Add Client Profile
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Add Client Profile</DialogTitle>
+                    <DialogDescription>
+                      Add a new client profile for {data.user.firstName} {data.user.lastName}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <ClientProfileForm
+                    userId={data.user.id}
+                    onSuccess={handleClientProfileSuccess}
+                    onCancel={() => setIsClientDialogOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" disabled={deleteUserMutation.isPending}>
@@ -255,6 +309,35 @@ const ViewUserPage = () => {
               </AlertDialog>
             </div>
           </CardFooter>
+        </Card>
+      )}
+
+      {/* Client Profiles Section */}
+      {clientsData?.clients && clientsData.clients.length > 0 && (
+        <div className="mt-6 space-y-4">
+          <h2 className="text-2xl font-bold">Client Profiles</h2>
+          {clientsData.clients.map(client => (
+            <ClientInfo
+              key={client.id}
+              clientId={client.id}
+              onEdit={() => navigate(`/clients/edit/${client.id}`)}
+              onDelete={() => {
+                refetchClients();
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {clientsData?.clients && clientsData.clients.length === 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>No Client Profiles</CardTitle>
+            <CardDescription>
+              This user doesn't have any client profiles yet. Click "Add Client Profile" to create
+              one.
+            </CardDescription>
+          </CardHeader>
         </Card>
       )}
     </div>

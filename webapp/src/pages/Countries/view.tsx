@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -34,6 +35,7 @@ import {
   Plus,
   Trash2,
   Save,
+  DollarSign,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
@@ -50,18 +52,36 @@ const ViewCountryPage = () => {
   const canDeleteCities = hasPermission('cities.delete');
   const canManageCities = canCreateCities || canUpdateCities || canDeleteCities;
 
+  // Visa Citizenship Surcharge permissions
+  const canCreateSurcharges = hasPermission('visaCitizenshipSurcharges.create');
+  const canReadSurcharges = hasPermission('visaCitizenshipSurcharges.read');
+  const canUpdateSurcharges = hasPermission('visaCitizenshipSurcharges.update');
+  const canDeleteSurcharges = hasPermission('visaCitizenshipSurcharges.delete');
+  const canManageSurcharges = canCreateSurcharges || canUpdateSurcharges || canDeleteSurcharges;
+
   const [visaFreeDialogOpen, setVisaFreeDialogOpen] = useState(false);
   const [blacklistDialogOpen, setBlacklistDialogOpen] = useState(false);
   const [cityDialogOpen, setCityDialogOpen] = useState(false);
+  const [surchargeDialogOpen, setSurchargeDialogOpen] = useState(false);
   const [editingCity, setEditingCity] = useState<{
     id: string;
     name: string;
     isActive: boolean;
   } | null>(null);
+  const [editingSurcharge, setEditingSurcharge] = useState<{
+    id: string;
+    citizenshipId: string;
+    visaTypeId: string;
+    surchargeAmount: number;
+    note: string | null;
+  } | null>(null);
   const [selectedCitizenshipId, setSelectedCitizenshipId] = useState('');
   const [stampDuration, setStampDuration] = useState(30);
   const [cityName, setCityName] = useState('');
   const [cityIsActive, setCityIsActive] = useState(true);
+  const [surchargeVisaType, setSurchargeVisaType] = useState('');
+  const [surchargeAmount, setSurchargeAmount] = useState<number>(0);
+  const [surchargeNote, setSurchargeNote] = useState('');
 
   const { data, error, isLoading, isError, refetch } = trpc.country.getOne.useQuery(
     { id: id! },
@@ -162,6 +182,47 @@ const ViewCountryPage = () => {
     },
   });
 
+  const createSurchargeMutation = trpc.visaCitizenshipSurcharge.create.useMutation({
+    onSuccess: () => {
+      toast.success('Visa surcharge added successfully');
+      refetch();
+      setSurchargeDialogOpen(false);
+      setSelectedCitizenshipId('');
+      setSurchargeVisaType('');
+      setSurchargeAmount(0);
+      setSurchargeNote('');
+    },
+    onError: error => {
+      toast.error(error.message);
+    },
+  });
+
+  const editSurchargeMutation = trpc.visaCitizenshipSurcharge.edit.useMutation({
+    onSuccess: () => {
+      toast.success('Visa surcharge updated successfully');
+      refetch();
+      setSurchargeDialogOpen(false);
+      setEditingSurcharge(null);
+      setSelectedCitizenshipId('');
+      setSurchargeVisaType('');
+      setSurchargeAmount(0);
+      setSurchargeNote('');
+    },
+    onError: error => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteSurchargeMutation = trpc.visaCitizenshipSurcharge.delete.useMutation({
+    onSuccess: () => {
+      toast.success('Visa surcharge removed successfully');
+      refetch();
+    },
+    onError: error => {
+      toast.error(error.message);
+    },
+  });
+
   const handleDelete = () => {
     if (
       window.confirm('Are you sure you want to delete this country? This action cannot be undone.')
@@ -246,6 +307,85 @@ const ViewCountryPage = () => {
     setEditingCity(null);
     setCityName('');
     setCityIsActive(true);
+  };
+
+  const handleAddSurcharge = () => {
+    if (!selectedCitizenshipId || !surchargeVisaType.trim()) {
+      toast.error('Please select a citizenship and enter visa type');
+      return;
+    }
+    if (surchargeAmount < 0) {
+      toast.error('Surcharge amount cannot be negative');
+      return;
+    }
+    createSurchargeMutation.mutate({
+      citizenshipId: selectedCitizenshipId,
+      countryId: id!,
+      visaTypeId: surchargeVisaType.trim(),
+      surchargeAmount,
+      note: surchargeNote.trim() || undefined,
+    });
+  };
+
+  const handleEditSurcharge = () => {
+    if (!editingSurcharge || !selectedCitizenshipId || !surchargeVisaType.trim()) {
+      toast.error('Please select a citizenship and enter visa type');
+      return;
+    }
+    if (surchargeAmount < 0) {
+      toast.error('Surcharge amount cannot be negative');
+      return;
+    }
+    editSurchargeMutation.mutate({
+      id: editingSurcharge.id,
+      citizenshipId: selectedCitizenshipId,
+      countryId: id!,
+      visaTypeId: surchargeVisaType.trim(),
+      surchargeAmount,
+      note: surchargeNote.trim() || undefined,
+    });
+  };
+
+  const handleDeleteSurcharge = (surchargeId: string) => {
+    if (
+      window.confirm(
+        'Are you sure you want to delete this visa surcharge? This action cannot be undone.'
+      )
+    ) {
+      deleteSurchargeMutation.mutate({ id: surchargeId });
+    }
+  };
+
+  const openSurchargeDialog = (surcharge?: {
+    id: string;
+    citizenshipId: string;
+    visaTypeId: string;
+    surchargeAmount: number;
+    note: string | null;
+  }) => {
+    if (surcharge) {
+      setEditingSurcharge(surcharge);
+      setSelectedCitizenshipId(surcharge.citizenshipId);
+      setSurchargeVisaType(surcharge.visaTypeId);
+      setSurchargeAmount(surcharge.surchargeAmount);
+      setSurchargeNote(surcharge.note || '');
+    } else {
+      setEditingSurcharge(null);
+      setSelectedCitizenshipId('');
+      setSurchargeVisaType('');
+      setSurchargeAmount(0);
+      setSurchargeNote('');
+    }
+    setSurchargeDialogOpen(true);
+  };
+
+  const closeSurchargeDialog = () => {
+    setSurchargeDialogOpen(false);
+    setEditingSurcharge(null);
+    setSelectedCitizenshipId('');
+    setSurchargeVisaType('');
+    setSurchargeAmount(0);
+    setSurchargeNote('');
   };
 
   const getAvailableCitizenshipsForVisaFree = () => {
@@ -662,6 +802,201 @@ const ViewCountryPage = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Visa Citizenship Surcharges */}
+        {(canReadSurcharges || canManageSurcharges) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Visa Surcharges ({country.surcharges?.length || 0})
+                </div>
+                {canCreateSurcharges && (
+                  <Dialog open={surchargeDialogOpen} onOpenChange={setSurchargeDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" onClick={() => openSurchargeDialog()}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Surcharge
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingSurcharge ? 'Edit Visa Surcharge' : 'Add Visa Surcharge'}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="surcharge-citizenship">Citizenship</Label>
+                          <Select
+                            value={selectedCitizenshipId}
+                            onValueChange={setSelectedCitizenshipId}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a citizenship" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {citizenshipsData?.citizenships.map(citizenship => (
+                                <SelectItem key={citizenship.id} value={citizenship.id}>
+                                  <div className="flex items-center gap-2">
+                                    <span>{citizenship.name}</span>
+                                    {citizenship.favourite && (
+                                      <span className="text-yellow-500">⭐</span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="surcharge-visa-type">Visa Type</Label>
+                          <div className="space-y-2">
+                            <Input
+                              id="surcharge-visa-type"
+                              value={surchargeVisaType}
+                              onChange={e => setSurchargeVisaType(e.target.value)}
+                              placeholder="Enter visa type (e.g., Tourist, Business)"
+                              maxLength={100}
+                            />
+                            <div className="flex flex-wrap gap-1">
+                              <span className="text-xs text-muted-foreground">Quick select:</span>
+                              {['Tourist', 'Business', 'Student', 'Work', 'Transit', 'Medical'].map(
+                                type => (
+                                  <Button
+                                    key={type}
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-6 px-2 text-xs"
+                                    onClick={() => setSurchargeVisaType(type)}
+                                    disabled={surchargeVisaType === type}
+                                  >
+                                    {type}
+                                  </Button>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="surcharge-amount">Surcharge Amount (USD)</Label>
+                          <Input
+                            id="surcharge-amount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={surchargeAmount || ''}
+                            onChange={e => setSurchargeAmount(parseFloat(e.target.value) || 0)}
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="surcharge-note">Note (Optional)</Label>
+                          <Textarea
+                            id="surcharge-note"
+                            value={surchargeNote}
+                            onChange={e => setSurchargeNote(e.target.value)}
+                            placeholder="Additional notes..."
+                            maxLength={500}
+                            rows={3}
+                          />
+                          <div className="text-xs text-muted-foreground text-right">
+                            {surchargeNote.length}/500 characters
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={editingSurcharge ? handleEditSurcharge : handleAddSurcharge}
+                            disabled={
+                              createSurchargeMutation.isPending || editSurchargeMutation.isPending
+                            }
+                            className="flex items-center gap-2"
+                          >
+                            <Save className="h-4 w-4" />
+                            {createSurchargeMutation.isPending || editSurchargeMutation.isPending
+                              ? editingSurcharge
+                                ? 'Updating...'
+                                : 'Adding...'
+                              : editingSurcharge
+                                ? 'Update Surcharge'
+                                : 'Add Surcharge'}
+                          </Button>
+                          <Button variant="outline" onClick={closeSurchargeDialog}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {country.surcharges && country.surcharges.length > 0 ? (
+                <div className="space-y-3">
+                  {country.surcharges.map(
+                    (surcharge: {
+                      id: string;
+                      citizenshipId: string;
+                      visaTypeId: string;
+                      surchargeAmount: number;
+                      note: string | null;
+                      citizenship: { id: string; name: string };
+                    }) => (
+                      <div
+                        key={surcharge.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <span className="font-medium">{surcharge.citizenship.name}</span>
+                            <div className="text-sm text-muted-foreground">
+                              {surcharge.visaTypeId} • ${surcharge.surchargeAmount.toFixed(2)}
+                            </div>
+                            {surcharge.note && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {surcharge.note}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          {canUpdateSurcharges && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openSurchargeDialog(surcharge)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canDeleteSurcharges && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteSurcharge(surcharge.id)}
+                              disabled={deleteSurchargeMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">
+                  {canReadSurcharges
+                    ? 'No visa surcharges configured.'
+                    : "You don't have permission to view visa surcharges."}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Actions */}
         <div className="flex gap-4">

@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { hashPassword } from './getPasswordHash.ts';
-import { citizenships } from './citizenships.ts';
+import { hashPassword } from './getPasswordHash.js';
+import { citizenships } from './citizenships.js';
 
 const prisma = new PrismaClient();
 
@@ -65,26 +65,26 @@ async function main() {
     { code: 'citizenships.update', description: 'Edit citizenships', category: 'citizenships' },
     { code: 'citizenships.delete', description: 'Delete citizenships', category: 'citizenships' },
 
-    // Visa nationality surcharges management
+    // Visa citizenship surcharges management
     {
-      code: 'visaNationalitySurcharge.create',
-      description: 'Create nationality surcharges',
-      category: 'visaNationalitySurcharge',
+      code: 'visaCitizenshipSurcharge.create',
+      description: 'Create citizenship surcharges',
+      category: 'visaCitizenshipSurcharge',
     },
     {
-      code: 'visaNationalitySurcharge.read',
-      description: 'View nationality surcharges',
-      category: 'visaNationalitySurcharge',
+      code: 'visaCitizenshipSurcharge.read',
+      description: 'View citizenship surcharges',
+      category: 'visaCitizenshipSurcharge',
     },
     {
-      code: 'visaNationalitySurcharge.update',
-      description: 'Edit nationality surcharges',
-      category: 'visaNationalitySurcharge',
+      code: 'visaCitizenshipSurcharge.update',
+      description: 'Edit citizenship surcharges',
+      category: 'visaCitizenshipSurcharge',
     },
     {
-      code: 'visaNationalitySurcharge.delete',
-      description: 'Delete nationality surcharges',
-      category: 'visaNationalitySurcharge',
+      code: 'visaCitizenshipSurcharge.delete',
+      description: 'Delete citizenship surcharges',
+      category: 'visaCitizenshipSurcharge',
     },
 
     // Cities management
@@ -94,12 +94,28 @@ async function main() {
     { code: 'cities.delete', description: 'Delete cities', category: 'cities' },
   ];
 
-  const permissionsResult = await prisma.permission.createMany({
-    data: permissions,
-    skipDuplicates: true,
-  });
+  // Create permissions with duplicate checking
+  let permissionsCreated = 0;
+  let permissionsExisted = 0;
 
-  console.log(`Created ${permissionsResult.count} permissions`);
+  for (const permission of permissions) {
+    const existing = await prisma.permission.findFirst({
+      where: { code: permission.code },
+    });
+
+    if (!existing) {
+      await prisma.permission.create({
+        data: permission,
+      });
+      permissionsCreated++;
+    } else {
+      permissionsExisted++;
+    }
+  }
+
+  console.log(
+    `Processed ${permissions.length} permissions: ${permissionsCreated} created, ${permissionsExisted} already existed`
+  );
 
   const fullAccessPermission = await prisma.permission.findUnique({
     where: { code: 'global.fullAccess' },
@@ -172,21 +188,53 @@ async function main() {
     { name: 'wechat', description: 'WeChat messenger contact' },
   ];
 
-  const contactMethodsResult = await prisma.contactMethod.createMany({
-    data: contactMethods,
-    skipDuplicates: true,
-  });
+  // Create contact methods with duplicate checking
+  let contactMethodsCreated = 0;
+  let contactMethodsExisted = 0;
 
-  console.log(`Created ${contactMethodsResult.count} contact methods`);
+  for (const contactMethod of contactMethods) {
+    const existing = await prisma.contactMethod.findFirst({
+      where: { name: contactMethod.name },
+    });
 
-  // Create citizenships
+    if (!existing) {
+      await prisma.contactMethod.create({
+        data: contactMethod,
+      });
+      contactMethodsCreated++;
+    } else {
+      contactMethodsExisted++;
+    }
+  }
+
+  console.log(
+    `Processed ${contactMethods.length} contact methods: ${contactMethodsCreated} created, ${contactMethodsExisted} already existed`
+  );
+
+  // Create citizenships with duplicate checking
   console.log('Creating citizenships...');
-  const citizenshipsResult = await prisma.citizenship.createMany({
-    data: citizenships,
-    skipDuplicates: true,
-  });
 
-  console.log(`Created ${citizenshipsResult.count} citizenships`);
+  let citizenshipsCreated = 0;
+  let citizenshipsExisted = 0;
+
+  for (const citizenship of citizenships) {
+    const existing = await prisma.citizenship.findFirst({
+      where: { name: citizenship.name },
+    });
+
+    if (!existing) {
+      await prisma.citizenship.create({
+        data: citizenship,
+      });
+      citizenshipsCreated++;
+    } else {
+      citizenshipsExisted++;
+    }
+  }
+
+  console.log(
+    `Processed ${citizenships.length} citizenships: ${citizenshipsCreated} created, ${citizenshipsExisted} already existed`
+  );
 
   const userCount = await prisma.user.count();
 

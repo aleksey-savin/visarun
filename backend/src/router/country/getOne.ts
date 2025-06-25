@@ -46,6 +46,31 @@ export const getOneCountryTrpcRoute = countryReadProcedure
             },
           },
         },
+        surcharges: {
+          select: {
+            id: true,
+            citizenshipId: true,
+            visaTypeId: true,
+            surchargeAmount: true,
+            note: true,
+            citizenship: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: [
+            {
+              citizenship: {
+                name: 'asc',
+              },
+            },
+            {
+              visaTypeId: 'asc',
+            },
+          ],
+        },
       },
     });
 

@@ -25,3 +25,7 @@ dist-ssr
 *.sw?
 
 .env
+
+# Uploads directory (handled by Docker volumes)
+backend/uploads/
+uploads/

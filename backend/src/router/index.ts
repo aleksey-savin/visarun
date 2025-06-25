@@ -16,8 +16,11 @@ import { countryRoute } from './country/index.js';
 import { citizenshipRoute } from './citizenship/index.js';
 import { visaFreeRoute } from './visaFree/index.js';
 import { blacklistedRoute } from './blacklisted/index.js';
-import { visaNationalitySurchargeRoute } from './visaNationalitySurcharge/index.js';
+import { visaCitizenshipSurchargeRoute } from './visaCitizenshipSurcharge/index.js';
 import { cityRoute } from './city/index.js';
+import { clientRoutes } from './client/index.js';
+import { clientPassportRoutes } from './clientPassport/index.js';
+import { uploadRoutes } from './upload/index.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
@@ -30,8 +33,11 @@ export const appRouter = trpc.router({
   citizenship: citizenshipRoute,
   visaFree: visaFreeRoute,
   blacklisted: blacklistedRoute,
-  visaNationalitySurcharge: visaNationalitySurchargeRoute,
+  visaCitizenshipSurcharge: visaCitizenshipSurchargeRoute,
   city: cityRoute,
+  client: clientRoutes,
+  clientPassport: clientPassportRoutes,
+  upload: uploadRoutes,
 
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,

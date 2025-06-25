@@ -3,12 +3,26 @@ import cors from 'cors';
 import { appRouter } from './router/index.js';
 import { applyTrpcToExpressApp } from './lib/trpc.js';
 import { createAppContext } from './lib/ctx.js';
+import { createUploadRoutes } from './router/upload/index.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 (async () => {
   try {
     const app = express();
 
     app.use(cors());
+    app.use(express.json({ limit: '50mb' }));
+    app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+    // Serve static files from uploads directory
+    app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+    // Upload routes
+    app.use('/api/upload', createUploadRoutes());
 
     // System initialization note
     console.log('⚠️  Note: To initialize system with default data, run:');

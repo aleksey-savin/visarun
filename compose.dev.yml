@@ -1,15 +1,105 @@
 services:
+  # База данных PostgreSQL
   db:
     image: postgres:17
     restart: always
     ports:
-      - 5432:${DB_PORT}
+      - "5432:5432"
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-visarun}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-dev
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - DB_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-visarun}
+      - PORT=3001
+      - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
+      - BACKEND_URL=http://backend:3001
+    volumes:
+      - ./backend:/app/backend
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./package.json:/app/package.json
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+      - ./backend/uploads:/app/backend/uploads
+      - /app/node_modules
+      - /app/backend/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["pnpm", "--filter", "@visarun/backend", "run", "dev"]
+
+  # Frontend webapp
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: webapp-dev
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3001/trpc
+      - VITE_BACKEND_URL=http://localhost:3001
+    volumes:
+      - ./webapp:/app/webapp
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./package.json:/app/package.json
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+      - /app/node_modules
+      - /app/webapp/node_modules
+    depends_on:
+      - backend
+    command:
+      [
+        "pnpm",
+        "--filter",
+        "@visarun/webapp",
+        "run",
+        "dev",
+        "--",
+        "--host",
+        "0.0.0.0",
+      ]
+
+  # Telegram Bot
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - BACKEND_URL=http://backend:3001/trpc
+      - DB_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-visarun}
+    volumes:
+      - ./telegram-bot:/app
+    depends_on:
+      - backend
+      - db
+    command: ["pnpm", "run", "dev"]
 
 volumes:
   pgdata:
+
+networks:
+  default:
+    driver: bridge

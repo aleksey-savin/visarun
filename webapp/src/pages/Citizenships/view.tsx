@@ -46,6 +46,7 @@ const ViewCitizenshipPage = () => {
   const [visaTypeId, setVisaTypeId] = useState('');
   const [surchargeAmount, setSurchargeAmount] = useState(0);
   const [surchargeNote, setSurchargeNote] = useState('');
+  const [surchargeCountryId, setSurchargeCountryId] = useState('');
 
   const { data, error, isLoading, isError, refetch } = trpc.citizenship.getOne.useQuery(
     { id: id! },
@@ -109,23 +110,24 @@ const ViewCitizenshipPage = () => {
     },
   });
 
-  const createSurchargeMutation = trpc.visaNationalitySurcharge.create.useMutation({
+  const createSurchargeMutation = trpc.visaCitizenshipSurcharge.create.useMutation({
     onSuccess: () => {
-      toast.success('Nationality surcharge added successfully');
+      toast.success('Citizenship surcharge added successfully');
       refetch();
       setSurchargeDialogOpen(false);
       setVisaTypeId('');
       setSurchargeAmount(0);
       setSurchargeNote('');
+      setSurchargeCountryId('');
     },
     onError: error => {
       toast.error(error.message);
     },
   });
 
-  const deleteSurchargeMutation = trpc.visaNationalitySurcharge.delete.useMutation({
+  const deleteSurchargeMutation = trpc.visaCitizenshipSurcharge.delete.useMutation({
     onSuccess: () => {
-      toast.success('Nationality surcharge removed successfully');
+      toast.success('Citizenship surcharge removed successfully');
       refetch();
     },
     onError: error => {
@@ -167,12 +169,17 @@ const ViewCitizenshipPage = () => {
   };
 
   const handleAddSurcharge = () => {
+    if (!surchargeCountryId) {
+      toast.error('Please select a country');
+      return;
+    }
     if (!visaTypeId || surchargeAmount <= 0) {
       toast.error('Please enter visa type ID and valid surcharge amount');
       return;
     }
     createSurchargeMutation.mutate({
       citizenshipId: id!,
+      countryId: surchargeCountryId,
       visaTypeId,
       surchargeAmount,
       note: surchargeNote || undefined,
@@ -456,13 +463,13 @@ const ViewCitizenshipPage = () => {
           </CardContent>
         </Card>
 
-        {/* Visa Nationality Surcharges */}
+        {/* Visa Citizenship Surcharges */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
-                Visa Nationality Surcharges ({citizenship.surcharges.length})
+                Visa Citizenship Surcharges ({citizenship.surcharges.length})
               </div>
               <Dialog open={surchargeDialogOpen} onOpenChange={setSurchargeDialogOpen}>
                 <DialogTrigger asChild>
@@ -473,9 +480,24 @@ const ViewCitizenshipPage = () => {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Add Nationality Surcharge</DialogTitle>
+                    <DialogTitle>Add Citizenship Surcharge</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="surcharge-country">Country</Label>
+                      <Select value={surchargeCountryId} onValueChange={setSurchargeCountryId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countriesData?.countries.map(country => (
+                            <SelectItem key={country.id} value={country.id}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div>
                       <Label htmlFor="visa-type">Visa Type ID</Label>
                       <Input
@@ -532,6 +554,7 @@ const ViewCitizenshipPage = () => {
                     visaTypeId: string;
                     surchargeAmount: number;
                     note: string | null;
+                    country: { id: string; name: string };
                   }) => (
                     <div
                       key={surcharge.id}
@@ -539,7 +562,9 @@ const ViewCitizenshipPage = () => {
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">Visa Type: {surcharge.visaTypeId}</span>
+                          <span className="font-medium">
+                            {surcharge.country.name} - {surcharge.visaTypeId}
+                          </span>
                           <Badge variant="outline" className="bg-blue-50 text-blue-700">
                             ${surcharge.surchargeAmount.toFixed(2)}
                           </Badge>

@@ -59,3 +59,27 @@ export const viewCitizenshipRouteParams = getRouteParams({ id: true });
 export type ViewCitizenshipRouteParams = typeof viewCitizenshipRouteParams;
 export const getViewCitizenshipRoute = ({ id }: ViewCitizenshipRouteParams) =>
   `/citizenships/view/${id}`;
+
+// Visa Citizenship Surcharges routes
+export const getAllVisaCitizenshipSurchargesRoute = () => '/visa-citizenship-surcharges';
+export const getCreateVisaCitizenshipSurchargeRoute = () => '/visa-citizenship-surcharges/create';
+export const editVisaCitizenshipSurchargeRouteParams = getRouteParams({ id: true });
+export type EditVisaCitizenshipSurchargeRouteParams =
+  typeof editVisaCitizenshipSurchargeRouteParams;
+export const getEditVisaCitizenshipSurchargeRoute = ({
+  id,
+}: EditVisaCitizenshipSurchargeRouteParams) => `/visa-citizenship-surcharges/edit/${id}`;
+export const viewVisaCitizenshipSurchargeRouteParams = getRouteParams({ id: true });
+export type ViewVisaCitizenshipSurchargeRouteParams =
+  typeof viewVisaCitizenshipSurchargeRouteParams;
+export const getViewVisaCitizenshipSurchargeRoute = ({
+  id,
+}: ViewVisaCitizenshipSurchargeRouteParams) => `/visa-citizenship-surcharges/view/${id}`;
+
+// Client routes
+export const viewClientRouteParams = getRouteParams({ id: true });
+export type ViewClientRouteParams = typeof viewClientRouteParams;
+export const getViewClientRoute = ({ id }: ViewClientRouteParams) => `/clients/view/${id}`;
+export const editClientRouteParams = getRouteParams({ id: true });
+export type EditClientRouteParams = typeof editClientRouteParams;
+export const getEditClientRoute = ({ id }: EditClientRouteParams) => `/clients/edit/${id}`;

@@ -53,7 +53,23 @@ export const getOneCitizenshipTrpcRoute = citizenshipReadProcedure
             visaTypeId: true,
             surchargeAmount: true,
             note: true,
+            country: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
+          orderBy: [
+            {
+              country: {
+                name: 'asc',
+              },
+            },
+            {
+              visaTypeId: 'asc',
+            },
+          ],
         },
       },
     });

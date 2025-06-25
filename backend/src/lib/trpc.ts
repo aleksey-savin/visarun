@@ -108,18 +108,18 @@ export const citizenshipDeleteProcedure = trpc.procedure.use(
   requirePermission('citizenships.delete')
 );
 
-// Visa nationality surcharge management procedures
-export const visaNationalitySurchargeCreateProcedure = trpc.procedure.use(
-  requirePermission('visaNationalitySurcharge.create')
+// Visa citizenship surcharge management procedures
+export const visaCitizenshipSurchargeCreateProcedure = trpc.procedure.use(
+  requirePermission('visaCitizenshipSurcharge.create')
 );
-export const visaNationalitySurchargeReadProcedure = trpc.procedure.use(
-  requirePermission('visaNationalitySurcharge.read')
+export const visaCitizenshipSurchargeReadProcedure = trpc.procedure.use(
+  requirePermission('visaCitizenshipSurcharge.read')
 );
-export const visaNationalitySurchargeUpdateProcedure = trpc.procedure.use(
-  requirePermission('visaNationalitySurcharge.update')
+export const visaCitizenshipSurchargeUpdateProcedure = trpc.procedure.use(
+  requirePermission('visaCitizenshipSurcharge.update')
 );
-export const visaNationalitySurchargeDeleteProcedure = trpc.procedure.use(
-  requirePermission('visaNationalitySurcharge.delete')
+export const visaCitizenshipSurchargeDeleteProcedure = trpc.procedure.use(
+  requirePermission('visaCitizenshipSurcharge.delete')
 );
 
 // City management procedures

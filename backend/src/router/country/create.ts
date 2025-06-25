@@ -10,18 +10,27 @@ export const zCreateCountryTrpcInput = z.object({
 export const createCountryTrpcRoute = countryCreateProcedure
   .input(zCreateCountryTrpcInput)
   .mutation(async ({ input, ctx }) => {
-    // Check if country name already exists
-    const existingCountry = await ctx.prisma.country.findFirst({
-      where: {
-        name: {
-          equals: input.name,
-          mode: 'insensitive',
-        },
+    // Normalize the input name for duplicate checking
+    const normalizedInputName = input.name.toLowerCase().trim().replace(/\s+/g, '');
+
+    // Get all existing countries to check for normalized duplicates
+    const existingCountries = await ctx.prisma.country.findMany({
+      select: {
+        id: true,
+        name: true,
       },
     });
 
-    if (existingCountry) {
-      throw new Error('Country name already exists');
+    // Check if a country with the same normalized name already exists
+    const isDuplicate = existingCountries.some(country => {
+      const normalizedExistingName = country.name.toLowerCase().trim().replace(/\s+/g, '');
+      return normalizedExistingName === normalizedInputName;
+    });
+
+    if (isDuplicate) {
+      throw new Error(
+        'A country with this name already exists (case and spacing variations ignored)'
+      );
     }
 
     // Create the country

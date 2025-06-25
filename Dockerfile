@@ -13,29 +13,37 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
 COPY ./backend/package.json ./backend/
 COPY ./webapp/package.json ./webapp/
 
-# Install dependencies WITHOUT running prisma generate yet
+# Development base - allows lockfile updates
+FROM base AS base-dev
+RUN pnpm install --ignore-scripts
+
+# Production base - uses frozen lockfile
+FROM base AS base-prod
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
-# Now copy the source code including prisma schema
+# Copy source code and generate Prisma client for both
+FROM base-dev AS dev-prepared
 COPY . .
+RUN cd backend && pnpm prisma generate
 
-# Generate Prisma client
+FROM base-prod AS prod-prepared
+COPY . .
 RUN cd backend && pnpm prisma generate
 
 # Backend development stage
-FROM base AS backend-dev
+FROM dev-prepared AS backend-dev
 WORKDIR /app
 EXPOSE 3001
 CMD ["pnpm", "--filter", "@visarun/backend", "run", "dev"]
 
 # webapp development stage
-FROM base AS webapp-dev
+FROM dev-prepared AS webapp-dev
 WORKDIR /app
 EXPOSE 5173
 # Configure Vite to listen on all interfaces and use proper host
 CMD ["pnpm", "--filter", "@visarun/webapp", "run", "dev", "--", "--host", "0.0.0.0"]
 
-FROM base AS backend-build
+FROM prod-prepared AS backend-build
 WORKDIR /app
 # Install build dependencies
 RUN cd backend && pnpm add -D @swc/cli @swc/core
@@ -43,7 +51,7 @@ RUN cd backend && pnpm add -D @swc/cli @swc/core
 RUN pnpm --filter @visarun/backend run build
 
 # Frontend build stage
-FROM base AS webapp-build
+FROM prod-prepared AS webapp-build
 WORKDIR /app
 # Set production environment variables if needed
 ARG VITE_API_URL

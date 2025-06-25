@@ -19,24 +19,35 @@ export const editCitizenshipTrpcRoute = citizenshipUpdateProcedure
       throw new Error('Citizenship not found');
     }
 
-    // Check if another citizenship with the same name exists (excluding current one)
-    const duplicateCitizenship = await ctx.prisma.citizenship.findFirst({
+    // Normalize the input name for duplicate checking
+    const normalizedInputName = input.name.toLowerCase().trim().replace(/\s+/g, '');
+
+    // Get all existing citizenships to check for normalized duplicates (excluding current one)
+    const existingCitizenships = await ctx.prisma.citizenship.findMany({
       where: {
-        name: {
-          equals: input.name,
-          mode: 'insensitive',
-        },
         id: {
           not: input.id,
         },
       },
+      select: {
+        id: true,
+        name: true,
+      },
     });
 
-    if (duplicateCitizenship) {
-      throw new Error('Citizenship name already exists');
+    // Check if a citizenship with the same normalized name already exists
+    const isDuplicate = existingCitizenships.some(citizenship => {
+      const normalizedExistingName = citizenship.name.toLowerCase().trim().replace(/\s+/g, '');
+      return normalizedExistingName === normalizedInputName;
+    });
+
+    if (isDuplicate) {
+      throw new Error(
+        'A citizenship with this name already exists (case and spacing variations ignored)'
+      );
     }
 
-    // Update the citizenship
+    // Update the citizenship with original name (preserve formatting)
     const updatedCitizenship = await ctx.prisma.citizenship.update({
       where: { id: input.id },
       data: {

@@ -81,6 +81,35 @@ model User {
   rolesUpdated       Role[]               @relation("RoleUpdatedBy")
   contactMethods     UserContactMethod[]
   roleAssignments    UserRoleAssignment[]
+  Client             Client[]
+}
+
+model Client {
+  id                    String           @id @default(uuid())
+  userId                String?
+  user                  User?            @relation(fields: [userId], references: [id])
+  firstName             String
+  lastName              String
+  citizenshipId         String?
+  citizenship           Citizenship?     @relation(fields: [citizenshipId], references: [id])
+  prevViolations        Boolean          @default(false)
+  prevViolationsDesc    String?
+  isOutsideTheCountry   Boolean          @default(false)
+  isOutsideTheCountryAt DateTime?
+  passports             ClientPassport[]
+
+  @@index([userId])
+  @@index([citizenshipId])
+}
+
+model ClientPassport {
+  id             String   @id @default(uuid())
+  clientId       String
+  client         Client   @relation(fields: [clientId], references: [id])
+  expirationDate DateTime
+  scanPath       String
+
+  @@index([clientId])
 }
 
 model ContactMethod {
@@ -108,21 +137,23 @@ model UserContactMethod {
 
 model Citizenship {
   id          String                     @id @default(uuid())
-  name        String
+  name        String                     @unique
   favourite   Boolean                    @default(false)
   visaFree    VisaFree[]
   blacklisted Blacklisted[]
-  surcharges  VisaNationalitySurcharge[]
+  surcharges  VisaCitizenshipSurcharge[]
+  Client      Client[]
 }
 
 model Country {
-  id                 String        @id @default(uuid())
-  name               String
-  eVisaAvailable     Boolean       @default(false)
-  multivisaAvailable Boolean       @default(false)
+  id                 String                     @id @default(uuid())
+  name               String                     @unique
+  eVisaAvailable     Boolean                    @default(false)
+  multivisaAvailable Boolean                    @default(false)
   cities             City[]
   visaFree           VisaFree[]
   blacklisted        Blacklisted[]
+  surcharges         VisaCitizenshipSurcharge[]
 }
 
 model City {
@@ -154,14 +185,16 @@ model Blacklisted {
   @@id([citizenshipId, countryId])
 }
 
-model VisaNationalitySurcharge {
+model VisaCitizenshipSurcharge {
   id              String  @id @default(uuid())
   citizenshipId   String
+  countryId       String
   visaTypeId      String
   surchargeAmount Float
   note            String?
 
   citizenship Citizenship @relation(fields: [citizenshipId], references: [id])
+  country     Country     @relation(fields: [countryId], references: [id])
   // visaType    VisaType    @relation(fields: [visaTypeId], references: [id])
 }
 

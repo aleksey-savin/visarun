@@ -30,6 +30,16 @@ import ViewCitizenshipPage from './pages/Citizenships/view';
 import CreateCitizenshipPage from './pages/Citizenships/create';
 import EditCitizenshipPage from './pages/Citizenships/edit';
 
+// Visa Citizenship Surcharges pages
+import AllVisaCitizenshipSurchargesPage from './pages/VisaCitizenshipSurcharges/getAll';
+import ViewVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/view';
+import CreateVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/create';
+import EditVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/edit';
+
+// Client pages
+import ViewClientPage from './pages/Clients/view';
+import EditClientPage from './pages/Clients/edit';
+
 import {
   getAllUsersRoute,
   getCurrencyExchangeRoute,
@@ -65,6 +75,18 @@ import {
   getEditCitizenshipRoute,
   editCitizenshipRouteParams,
   viewCitizenshipRouteParams,
+  // Visa Citizenship Surcharges routes
+  getAllVisaCitizenshipSurchargesRoute,
+  getViewVisaCitizenshipSurchargeRoute,
+  getCreateVisaCitizenshipSurchargeRoute,
+  getEditVisaCitizenshipSurchargeRoute,
+  editVisaCitizenshipSurchargeRouteParams,
+  viewVisaCitizenshipSurchargeRouteParams,
+  // Client routes
+  getViewClientRoute,
+  getEditClientRoute,
+  viewClientRouteParams,
+  editClientRouteParams,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -267,6 +289,62 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="citizenships.update">
                       <EditCitizenshipPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Visa Citizenship Surcharges Management Routes */}
+                <Route
+                  path={getAllVisaCitizenshipSurchargesRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="visaCitizenshipSurcharges.read">
+                      <AllVisaCitizenshipSurchargesPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateVisaCitizenshipSurchargeRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="visaCitizenshipSurcharges.create">
+                      <CreateVisaCitizenshipSurchargePage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewVisaCitizenshipSurchargeRoute(
+                    viewVisaCitizenshipSurchargeRouteParams
+                  )}
+                  element={
+                    <PermissionRoute requiredPermission="visaCitizenshipSurcharges.read">
+                      <ViewVisaCitizenshipSurchargePage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditVisaCitizenshipSurchargeRoute(
+                    editVisaCitizenshipSurchargeRouteParams
+                  )}
+                  element={
+                    <PermissionRoute requiredPermission="visaCitizenshipSurcharges.update">
+                      <EditVisaCitizenshipSurchargePage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Client Management Routes */}
+                <Route
+                  path={getViewClientRoute(viewClientRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="users.read">
+                      <ViewClientPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditClientRoute(editClientRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="users.update">
+                      <EditClientPage />
                     </PermissionRoute>
                   }
                 />

@@ -8,6 +8,7 @@ import {
   Send,
   Globe,
   UserCheck,
+  Receipt,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -36,6 +37,7 @@ import {
   // New entity routes
   getAllCountriesRoute,
   getAllCitizenshipsRoute,
+  getAllVisaCitizenshipSurchargesRoute,
 
   //getTelegramTemplatesRoute,
 } from '@/lib/routes';
@@ -61,7 +63,9 @@ export function AppSidebar() {
     location.pathname === getAllCountriesRoute() ||
     location.pathname.startsWith(`${getAllCountriesRoute()}/`) ||
     location.pathname === getAllCitizenshipsRoute() ||
-    location.pathname.startsWith(`${getAllCitizenshipsRoute()}/`);
+    location.pathname.startsWith(`${getAllCitizenshipsRoute()}/`) ||
+    location.pathname === getAllVisaCitizenshipSurchargesRoute() ||
+    location.pathname.startsWith(`${getAllVisaCitizenshipSurchargesRoute()}/`);
 
   // Permission checks
   const canAccessExchangeRates = hasPermission('exchangeRates.create');
@@ -81,13 +85,19 @@ export function AppSidebar() {
     hasPermission('citizenships.create') ||
     hasPermission('citizenships.update') ||
     hasPermission('citizenships.delete');
+  const canReadVisaCitizenshipSurcharges =
+    hasPermission('visaCitizenshipSurcharges.read') ||
+    hasPermission('visaCitizenshipSurcharges.create') ||
+    hasPermission('visaCitizenshipSurcharges.update') ||
+    hasPermission('visaCitizenshipSurcharges.delete');
 
   // Check if user has any admin permissions
   const hasAnyAdminPermission =
     canReadUsers || canReadRoles || canReadTelegram || canManageContactMethods;
 
   // Check if user has any visa management permissions
-  const hasAnyVisaPermission = canReadCountries || canReadCitizenships;
+  const hasAnyVisaPermission =
+    canReadCountries || canReadCitizenships || canReadVisaCitizenshipSurcharges;
 
   return (
     <Sidebar>
@@ -173,6 +183,24 @@ export function AppSidebar() {
                             <Link to={getAllCitizenshipsRoute()}>
                               <UserCheck className="w-4 h-4" />
                               <span>Citizenships</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuSubItem>
+                      )}
+                      {canReadVisaCitizenshipSurcharges && (
+                        <SidebarMenuSubItem key="VisaCitizenshipSurcharges">
+                          <SidebarMenuButton
+                            asChild
+                            isActive={
+                              location.pathname === getAllVisaCitizenshipSurchargesRoute() ||
+                              location.pathname.startsWith(
+                                `${getAllVisaCitizenshipSurchargesRoute()}/`
+                              )
+                            }
+                          >
+                            <Link to={getAllVisaCitizenshipSurchargesRoute()}>
+                              <Receipt className="w-4 h-4" />
+                              <span>Visa Surcharges</span>
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuSubItem>

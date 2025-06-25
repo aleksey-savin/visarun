@@ -11,10 +11,12 @@ services:
     environment:
       - NODE_ENV=production
       - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    volumes:
+      - uploads:/app/backend/uploads
     depends_on:
       - postgres
     restart: always
-    
+
   telegram-bot:
     build:
       context: ./telegram-bot
@@ -58,3 +60,4 @@ services:
 
 volumes:
   postgres_data:
+  uploads:

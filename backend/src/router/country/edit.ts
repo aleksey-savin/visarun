@@ -20,21 +20,32 @@ export const editCountryTrpcRoute = countryUpdateProcedure
       throw new Error('Country not found');
     }
 
-    // Check if another country with the same name exists (excluding current one)
-    const duplicateCountry = await ctx.prisma.country.findFirst({
+    // Normalize the input name for duplicate checking
+    const normalizedInputName = input.name.toLowerCase().trim().replace(/\s+/g, '');
+
+    // Get all existing countries to check for normalized duplicates (excluding current one)
+    const existingCountries = await ctx.prisma.country.findMany({
       where: {
-        name: {
-          equals: input.name,
-          mode: 'insensitive',
-        },
         id: {
           not: input.id,
         },
       },
+      select: {
+        id: true,
+        name: true,
+      },
     });
 
-    if (duplicateCountry) {
-      throw new Error('Country name already exists');
+    // Check if a country with the same normalized name already exists
+    const isDuplicate = existingCountries.some(country => {
+      const normalizedExistingName = country.name.toLowerCase().trim().replace(/\s+/g, '');
+      return normalizedExistingName === normalizedInputName;
+    });
+
+    if (isDuplicate) {
+      throw new Error(
+        'A country with this name already exists (case and spacing variations ignored)'
+      );
     }
 
     // Update the country
