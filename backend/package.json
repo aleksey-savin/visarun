@@ -5,7 +5,7 @@
   "description": "",
   "main": "src/app.ts",
   "scripts": {
-    "dev": "tsx watch src/app.ts ./.env",
+    "dev": "tsx watch --clear-screen=false src/app.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\"",
     "lint": "eslint . --ext .ts,.js",

@@ -32,14 +32,16 @@ services:
       - PORT=3001
       - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret}
       - BACKEND_URL=http://backend:3001
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     volumes:
       - ./backend:/app/backend
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
       - ./package.json:/app/package.json
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
       - ./backend/uploads:/app/backend/uploads
-      - /app/node_modules
-      - /app/backend/node_modules
+      - backend_node_modules:/app/backend/node_modules
+      - root_node_modules:/app/node_modules
     depends_on:
       db:
         condition: service_healthy
@@ -100,6 +102,8 @@ services:
 
 volumes:
   pgdata:
+  backend_node_modules:
+  root_node_modules:
 
 networks:
   default:
