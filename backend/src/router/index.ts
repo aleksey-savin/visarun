@@ -21,6 +21,10 @@ import { cityRoute } from './city/index.js';
 import { clientRoutes } from './client/index.js';
 import { clientPassportRoutes } from './clientPassport/index.js';
 import { uploadRoutes } from './upload/index.js';
+import { orderRoutes } from './order/index.js';
+import { orderItemRoutes } from './orderItem/index.js';
+import { clientDiscountRuleRoutes } from './clientDiscountRule/index.js';
+import { clientDiscountAssignmentRoutes } from './clientDiscountAssignment/index.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
@@ -38,6 +42,10 @@ export const appRouter = trpc.router({
   client: clientRoutes,
   clientPassport: clientPassportRoutes,
   upload: uploadRoutes,
+  order: orderRoutes,
+  orderItem: orderItemRoutes,
+  clientDiscountRule: clientDiscountRuleRoutes,
+  clientDiscountAssignment: clientDiscountAssignmentRoutes,
 
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,

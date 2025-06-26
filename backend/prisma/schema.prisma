@@ -65,38 +65,42 @@ model UserRoleAssignment {
 }
 
 model User {
-  id                 String               @id @default(uuid())
-  email              String               @unique
-  firstName          String
-  middleName         String?
-  lastName           String
-  role               UserRole?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @default(now()) @updatedAt
-  password           String
-  mustChangePassword Boolean              @default(false)
-  exchangeRates      ExchangeRate[]
-  refreshTokens      RefreshToken[]
-  rolesCreated       Role[]               @relation("RoleCreatedBy")
-  rolesUpdated       Role[]               @relation("RoleUpdatedBy")
-  contactMethods     UserContactMethod[]
-  roleAssignments    UserRoleAssignment[]
-  Client             Client[]
+  id                       String                     @id @default(uuid())
+  email                    String                     @unique
+  firstName                String
+  middleName               String?
+  lastName                 String
+  role                     UserRole?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @default(now()) @updatedAt
+  password                 String
+  mustChangePassword       Boolean                    @default(false)
+  exchangeRates            ExchangeRate[]
+  refreshTokens            RefreshToken[]
+  rolesCreated             Role[]                     @relation("RoleCreatedBy")
+  rolesUpdated             Role[]                     @relation("RoleUpdatedBy")
+  contactMethods           UserContactMethod[]
+  roleAssignments          UserRoleAssignment[]
+  Client                   Client[]
+  Order                    Order[]
+  ClientDiscountAssignment ClientDiscountAssignment[]
 }
 
 model Client {
-  id                    String           @id @default(uuid())
-  userId                String?
-  user                  User?            @relation(fields: [userId], references: [id])
-  firstName             String
-  lastName              String
-  citizenshipId         String?
-  citizenship           Citizenship?     @relation(fields: [citizenshipId], references: [id])
-  prevViolations        Boolean          @default(false)
-  prevViolationsDesc    String?
-  isOutsideTheCountry   Boolean          @default(false)
-  isOutsideTheCountryAt DateTime?
-  passports             ClientPassport[]
+  id                       String                     @id @default(uuid())
+  userId                   String?
+  user                     User?                      @relation(fields: [userId], references: [id])
+  firstName                String
+  lastName                 String
+  citizenshipId            String?
+  citizenship              Citizenship?               @relation(fields: [citizenshipId], references: [id])
+  prevViolations           Boolean                    @default(false)
+  prevViolationsDesc       String?
+  isOutsideTheCountry      Boolean                    @default(false)
+  isOutsideTheCountryAt    DateTime?
+  passports                ClientPassport[]
+  OrderItem                OrderItem[]
+  ClientDiscountAssignment ClientDiscountAssignment[]
 
   @@index([userId])
   @@index([citizenshipId])
@@ -249,4 +253,97 @@ enum TelegramChannelStatus {
   blocked
   kicked
   insufficient_permissions
+}
+
+enum OrderStatus {
+  draft
+  submitted
+  paid
+  cancelled
+}
+
+enum ServiceType {
+  visa
+  visarun
+}
+
+enum DiscountAppliedType {
+  manual
+  rule
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  createdAt DateTime    @default(now())
+  status    OrderStatus @default(draft)
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id                  String               @id @default(uuid())
+  orderId             String
+  order               Order                @relation(fields: [orderId], references: [id])
+  clientId            String
+  client              Client               @relation(fields: [clientId], references: [id])
+  serviceType         ServiceType
+  serviceTypeId       String
+  discountAppliedType DiscountAppliedType?
+  discountRuleId      String?
+  discountRule        ClientDiscountRule?  @relation(fields: [discountRuleId], references: [id])
+  discountAmount      Float
+  discountComment     String?
+  note                String?
+  basePrice           Float
+  finalPrice          Float
+
+  @@index([orderId])
+  @@index([clientId])
+  @@index([discountRuleId])
+}
+
+enum DiscountType {
+  percent
+  fixed
+}
+
+enum AppliesToService {
+  visa
+  visarun
+  all
+}
+
+model ClientDiscountRule {
+  id                   String           @id @default(uuid())
+  name                 String
+  discountType         DiscountType
+  discountValue        Float
+  appliesToService     AppliesToService
+  appliesAutomatically Boolean
+  validFrom            DateTime
+  validTo              DateTime
+  minOrders            Int
+  isActive             Boolean
+  note                 String?
+
+  assignments ClientDiscountAssignment[]
+  OrderItem   OrderItem[]
+}
+
+model ClientDiscountAssignment {
+  id               String   @id @default(uuid())
+  clientId         String
+  ruleId           String
+  assignedByUserId String
+  assignedAt       DateTime
+  note             String?
+
+  client     Client             @relation(fields: [clientId], references: [id])
+  rule       ClientDiscountRule @relation(fields: [ruleId], references: [id])
+  assignedBy User               @relation(fields: [assignedByUserId], references: [id])
+
+  @@index([clientId])
+  @@index([ruleId])
+  @@index([assignedByUserId])
 }

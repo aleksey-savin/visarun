@@ -128,6 +128,46 @@ export const cityReadProcedure = trpc.procedure.use(requirePermission('cities.re
 export const cityUpdateProcedure = trpc.procedure.use(requirePermission('cities.update'));
 export const cityDeleteProcedure = trpc.procedure.use(requirePermission('cities.delete'));
 
+// Order management procedures
+export const orderCreateProcedure = trpc.procedure.use(requirePermission('orders.create'));
+export const orderReadProcedure = trpc.procedure.use(requirePermission('orders.read'));
+export const orderUpdateProcedure = trpc.procedure.use(requirePermission('orders.update'));
+export const orderDeleteProcedure = trpc.procedure.use(requirePermission('orders.delete'));
+
+// OrderItem management procedures
+export const orderItemCreateProcedure = trpc.procedure.use(requirePermission('orderItems.create'));
+export const orderItemReadProcedure = trpc.procedure.use(requirePermission('orderItems.read'));
+export const orderItemUpdateProcedure = trpc.procedure.use(requirePermission('orderItems.update'));
+export const orderItemDeleteProcedure = trpc.procedure.use(requirePermission('orderItems.delete'));
+
+// ClientDiscountRule management procedures
+export const clientDiscountRuleCreateProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountRules.create')
+);
+export const clientDiscountRuleReadProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountRules.read')
+);
+export const clientDiscountRuleUpdateProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountRules.update')
+);
+export const clientDiscountRuleDeleteProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountRules.delete')
+);
+
+// ClientDiscountAssignment management procedures
+export const clientDiscountAssignmentCreateProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountAssignments.create')
+);
+export const clientDiscountAssignmentReadProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountAssignments.read')
+);
+export const clientDiscountAssignmentUpdateProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountAssignments.update')
+);
+export const clientDiscountAssignmentDeleteProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountAssignments.delete')
+);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter
