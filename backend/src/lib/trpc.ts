@@ -168,6 +168,38 @@ export const clientDiscountAssignmentDeleteProcedure = trpc.procedure.use(
   requirePermission('clientDiscountAssignments.delete')
 );
 
+// VisaType management procedures
+export const visaTypeCreateProcedure = trpc.procedure.use(requirePermission('visaTypes.create'));
+export const visaTypeReadProcedure = trpc.procedure.use(requirePermission('visaTypes.read'));
+export const visaTypeUpdateProcedure = trpc.procedure.use(requirePermission('visaTypes.update'));
+export const visaTypeDeleteProcedure = trpc.procedure.use(requirePermission('visaTypes.delete'));
+
+// VisaApplication management procedures
+export const visaApplicationCreateProcedure = trpc.procedure.use(
+  requirePermission('visaApplications.create')
+);
+export const visaApplicationReadProcedure = trpc.procedure.use(
+  requirePermission('visaApplications.read')
+);
+export const visaApplicationUpdateProcedure = trpc.procedure.use(
+  requirePermission('visaApplications.update')
+);
+export const visaApplicationDeleteProcedure = trpc.procedure.use(
+  requirePermission('visaApplications.delete')
+);
+
+// ClientVisa management procedures
+export const clientVisaCreateProcedure = trpc.procedure.use(
+  requirePermission('clientVisas.create')
+);
+export const clientVisaReadProcedure = trpc.procedure.use(requirePermission('clientVisas.read'));
+export const clientVisaUpdateProcedure = trpc.procedure.use(
+  requirePermission('clientVisas.update')
+);
+export const clientVisaDeleteProcedure = trpc.procedure.use(
+  requirePermission('clientVisas.delete')
+);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

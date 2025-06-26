@@ -5,7 +5,7 @@ export const zEditVisaCitizenshipSurchargeTrpcInput = z.object({
   id: z.string().uuid(),
   citizenshipId: z.string().uuid(),
   countryId: z.string().uuid(),
-  visaTypeId: z.string().min(1).max(100),
+  visaTypeId: z.string().uuid(),
   surchargeAmount: z.number().min(0),
   note: z.preprocess(
     val => (typeof val === 'string' && val.trim() === '' ? null : val),
@@ -41,6 +41,19 @@ export const editVisaCitizenshipSurchargeTrpcRoute = visaCitizenshipSurchargeUpd
 
     if (!country) {
       throw new Error('Country not found');
+    }
+
+    // Check if visa type exists and belongs to the specified country
+    const visaType = await ctx.prisma.visaType.findUnique({
+      where: { id: input.visaTypeId },
+    });
+
+    if (!visaType) {
+      throw new Error('Visa type not found');
+    }
+
+    if (visaType.countryId !== input.countryId) {
+      throw new Error('Visa type does not belong to the specified country');
     }
 
     // Check if another surcharge with the same citizenship, country and visa type combination exists (excluding current one)
