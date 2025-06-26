@@ -31,10 +31,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   description: z.string().max(500).optional(),
-  permissions: z.array(z.string()).default([]),
+  permissions: z.array(z.string()),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = {
+  name: string;
+  description?: string;
+  permissions: string[];
+};
 
 export default function EditRolePage() {
   const { id } = useParams<{ id: string }>();
@@ -59,7 +63,7 @@ export default function EditRolePage() {
 
   // Initialize form
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       description: '',

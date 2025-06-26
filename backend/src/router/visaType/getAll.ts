@@ -9,7 +9,7 @@ export const zGetAllVisaTypesTrpcInput = z.object({
   isMultientry: z.boolean().optional(),
   processingMode: z.enum(['fixed', 'approximate']).optional(),
   processingUnit: z.enum(['hours', 'days']).optional(),
-  search: z.string().optional(),
+  search: z.string().min(1).optional(),
 });
 
 export const getAllVisaTypesTrpcRoute = visaTypeReadProcedure
@@ -37,18 +37,18 @@ export const getAllVisaTypesTrpcRoute = visaTypeReadProcedure
       where.processingUnit = processingUnit;
     }
 
-    if (search) {
+    if (search && search.trim()) {
       where.OR = [
         {
           name: {
-            contains: search,
+            contains: search.trim(),
             mode: 'insensitive',
           },
         },
         {
           country: {
             name: {
-              contains: search,
+              contains: search.trim(),
               mode: 'insensitive',
             },
           },

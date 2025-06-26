@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { trpc } from '../../lib/trpcProvider';
 import {
   getCreateVisaCitizenshipSurchargeRoute,
@@ -57,7 +57,7 @@ const AllVisaCitizenshipSurchargesPage = () => {
   const { data, error, isLoading, isError, refetch } =
     trpc.visaCitizenshipSurcharge.getAll.useQuery();
 
-  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery();
+  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
   const { data: countriesData } = trpc.country.getAll.useQuery();
 
   const deleteVisaCitizenshipSurchargeMutation = trpc.visaCitizenshipSurcharge.delete.useMutation({
@@ -102,7 +102,7 @@ const AllVisaCitizenshipSurchargesPage = () => {
       searchTerm === '' ||
       surcharge.citizenship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       surcharge.country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      surcharge.visaTypeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      surcharge.visaType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       surcharge.note?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCitizenship =
@@ -219,15 +219,18 @@ const AllVisaCitizenshipSurchargesPage = () => {
                   {filteredSurcharges.map(surcharge => (
                     <TableRow key={surcharge.id}>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{surcharge.citizenship.name}</span>
-                        </div>
+                        <Link
+                          to={getViewVisaCitizenshipSurchargeRoute({ id: surcharge.id })}
+                          className="flex items-center gap-2 font-medium hover:underline"
+                        >
+                          <span>{surcharge.citizenship.name}</span>
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <span className="font-medium">{surcharge.country.name}</span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{surcharge.visaTypeId}</Badge>
+                        <Badge variant="secondary">{surcharge.visaType.name}</Badge>
                       </TableCell>
                       <TableCell>
                         <span className="font-mono">${surcharge.surchargeAmount.toFixed(2)}</span>

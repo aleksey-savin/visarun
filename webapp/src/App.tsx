@@ -30,6 +30,12 @@ import ViewCitizenshipPage from './pages/Citizenships/view';
 import CreateCitizenshipPage from './pages/Citizenships/create';
 import EditCitizenshipPage from './pages/Citizenships/edit';
 
+// Visa Types pages
+import AllVisaTypesPage from './pages/VisaTypes/getAll';
+import ViewVisaTypePage from './pages/VisaTypes/view';
+import CreateVisaTypePage from './pages/VisaTypes/create';
+import EditVisaTypePage from './pages/VisaTypes/edit';
+
 // Visa Citizenship Surcharges pages
 import AllVisaCitizenshipSurchargesPage from './pages/VisaCitizenshipSurcharges/getAll';
 import ViewVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/view';
@@ -75,6 +81,13 @@ import {
   getEditCitizenshipRoute,
   editCitizenshipRouteParams,
   viewCitizenshipRouteParams,
+  // Visa Types routes
+  getAllVisaTypesRoute,
+  getViewVisaTypeRoute,
+  getCreateVisaTypeRoute,
+  getEditVisaTypeRoute,
+  editVisaTypeRouteParams,
+  viewVisaTypeRouteParams,
   // Visa Citizenship Surcharges routes
   getAllVisaCitizenshipSurchargesRoute,
   getViewVisaCitizenshipSurchargeRoute,
@@ -289,6 +302,40 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="citizenships.update">
                       <EditCitizenshipPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Visa Types Management Routes */}
+                <Route
+                  path={getAllVisaTypesRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="visaTypes.read">
+                      <AllVisaTypesPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateVisaTypeRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="visaTypes.create">
+                      <CreateVisaTypePage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewVisaTypeRoute(viewVisaTypeRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="visaTypes.read">
+                      <ViewVisaTypePage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditVisaTypeRoute(editVisaTypeRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="visaTypes.update">
+                      <EditVisaTypePage />
                     </PermissionRoute>
                   }
                 />

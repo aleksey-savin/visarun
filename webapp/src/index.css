@@ -29,7 +29,7 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -56,9 +56,6 @@
   }
   :root:not(.dark) a:hover {
     color: #747bff;
-  }
-  :root:not(.dark) button {
-    background-color: #f9f9f9;
   }
 }
 
@@ -132,32 +129,6 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-}
-
-:root:not(.dark) {
-  /* These values need to ensure your buttons are visible in light mode */
-  --button-bg: var(--primary);
-  --button-text: var(--primary-foreground);
-
-  --destructive-button-bg: oklch(0.704 0.191 22.216);
-  --destructive-button-text: white;
-}
-
-.dark {
-  --button-bg: var(--primary);
-  --button-text: var(--primary-foreground);
-}
-
-/* Apply these button-specific variables to buttons with the default variant */
-:root:not(.dark) [data-slot='button'] {
-  background-color: var(--button-bg);
-  color: var(--button-text);
-}
-
-/* Apply destructive styles to destructive variant buttons */
-:root:not(.dark) [data-variant='destructive'] {
-  background-color: var(--destructive-button-bg) !important;
-  color: var(--destructive-button-text) !important;
 }
 
 @layer base {

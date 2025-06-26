@@ -23,12 +23,14 @@ const ViewClientPage = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold">Client Details</h1>
+      <div className="w-full max-w-7xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-3xl font-bold">Client Details</h1>
+          </div>
         </div>
         <div className="flex justify-center items-center h-64">
           <p>Loading client details...</p>
@@ -39,12 +41,14 @@ const ViewClientPage = () => {
 
   if (isError) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold">Client Details</h1>
+      <div className="w-full max-w-7xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-3xl font-bold">Client Details</h1>
+          </div>
         </div>
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
@@ -60,12 +64,14 @@ const ViewClientPage = () => {
 
   if (!data?.client) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold">Client Details</h1>
+      <div className="w-full max-w-7xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-3xl font-bold">Client Details</h1>
+          </div>
         </div>
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
@@ -80,16 +86,18 @@ const ViewClientPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Client Details</h1>
-          <p className="text-gray-600">
-            {data.client.firstName} {data.client.lastName}
-          </p>
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Client Details</h1>
+            <p className="text-muted-foreground">
+              {data.client.firstName} {data.client.lastName}
+            </p>
+          </div>
         </div>
       </div>
 

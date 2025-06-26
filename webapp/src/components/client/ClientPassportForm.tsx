@@ -80,7 +80,7 @@ export const ClientPassportForm = ({
         onSuccess();
       }
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error('Failed to add passport', {
         description: error.message,
       });
@@ -98,7 +98,7 @@ export const ClientPassportForm = ({
         onSuccess();
       }
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error('Failed to update passport', {
         description: error.message,
       });

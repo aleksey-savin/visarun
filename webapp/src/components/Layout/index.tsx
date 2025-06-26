@@ -42,11 +42,9 @@ export default function Layout() {
         </Button>
         <ModeToggle />
       </div>
-      <main className="flex flex-col w-full items-center justify-center">
-        <div className="flex-1 w-full flex items-center">
-          <div className="max-w-6xl mx-auto px-6 py-8">
-            <Outlet />
-          </div>
+      <main className="flex flex-col w-full items-start justify-center">
+        <div className="flex-1 w-full flex items-start p-20">
+          <Outlet />
         </div>
       </main>
 

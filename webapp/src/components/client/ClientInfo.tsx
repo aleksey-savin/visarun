@@ -131,7 +131,9 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
       <Card className="w-full">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl">Client Profile</CardTitle>
+            <CardTitle className="text-2xl">
+              {client.firstName} {client.lastName}
+            </CardTitle>
             <div className="flex gap-2">
               {onEdit && (
                 <Button variant="outline" size="sm" onClick={onEdit}>
@@ -164,21 +166,10 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
               </AlertDialog>
             </div>
           </div>
-
-          <CardDescription>
-            Profile for {client.firstName} {client.lastName}
-          </CardDescription>
         </CardHeader>
 
         <CardContent className="pt-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <h3 className="text-sm font-medium text-gray-500">Client Name</h3>
-              <p className="text-sm font-medium">
-                {client.firstName} {client.lastName}
-              </p>
-            </div>
-
             <div className="space-y-1">
               <h3 className="text-sm font-medium text-gray-500">Account Owner</h3>
               <p className="text-sm">
@@ -261,44 +252,46 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
         <CardContent className="pt-4">
           {client.passports && client.passports.length > 0 ? (
             <div className="space-y-4">
-              {client.passports.map((passport: any) => (
-                <div
-                  key={passport.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      <FileText className="h-5 w-5 text-blue-600" />
+              {client.passports.map(
+                (passport: { id: string; expirationDate: string; scanPath: string }) => (
+                  <div
+                    key={passport.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          Expires: {formatDate(passport.expirationDate)}
+                        </p>
+                        <p className="text-xs text-gray-500">Scan: {passport.scanPath}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        Expires: {formatDate(passport.expirationDate)}
-                      </p>
-                      <p className="text-xs text-gray-500">Scan: {passport.scanPath}</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handleViewFile(
+                            passport.scanPath,
+                            `Passport expires ${formatDate(passport.expirationDate)}`
+                          )
+                        }
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handleViewFile(
-                          passport.scanPath,
-                          `Passport expires ${formatDate(passport.expirationDate)}`
-                        )
-                      }
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">

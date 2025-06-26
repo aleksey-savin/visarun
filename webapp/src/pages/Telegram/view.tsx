@@ -135,33 +135,53 @@ const ViewTelegramChannelPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate(getTelegramChannelsRoute())}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-3xl font-bold">{`Telegram ${chatType} details`}</h1>
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate(getTelegramChannelsRoute())}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-3xl font-bold">Telegram Channel Details</h1>
+        </div>
       </div>
 
       {isLoading && (
-        <Card className="w-full max-w-3xl">
-          <CardHeader className="pb-4">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-4 w-1/4 mt-2" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[1, 2].map(i => (
-              <div key={i} className="flex items-center gap-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader className="pb-4">
+                <Skeleton className="h-8 w-1/3" />
+                <Skeleton className="h-4 w-1/4 mt-2" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
 
       {isError && (
-        <Card className="w-full max-w-3xl border-red-200 bg-red-50">
+        <Card className="border-red-200 bg-red-50">
           <CardHeader>
             <CardTitle className="text-red-700">Error Loading Telegram Channel or Group</CardTitle>
           </CardHeader>
@@ -170,153 +190,177 @@ const ViewTelegramChannelPage = () => {
           </CardContent>
           <CardFooter>
             <Button variant="outline" onClick={() => navigate(getTelegramChannelsRoute())}>
-              Back to All Users
+              Back to Telegram Channels
             </Button>
           </CardFooter>
         </Card>
       )}
 
       {!isLoading && !isError && !data?.channel && (
-        <Card className="w-full max-w-3xl border-amber-200 bg-amber-50">
+        <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
-            <CardTitle className="text-amber-700">User Not Found</CardTitle>
-            <CardDescription>The user with ID {id} could not be found.</CardDescription>
+            <CardTitle className="text-amber-700">Channel Not Found</CardTitle>
+            <CardDescription>The telegram channel with ID {id} could not be found.</CardDescription>
           </CardHeader>
           <CardFooter>
             <Button variant="outline" onClick={() => navigate(getTelegramChannelsRoute())}>
-              Back to All Users
+              Back to Telegram Channels
             </Button>
           </CardFooter>
         </Card>
       )}
 
       {data?.channel && (
-        <Card className="w-full max-w-3xl">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl">{`${chatTitle}`}</CardTitle>
-            </div>
-            <div className="py-3">
-              <Badge className={getStatusBadgeColor(status)}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </Badge>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Channel Information */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-2xl">{chatTitle}</CardTitle>
+                  <Badge variant="outline" className="ml-2 capitalize">
+                    {chatType}
+                  </Badge>
+                </div>
+                <div className="py-3">
+                  <Badge className={getStatusBadgeColor(status)}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </Badge>
+                </div>
 
-            <CardDescription className="flex items-center gap-1">
-              Added by {fromFirstName} {fromLastName} ({fromUsername})
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium text-gray-500">Created</h3>
-                <p className="text-sm flex items-center gap-1">
-                  <CalendarIcon className="h-3 w-3" />
-                  {formatDate(createdAt)}
-                </p>
-              </div>
+                <CardDescription className="flex items-center gap-1">
+                  Added by {fromFirstName} {fromLastName} (@{fromUsername})
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground">Chat ID</h3>
+                    <p className="text-sm font-mono">{chatId}</p>
+                  </div>
 
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium text-gray-500">Last Updated</h3>
-                <p className="text-sm flex items-center gap-1">
-                  <CalendarIcon className="h-3 w-3" />
-                  {formatDate(updatedAt)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground">Username</h3>
+                    <p className="text-sm">{fromUsername ? `@${fromUsername}` : 'N/A'}</p>
+                  </div>
 
-          <CardFooter className="pt-2 flex justify-between">
-            {status === 'kicked' && (
-              <div className="space-x-4 space-y-2">
-                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      disabled={deleteTelegramChannelMutation.isPending}
-                    >
-                      {deleteTelegramChannelMutation.isPending
-                        ? 'Deleting...'
-                        : `Delete Telegram ${chatType}`}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete telegram channel
-                        or group
-                        {chatTitle}.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeleteTelegramChannel}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
-            {status === 'active' && (
-              <div className="space-x-4 space-y-2">
-                <AlertDialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={blockTelegramChannelMutation.isPending}>
-                      {blockTelegramChannelMutation.isPending
-                        ? 'Blocking...'
-                        : `Block Telegram ${chatType}`}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action will block telegram channel or group
-                        {chatTitle} and prevent from sending messages.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleBlockTelegramChannel}>
-                        Block
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
-            {status === 'blocked' && (
-              <div className="space-x-4 space-y-2">
-                <AlertDialog open={isUnblockDialogOpen} onOpenChange={setIsUnblockDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="default" disabled={unblockTelegramChannelMutation.isPending}>
-                      {unblockTelegramChannelMutation.isPending
-                        ? 'Unblocking...'
-                        : `Unblock Telegram ${chatType}`}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action will unblock telegram channel or group
-                        {chatTitle} and allow it to recieve messages.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleUnblockTelegramChannel}>
-                        Unblock
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
-          </CardFooter>
-        </Card>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground">Created</h3>
+                    <p className="text-sm flex items-center gap-1">
+                      <CalendarIcon className="h-3 w-3" />
+                      {formatDate(createdAt)}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground">Last Updated</h3>
+                    <p className="text-sm flex items-center gap-1">
+                      <CalendarIcon className="h-3 w-3" />
+                      {formatDate(updatedAt)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Actions Sidebar */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {status === 'kicked' && (
+                  <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        className="w-full justify-start"
+                        disabled={deleteTelegramChannelMutation.isPending}
+                      >
+                        {deleteTelegramChannelMutation.isPending ? 'Deleting...' : 'Delete Channel'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the telegram
+                          channel "{chatTitle}".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteTelegramChannel}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                {status === 'active' && (
+                  <AlertDialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        className="w-full justify-start"
+                        disabled={blockTelegramChannelMutation.isPending}
+                      >
+                        {blockTelegramChannelMutation.isPending ? 'Blocking...' : 'Block Channel'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will block the telegram channel "{chatTitle}" and prevent it
+                          from sending messages.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleBlockTelegramChannel}>
+                          Block
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                {status === 'blocked' && (
+                  <AlertDialog open={isUnblockDialogOpen} onOpenChange={setIsUnblockDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="default"
+                        className="w-full justify-start"
+                        disabled={unblockTelegramChannelMutation.isPending}
+                      >
+                        {unblockTelegramChannelMutation.isPending
+                          ? 'Unblocking...'
+                          : 'Unblock Channel'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will unblock the telegram channel "{chatTitle}" and allow it
+                          to receive messages.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleUnblockTelegramChannel}>
+                          Unblock
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
     </div>
   );

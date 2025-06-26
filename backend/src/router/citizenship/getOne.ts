@@ -59,6 +59,12 @@ export const getOneCitizenshipTrpcRoute = citizenshipReadProcedure
                 name: true,
               },
             },
+            visaType: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
           orderBy: [
             {

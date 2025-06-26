@@ -88,7 +88,7 @@ const ViewCountryPage = () => {
     { enabled: !!id }
   );
 
-  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery();
+  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
 
   const deleteCountryMutation = trpc.country.delete.useMutation({
     onSuccess: () => {

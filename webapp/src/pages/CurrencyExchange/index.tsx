@@ -112,7 +112,7 @@ const CurrencyExchangePage = () => {
   // If we have rates, show the full content, otherwise just show the appropriate message
   if (rates) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen flex justify-center">
         <div className="container mx-auto pt-8 max-w-6xl">
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-center mb-2">Currency Exchange</h1>

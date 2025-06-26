@@ -44,6 +44,24 @@ export const getVisaTypeTrpcRoute = visaTypeReadProcedure
             validFrom: 'desc',
           },
         },
+        surcharges: {
+          select: {
+            id: true,
+            surchargeAmount: true,
+            note: true,
+            citizenship: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            citizenship: {
+              name: 'asc',
+            },
+          },
+        },
         _count: {
           select: {
             visaApplications: true,

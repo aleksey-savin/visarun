@@ -104,33 +104,49 @@ const ViewUserPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate(getAllUsersRoute())}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-3xl font-bold">User Details</h1>
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" onClick={() => navigate(getAllUsersRoute())}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-3xl font-bold">User Details</h1>
+        </div>
       </div>
 
       {isLoading && (
-        <Card className="w-full max-w-3xl">
-          <CardHeader className="pb-4">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-4 w-1/4 mt-2" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[1, 2].map(i => (
-              <div key={i} className="flex items-center gap-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader className="pb-4">
+                <Skeleton className="h-8 w-1/3" />
+                <Skeleton className="h-4 w-1/4 mt-2" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
 
       {isError && (
-        <Card className="w-full max-w-3xl border-red-200 bg-red-50">
+        <Card className="border-red-200 bg-red-50">
           <CardHeader>
             <CardTitle className="text-red-700">Error Loading User</CardTitle>
           </CardHeader>
@@ -146,7 +162,7 @@ const ViewUserPage = () => {
       )}
 
       {!isLoading && !isError && !data?.user && (
-        <Card className="w-full max-w-3xl border-amber-200 bg-amber-50">
+        <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
             <CardTitle className="text-amber-700">User Not Found</CardTitle>
             <CardDescription>The user with ID {id} could not be found.</CardDescription>
@@ -160,177 +176,200 @@ const ViewUserPage = () => {
       )}
 
       {data?.user && (
-        <Card className="w-full max-w-3xl">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl">
-                {`${data.user.firstName} ${data.user.middleName ? data.user.middleName + ' ' : ''}${data.user.lastName}`}
-              </CardTitle>
-            </div>
-            <div className="py-3">
-              <div className="flex flex-wrap gap-2">
-                {data.user.roleAssignments && data.user.roleAssignments.length > 0 ? (
-                  data.user.roleAssignments.map(assignment => (
-                    <Badge key={assignment.id} className={getRoleBadgeColor(assignment.role.name)}>
-                      {assignment.role.name.charAt(0).toUpperCase() + assignment.role.name.slice(1)}
-                    </Badge>
-                  ))
-                ) : (
-                  <Badge variant="outline">No roles assigned</Badge>
-                )}
-              </div>
-            </div>
-
-            <CardDescription className="flex items-center gap-1">
-              <Mail className="h-3 w-3" />
-              {data.user.email}
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="pt-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium text-gray-500">Created</h3>
-                <p className="text-sm flex items-center gap-1">
-                  <CalendarIcon className="h-3 w-3" />
-                  {formatDate(data.user.createdAt)}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium text-gray-500">Last Updated</h3>
-                <p className="text-sm flex items-center gap-1">
-                  <CalendarIcon className="h-3 w-3" />
-                  {formatDate(data.user.updatedAt)}
-                </p>
-              </div>
-            </div>
-
-            {/* Contact Methods Section */}
-            {data.user.contactMethods && data.user.contactMethods.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-500">Contact Methods</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {data.user.contactMethods.map(contactMethod => (
-                    <div
-                      key={contactMethod.id}
-                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex-shrink-0">
-                        {contactMethod.method.name === 'email' && (
-                          <Mail className="h-4 w-4 text-blue-600" />
-                        )}
-                        {contactMethod.method.name === 'phone' && (
-                          <Phone className="h-4 w-4 text-green-600" />
-                        )}
-                        {['telegram', 'whatsapp', 'viber', 'line', 'wechat', 'skype'].includes(
-                          contactMethod.method.name
-                        ) && <MessageCircle className="h-4 w-4 text-purple-600" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 capitalize">
-                          {contactMethod.method.name}
-                        </p>
-                        <p className="text-sm text-gray-600 truncate">
-                          {contactMethod.url ? (
-                            <a
-                              href={contactMethod.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1"
-                            >
-                              {contactMethod.value}
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          ) : (
-                            contactMethod.value
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main User Information */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-2xl">
+                    {`${data.user.firstName} ${data.user.middleName ? data.user.middleName + ' ' : ''}${data.user.lastName}`}
+                  </CardTitle>
                 </div>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="pt-2 flex justify-between">
-            <div className="space-x-4 space-y-2">
-              <Button
-                variant="outline"
-                onClick={() => navigate(getEditUserRoute({ id: data.user.id }))}
-              >
-                Edit User
-              </Button>
+                <div className="py-3">
+                  <div className="flex flex-wrap gap-2">
+                    {data.user.roleAssignments && data.user.roleAssignments.length > 0 ? (
+                      data.user.roleAssignments.map(assignment => (
+                        <Badge
+                          key={assignment.id}
+                          className={getRoleBadgeColor(assignment.role.name)}
+                        >
+                          {assignment.role.name.charAt(0).toUpperCase() +
+                            assignment.role.name.slice(1)}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge variant="outline">No roles assigned</Badge>
+                    )}
+                  </div>
+                </div>
 
-              {/* Client Profile Section */}
-              <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="default">
-                    <User className="h-4 w-4 mr-2" />
-                    Add Client Profile
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Add Client Profile</DialogTitle>
-                    <DialogDescription>
-                      Add a new client profile for {data.user.firstName} {data.user.lastName}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <ClientProfileForm
-                    userId={data.user.id}
-                    onSuccess={handleClientProfileSuccess}
-                    onCancel={() => setIsClientDialogOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
+                <CardDescription className="flex items-center gap-1">
+                  <Mail className="h-3 w-3" />
+                  {data.user.email}
+                </CardDescription>
+              </CardHeader>
 
-              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={deleteUserMutation.isPending}>
-                    {deleteUserMutation.isPending ? 'Deleting...' : 'Delete User'}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the user account
-                      for {data.user.firstName} {data.user.lastName}.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <Button variant="destructive" onClick={handleDeleteUser}>
-                      Delete
+              <CardContent className="pt-4 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground">Created</h3>
+                    <p className="text-sm flex items-center gap-1">
+                      <CalendarIcon className="h-3 w-3" />
+                      {formatDate(data.user.createdAt)}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground">Last Updated</h3>
+                    <p className="text-sm flex items-center gap-1">
+                      <CalendarIcon className="h-3 w-3" />
+                      {formatDate(data.user.updatedAt)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Contact Methods Section */}
+                {data.user.contactMethods && data.user.contactMethods.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold">Contact Methods</h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      {data.user.contactMethods.map(contactMethod => (
+                        <div
+                          key={contactMethod.id}
+                          className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex-shrink-0">
+                            {contactMethod.method.name === 'email' && (
+                              <Mail className="h-4 w-4 text-blue-600" />
+                            )}
+                            {contactMethod.method.name === 'phone' && (
+                              <Phone className="h-4 w-4 text-green-600" />
+                            )}
+                            {['telegram', 'whatsapp', 'viber', 'line', 'wechat', 'skype'].includes(
+                              contactMethod.method.name
+                            ) && <MessageCircle className="h-4 w-4 text-purple-600" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium capitalize">
+                              {contactMethod.method.name}
+                            </p>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {contactMethod.url ? (
+                                <a
+                                  href={contactMethod.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1"
+                                >
+                                  {contactMethod.value}
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ) : (
+                                contactMethod.value
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Actions Sidebar */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => navigate(getEditUserRoute({ id: data.user.id }))}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Edit User
+                </Button>
+
+                <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="default" className="w-full justify-start">
+                      <User className="h-4 w-4 mr-2" />
+                      Add Client Profile
                     </Button>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardFooter>
-        </Card>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Add Client Profile</DialogTitle>
+                      <DialogDescription>
+                        Add a new client profile for {data.user.firstName} {data.user.lastName}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <ClientProfileForm
+                      userId={data.user.id}
+                      onSuccess={handleClientProfileSuccess}
+                      onCancel={() => setIsClientDialogOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
+
+                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      className="w-full justify-start"
+                      disabled={deleteUserMutation.isPending}
+                    >
+                      {deleteUserMutation.isPending ? 'Deleting...' : 'Delete User'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the user account
+                        for {data.user.firstName} {data.user.lastName}.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <Button variant="destructive" onClick={handleDeleteUser}>
+                        Delete
+                      </Button>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
 
       {/* Client Profiles Section */}
       {clientsData?.clients && clientsData.clients.length > 0 && (
-        <div className="mt-6 space-y-4">
+        <div className="space-y-6">
           <h2 className="text-2xl font-bold">Client Profiles</h2>
-          {clientsData.clients.map(client => (
-            <ClientInfo
-              key={client.id}
-              clientId={client.id}
-              onEdit={() => navigate(`/clients/edit/${client.id}`)}
-              onDelete={() => {
-                refetchClients();
-              }}
-            />
-          ))}
+          <div className="grid grid-cols-1 gap-6">
+            {clientsData.clients.map(client => (
+              <ClientInfo
+                key={client.id}
+                clientId={client.id}
+                onEdit={() => navigate(`/clients/edit/${client.id}`)}
+                onDelete={() => {
+                  refetchClients();
+                }}
+              />
+            ))}
+          </div>
         </div>
       )}
 
       {clientsData?.clients && clientsData.clients.length === 0 && (
-        <Card className="mt-6">
+        <Card>
           <CardHeader>
             <CardTitle>No Client Profiles</CardTitle>
             <CardDescription>

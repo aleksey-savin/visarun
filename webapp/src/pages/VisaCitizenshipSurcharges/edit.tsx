@@ -35,8 +35,12 @@ const EditVisaCitizenshipSurchargePage = () => {
     isError,
   } = trpc.visaCitizenshipSurcharge.getOne.useQuery({ id: id! }, { enabled: !!id });
 
-  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery();
+  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
   const { data: countriesData } = trpc.country.getAll.useQuery();
+  const { data: visaTypesData } = trpc.visaType.getByCountry.useQuery(
+    { countryId: countryId! },
+    { enabled: !!countryId }
+  );
 
   const editVisaCitizenshipSurchargeMutation = trpc.visaCitizenshipSurcharge.edit.useMutation({
     onSuccess: () => {
@@ -73,8 +77,8 @@ const EditVisaCitizenshipSurchargePage = () => {
       return;
     }
 
-    if (!visaTypeId.trim()) {
-      toast.error('Please enter a visa type');
+    if (!visaTypeId) {
+      toast.error('Please select a visa type');
       return;
     }
 
@@ -89,24 +93,11 @@ const EditVisaCitizenshipSurchargePage = () => {
       id: id!,
       citizenshipId,
       countryId,
-      visaTypeId: visaTypeId.trim(),
+      visaTypeId,
       surchargeAmount,
       note: note.trim() || undefined,
     });
   };
-
-  const commonVisaTypes = [
-    'Tourist',
-    'Business',
-    'Student',
-    'Work',
-    'Transit',
-    'Medical',
-    'Conference',
-    'Family Visit',
-    'Religious',
-    'Cultural',
-  ];
 
   if (isLoading) {
     return (
@@ -177,7 +168,13 @@ const EditVisaCitizenshipSurchargePage = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="country">Country *</Label>
-                <Select value={countryId} onValueChange={setCountryId}>
+                <Select
+                  value={countryId}
+                  onValueChange={value => {
+                    setCountryId(value);
+                    setVisaTypeId(''); // Clear visa type when country changes
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
@@ -194,31 +191,30 @@ const EditVisaCitizenshipSurchargePage = () => {
 
             <div className="space-y-2">
               <Label htmlFor="visaType">Visa Type *</Label>
-              <div className="space-y-2">
-                <Input
-                  id="visaType"
-                  placeholder="Enter visa type (e.g., Tourist, Business, Student)"
-                  value={visaTypeId}
-                  onChange={e => setVisaTypeId(e.target.value)}
-                  maxLength={100}
-                />
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-xs text-muted-foreground">Quick select:</span>
-                  {commonVisaTypes.map(type => (
-                    <Button
-                      key={type}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={() => setVisaTypeId(type)}
-                      disabled={visaTypeId === type}
-                    >
-                      {type}
-                    </Button>
+              <Select value={visaTypeId} onValueChange={setVisaTypeId} disabled={!countryId}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={!countryId ? 'Select a country first' : 'Select visa type'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {visaTypesData?.visaTypes.map(visaType => (
+                    <SelectItem key={visaType.id} value={visaType.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{visaType.name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ${visaType.serviceCost.toFixed(2)}
+                        </span>
+                      </div>
+                    </SelectItem>
                   ))}
-                </div>
-              </div>
+                </SelectContent>
+              </Select>
+              {!countryId && (
+                <p className="text-xs text-muted-foreground">
+                  Please select a country to see available visa types
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
