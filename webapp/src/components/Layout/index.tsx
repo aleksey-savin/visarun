@@ -43,7 +43,7 @@ export default function Layout() {
         <ModeToggle />
       </div>
       <main className="flex flex-col w-full items-start justify-center">
-        <div className="flex-1 w-full flex items-start p-20">
+        <div className="flex-1 w-full flex items-start py-20 px-5">
           <Outlet />
         </div>
       </main>
