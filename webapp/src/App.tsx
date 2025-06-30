@@ -2,44 +2,44 @@ import './App.css';
 import { TrpcProvider } from './lib/trpcProvider';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import AllUsersPage from './pages/Users/getAll';
-import ViewUserPage from './pages/Users/view';
-import CreateUserPage from './pages/Users/create';
-import EditUserPage from './pages/Users/edit';
+import AllUsersPage from './pages/Users/getAll.js';
+import ViewUserPage from './pages/Users/view.js';
+import CreateUserPage from './pages/Users/create.js';
+import EditUserPage from './pages/Users/edit.js';
 
-import AllRolesPage from './pages/Roles/getAll';
-import ViewRolePage from './pages/Roles/view';
-import CreateRolePage from './pages/Roles/create';
+import AllRolesPage from './pages/Roles/getAll.js';
+import ViewRolePage from './pages/Roles/view.js';
+import CreateRolePage from './pages/Roles/create.js';
 import EditRolePage from './pages/Roles/edit';
 import DashboardPage from './pages/Dashboard';
 import CurrencyExchangePage from './pages/CurrencyExchange';
 import HomePage from './pages/HomePage';
-import TelegramChannelsPage from './pages/Telegram/getAll';
-import ViewTelegramChannelPage from './pages/Telegram/view';
-import ContactMethodsPage from './pages/ContactMethods/getAll';
+import TelegramChannelsPage from './pages/Telegram/getAll.js';
+import ViewTelegramChannelPage from './pages/Telegram/view.js';
+import ContactMethodsPage from './pages/ContactMethods/getAll.js';
 
 // Countries pages
-import AllCountriesPage from './pages/Countries/getAll';
-import ViewCountryPage from './pages/Countries/view';
-import CreateCountryPage from './pages/Countries/create';
+import AllCountriesPage from './pages/Countries/getAll.js';
+import ViewCountryPage from './pages/Countries/view.js';
+import CreateCountryPage from './pages/Countries/create.js';
 import EditCountryPage from './pages/Countries/edit';
 
 // Citizenships pages
-import AllCitizenshipsPage from './pages/Citizenships/getAll';
-import ViewCitizenshipPage from './pages/Citizenships/view';
-import CreateCitizenshipPage from './pages/Citizenships/create';
+import AllCitizenshipsPage from './pages/Citizenships/getAll.js';
+import ViewCitizenshipPage from './pages/Citizenships/view.js';
+import CreateCitizenshipPage from './pages/Citizenships/create.js';
 import EditCitizenshipPage from './pages/Citizenships/edit';
 
 // Visa Types pages
-import AllVisaTypesPage from './pages/VisaTypes/getAll';
-import ViewVisaTypePage from './pages/VisaTypes/view';
-import CreateVisaTypePage from './pages/VisaTypes/create';
+import AllVisaTypesPage from './pages/VisaTypes/getAll.js';
+import ViewVisaTypePage from './pages/VisaTypes/view.js';
+import CreateVisaTypePage from './pages/VisaTypes/create.js';
 import EditVisaTypePage from './pages/VisaTypes/edit';
 
 // Visa Citizenship Surcharges pages
-import AllVisaCitizenshipSurchargesPage from './pages/VisaCitizenshipSurcharges/getAll';
-import ViewVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/view';
-import CreateVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/create';
+import AllVisaCitizenshipSurchargesPage from './pages/VisaCitizenshipSurcharges/getAll.js';
+import ViewVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/view.js';
+import CreateVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/create.js';
 import EditVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/edit';
 
 // Client pages

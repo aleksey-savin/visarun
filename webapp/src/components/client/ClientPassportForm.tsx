@@ -133,7 +133,7 @@ export const ClientPassportForm = ({
         const formData = new FormData();
         formData.append('passport', file);
 
-        const uploadUrl = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'}/api/upload/passport`;
+        const uploadUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload/passport`;
         console.log('Uploading to:', uploadUrl);
 
         const uploadResponse = await fetch(uploadUrl, {

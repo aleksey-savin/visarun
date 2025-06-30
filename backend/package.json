@@ -14,7 +14,8 @@
     "pmd": "prisma migrate dev",
     "pgc": "prisma generate",
     "prisma:seed": "tsx src/utils/seed.ts",
-    "prepare": "pnpm pgc && pnpm prisma:seed",
+    "prisma:seed-prod": "node dist/src/utils/seed.js",
+    "prepare": "",
     "build": "rm -rf dist && swc src -d dist --extensions '.ts,.tsx' && cp -r prisma dist/ && echo '{\"type\":\"module\"}' > dist/package.json"
   },
   "keywords": [],

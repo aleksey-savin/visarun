@@ -10,7 +10,7 @@ This repository contains the code for **VisaRun**, a full‑stack application fo
 
 **All services are configured and working:**
 - ✅ **Database (PostgreSQL)** - localhost:5432 (healthy)
-- ✅ **Backend API** - http://localhost:3001 (running with migrations)  
+- ✅ **Backend API** - http://localhost:3001 (running with migrations)
 - ✅ **Frontend** - http://localhost:5173 (accessible)
 - ✅ **Telegram Bot** - running with nodemon (hot reload)
 
@@ -22,12 +22,14 @@ This repository contains the code for **VisaRun**, a full‑stack application fo
 
 ### 1. Setup Environment
 ```bash
-# Copy environment variables
-cp .env.dev.example .env
+# Copy environment template
+cp .env.example .env
 
-# Edit .env and set:
-# TELEGRAM_BOT_TOKEN=your_bot_token
-# JWT_SECRET=any_long_string
+# Edit .env and set your Telegram bot credentials:
+nano .env
+
+# Required: TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME
+# The file is pre-configured for development
 ```
 
 ### 2. Install Dependencies & Start Services
@@ -36,11 +38,10 @@ cp .env.dev.example .env
 cd telegram-bot && pnpm install --ignore-workspace && cd ..
 
 # Start all services
-docker compose -f compose.dev.yml up -d
+docker compose -f compose.dev.yml up -d --build
 
 # Initialize database (first time only)
 docker compose -f compose.dev.yml exec -T backend sh -c "cd /app/backend && pnpm pmd"
-docker compose -f compose.dev.yml exec -T backend sh -c "cd /app/backend && pnpm prisma:seed"
 ```
 
 ### 3. Access Services
@@ -141,25 +142,75 @@ visarun/
 │   └── node_modules/          # Local dependencies (required)
 ├── compose.dev.yml             # Docker Compose configuration
 ├── Dockerfile                  # Multi-stage for backend/webapp
-├── .env.dev.example           # Environment variables example
-└── .env                       # Your environment variables
+├── .env.example               # Environment template
+├── .env                       # Your environment variables (created from example)
+└── generate-secrets.sh        # Production secrets generator
 ```
 
-### Environment Variables (.env)
+### Environment Variables
 
-**Required:**
-- `TELEGRAM_BOT_TOKEN` - Bot token from @BotFather
-- `JWT_SECRET` - Secret key for JWT tokens
+**Single `.env` file approach:**
+- Copy `.env.example` to `.env`
+- For development: Use default values, just add Telegram bot credentials
+- For production: Run `./generate-secrets.sh` to set production values
+- Update `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` in both cases
 
-**Optional (have defaults):**
-- `DB_USER=postgres` - Database user
-- `DB_PASSWORD=postgres` - Database password  
-- `DB_NAME=visarun` - Database name
+**Required Variables:**
+- `TELEGRAM_BOT_TOKEN` - Get from @BotFather on Telegram
+- `TELEGRAM_BOT_USERNAME` - Your bot's username (without @)
+
+**Development defaults (already set in .env.example):**
+- Database: postgres/postgres/visarun on localhost:5432
+- API URLs: localhost for frontend, internal Docker network for services
+- JWT_SECRET: development default (change for production)
 
 ### Ports
 - **5173** - Frontend
 - **3001** - Backend API
 - **5432** - PostgreSQL Database
+
+## 🚀 Production Deployment
+
+### 1. Generate Production Environment
+```bash
+# Create .env with production-ready secrets
+./generate-secrets.sh
+```
+
+This script will:
+- Copy `.env.example` to `.env`
+- Generate secure JWT secret, session secret, and database password
+- Switch to production URLs and settings
+- Set secure file permissions
+
+### 2. Configure Production Values
+```bash
+# Edit the generated .env file
+nano .env
+```
+
+**Update these values:**
+- `TELEGRAM_BOT_TOKEN` - Your actual bot token from @BotFather
+- `TELEGRAM_BOT_USERNAME` - Your bot's username
+- Replace `yourdomain.com` with your actual domain in all URL fields
+
+### 3. Deploy Production Services
+```bash
+# Build and start production containers
+docker compose -f compose.prod.yml up -d --build
+
+# Check service status
+docker compose -f compose.prod.yml ps
+
+# View logs
+docker compose -f compose.prod.yml logs -f
+```
+
+### Production Notes
+- Database port is not exposed externally for security
+- Frontend serves on port 80, backend on port 3001
+- All data persisted in Docker volumes
+- Configure your reverse proxy to handle SSL and forward requests
 
 ## 🛠️ Troubleshooting
 
@@ -180,10 +231,66 @@ docker compose -f compose.dev.yml restart
 2. Ensure bot is added to chats with admin rights
 3. Check local dependencies: `ls telegram-bot/node_modules`
 4. If missing: `cd telegram-bot && pnpm install --ignore-workspace`
-5. Check logs: `docker compose -f compose.dev.yml logs telegram-bot`
+
+### Production Issues
+```bash
+# Check all production services
+docker compose -f compose.prod.yml ps
+
+# View specific service logs
+docker compose -f compose.prod.yml logs backend
+docker compose -f compose.prod.yml logs telegram-bot
+
+# Database health check
+docker compose -f compose.prod.yml exec postgres POSTGRES_isready -U visarun_prod
+```
 
 ### Ports already in use
-Edit `compose.dev.yml` to change external ports:
+```bash
+# Check what's using the ports
+sudo lsof -i :5173  # Frontend
+sudo lsof -i :3001  # Backend
+sudo lsof -i :5432  # Database
+
+# Stop conflicting services or change ports in compose files
+```
+
+## 📝 Environment Variables Reference
+
+### Development (default in .env.example)
+```bash
+NODE_ENV=development
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=visarun
+JWT_SECRET=dev-jwt-secret-change-for-production
+BACKEND_URL=http://backend:3001
+VITE_API_URL=http://localhost:3001
+```
+
+### Production (set by generate-secrets.sh)
+```bash
+NODE_ENV=production
+POSTGRES_USER=visarun_prod
+POSTGRES_PASSWORD=<generated-secure-password>
+POSTGRES_DB=visarun_production
+JWT_SECRET=<generated-64-char-secret>
+BACKEND_URL=https://yourdomain.com
+VITE_API_URL=https://yourdomain.com
+```
+
+## 🔒 Security Notes
+
+- Never commit `.env` file to version control (it's git-ignored)
+- Use strong secrets for production (generated automatically)
+- Production database is not exposed externally
+- Configure reverse proxy with SSL certificates
+- Rotate secrets periodically for production deployments
+
+## 🔧 Advanced Configuration
+
+### Port Configuration
+Edit compose files to change external ports if needed:
 ```yaml
 services:
   webapp:
@@ -194,24 +301,25 @@ services:
       - "8080:3001"  # Change external port to 8080
 ```
 
-### File sync issues (Windows/macOS)
-1. Ensure Docker Desktop is properly configured
-2. Check file system settings in Docker Desktop
-3. Use WSL2 on Windows if needed
-
-### Permission issues (Linux)
+### Development Reset
 ```bash
-# Fix file permissions
-sudo chown -R $USER:$USER ./backend ./webapp ./telegram-bot
-```
-
-### Clean reset
-```bash
-# Stop and remove all data
+# Stop and remove all containers
 docker compose -f compose.dev.yml down -v
+
+# Rebuild from scratch
+docker compose -f compose.dev.yml up -d --build --force-recreate
 
 # Remove unused images
 docker system prune -f
+```
+
+### Production Reset
+```bash
+# Stop production services
+docker compose -f compose.prod.yml down -v
+
+# Rebuild production
+docker compose -f compose.prod.yml up -d --build --force-recreate
 ```
 
 ## 🏗️ System Components
@@ -221,7 +329,7 @@ docker system prune -f
 - **Database**: PostgreSQL
 - **API**: REST + tRPC for type-safe requests
 
-### Frontend (port 5173)  
+### Frontend (port 5173)
 - **Technologies**: React, Vite, TypeScript
 - **UI**: Tailwind CSS + Radix UI components
 - **State**: React Query + tRPC client
@@ -229,7 +337,7 @@ docker system prune -f
 ### Telegram Bot
 - **Technologies**: Node.js, node-telegram-bot-api, nodemon
 - **Features**: Command handling, notifications, API integration
-- **Notes**: 
+- **Notes**:
   - Uses local `node_modules` (not workspace)
   - Requires: `cd telegram-bot && pnpm install --ignore-workspace`
   - Supports hot reload via nodemon

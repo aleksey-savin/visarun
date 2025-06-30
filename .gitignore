@@ -24,8 +24,16 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
+# Environment files - never commit production secrets
+.env.prod
+.env.local
+.env.*.local
 
 # Uploads directory (handled by Docker volumes)
 backend/uploads/
 uploads/
+
+# Backup files
+*.backup
+*.sql
+backup_*

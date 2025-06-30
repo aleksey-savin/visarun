@@ -71,11 +71,11 @@ COPY --from=backend-build /app/backend/package.json ./package.json
 COPY --from=backend-build /app/backend/dist ./dist
 COPY --from=backend-build /app/backend/prisma ./prisma
 
-# Install production dependencies only
+# Install production dependencies only (ignore scripts to prevent prepare from running)
 RUN pnpm install --prod
 
-# Generate Prisma client
-ENV DATABASE_URL=${DATABASE_URL:-"postgresql://postgres:postgres@postgres:5432/visarun"}
+# Generate Prisma client manually
+ENV DATABASE_URL=${DATABASE_URL:-"postgresql://postgres:postgres@db:5432/visarun"}
 RUN npx prisma generate
 
 EXPOSE 3001
