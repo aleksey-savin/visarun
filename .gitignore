@@ -25,6 +25,7 @@ dist-ssr
 *.sw?
 
 # Environment files - never commit production secrets
+.env
 .env.prod
 .env.local
 .env.*.local
