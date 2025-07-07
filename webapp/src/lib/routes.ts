@@ -29,6 +29,17 @@ export type ViewTelegramChannelRouteParams = typeof viewTelegramChannelRoutePara
 export const getViewTelegramChannelRoute = ({ id }: ViewTelegramChannelRouteParams) =>
   `/telegram-channels/${id}`;
 
+export const getMessageTemplatesRoute = () => '/message-templates';
+export const getCreateMessageTemplateRoute = () => '/message-templates/create';
+export const editMessageTemplateRouteParams = getRouteParams({ id: true });
+export type EditMessageTemplateRouteParams = typeof editMessageTemplateRouteParams;
+export const getEditMessageTemplateRoute = ({ id }: EditMessageTemplateRouteParams) =>
+  `/message-templates/edit/${id}`;
+export const viewMessageTemplateRouteParams = getRouteParams({ id: true });
+export type ViewMessageTemplateRouteParams = typeof viewMessageTemplateRouteParams;
+export const getViewMessageTemplateRoute = ({ id }: ViewMessageTemplateRouteParams) =>
+  `/message-templates/view/${id}`;
+
 export const getSignInRoute = () => '/sign-in';
 export const getAccessDeniedRoute = () => '/access-denied';
 

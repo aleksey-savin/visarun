@@ -10,7 +10,7 @@
     "types": "concurrently 'pnpm back types' 'pnpm web types'",
     "lint": "pnpm -r --parallel lint",
     "format": "pnpm -r --parallel format",
-    "prepare": "husky"
+    
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

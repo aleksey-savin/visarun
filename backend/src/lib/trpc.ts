@@ -72,6 +72,10 @@ export const telegramManageProcedure = trpc.procedure.use(
   requirePermission('telegram.channels.manage')
 );
 
+export const messageTemplateManageProcedure = trpc.procedure.use(
+  requirePermission('messages.manage')
+);
+
 // Legacy admin procedure - now uses global.fullAccess permission
 export const adminProcedure = trpc.procedure.use(requirePermission('global.fullAccess'));
 

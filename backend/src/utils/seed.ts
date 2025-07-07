@@ -53,6 +53,12 @@ async function main() {
       category: 'telegram',
     },
 
+    {
+      code: 'messages.manage',
+      description: 'Can manage message templates',
+      category: 'messages',
+    },
+
     // Countries management
     { code: 'countries.create', description: 'Create countries', category: 'countries' },
     { code: 'countries.read', description: 'View countries', category: 'countries' },

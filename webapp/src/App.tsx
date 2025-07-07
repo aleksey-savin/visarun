@@ -18,6 +18,11 @@ import TelegramChannelsPage from './pages/Telegram/getAll';
 import ViewTelegramChannelPage from './pages/Telegram/view';
 import ContactMethodsPage from './pages/ContactMethods/getAll';
 
+import AllMessageTemplatesPage from './pages/MessageTemplates/getAll';
+import CreateMessageTemplatePage from './pages/MessageTemplates/create';
+import ViewMessageTemplatePage from './pages/MessageTemplates/view.tsx';
+import EditMessageTemplatePage from './pages/MessageTemplates/edit.tsx';
+
 // Countries pages
 import AllCountriesPage from './pages/Countries/getAll';
 import ViewCountryPage from './pages/Countries/view';
@@ -87,6 +92,12 @@ import {
   getEditClientRoute,
   viewClientRouteParams,
   editClientRouteParams,
+  getMessageTemplatesRoute,
+  getCreateMessageTemplateRoute,
+  getViewMessageTemplateRoute,
+  getEditMessageTemplateRoute,
+  viewMessageTemplateRouteParams,
+  editMessageTemplateRouteParams,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -96,268 +107,305 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PermissionRoute } from '@/components/PermissionRoute';
 import { Toaster } from '@/components/ui/sonner';
 import AccessDeniedPage from '@/pages/AccessDenied';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const App = () => {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <AuthProvider>
-        <TrpcProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path={getSignInRoute()} element={<HomePage />} />
-              <Route path={getAccessDeniedRoute()} element={<AccessDeniedPage />} />
+    <TooltipProvider>
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <AuthProvider>
+          <TrpcProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path={getSignInRoute()} element={<HomePage />} />
+                <Route path={getAccessDeniedRoute()} element={<AccessDeniedPage />} />
 
-              {/* Protected routes */}
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <Layout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path={getDashboardRoute()} element={<DashboardPage />} />
+                {/* Protected routes */}
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path={getDashboardRoute()} element={<DashboardPage />} />
 
-                {/* Currency Exchange Routes */}
-                <Route
-                  path={getCurrencyExchangeRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="exchangeRates.create">
-                      <CurrencyExchangePage />
-                    </PermissionRoute>
-                  }
-                />
+                  {/* Currency Exchange Routes */}
+                  <Route
+                    path={getCurrencyExchangeRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="exchangeRates.create">
+                        <CurrencyExchangePage />
+                      </PermissionRoute>
+                    }
+                  />
 
-                {/* User Management Routes */}
-                <Route
-                  path={getAllUsersRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="users.read">
-                      <AllUsersPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getCreateUserRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="users.create">
-                      <CreateUserPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getEditUserRoute(editUserRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="users.update">
-                      <EditUserPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getViewUserRoute(viewUserRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="users.read">
-                      <ViewUserPage />
-                    </PermissionRoute>
-                  }
-                />
+                  {/* User Management Routes */}
+                  <Route
+                    path={getAllUsersRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="users.read">
+                        <AllUsersPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getCreateUserRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="users.create">
+                        <CreateUserPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getEditUserRoute(editUserRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="users.update">
+                        <EditUserPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getViewUserRoute(viewUserRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="users.read">
+                        <ViewUserPage />
+                      </PermissionRoute>
+                    }
+                  />
 
-                {/* Role Management Routes */}
-                <Route
-                  path={getAllRolesRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="roles.read">
-                      <AllRolesPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getCreateRoleRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="roles.create">
-                      <CreateRolePage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getViewRoleRoute(viewRoleRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="roles.read">
-                      <ViewRolePage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getEditRoleRoute(editRoleRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="roles.update">
-                      <EditRolePage />
-                    </PermissionRoute>
-                  }
-                />
+                  {/* Role Management Routes */}
+                  <Route
+                    path={getAllRolesRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="roles.read">
+                        <AllRolesPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getCreateRoleRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="roles.create">
+                        <CreateRolePage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getViewRoleRoute(viewRoleRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="roles.read">
+                        <ViewRolePage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getEditRoleRoute(editRoleRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="roles.update">
+                        <EditRolePage />
+                      </PermissionRoute>
+                    }
+                  />
 
-                {/* Telegram Management Routes */}
-                <Route
-                  path={getTelegramChannelsRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="telegram.channels.read">
-                      <TelegramChannelsPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getViewTelegramChannelRoute(viewTelegramChannelRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="telegram.channels.read">
-                      <ViewTelegramChannelPage />
-                    </PermissionRoute>
-                  }
-                />
+                  {/* Telegram Management Routes */}
+                  <Route
+                    path={getTelegramChannelsRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="telegram.channels.read">
+                        <TelegramChannelsPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getViewTelegramChannelRoute(viewTelegramChannelRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="telegram.channels.read">
+                        <ViewTelegramChannelPage />
+                      </PermissionRoute>
+                    }
+                  />
 
-                {/* Contact Methods Management Routes */}
-                <Route
-                  path={getAllContactMethodsRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="global.fullAccess">
-                      <ContactMethodsPage />
-                    </PermissionRoute>
-                  }
-                />
+                  {/* Message Templates Management Routes */}
+                  <Route
+                    path={getMessageTemplatesRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="messages.manage">
+                        <AllMessageTemplatesPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getCreateMessageTemplateRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="messages.manage">
+                        <CreateMessageTemplatePage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getViewMessageTemplateRoute(viewMessageTemplateRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="messages.manage">
+                        <ViewMessageTemplatePage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getEditMessageTemplateRoute(editMessageTemplateRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="messages.manage">
+                        <EditMessageTemplatePage />
+                      </PermissionRoute>
+                    }
+                  />
 
-                {/* Countries Management Routes */}
-                <Route
-                  path={getAllCountriesRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="countries.read">
-                      <AllCountriesPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getCreateCountryRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="countries.create">
-                      <CreateCountryPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getViewCountryRoute(viewCountryRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="countries.read">
-                      <ViewCountryPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getEditCountryRoute(editCountryRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="countries.update">
-                      <EditCountryPage />
-                    </PermissionRoute>
-                  }
-                />
+                  {/* Contact Methods Management Routes */}
+                  <Route
+                    path={getAllContactMethodsRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="global.fullAccess">
+                        <ContactMethodsPage />
+                      </PermissionRoute>
+                    }
+                  />
 
-                {/* Citizenships Management Routes */}
-                <Route
-                  path={getAllCitizenshipsRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="citizenships.read">
-                      <AllCitizenshipsPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getCreateCitizenshipRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="citizenships.create">
-                      <CreateCitizenshipPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getViewCitizenshipRoute(viewCitizenshipRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="citizenships.read">
-                      <ViewCitizenshipPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getEditCitizenshipRoute(editCitizenshipRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="citizenships.update">
-                      <EditCitizenshipPage />
-                    </PermissionRoute>
-                  }
-                />
+                  {/* Countries Management Routes */}
+                  <Route
+                    path={getAllCountriesRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="countries.read">
+                        <AllCountriesPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getCreateCountryRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="countries.create">
+                        <CreateCountryPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getViewCountryRoute(viewCountryRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="countries.read">
+                        <ViewCountryPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getEditCountryRoute(editCountryRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="countries.update">
+                        <EditCountryPage />
+                      </PermissionRoute>
+                    }
+                  />
 
-                {/* Visa Citizenship Surcharges Management Routes */}
-                <Route
-                  path={getAllVisaCitizenshipSurchargesRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="visaCitizenshipSurcharges.read">
-                      <AllVisaCitizenshipSurchargesPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getCreateVisaCitizenshipSurchargeRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="visaCitizenshipSurcharges.create">
-                      <CreateVisaCitizenshipSurchargePage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getViewVisaCitizenshipSurchargeRoute(
-                    viewVisaCitizenshipSurchargeRouteParams
-                  )}
-                  element={
-                    <PermissionRoute requiredPermission="visaCitizenshipSurcharges.read">
-                      <ViewVisaCitizenshipSurchargePage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getEditVisaCitizenshipSurchargeRoute(
-                    editVisaCitizenshipSurchargeRouteParams
-                  )}
-                  element={
-                    <PermissionRoute requiredPermission="visaCitizenshipSurcharges.update">
-                      <EditVisaCitizenshipSurchargePage />
-                    </PermissionRoute>
-                  }
-                />
+                  {/* Citizenships Management Routes */}
+                  <Route
+                    path={getAllCitizenshipsRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="citizenships.read">
+                        <AllCitizenshipsPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getCreateCitizenshipRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="citizenships.create">
+                        <CreateCitizenshipPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getViewCitizenshipRoute(viewCitizenshipRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="citizenships.read">
+                        <ViewCitizenshipPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getEditCitizenshipRoute(editCitizenshipRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="citizenships.update">
+                        <EditCitizenshipPage />
+                      </PermissionRoute>
+                    }
+                  />
 
-                {/* Client Management Routes */}
-                <Route
-                  path={getViewClientRoute(viewClientRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="users.read">
-                      <ViewClientPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getEditClientRoute(editClientRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="users.update">
-                      <EditClientPage />
-                    </PermissionRoute>
-                  }
-                />
-              </Route>
+                  {/* Visa Citizenship Surcharges Management Routes */}
+                  <Route
+                    path={getAllVisaCitizenshipSurchargesRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="visaCitizenshipSurcharges.read">
+                        <AllVisaCitizenshipSurchargesPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getCreateVisaCitizenshipSurchargeRoute()}
+                    element={
+                      <PermissionRoute requiredPermission="visaCitizenshipSurcharges.create">
+                        <CreateVisaCitizenshipSurchargePage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getViewVisaCitizenshipSurchargeRoute(
+                      viewVisaCitizenshipSurchargeRouteParams
+                    )}
+                    element={
+                      <PermissionRoute requiredPermission="visaCitizenshipSurcharges.read">
+                        <ViewVisaCitizenshipSurchargePage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getEditVisaCitizenshipSurchargeRoute(
+                      editVisaCitizenshipSurchargeRouteParams
+                    )}
+                    element={
+                      <PermissionRoute requiredPermission="visaCitizenshipSurcharges.update">
+                        <EditVisaCitizenshipSurchargePage />
+                      </PermissionRoute>
+                    }
+                  />
 
-              {/* Fallback route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-          <Toaster />
-        </TrpcProvider>
-      </AuthProvider>
-    </ThemeProvider>
+                  {/* Client Management Routes */}
+                  <Route
+                    path={getViewClientRoute(viewClientRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="users.read">
+                        <ViewClientPage />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route
+                    path={getEditClientRoute(editClientRouteParams)}
+                    element={
+                      <PermissionRoute requiredPermission="users.update">
+                        <EditClientPage />
+                      </PermissionRoute>
+                    }
+                  />
+                </Route>
+
+                {/* Fallback route */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+            <Toaster />
+          </TrpcProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </TooltipProvider>
   );
 };
 

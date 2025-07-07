@@ -34,6 +34,8 @@ services:
       - BACKEND_URL=http://backend:3001
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - TELEGRAM_BOT_USERNAME=kaiku_sandbox_bot
+      - TELEGRAM_BOT_TOKEN=5183988695:AAF_5WRc5IPWmCgqWx5y83zV0_698hlY1t0
     volumes:
       - ./backend:/app/backend
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml

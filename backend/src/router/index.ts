@@ -21,6 +21,7 @@ import { cityRoute } from './city/index.js';
 import { clientRoutes } from './client/index.js';
 import { clientPassportRoutes } from './clientPassport/index.js';
 import { uploadRoutes } from './upload/index.js';
+import { messageTemplateRoute } from './messageTemplate/index.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
@@ -47,6 +48,7 @@ export const appRouter = trpc.router({
   changePassword: changePasswordTrpcRoute,
   forceChangePassword: forceChangePasswordTrpcRoute,
   telegramChannel: telegramRoute,
+  messageTemplate: messageTemplateRoute,
 });
 
 // Export type definition of API
