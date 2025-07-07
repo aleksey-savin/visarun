@@ -208,24 +208,71 @@ const ViewCitizenshipPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="w-full max-w-7xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate(getAllCitizenshipsRoute())}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-3xl font-bold">Citizenship Details</h1>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <div className="h-8 bg-muted animate-pulse rounded w-1/3"></div>
+                <div className="h-4 bg-muted animate-pulse rounded w-1/4 mt-2"></div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-4 bg-muted animate-pulse rounded"></div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card>
+              <CardHeader>
+                <div className="h-6 bg-muted animate-pulse rounded w-32"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-20 bg-muted animate-pulse rounded"></div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (isError || !data?.citizenship) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        <h3 className="font-medium text-lg mb-2">Error Loading Citizenship</h3>
-        <p>{error?.message || 'Citizenship not found'}</p>
-        <Button
-          onClick={() => navigate(getAllCitizenshipsRoute())}
-          className="mt-4"
-          variant="outline"
-        >
-          Back to Citizenships
-        </Button>
+      <div className="w-full max-w-7xl mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate(getAllCitizenshipsRoute())}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-3xl font-bold">Citizenship Details</h1>
+          </div>
+        </div>
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-700">Error Loading Citizenship</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-600">{error?.message || 'Citizenship not found'}</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -233,391 +280,405 @@ const ViewCitizenshipPage = () => {
   const { citizenship } = data;
 
   return (
-    <>
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" size="sm" onClick={() => navigate(getAllCitizenshipsRoute())}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Citizenships
-        </Button>
-        <div className="text-3xl sm:text-5xl font-semibold capitalize flex items-center gap-2">
-          {citizenship.name}
-          {citizenship.favourite && <Star className="h-8 w-8 text-yellow-500 fill-current" />}
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" onClick={() => navigate(getAllCitizenshipsRoute())}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold capitalize">{citizenship.name}</h1>
+            {citizenship.favourite && <Star className="h-8 w-8 text-yellow-500 fill-current" />}
+          </div>
         </div>
       </div>
 
-      <div className="space-y-6">
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Citizenship Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-2">Citizenship Name</h3>
-                <p className="text-lg font-medium">{citizenship.name}</p>
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Citizenship Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-2">
+                    Citizenship Name
+                  </h3>
+                  <p className="text-lg font-medium">{citizenship.name}</p>
+                </div>
 
-              <div>
-                <h3 className="font-medium text-sm text-muted-foreground mb-2">Status</h3>
-                <Badge
-                  variant={citizenship.favourite ? 'default' : 'secondary'}
-                  className="flex items-center gap-1 w-fit"
-                >
-                  {citizenship.favourite ? <Star className="h-3 w-3 fill-current" /> : null}
-                  {citizenship.favourite ? 'Favourite' : 'Regular'}
-                </Badge>
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-2">Status</h3>
+                  <Badge
+                    variant={citizenship.favourite ? 'default' : 'secondary'}
+                    className="flex items-center gap-1 w-fit"
+                  >
+                    {citizenship.favourite ? <Star className="h-3 w-3 fill-current" /> : null}
+                    {citizenship.favourite ? 'Favourite' : 'Regular'}
+                  </Badge>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Visa Free Countries */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Visa-Free Countries ({citizenship.visaFree.length})
-              </div>
-              <Dialog open={visaFreeDialogOpen} onOpenChange={setVisaFreeDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Visa-Free
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Visa-Free Access</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="country">Country</Label>
-                      <Select value={selectedCountryId} onValueChange={setSelectedCountryId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getAvailableCountriesForVisaFree().map(country => (
-                            <SelectItem key={country.id} value={country.id}>
-                              {country.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="duration">Stamp Duration (days)</Label>
-                      <Input
-                        id="duration"
-                        type="number"
-                        min="1"
-                        max="365"
-                        value={stampDuration}
-                        onChange={e => setStampDuration(parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleAddVisaFree}
-                        disabled={createVisaFreeMutation.isPending}
-                      >
-                        {createVisaFreeMutation.isPending ? 'Adding...' : 'Add'}
-                      </Button>
-                      <Button variant="outline" onClick={() => setVisaFreeDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {citizenship.visaFree.length > 0 ? (
-              <div className="space-y-3">
-                {citizenship.visaFree.map(
-                  (entry: {
-                    countryId: string;
-                    stampDuration: number;
-                    country: { id: string; name: string };
-                  }) => (
-                    <div
-                      key={entry.countryId}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium">{entry.country.name}</span>
-                        <Badge variant="outline" className="bg-green-50 text-green-700">
-                          {entry.stampDuration} days
-                        </Badge>
+          {/* Visa Free Countries */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Visa-Free Countries ({citizenship.visaFree.length})
+                </div>
+                <Dialog open={visaFreeDialogOpen} onOpenChange={setVisaFreeDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Visa-Free
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Visa-Free Access</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="country">Country</Label>
+                        <Select value={selectedCountryId} onValueChange={setSelectedCountryId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getAvailableCountriesForVisaFree().map(country => (
+                              <SelectItem key={country.id} value={country.id}>
+                                {country.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() =>
-                          deleteVisaFreeMutation.mutate({
-                            citizenshipId: id!,
-                            countryId: entry.countryId,
-                          })
-                        }
-                        disabled={deleteVisaFreeMutation.isPending}
+                      <div>
+                        <Label htmlFor="duration">Stamp Duration (days)</Label>
+                        <Input
+                          id="duration"
+                          type="number"
+                          min="1"
+                          max="365"
+                          value={stampDuration}
+                          onChange={e => setStampDuration(parseInt(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleAddVisaFree}
+                          disabled={createVisaFreeMutation.isPending}
+                        >
+                          {createVisaFreeMutation.isPending ? 'Adding...' : 'Add'}
+                        </Button>
+                        <Button variant="outline" onClick={() => setVisaFreeDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {citizenship.visaFree.length > 0 ? (
+                <div className="space-y-3">
+                  {citizenship.visaFree.map(
+                    (entry: {
+                      countryId: string;
+                      stampDuration: number;
+                      country: { id: string; name: string };
+                    }) => (
+                      <div
+                        key={entry.countryId}
+                        className="flex items-center justify-between p-3 border rounded-lg"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )
-                )}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No visa-free countries configured.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Blacklisted Countries */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldX className="h-5 w-5" />
-                Blacklisted Countries ({citizenship.blacklisted.length})
-              </div>
-              <Dialog open={blacklistDialogOpen} onOpenChange={setBlacklistDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="destructive">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add to Blacklist
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Country to Blacklist</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="blacklist-country">Country</Label>
-                      <Select value={selectedCountryId} onValueChange={setSelectedCountryId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getAvailableCountriesForBlacklist().map(country => (
-                            <SelectItem key={country.id} value={country.id}>
-                              {country.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleAddBlacklist}
-                        disabled={createBlacklistMutation.isPending}
-                      >
-                        {createBlacklistMutation.isPending ? 'Adding...' : 'Add to Blacklist'}
-                      </Button>
-                      <Button variant="outline" onClick={() => setBlacklistDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {citizenship.blacklisted.length > 0 ? (
-              <div className="space-y-3">
-                {citizenship.blacklisted.map(
-                  (entry: { countryId: string; country: { id: string; name: string } }) => (
-                    <div
-                      key={entry.countryId}
-                      className="flex items-center justify-between p-3 border rounded-lg bg-red-50"
-                    >
-                      <span className="font-medium text-red-800">{entry.country.name}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          deleteBlacklistMutation.mutate({
-                            citizenshipId: id!,
-                            countryId: entry.countryId,
-                          })
-                        }
-                        disabled={deleteBlacklistMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )
-                )}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No blacklisted countries.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Visa Citizenship Surcharges */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Visa Citizenship Surcharges ({citizenship.surcharges.length})
-              </div>
-              <Dialog open={surchargeDialogOpen} onOpenChange={setSurchargeDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Surcharge
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Citizenship Surcharge</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="surcharge-country">Country</Label>
-                      <Select value={surchargeCountryId} onValueChange={setSurchargeCountryId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {countriesData?.countries.map(country => (
-                            <SelectItem key={country.id} value={country.id}>
-                              {country.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="visa-type">Visa Type ID</Label>
-                      <Input
-                        id="visa-type"
-                        value={visaTypeId}
-                        onChange={e => setVisaTypeId(e.target.value)}
-                        placeholder="Enter visa type ID"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="amount">Surcharge Amount (USD)</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={surchargeAmount}
-                        onChange={e => setSurchargeAmount(parseFloat(e.target.value) || 0)}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="note">Note (optional)</Label>
-                      <Textarea
-                        id="note"
-                        value={surchargeNote}
-                        onChange={e => setSurchargeNote(e.target.value)}
-                        placeholder="Optional note or description"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleAddSurcharge}
-                        disabled={createSurchargeMutation.isPending}
-                      >
-                        {createSurchargeMutation.isPending ? 'Adding...' : 'Add Surcharge'}
-                      </Button>
-                      <Button variant="outline" onClick={() => setSurchargeDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {citizenship.surcharges.length > 0 ? (
-              <div className="space-y-3">
-                {citizenship.surcharges.map(
-                  (surcharge: {
-                    id: string;
-                    visaTypeId: string;
-                    surchargeAmount: number;
-                    note: string | null;
-                    country: { id: string; name: string };
-                  }) => (
-                    <div
-                      key={surcharge.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {surcharge.country.name} - {surcharge.visaTypeId}
-                          </span>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                            ${surcharge.surchargeAmount.toFixed(2)}
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium">{entry.country.name}</span>
+                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                            {entry.stampDuration} days
                           </Badge>
                         </div>
-                        {surcharge.note && (
-                          <p className="text-sm text-muted-foreground mt-1">{surcharge.note}</p>
-                        )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() =>
+                            deleteVisaFreeMutation.mutate({
+                              citizenshipId: id!,
+                              countryId: entry.countryId,
+                            })
+                          }
+                          disabled={deleteVisaFreeMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteSurchargeMutation.mutate({ id: surcharge.id })}
-                        disabled={deleteSurchargeMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )
-                )}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No surcharges configured.</p>
-            )}
-          </CardContent>
-        </Card>
+                    )
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No visa-free countries configured.</p>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Actions */}
-        <div className="flex gap-4">
-          <Button
-            onClick={() => navigate(getEditCitizenshipRoute({ id: citizenship.id }))}
-            className="flex-1 sm:flex-none"
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Citizenship
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={deleteCitizenshipMutation.isPending}
-            className="flex-1 sm:flex-none"
-          >
-            {deleteCitizenshipMutation.isPending ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Deleting...
-              </>
-            ) : (
-              'Delete Citizenship'
-            )}
-          </Button>
+          {/* Blacklisted Countries */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldX className="h-5 w-5" />
+                  Blacklisted Countries ({citizenship.blacklisted.length})
+                </div>
+                <Dialog open={blacklistDialogOpen} onOpenChange={setBlacklistDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="destructive">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add to Blacklist
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Country to Blacklist</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="blacklist-country">Country</Label>
+                        <Select value={selectedCountryId} onValueChange={setSelectedCountryId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getAvailableCountriesForBlacklist().map(country => (
+                              <SelectItem key={country.id} value={country.id}>
+                                {country.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleAddBlacklist}
+                          disabled={createBlacklistMutation.isPending}
+                        >
+                          {createBlacklistMutation.isPending ? 'Adding...' : 'Add to Blacklist'}
+                        </Button>
+                        <Button variant="outline" onClick={() => setBlacklistDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {citizenship.blacklisted.length > 0 ? (
+                <div className="space-y-3">
+                  {citizenship.blacklisted.map(
+                    (entry: { countryId: string; country: { id: string; name: string } }) => (
+                      <div
+                        key={entry.countryId}
+                        className="flex items-center justify-between p-3 border rounded-lg bg-red-50"
+                      >
+                        <span className="font-medium text-red-800">{entry.country.name}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            deleteBlacklistMutation.mutate({
+                              citizenshipId: id!,
+                              countryId: entry.countryId,
+                            })
+                          }
+                          disabled={deleteBlacklistMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No blacklisted countries.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Visa Citizenship Surcharges */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Visa Citizenship Surcharges ({citizenship.surcharges.length})
+                </div>
+                <Dialog open={surchargeDialogOpen} onOpenChange={setSurchargeDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Surcharge
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Citizenship Surcharge</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="surcharge-country">Country</Label>
+                        <Select value={surchargeCountryId} onValueChange={setSurchargeCountryId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countriesData?.countries.map(country => (
+                              <SelectItem key={country.id} value={country.id}>
+                                {country.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="visa-type">Visa Type ID</Label>
+                        <Input
+                          id="visa-type"
+                          value={visaTypeId}
+                          onChange={e => setVisaTypeId(e.target.value)}
+                          placeholder="Enter visa type ID"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="amount">Surcharge Amount (USD)</Label>
+                        <Input
+                          id="amount"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={surchargeAmount}
+                          onChange={e => setSurchargeAmount(parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="note">Note (optional)</Label>
+                        <Textarea
+                          id="note"
+                          value={surchargeNote}
+                          onChange={e => setSurchargeNote(e.target.value)}
+                          placeholder="Optional note or description"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleAddSurcharge}
+                          disabled={createSurchargeMutation.isPending}
+                        >
+                          {createSurchargeMutation.isPending ? 'Adding...' : 'Add Surcharge'}
+                        </Button>
+                        <Button variant="outline" onClick={() => setSurchargeDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {citizenship.surcharges.length > 0 ? (
+                <div className="space-y-3">
+                  {citizenship.surcharges.map(
+                    (surcharge: {
+                      id: string;
+                      visaTypeId: string;
+                      surchargeAmount: number;
+                      note: string | null;
+                      country: { id: string; name: string };
+                      visaType: { id: string; name: string };
+                    }) => (
+                      <div
+                        key={surcharge.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                              {surcharge.country.name} - {surcharge.visaType.name}
+                            </span>
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                              ${surcharge.surchargeAmount.toFixed(2)}
+                            </Badge>
+                          </div>
+                          {surcharge.note && (
+                            <p className="text-sm text-muted-foreground mt-1">{surcharge.note}</p>
+                          )}
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteSurchargeMutation.mutate({ id: surcharge.id })}
+                          disabled={deleteSurchargeMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No surcharges configured.</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Actions Sidebar */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                onClick={() => navigate(getEditCitizenshipRoute({ id: citizenship.id }))}
+                className="w-full justify-start"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Citizenship
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={deleteCitizenshipMutation.isPending}
+                className="w-full justify-start"
+              >
+                {deleteCitizenshipMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Citizenship'
+                )}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

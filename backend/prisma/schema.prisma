@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DB_URL")
+  url      = env("POSTGRES_URL")
 }
 
 model RefreshToken {
@@ -65,38 +65,43 @@ model UserRoleAssignment {
 }
 
 model User {
-  id                 String               @id @default(uuid())
-  email              String               @unique
-  firstName          String
-  middleName         String?
-  lastName           String
-  role               UserRole?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @default(now()) @updatedAt
-  password           String
-  mustChangePassword Boolean              @default(false)
-  exchangeRates      ExchangeRate[]
-  refreshTokens      RefreshToken[]
-  rolesCreated       Role[]               @relation("RoleCreatedBy")
-  rolesUpdated       Role[]               @relation("RoleUpdatedBy")
-  contactMethods     UserContactMethod[]
-  roleAssignments    UserRoleAssignment[]
-  Client             Client[]
+  id                       String                     @id @default(uuid())
+  email                    String                     @unique
+  firstName                String
+  middleName               String?
+  lastName                 String
+  role                     UserRole?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @default(now()) @updatedAt
+  password                 String
+  mustChangePassword       Boolean                    @default(false)
+  Client                   Client[]
+  ClientDiscountAssignment ClientDiscountAssignment[]
+  exchangeRates            ExchangeRate[]
+  Order                    Order[]
+  refreshTokens            RefreshToken[]
+  rolesCreated             Role[]                     @relation("RoleCreatedBy")
+  rolesUpdated             Role[]                     @relation("RoleUpdatedBy")
+  contactMethods           UserContactMethod[]
+  roleAssignments          UserRoleAssignment[]
 }
 
 model Client {
-  id                    String           @id @default(uuid())
-  userId                String?
-  user                  User?            @relation(fields: [userId], references: [id])
-  firstName             String
-  lastName              String
-  citizenshipId         String?
-  citizenship           Citizenship?     @relation(fields: [citizenshipId], references: [id])
-  prevViolations        Boolean          @default(false)
-  prevViolationsDesc    String?
-  isOutsideTheCountry   Boolean          @default(false)
-  isOutsideTheCountryAt DateTime?
-  passports             ClientPassport[]
+  id                       String                     @id @default(uuid())
+  userId                   String?
+  citizenshipId            String?
+  prevViolations           Boolean                    @default(false)
+  prevViolationsDesc       String?
+  isOutsideTheCountry      Boolean                    @default(false)
+  isOutsideTheCountryAt    DateTime?
+  firstName                String
+  lastName                 String
+  citizenship              Citizenship?               @relation(fields: [citizenshipId], references: [id])
+  user                     User?                      @relation(fields: [userId], references: [id])
+  ClientDiscountAssignment ClientDiscountAssignment[]
+  passports                ClientPassport[]
+  ClientVisa               ClientVisa[]
+  OrderItem                OrderItem[]
 
   @@index([userId])
   @@index([citizenshipId])
@@ -105,9 +110,9 @@ model Client {
 model ClientPassport {
   id             String   @id @default(uuid())
   clientId       String
-  client         Client   @relation(fields: [clientId], references: [id])
   expirationDate DateTime
   scanPath       String
+  client         Client   @relation(fields: [clientId], references: [id])
 
   @@index([clientId])
 }
@@ -139,10 +144,10 @@ model Citizenship {
   id          String                     @id @default(uuid())
   name        String                     @unique
   favourite   Boolean                    @default(false)
-  visaFree    VisaFree[]
   blacklisted Blacklisted[]
-  surcharges  VisaCitizenshipSurcharge[]
   Client      Client[]
+  surcharges  VisaCitizenshipSurcharge[]
+  visaFree    VisaFree[]
 }
 
 model Country {
@@ -150,27 +155,29 @@ model Country {
   name               String                     @unique
   eVisaAvailable     Boolean                    @default(false)
   multivisaAvailable Boolean                    @default(false)
-  cities             City[]
-  visaFree           VisaFree[]
   blacklisted        Blacklisted[]
+  cities             City[]
+  ClientVisa         ClientVisa[]
+  VisaApplication    VisaApplication[]
   surcharges         VisaCitizenshipSurcharge[]
+  visaFree           VisaFree[]
+  VisaType           VisaType[]
 }
 
 model City {
   id        String  @id @default(uuid())
   name      String
   countryId String
-  country   Country @relation(fields: [countryId], references: [id])
   isActive  Boolean @default(true)
+  country   Country @relation(fields: [countryId], references: [id])
 }
 
 model VisaFree {
   citizenshipId String
   countryId     String
   stampDuration Int
-
-  citizenship Citizenship @relation(fields: [citizenshipId], references: [id])
-  country     Country     @relation(fields: [countryId], references: [id])
+  citizenship   Citizenship @relation(fields: [citizenshipId], references: [id])
+  country       Country     @relation(fields: [countryId], references: [id])
 
   @@id([citizenshipId, countryId])
 }
@@ -178,24 +185,22 @@ model VisaFree {
 model Blacklisted {
   citizenshipId String
   countryId     String
-
-  citizenship Citizenship @relation(fields: [citizenshipId], references: [id])
-  country     Country     @relation(fields: [countryId], references: [id])
+  citizenship   Citizenship @relation(fields: [citizenshipId], references: [id])
+  country       Country     @relation(fields: [countryId], references: [id])
 
   @@id([citizenshipId, countryId])
 }
 
 model VisaCitizenshipSurcharge {
-  id              String  @id @default(uuid())
+  id              String      @id @default(uuid())
   citizenshipId   String
-  countryId       String
   visaTypeId      String
   surchargeAmount Float
   note            String?
-
-  citizenship Citizenship @relation(fields: [citizenshipId], references: [id])
-  country     Country     @relation(fields: [countryId], references: [id])
-  // visaType    VisaType    @relation(fields: [visaTypeId], references: [id])
+  countryId       String
+  citizenship     Citizenship @relation(fields: [citizenshipId], references: [id])
+  country         Country     @relation(fields: [countryId], references: [id])
+  visaType        VisaType    @relation(fields: [visaTypeId], references: [id])
 }
 
 model ExchangeRate {
@@ -238,6 +243,126 @@ model MessageTemplate {
   telegramChannels TelegramChannel[]
 }
 
+model Order {
+  id        String      @id @default(uuid())
+  userId    String
+  createdAt DateTime    @default(now())
+  status    OrderStatus @default(draft)
+  user      User        @relation(fields: [userId], references: [id])
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id                  String               @id @default(uuid())
+  orderId             String
+  clientId            String
+  serviceType         ServiceType
+  serviceTypeId       String
+  discountAppliedType DiscountAppliedType?
+  discountRuleId      String?
+  discountAmount      Float
+  discountComment     String?
+  note                String?
+  basePrice           Float
+  finalPrice          Float
+  client              Client               @relation(fields: [clientId], references: [id])
+  discountRule        ClientDiscountRule?  @relation(fields: [discountRuleId], references: [id])
+  order               Order                @relation(fields: [orderId], references: [id])
+  VisaApplication     VisaApplication[]
+
+  @@index([orderId])
+  @@index([clientId])
+  @@index([discountRuleId])
+}
+
+model ClientDiscountRule {
+  id                   String                     @id @default(uuid())
+  name                 String
+  discountType         DiscountType
+  discountValue        Float
+  appliesToService     AppliesToService
+  appliesAutomatically Boolean
+  validFrom            DateTime
+  validTo              DateTime
+  minOrders            Int
+  isActive             Boolean
+  note                 String?
+  assignments          ClientDiscountAssignment[]
+  OrderItem            OrderItem[]
+}
+
+model ClientDiscountAssignment {
+  id               String             @id @default(uuid())
+  clientId         String
+  ruleId           String
+  assignedByUserId String
+  assignedAt       DateTime
+  note             String?
+  assignedBy       User               @relation(fields: [assignedByUserId], references: [id])
+  client           Client             @relation(fields: [clientId], references: [id])
+  rule             ClientDiscountRule @relation(fields: [ruleId], references: [id])
+
+  @@index([clientId])
+  @@index([ruleId])
+  @@index([assignedByUserId])
+}
+
+model VisaType {
+  id                    String                     @id @default(uuid())
+  name                  String
+  serviceCost           Float
+  countryId             String
+  isMultientry          Boolean
+  multientryExtraCost   Float?
+  processingMode        ProcessingMode
+  processingUnit        ProcessingUnit
+  processingValueFixed  Int?
+  processingValueMin    Int?
+  processingValueMax    Int?
+  submissionDayIncluded Boolean
+  clientVisas           ClientVisa[]
+  visaApplications      VisaApplication[]
+  surcharges            VisaCitizenshipSurcharge[]
+  country               Country                    @relation(fields: [countryId], references: [id])
+}
+
+model VisaApplication {
+  id                    String                @id @default(uuid())
+  orderItemId           String
+  applicationCode       String
+  submittedByAgent      Boolean
+  countryId             String
+  visaTypeId            String
+  note                  String?
+  revisedActivationDate DateTime?
+  statusNote            String?
+  status                VisaApplicationStatus
+  clientVisas           ClientVisa[]
+  country               Country               @relation(fields: [countryId], references: [id])
+  orderItem             OrderItem             @relation(fields: [orderItemId], references: [id])
+  visaType              VisaType              @relation(fields: [visaTypeId], references: [id])
+}
+
+model ClientVisa {
+  id                String          @id @default(uuid())
+  clientId          String
+  countryId         String
+  visaTypeId        String
+  visaApplicationId String
+  validFrom         DateTime
+  validTo           DateTime
+  notifiedExpiry    Boolean
+  client            Client          @relation(fields: [clientId], references: [id])
+  country           Country         @relation(fields: [countryId], references: [id])
+  visaApplication   VisaApplication @relation(fields: [visaApplicationId], references: [id])
+  visaType          VisaType        @relation(fields: [visaTypeId], references: [id])
+
+  @@index([clientId])
+  @@index([countryId])
+  @@index([visaTypeId])
+  @@index([visaApplicationId])
+}
+
 enum UserRole {
   client
   manager
@@ -249,4 +374,51 @@ enum TelegramChannelStatus {
   blocked
   kicked
   insufficient_permissions
+}
+
+enum OrderStatus {
+  draft
+  submitted
+  paid
+  cancelled
+}
+
+enum ServiceType {
+  visa
+  visarun
+}
+
+enum DiscountAppliedType {
+  manual
+  rule
+}
+
+enum DiscountType {
+  percent
+  fixed
+}
+
+enum AppliesToService {
+  visa
+  visarun
+  all
+}
+
+enum VisaApplicationStatus {
+  pending
+  submitted
+  approved
+  used
+  cancelled
+  denied
+}
+
+enum ProcessingMode {
+  fixed
+  approximate
+}
+
+enum ProcessingUnit {
+  hours
+  days
 }

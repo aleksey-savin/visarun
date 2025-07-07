@@ -16,12 +16,12 @@ export const FileViewer = ({ filePath, fileName, isOpen, onClose }: FileViewerPr
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fileUrl = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'}${filePath}`;
+  const fileUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${filePath}`;
   const isPDF = filePath.toLowerCase().endsWith('.pdf');
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filePath);
 
   console.log('FileViewer - File path:', filePath);
-  console.log('FileViewer - Backend URL:', import.meta.env.VITE_BACKEND_URL);
+  console.log('FileViewer - Backend URL:', import.meta.env.VITE_API_URL);
   console.log('FileViewer - Full file URL:', fileUrl);
   console.log('FileViewer - Is PDF:', isPDF);
   console.log('FileViewer - Is Image:', isImage);

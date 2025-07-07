@@ -30,6 +30,14 @@ export const getOneVisaCitizenshipSurchargeTrpcRoute = visaCitizenshipSurchargeR
             name: true,
           },
         },
+        visaType: {
+          select: {
+            id: true,
+            name: true,
+            serviceCost: true,
+            isMultientry: true,
+          },
+        },
       },
     });
 

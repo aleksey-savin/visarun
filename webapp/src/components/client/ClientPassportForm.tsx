@@ -80,7 +80,7 @@ export const ClientPassportForm = ({
         onSuccess();
       }
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error('Failed to add passport', {
         description: error.message,
       });
@@ -98,7 +98,7 @@ export const ClientPassportForm = ({
         onSuccess();
       }
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error('Failed to update passport', {
         description: error.message,
       });
@@ -133,7 +133,7 @@ export const ClientPassportForm = ({
         const formData = new FormData();
         formData.append('passport', file);
 
-        const uploadUrl = `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'}/api/upload/passport`;
+        const uploadUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload/passport`;
         console.log('Uploading to:', uploadUrl);
 
         const uploadResponse = await fetch(uploadUrl, {

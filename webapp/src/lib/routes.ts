@@ -71,6 +71,16 @@ export type ViewCitizenshipRouteParams = typeof viewCitizenshipRouteParams;
 export const getViewCitizenshipRoute = ({ id }: ViewCitizenshipRouteParams) =>
   `/citizenships/view/${id}`;
 
+// Visa Types routes
+export const getAllVisaTypesRoute = () => '/visa-types';
+export const getCreateVisaTypeRoute = () => '/visa-types/create';
+export const editVisaTypeRouteParams = getRouteParams({ id: true });
+export type EditVisaTypeRouteParams = typeof editVisaTypeRouteParams;
+export const getEditVisaTypeRoute = ({ id }: EditVisaTypeRouteParams) => `/visa-types/edit/${id}`;
+export const viewVisaTypeRouteParams = getRouteParams({ id: true });
+export type ViewVisaTypeRouteParams = typeof viewVisaTypeRouteParams;
+export const getViewVisaTypeRoute = ({ id }: ViewVisaTypeRouteParams) => `/visa-types/view/${id}`;
+
 // Visa Citizenship Surcharges routes
 export const getAllVisaCitizenshipSurchargesRoute = () => '/visa-citizenship-surcharges';
 export const getCreateVisaCitizenshipSurchargeRoute = () => '/visa-citizenship-surcharges/create';

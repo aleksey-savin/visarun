@@ -114,16 +114,16 @@ export const citizenshipDeleteProcedure = trpc.procedure.use(
 
 // Visa citizenship surcharge management procedures
 export const visaCitizenshipSurchargeCreateProcedure = trpc.procedure.use(
-  requirePermission('visaCitizenshipSurcharge.create')
+  requirePermission('visaCitizenshipSurcharges.create')
 );
 export const visaCitizenshipSurchargeReadProcedure = trpc.procedure.use(
-  requirePermission('visaCitizenshipSurcharge.read')
+  requirePermission('visaCitizenshipSurcharges.read')
 );
 export const visaCitizenshipSurchargeUpdateProcedure = trpc.procedure.use(
-  requirePermission('visaCitizenshipSurcharge.update')
+  requirePermission('visaCitizenshipSurcharges.update')
 );
 export const visaCitizenshipSurchargeDeleteProcedure = trpc.procedure.use(
-  requirePermission('visaCitizenshipSurcharge.delete')
+  requirePermission('visaCitizenshipSurcharges.delete')
 );
 
 // City management procedures
@@ -131,6 +131,78 @@ export const cityCreateProcedure = trpc.procedure.use(requirePermission('cities.
 export const cityReadProcedure = trpc.procedure.use(requirePermission('cities.read'));
 export const cityUpdateProcedure = trpc.procedure.use(requirePermission('cities.update'));
 export const cityDeleteProcedure = trpc.procedure.use(requirePermission('cities.delete'));
+
+// Order management procedures
+export const orderCreateProcedure = trpc.procedure.use(requirePermission('orders.create'));
+export const orderReadProcedure = trpc.procedure.use(requirePermission('orders.read'));
+export const orderUpdateProcedure = trpc.procedure.use(requirePermission('orders.update'));
+export const orderDeleteProcedure = trpc.procedure.use(requirePermission('orders.delete'));
+
+// OrderItem management procedures
+export const orderItemCreateProcedure = trpc.procedure.use(requirePermission('orderItems.create'));
+export const orderItemReadProcedure = trpc.procedure.use(requirePermission('orderItems.read'));
+export const orderItemUpdateProcedure = trpc.procedure.use(requirePermission('orderItems.update'));
+export const orderItemDeleteProcedure = trpc.procedure.use(requirePermission('orderItems.delete'));
+
+// ClientDiscountRule management procedures
+export const clientDiscountRuleCreateProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountRules.create')
+);
+export const clientDiscountRuleReadProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountRules.read')
+);
+export const clientDiscountRuleUpdateProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountRules.update')
+);
+export const clientDiscountRuleDeleteProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountRules.delete')
+);
+
+// ClientDiscountAssignment management procedures
+export const clientDiscountAssignmentCreateProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountAssignments.create')
+);
+export const clientDiscountAssignmentReadProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountAssignments.read')
+);
+export const clientDiscountAssignmentUpdateProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountAssignments.update')
+);
+export const clientDiscountAssignmentDeleteProcedure = trpc.procedure.use(
+  requirePermission('clientDiscountAssignments.delete')
+);
+
+// VisaType management procedures
+export const visaTypeCreateProcedure = trpc.procedure.use(requirePermission('visaTypes.create'));
+export const visaTypeReadProcedure = trpc.procedure.use(requirePermission('visaTypes.read'));
+export const visaTypeUpdateProcedure = trpc.procedure.use(requirePermission('visaTypes.update'));
+export const visaTypeDeleteProcedure = trpc.procedure.use(requirePermission('visaTypes.delete'));
+
+// VisaApplication management procedures
+export const visaApplicationCreateProcedure = trpc.procedure.use(
+  requirePermission('visaApplications.create')
+);
+export const visaApplicationReadProcedure = trpc.procedure.use(
+  requirePermission('visaApplications.read')
+);
+export const visaApplicationUpdateProcedure = trpc.procedure.use(
+  requirePermission('visaApplications.update')
+);
+export const visaApplicationDeleteProcedure = trpc.procedure.use(
+  requirePermission('visaApplications.delete')
+);
+
+// ClientVisa management procedures
+export const clientVisaCreateProcedure = trpc.procedure.use(
+  requirePermission('clientVisas.create')
+);
+export const clientVisaReadProcedure = trpc.procedure.use(requirePermission('clientVisas.read'));
+export const clientVisaUpdateProcedure = trpc.procedure.use(
+  requirePermission('clientVisas.update')
+);
+export const clientVisaDeleteProcedure = trpc.procedure.use(
+  requirePermission('clientVisas.delete')
+);
 
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,

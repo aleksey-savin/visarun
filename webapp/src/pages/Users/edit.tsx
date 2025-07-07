@@ -200,7 +200,12 @@ export default function EditUserPage() {
     });
   };
 
-  const startEditingContact = (contactMethod: any) => {
+  const startEditingContact = (contactMethod: {
+    id: string;
+    contactMethodId: string;
+    value: string;
+    url: string | null;
+  }) => {
     setEditingContactId(contactMethod.id);
     editContactForm.reset({
       contactMethodId: contactMethod.contactMethodId,

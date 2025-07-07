@@ -112,110 +112,102 @@ const CurrencyExchangePage = () => {
   // If we have rates, show the full content, otherwise just show the appropriate message
   if (rates) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <div className="container mx-auto pt-8 max-w-6xl">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-center mb-2">Currency Exchange</h1>
-            <p className="text-center text-muted-foreground mb-4">Convert between RUB, VND, USDT</p>
+      <div className="container mx-auto max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-center mb-2">Currency Exchange</h1>
+          <p className="text-center text-muted-foreground mb-4">Convert between RUB, VND, USDT</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+          <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
+            <h2 className="text-2xl font-semibold mb-6 text-center">Currency Calculator</h2>
+            <CurrencyExchangeForm
+              isClient={false}
+              rates={{
+                rubToVnd: rates.rubToVnd,
+                vndToRub: rates.vndToRub,
+                usdtToVnd: rates.usdtToVnd,
+                vndToUsdt: rates.vndToUsdt,
+                usdtToRub: rates.usdtToRub,
+                rubToUsdt: rates.rubToUsdt,
+              }}
+            />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
-            <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
-              <h2 className="text-2xl font-semibold mb-6 text-center">Currency Calculator</h2>
-              <CurrencyExchangeForm
-                isClient={false}
-                rates={{
-                  rubToVnd: rates.rubToVnd,
-                  vndToRub: rates.vndToRub,
-                  usdtToVnd: rates.usdtToVnd,
-                  vndToUsdt: rates.vndToUsdt,
-                  usdtToRub: rates.usdtToRub,
-                  rubToUsdt: rates.rubToUsdt,
-                }}
-              />
-            </div>
-            <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
-              <h2 className="text-2xl font-semibold mb-6 text-center">Current Exchange Rates</h2>
-              <ExchangeRatesDisplay
-                rates={{
-                  rubToVnd: rates.rubToVnd,
-                  vndToRub: rates.vndToRub,
-                  usdtToVnd: rates.usdtToVnd,
-                  vndToUsdt: rates.vndToUsdt,
-                  usdtToRub: rates.usdtToRub,
-                  rubToUsdt: rates.rubToUsdt,
-                }}
-              />
+          <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
+            <h2 className="text-2xl font-semibold mb-6 text-center">Current Exchange Rates</h2>
+            <ExchangeRatesDisplay
+              rates={{
+                rubToVnd: rates.rubToVnd,
+                vndToRub: rates.vndToRub,
+                usdtToVnd: rates.usdtToVnd,
+                vndToUsdt: rates.vndToUsdt,
+                usdtToRub: rates.usdtToRub,
+                rubToUsdt: rates.rubToUsdt,
+              }}
+            />
 
-              <div className="mt-6">
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className="px-3 py-1 text-sm w-full sm:w-auto text-center"
-                  >
-                    {`Rates updated: ${rates?.createdAt ? formatLastUpdated(new Date(rates.createdAt)) : 'N/A'}`}
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className="px-3 py-1 text-sm w-full sm:w-auto text-center"
-                  >
-                    By:{' '}
-                    {rates?.createdBy
-                      ? `${rates.createdBy.firstName} ${rates.createdBy.lastName}`
-                      : 'N/A'}
-                  </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRefresh}
-                    className="flex items-center gap-1 w-full sm:w-auto justify-center"
-                    disabled={isFetching}
-                  >
-                    <RefreshCw className={`h-3 w-3 ${isFetching ? 'animate-spin' : ''}`} />
-                    <span>Refresh</span>
-                  </Button>
-                </div>
+            <div className="mt-6">
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
+                <Badge variant="outline" className="px-3 py-1 text-sm w-full sm:w-auto text-center">
+                  {`Rates updated: ${rates?.createdAt ? formatLastUpdated(new Date(rates.createdAt)) : 'N/A'}`}
+                </Badge>
+                <Badge variant="outline" className="px-3 py-1 text-sm w-full sm:w-auto text-center">
+                  By:{' '}
+                  {rates?.createdBy
+                    ? `${rates.createdBy.firstName} ${rates.createdBy.lastName}`
+                    : 'N/A'}
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  className="flex items-center gap-1 w-full sm:w-auto justify-center"
+                  disabled={isFetching}
+                >
+                  <RefreshCw className={`h-3 w-3 ${isFetching ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </Button>
               </div>
             </div>
           </div>
-
-          {canCreateExchangeRates && (
-            <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mt-6">
-              <Collapsible
-                open={isOpen}
-                onOpenChange={setIsOpen}
-                className="w-full border rounded-lg overflow-hidden shadow-sm"
-              >
-                <div className="flex justify-between items-center p-4 bg-muted/20">
-                  <h3 className="text-lg font-medium text-muted-foreground">Admin Controls</h3>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      <span>Manage Rates</span>
-                      {isOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-                <CollapsibleContent className="p-4 bg-card border-t">
-                  <ExchangeRatesForm
-                    onRatesUpdated={handleRefresh}
-                    initialValues={{
-                      rubToVnd: rates.rubToVnd,
-                      vndToRub: rates.vndToRub,
-                      usdtToVnd: rates.usdtToVnd,
-                      vndToUsdt: rates.vndToUsdt,
-                      usdtToRub: rates.usdtToRub,
-                      rubToUsdt: rates.rubToUsdt,
-                    }}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          )}
         </div>
+
+        {canCreateExchangeRates && (
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mt-6">
+            <Collapsible
+              open={isOpen}
+              onOpenChange={setIsOpen}
+              className="w-full border rounded-lg overflow-hidden shadow-sm"
+            >
+              <div className="flex justify-between items-center p-4 bg-muted/20">
+                <h3 className="text-lg font-medium text-muted-foreground">Admin Controls</h3>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <span>Manage Rates</span>
+                    {isOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+              <CollapsibleContent className="p-4 bg-card border-t">
+                <ExchangeRatesForm
+                  onRatesUpdated={handleRefresh}
+                  initialValues={{
+                    rubToVnd: rates.rubToVnd,
+                    vndToRub: rates.vndToRub,
+                    usdtToVnd: rates.usdtToVnd,
+                    vndToUsdt: rates.vndToUsdt,
+                    usdtToRub: rates.usdtToRub,
+                    rubToUsdt: rates.rubToUsdt,
+                  }}
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        )}
       </div>
     );
   } else {

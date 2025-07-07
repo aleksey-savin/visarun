@@ -70,7 +70,7 @@ export const ClientProfileForm = ({ userId, onSuccess, onCancel }: ClientProfile
   });
 
   // Get citizenships for dropdown
-  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery();
+  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
 
   // Create client mutation
   const createClientMutation = trpc.client.create.useMutation({

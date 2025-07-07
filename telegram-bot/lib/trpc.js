@@ -1,7 +1,7 @@
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 
 // Define the backend URL
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001/trpc";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
 // Maximum number of retries for connecting to the backend
 const MAX_RETRIES = 3;

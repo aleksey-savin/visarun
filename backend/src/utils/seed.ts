@@ -71,26 +71,32 @@ async function main() {
     { code: 'citizenships.update', description: 'Edit citizenships', category: 'citizenships' },
     { code: 'citizenships.delete', description: 'Delete citizenships', category: 'citizenships' },
 
+    // Visa types management
+    { code: 'visaTypes.create', description: 'Create visa types', category: 'visaTypes' },
+    { code: 'visaTypes.read', description: 'View visa types', category: 'visaTypes' },
+    { code: 'visaTypes.update', description: 'Edit visa types', category: 'visaTypes' },
+    { code: 'visaTypes.delete', description: 'Delete visa types', category: 'visaTypes' },
+
     // Visa citizenship surcharges management
     {
-      code: 'visaCitizenshipSurcharge.create',
+      code: 'visaCitizenshipSurcharges.create',
       description: 'Create citizenship surcharges',
-      category: 'visaCitizenshipSurcharge',
+      category: 'visaCitizenshipSurcharges',
     },
     {
-      code: 'visaCitizenshipSurcharge.read',
+      code: 'visaCitizenshipSurcharges.read',
       description: 'View citizenship surcharges',
-      category: 'visaCitizenshipSurcharge',
+      category: 'visaCitizenshipSurcharges',
     },
     {
-      code: 'visaCitizenshipSurcharge.update',
+      code: 'visaCitizenshipSurcharges.update',
       description: 'Edit citizenship surcharges',
-      category: 'visaCitizenshipSurcharge',
+      category: 'visaCitizenshipSurcharges',
     },
     {
-      code: 'visaCitizenshipSurcharge.delete',
+      code: 'visaCitizenshipSurcharges.delete',
       description: 'Delete citizenship surcharges',
-      category: 'visaCitizenshipSurcharge',
+      category: 'visaCitizenshipSurcharges',
     },
 
     // Cities management

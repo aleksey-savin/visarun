@@ -73,7 +73,7 @@ const EditClientPage = () => {
   const { data, error, isLoading, isError } = trpc.client.getOne.useQuery({ id });
 
   // Get citizenships for dropdown
-  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery();
+  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
 
   // Edit client mutation
   const editClientMutation = trpc.client.edit.useMutation({
@@ -81,7 +81,7 @@ const EditClientPage = () => {
       toast.success('Client profile updated successfully');
       navigate(`/clients/view/${id}`);
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error('Failed to update client profile', {
         description: error.message,
       });
