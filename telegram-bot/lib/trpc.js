@@ -214,9 +214,7 @@ export const api = {
   testConnection: async () => {
     try {
       // Simple ping to test connection
-      const response = await fetch(
-        BACKEND_URL.replace("/trpc", "/trpc/health"),
-      );
+      const response = await fetch(`${BACKEND_URL}/trpc/health`);
       if (!response.ok) {
         throw new Error(`Health check failed with status: ${response.status}`);
       }
