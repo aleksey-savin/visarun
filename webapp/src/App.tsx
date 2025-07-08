@@ -46,6 +46,12 @@ import EditVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/
 import ViewClientPage from './pages/Clients/view';
 import EditClientPage from './pages/Clients/edit';
 
+// Message templates pages
+import AllMessageTemplatesPage from './pages/MessageTemplates/getAll.js';
+import CreateMessageTemplatePage from './pages/MessageTemplates/create.js';
+import ViewMessageTemplatePage from './pages/MessageTemplates/view.js';
+import EditMessageTemplatePage from './pages/MessageTemplates/edit.js';
+
 import {
   getAllUsersRoute,
   getCurrencyExchangeRoute,
@@ -100,6 +106,12 @@ import {
   getEditClientRoute,
   viewClientRouteParams,
   editClientRouteParams,
+  getMessageTemplatesRoute,
+  getCreateMessageTemplateRoute,
+  getViewMessageTemplateRoute,
+  getEditMessageTemplateRoute,
+  viewMessageTemplateRouteParams,
+  editMessageTemplateRouteParams,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -224,6 +236,40 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="telegram.channels.read">
                       <ViewTelegramChannelPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Message Templates Management Routes */}
+                <Route
+                  path={getMessageTemplatesRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="messages.manage">
+                      <AllMessageTemplatesPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateMessageTemplateRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="messages.manage">
+                      <CreateMessageTemplatePage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewMessageTemplateRoute(viewMessageTemplateRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="messages.manage">
+                      <ViewMessageTemplatePage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditMessageTemplateRoute(editMessageTemplateRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="messages.manage">
+                      <EditMessageTemplatePage />
                     </PermissionRoute>
                   }
                 />

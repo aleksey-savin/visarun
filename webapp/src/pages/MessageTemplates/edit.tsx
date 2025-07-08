@@ -64,8 +64,6 @@ export default function EditMessageTemplatePage() {
     },
   });
 
-  console.log(messageTemplateData?.messageTemplate);
-
   useEffect(() => {
     if (!messageTemplateData) return;
 

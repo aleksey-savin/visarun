@@ -59,12 +59,18 @@ const ViewMessageTemplatePage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate(getMessageTemplatesRoute())}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-3xl font-bold">Message Template Details</h1>
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate(getMessageTemplatesRoute())}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-3xl font-bold">Message Template Details</h1>
+        </div>
       </div>
 
       {isLoading && (
@@ -115,54 +121,68 @@ const ViewMessageTemplatePage = () => {
       )}
 
       {data?.messageTemplate && (
-        <div>
-          <Card className="w-full max-w-3xl">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl">{data.messageTemplate.title}</CardTitle>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main User Information */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-2xl">{data.messageTemplate.title}</CardTitle>
+                </div>
 
-              <CardDescription className="flex items-center gap-1 whitespace-pre-wrap">
-                {data.messageTemplate.body}
-              </CardDescription>
-            </CardHeader>
-          </Card>
+                <CardDescription className="flex items-center gap-1 whitespace-pre-wrap overflow-x-auto">
+                  {data.messageTemplate.body}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
 
-          <CardFooter className="pt-2 flex justify-between">
-            <div className="space-x-4 space-y-2">
-              <Button
-                variant="outline"
-                onClick={() =>
-                  navigate(getEditMessageTemplateRoute({ id: data.messageTemplate.id }))
-                }
-              >
-                Edit Template
-              </Button>
+          {/* Actions Sidebar */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() =>
+                    navigate(getEditMessageTemplateRoute({ id: data.messageTemplate.id }))
+                  }
+                >
+                  Edit Template
+                </Button>
 
-              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={deleteMessageTemplateMutation.isPending}>
-                    {deleteMessageTemplateMutation.isPending ? 'Deleting...' : 'Delete Template'}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete message template{' '}
-                      {data.messageTemplate.title}.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <Button variant="destructive" onClick={handleDeleteMessageTemplate}>
-                      Delete
+                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      className="w-full justify-start"
+                      disabled={deleteMessageTemplateMutation.isPending}
+                    >
+                      {deleteMessageTemplateMutation.isPending ? 'Deleting...' : 'Delete User'}
                     </Button>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardFooter>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete message template{' '}
+                        {data.messageTemplate.title}.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <Button variant="destructive" onClick={handleDeleteMessageTemplate}>
+                        Delete
+                      </Button>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
     </div>

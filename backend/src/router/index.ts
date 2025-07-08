@@ -28,6 +28,7 @@ import { clientDiscountAssignmentRoutes } from './clientDiscountAssignment/index
 import { visaTypeRoutes } from './visaType/index.js';
 import { visaApplicationRoutes } from './visaApplication/index.js';
 import { clientVisaRoutes } from './clientVisa/index.js';
+import { messageTemplateRoute } from './messageTemplate/index.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
@@ -61,6 +62,7 @@ export const appRouter = trpc.router({
   changePassword: changePasswordTrpcRoute,
   forceChangePassword: forceChangePasswordTrpcRoute,
   telegramChannel: telegramRoute,
+  messageTemplate: messageTemplateRoute,
 });
 
 // Export type definition of API

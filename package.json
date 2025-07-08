@@ -9,8 +9,7 @@
     "dev": "pnpm -r --parallel dev",
     "types": "concurrently 'pnpm back types' 'pnpm web types'",
     "lint": "pnpm -r --parallel lint",
-    "format": "pnpm -r --parallel format",
-    
+    "format": "pnpm -r --parallel format"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

@@ -78,6 +78,11 @@ services:
       context: ./telegram-bot
       dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      - BACKEND_URL=${BACKEND_URL}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
+      - NODE_ENV=${NODE_ENV}
     volumes:
       - ./telegram-bot:/app
       - /app/node_modules
