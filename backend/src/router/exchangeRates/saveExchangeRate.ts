@@ -42,6 +42,9 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
       // Получаем все активные каналы
       const channels = await ctx.prisma.telegramChannel.findMany({
         where: { status: 'active' },
+        include: {
+          messageTemplate: true,
+        },
       });
 
       let broadcastResult = { success: false, message: 'No broadcast attempted' };
@@ -85,22 +88,7 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
           `🔴Курс валют, актуальный на ${timeString} на ${dateString} :`,
           ``,
           `За ваши ${formatNumber(baseRub)} ₽ отправим ${formatNumber(baseVndRound)} vnd,`,
-          `За ваш ${formatNumber(baseVndAmount)} vnd отправим ${formatNumber(baseRubFromVndRound)} ₽`,
-          ``,
-          `⚠️ Расписание визаранов в Камбоджу (Ford Transit, 15 мест) :`,
-          `⚫️среда, суббота – за штампами`,
-          `⚫️четверг – за визами на 90 дней`,
-          ``,
-          `Изменения в расписании!`,
-          `Теперь за визами ездим по четвергам, чтобы избежать очередей на границе. Расписание поездок за штампами остается то же.`,
-          ``,
-          `Подробная информация <a href="https://t.me/visarunvungtau/4693">ТУТ</a>`,
-          `Визаран из Нячанга и Муйне в Камбоджу <a href="https://t.me/VisarunNT">ТУТ</a>`,
-          ``,
-          `➡️Запись – @visarunviet`,
-          ``,
-          `🔴 Будьте в курсе всех новостей! Подписывайтесь:`,
-          `👉 <a href="https://www.facebook.com/share/1AM8sVfu9T/?mibextid=wwXIfr">Фейсбук</a> | <a href="https://t.me/visarunvungtau">Телеграм</a> | <a href="https://www.instagram.com/visarunsaigon?igsh=dnQzZmx1bXYwd3Zx">Инстаграм</a>`,
+          `За ваш ${formatNumber(baseVndAmount)} vnd отправим ${formatNumber(baseRubFromVndRound)} ₽\n\n`,
         ].join('\n');
 
         const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -108,6 +96,8 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
           try {
             const results = await Promise.allSettled(
               channels.map(async channel => {
+                const messageTemplate = channel.messageTemplate?.body || '';
+
                 try {
                   const response = await fetch(
                     `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -118,7 +108,7 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
                       },
                       body: JSON.stringify({
                         chat_id: channel.chatId,
-                        text: messageText,
+                        text: messageText.concat(messageTemplate),
                         parse_mode: 'HTML', // или 'HTML', если нужны какие-то стили
                       }),
                     }

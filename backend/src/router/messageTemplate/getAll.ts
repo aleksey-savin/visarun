@@ -4,6 +4,17 @@ export const getAllMessageTemplatesTrpcRoute = messageTemplateManageProcedure.qu
   async ({ ctx }) => {
     const messageTemplates = await ctx.prisma.messageTemplate.findMany({
       orderBy: { title: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        telegramChannels: {
+          select: {
+            id: true,
+            chatTitle: true,
+          },
+        },
+      },
     });
 
     return { messageTemplates };

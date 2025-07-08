@@ -86,6 +86,7 @@ export default function EditMessageTemplatePage() {
         id: id!,
         title: values.title,
         body: values.body,
+        telegramChannels: values.telegramChannels,
       });
       navigate(getMessageTemplatesRoute());
     } catch (err) {
@@ -187,7 +188,10 @@ export default function EditMessageTemplatePage() {
                   <FormItem>
                     <div className="space-y-4">
                       {telegramChannelsData?.channels.map(channel => {
-                        const isChecked = field.value.includes({ id: channel.id });
+                        const isChecked =
+                          field.value.filter(
+                            (targetChannel: { id: string }) => targetChannel.id === channel.id
+                          ).length > 0;
                         return (
                           <div
                             key={channel.id}
@@ -204,16 +208,17 @@ export default function EditMessageTemplatePage() {
                                   )
                                 );
                               } else {
-                                field.onChange([...field.value, channel.id]);
+                                field.onChange([...field.value, { id: channel.id }]);
                               }
                             }}
                           >
                             <Checkbox
+                              className="mt-0.5 cursor-pointer"
                               id={channel.id}
                               checked={isChecked}
                               onCheckedChange={checked => {
                                 if (checked) {
-                                  field.onChange([...field.value, channel.id]);
+                                  field.onChange([...field.value, { id: channel.id }]);
                                 } else {
                                   field.onChange(
                                     field.value.filter(
@@ -223,7 +228,6 @@ export default function EditMessageTemplatePage() {
                                   );
                                 }
                               }}
-                              className="mt-0.5"
                             />
                             <div className="ml-3 flex-1">
                               <label

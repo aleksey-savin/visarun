@@ -12,7 +12,7 @@ const INITIAL_RETRY_DELAY = 1000;
 export const trpc = createTRPCProxyClient({
   links: [
     httpBatchLink({
-      url: BACKEND_URL,
+      url: `${BACKEND_URL}/trpc`,
       fetch: async (url, options) => {
         let retries = 0;
         let lastError;
@@ -167,7 +167,7 @@ export const api = {
           chatStatus: "active",
           fromId: from.id.toString(),
           fromIsBot: from.is_bot,
-          fromLastName: from.last_name,
+          fromLastName: from.last_name || "",
           fromFirstName: from.first_name,
           fromUsername: from.username,
         });

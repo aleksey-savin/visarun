@@ -8,7 +8,7 @@ export const channelJoinTrpcInput = z.object({
   chatUsername: z.string(),
   fromId: z.string(),
   fromIsBot: z.boolean(),
-  fromLastName: z.string().min(1).max(255),
+  fromLastName: z.string().max(255),
   fromFirstName: z.string().min(1).max(255),
   fromUsername: z.string().min(1).max(255),
 });

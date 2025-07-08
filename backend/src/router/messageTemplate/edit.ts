@@ -5,6 +5,7 @@ export const zEditMessageTemplateTrpcInput = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(100),
   body: z.string().min(1),
+  telegramChannels: z.array(z.object({ id: z.string() })).min(0),
 });
 
 export const editMessageTemplateTrpcRoute = messageTemplateManageProcedure
@@ -24,7 +25,13 @@ export const editMessageTemplateTrpcRoute = messageTemplateManageProcedure
     // Update message template
     const updatedMessageTemplate = await ctx.prisma.messageTemplate.update({
       where: { id },
-      data: updateData,
+      data: {
+        title: updateData.title,
+        body: updateData.body,
+        telegramChannels: {
+          set: updateData.telegramChannels.map(targetChannel => ({ id: targetChannel.id })),
+        },
+      },
     });
 
     return {

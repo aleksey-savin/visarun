@@ -17,6 +17,7 @@ export const getOneMessageTemplateTrpcRoute = messageTemplateManageProcedure
         telegramChannels: {
           select: {
             id: true,
+            chatTitle: true,
           },
         },
       },
