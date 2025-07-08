@@ -113,14 +113,14 @@ while IFS= read -r line; do
         "# BACKEND_URL=https://yourdomain.com")
             echo "BACKEND_URL=https://yourdomain.com"
             ;;
-        "# VITE_API_URL=https://yourdomain.com")
-            echo "VITE_API_URL=https://yourdomain.com"
+        "# VITE_BACKEND_URL=https://yourdomain.com")
+            echo "VITE_BACKEND_URL=https://yourdomain.com"
             ;;
         "BACKEND_URL=http://backend:3001")
             echo "# BACKEND_URL=http://backend:3001"
             ;;
-        "VITE_API_URL=http://localhost:3001")
-            echo "# VITE_API_URL=http://localhost:3001"
+        "VITE_BACKEND_URL=http://localhost:3001")
+            echo "# VITE_BACKEND_URL=http://localhost:3001"
             ;;
         *)
             echo "$line"

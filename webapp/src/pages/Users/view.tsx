@@ -42,8 +42,8 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { ClientProfileForm } from '../../components/client/ClientProfileForm';
-import { ClientInfo } from '../../components/client/ClientInfo';
+import { ClientProfileForm } from '../../components/Client/client-profile-form';
+import { ClientInfo } from '../../components/Client/client-info';
 
 const ViewUserPage = () => {
   const { id } = useParams() as ViewUserRouteParams;

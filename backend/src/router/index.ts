@@ -53,7 +53,7 @@ export const appRouter = trpc.router({
   visaType: visaTypeRoutes,
   visaApplication: visaApplicationRoutes,
   clientVisa: clientVisaRoutes,
-
+  messageTemplate: messageTemplateRoute,
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,
   exchangeRates: exchangeRatesRoute,
@@ -62,7 +62,6 @@ export const appRouter = trpc.router({
   changePassword: changePasswordTrpcRoute,
   forceChangePassword: forceChangePasswordTrpcRoute,
   telegramChannel: telegramRoute,
-  messageTemplate: messageTemplateRoute,
 });
 
 // Export type definition of API

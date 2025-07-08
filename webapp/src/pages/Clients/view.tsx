@@ -3,7 +3,7 @@ import { type ViewClientRouteParams, getAllUsersRoute } from '../../lib/routes';
 import { trpc } from '../../lib/trpcProvider';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { ClientInfo } from '../../components/client/ClientInfo';
+import { ClientInfo } from '../../components/Client/client-info';
 
 const ViewClientPage = () => {
   const { id } = useParams() as ViewClientRouteParams;
