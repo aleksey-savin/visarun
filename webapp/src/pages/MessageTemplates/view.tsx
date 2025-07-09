@@ -123,7 +123,7 @@ const ViewMessageTemplatePage = () => {
 
       {data?.messageTemplate && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main User Information */}
+          {/* Main Message Template Information */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
@@ -187,7 +187,7 @@ const ViewMessageTemplatePage = () => {
                       className="w-full justify-start"
                       disabled={deleteMessageTemplateMutation.isPending}
                     >
-                      {deleteMessageTemplateMutation.isPending ? 'Deleting...' : 'Delete User'}
+                      {deleteMessageTemplateMutation.isPending ? 'Deleting...' : 'Delete Template'}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>

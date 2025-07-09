@@ -21,6 +21,8 @@ import { getMessageTemplatesRoute } from '@/lib/routes';
 import { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox.tsx';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+
 // Define the exact schema from backend, enforcing non-optional roles
 const formSchema = z.object({
   title: z.string().min(1).max(100),
@@ -110,7 +112,11 @@ const CreateMessageTemplatePage = () => {
                       <FormItem>
                         <FormLabel>Body</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Enter body" {...field} />
+                          <SimpleEditor
+                            className="selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none"
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

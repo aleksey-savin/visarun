@@ -21,7 +21,8 @@ import { Input } from '@/components/ui/input';
 
 import { SquarePen, MessageSquareDiff } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox.tsx';
-import { Textarea } from '@/components/ui/textarea.tsx';
+
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 
 // Schema for form validation
 const formSchema = z.object({
@@ -144,7 +145,11 @@ export default function EditMessageTemplatePage() {
                       <FormItem>
                         <FormLabel>Body</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Enter body" {...field} />
+                          <SimpleEditor
+                            className="selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none"
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -187,69 +192,71 @@ export default function EditMessageTemplatePage() {
                 render={({ field }) => (
                   <FormItem>
                     <div className="space-y-4">
-                      {telegramChannelsData?.channels.map(channel => {
-                        const isChecked =
-                          field.value.filter(
-                            (targetChannel: { id: string }) => targetChannel.id === channel.id
-                          ).length > 0;
-                        return (
-                          <div
-                            key={channel.id}
-                            className={`
+                      {telegramChannelsData?.channels.map(
+                        (channel: { id: string; chatUsername: string; chatTitle: string }) => {
+                          const isChecked =
+                            field.value.filter(
+                              (targetChannel: { id: string }) => targetChannel.id === channel.id
+                            ).length > 0;
+                          return (
+                            <div
+                              key={channel.id}
+                              className={`
                               flex items-start p-4 border-2 rounded-lg transition-all cursor-pointer hover:bg-accent/50
                               ${isChecked ? 'border-primary bg-primary/5' : 'border-border'}
                             `}
-                            onClick={() => {
-                              if (isChecked) {
-                                field.onChange(
-                                  field.value.filter(
-                                    (targetChannel: { id: string }) =>
-                                      targetChannel.id !== channel.id
-                                  )
-                                );
-                              } else {
-                                field.onChange([...field.value, { id: channel.id }]);
-                              }
-                            }}
-                          >
-                            <Checkbox
-                              className="mt-0.5 cursor-pointer"
-                              id={channel.id}
-                              checked={isChecked}
-                              onCheckedChange={checked => {
-                                if (checked) {
-                                  field.onChange([...field.value, { id: channel.id }]);
-                                } else {
+                              onClick={() => {
+                                if (isChecked) {
                                   field.onChange(
                                     field.value.filter(
                                       (targetChannel: { id: string }) =>
                                         targetChannel.id !== channel.id
                                     )
                                   );
+                                } else {
+                                  field.onChange([...field.value, { id: channel.id }]);
                                 }
                               }}
-                            />
-                            <div className="ml-3 flex-1">
-                              <label
-                                htmlFor={channel.id}
-                                className="text-sm font-medium leading-tight cursor-pointer"
-                              >
-                                {channel.chatTitle ? channel.chatTitle : 'Null'}
-                              </label>
-                              {channel.chatUsername && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {channel.chatUsername}
-                                </p>
+                            >
+                              <Checkbox
+                                className="mt-0.5 cursor-pointer"
+                                id={channel.id}
+                                checked={isChecked}
+                                onCheckedChange={checked => {
+                                  if (checked) {
+                                    field.onChange([...field.value, { id: channel.id }]);
+                                  } else {
+                                    field.onChange(
+                                      field.value.filter(
+                                        (targetChannel: { id: string }) =>
+                                          targetChannel.id !== channel.id
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+                              <div className="ml-3 flex-1">
+                                <label
+                                  htmlFor={channel.id}
+                                  className="text-sm font-medium leading-tight cursor-pointer"
+                                >
+                                  {channel.chatTitle ? channel.chatTitle : 'Null'}
+                                </label>
+                                {channel.chatUsername && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {channel.chatUsername}
+                                  </p>
+                                )}
+                              </div>
+                              {isChecked && (
+                                <div className="ml-2">
+                                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                </div>
                               )}
                             </div>
-                            {isChecked && (
-                              <div className="ml-2">
-                                <div className="w-2 h-2 bg-primary rounded-full"></div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                          );
+                        }
+                      )}
                     </div>
                     <FormMessage />
                   </FormItem>
