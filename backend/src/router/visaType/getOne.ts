@@ -47,18 +47,24 @@ export const getVisaTypeTrpcRoute = visaTypeReadProcedure
         surcharges: {
           select: {
             id: true,
-            surchargeAmount: true,
-            note: true,
-            citizenship: {
+            surcharge: {
               select: {
-                id: true,
-                name: true,
+                surchargeAmount: true,
+                note: true,
+                citizenship: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
           orderBy: {
-            citizenship: {
-              name: 'asc',
+            surcharge: {
+              citizenship: {
+                name: 'asc',
+              },
             },
           },
         },

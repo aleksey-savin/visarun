@@ -48,6 +48,12 @@ import EditClientPage from './pages/Clients/edit';
 
 // Message templates pages
 import AllMessageTemplatesPage from './pages/MessageTemplates/getAll.js';
+
+// Requirements pages
+import RequirementsPage from './pages/Requirements/index.js';
+import CreateRequirementPage from './pages/Requirements/create.js';
+import ViewRequirementPage from './pages/Requirements/view.js';
+import EditRequirementPage from './pages/Requirements/edit.js';
 import CreateMessageTemplatePage from './pages/MessageTemplates/create.js';
 import ViewMessageTemplatePage from './pages/MessageTemplates/view.js';
 import EditMessageTemplatePage from './pages/MessageTemplates/edit.js';
@@ -96,16 +102,21 @@ import {
   viewVisaTypeRouteParams,
   // Visa Citizenship Surcharges routes
   getAllVisaCitizenshipSurchargesRoute,
-  getViewVisaCitizenshipSurchargeRoute,
   getCreateVisaCitizenshipSurchargeRoute,
+  getViewVisaCitizenshipSurchargeRoute,
   getEditVisaCitizenshipSurchargeRoute,
-  editVisaCitizenshipSurchargeRouteParams,
   viewVisaCitizenshipSurchargeRouteParams,
-  // Client routes
+  editVisaCitizenshipSurchargeRouteParams,
   getViewClientRoute,
   getEditClientRoute,
   viewClientRouteParams,
   editClientRouteParams,
+  getAllRequirementsRoute,
+  getCreateRequirementRoute,
+  getViewRequirementRoute,
+  getEditRequirementRoute,
+  viewRequirementRouteParams,
+  editRequirementRouteParams,
   getMessageTemplatesRoute,
   getCreateMessageTemplateRoute,
   getViewMessageTemplateRoute,
@@ -280,6 +291,40 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="global.fullAccess">
                       <ContactMethodsPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Requirements Management Routes */}
+                <Route
+                  path={getAllRequirementsRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="requirements.read">
+                      <RequirementsPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateRequirementRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="requirements.create">
+                      <CreateRequirementPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewRequirementRoute(viewRequirementRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="requirements.read">
+                      <ViewRequirementPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditRequirementRoute(editRequirementRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="requirements.update">
+                      <EditRequirementPage />
                     </PermissionRoute>
                   }
                 />

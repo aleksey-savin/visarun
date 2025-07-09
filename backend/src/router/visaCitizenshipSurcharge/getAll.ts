@@ -15,14 +15,13 @@ export const getAllVisaCitizenshipSurchargeTrpcRoute = visaCitizenshipSurchargeR
           },
         },
         {
-          visaTypeId: 'asc',
+          surchargeAmount: 'asc',
         },
       ],
       select: {
         id: true,
         citizenshipId: true,
         countryId: true,
-        visaTypeId: true,
         surchargeAmount: true,
         note: true,
         citizenship: {
@@ -38,12 +37,16 @@ export const getAllVisaCitizenshipSurchargeTrpcRoute = visaCitizenshipSurchargeR
             name: true,
           },
         },
-        visaType: {
+        visaTypes: {
           select: {
-            id: true,
-            name: true,
-            serviceCost: true,
-            isMultientry: true,
+            visaType: {
+              select: {
+                id: true,
+                name: true,
+                serviceCost: true,
+                isMultientry: true,
+              },
+            },
           },
         },
       },

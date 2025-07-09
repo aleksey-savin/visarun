@@ -7,6 +7,105 @@ datasource db {
   url      = env("POSTGRES_URL")
 }
 
+//legacy, remove after migration
+enum UserRole {
+  client
+  manager
+  admin
+}
+
+enum TelegramChannelStatus {
+  active
+  blocked
+  kicked
+  insufficient_permissions
+}
+
+enum OrderStatus {
+  draft
+  submitted
+  paid
+  cancelled
+}
+
+enum ServiceType {
+  visa
+  visarun
+}
+
+enum DiscountAppliedType {
+  manual
+  rule
+}
+
+enum DiscountType {
+  percent
+  fixed
+}
+
+enum AppliesToService {
+  visa
+  visarun
+  all
+}
+
+enum VisaApplicationStatus {
+  pending
+  submitted
+  approved
+  used
+  cancelled
+  denied
+}
+
+enum ProcessingMode {
+  fixed
+  approximate
+}
+
+enum ProcessingUnit {
+  hours
+  days
+}
+
+enum RequirementInputType {
+  document
+  checkpoint
+  date
+  text
+  boolean
+}
+
+enum RequirementOperator {
+  eq
+  neq
+  lt
+  lte
+  gt
+  gte
+  contains
+}
+
+enum RequirementUnit {
+  days
+  months
+  years
+}
+
+enum ServiceEntityType {
+  visa_application
+  visarun_order
+  document_service
+}
+
+enum RequirementStatus {
+  pending
+  submitted
+  approved
+  rejected
+  needs_revision
+}
+
 model RefreshToken {
   id        String   @id @default(uuid())
   token     String   @unique
@@ -84,6 +183,9 @@ model User {
   rolesUpdated             Role[]                     @relation("RoleUpdatedBy")
   contactMethods           UserContactMethod[]
   roleAssignments          UserRoleAssignment[]
+  RequirementDocument      RequirementDocument[]
+  ClientDocument           ClientDocument[]
+  ServiceRequirement       ServiceRequirement[]
 }
 
 model Client {
@@ -99,22 +201,13 @@ model Client {
   citizenship              Citizenship?               @relation(fields: [citizenshipId], references: [id])
   user                     User?                      @relation(fields: [userId], references: [id])
   ClientDiscountAssignment ClientDiscountAssignment[]
-  passports                ClientPassport[]
-  ClientVisa               ClientVisa[]
-  OrderItem                OrderItem[]
+
+  ClientVisa ClientVisa[]
+  OrderItem  OrderItem[]
+  documents  ClientDocument[]
 
   @@index([userId])
   @@index([citizenshipId])
-}
-
-model ClientPassport {
-  id             String   @id @default(uuid())
-  clientId       String
-  expirationDate DateTime
-  scanPath       String
-  client         Client   @relation(fields: [clientId], references: [id])
-
-  @@index([clientId])
 }
 
 model ContactMethod {
@@ -141,13 +234,14 @@ model UserContactMethod {
 }
 
 model Citizenship {
-  id          String                     @id @default(uuid())
-  name        String                     @unique
-  favourite   Boolean                    @default(false)
-  blacklisted Blacklisted[]
-  Client      Client[]
-  surcharges  VisaCitizenshipSurcharge[]
-  visaFree    VisaFree[]
+  id                     String                     @id @default(uuid())
+  name                   String                     @unique
+  favourite              Boolean                    @default(false)
+  blacklisted            Blacklisted[]
+  Client                 Client[]
+  surcharges             VisaCitizenshipSurcharge[]
+  visaFree               VisaFree[]
+  RequirementCitizenship RequirementCitizenship[]
 }
 
 model Country {
@@ -192,15 +286,24 @@ model Blacklisted {
 }
 
 model VisaCitizenshipSurcharge {
-  id              String      @id @default(uuid())
+  id              String                             @id @default(uuid())
   citizenshipId   String
-  visaTypeId      String
   surchargeAmount Float
   note            String?
   countryId       String
-  citizenship     Citizenship @relation(fields: [citizenshipId], references: [id])
-  country         Country     @relation(fields: [countryId], references: [id])
-  visaType        VisaType    @relation(fields: [visaTypeId], references: [id])
+  citizenship     Citizenship                        @relation(fields: [citizenshipId], references: [id])
+  country         Country                            @relation(fields: [countryId], references: [id])
+  visaTypes       VisaCitizenshipSurchargeVisaType[]
+}
+
+model VisaCitizenshipSurchargeVisaType {
+  id          String                   @id @default(uuid())
+  surchargeId String
+  visaTypeId  String
+  surcharge   VisaCitizenshipSurcharge @relation(fields: [surchargeId], references: [id], onDelete: Cascade)
+  visaType    VisaType                 @relation(fields: [visaTypeId], references: [id])
+
+  @@unique([surchargeId, visaTypeId])
 }
 
 model ExchangeRate {
@@ -308,7 +411,7 @@ model ClientDiscountAssignment {
 }
 
 model VisaType {
-  id                    String                     @id @default(uuid())
+  id                    String                             @id @default(uuid())
   name                  String
   serviceCost           Float
   countryId             String
@@ -322,8 +425,10 @@ model VisaType {
   submissionDayIncluded Boolean
   clientVisas           ClientVisa[]
   visaApplications      VisaApplication[]
-  surcharges            VisaCitizenshipSurcharge[]
-  country               Country                    @relation(fields: [countryId], references: [id])
+  surcharges            VisaCitizenshipSurchargeVisaType[]
+  country               Country                            @relation(fields: [countryId], references: [id])
+  Requirement           Requirement[]
+  RequirementVisaType   RequirementVisaType[]
 }
 
 model VisaApplication {
@@ -363,62 +468,129 @@ model ClientVisa {
   @@index([visaApplicationId])
 }
 
-enum UserRole {
-  client
-  manager
-  admin
+model Requirement {
+  id                       String               @id @default(uuid())
+  serviceType              ServiceType
+  inputType                RequirementInputType
+  operator                 RequirementOperator?
+  thresholdNumber          Float?
+  thresholdDate            DateTime?
+  thresholdText            String?
+  thresholdBool            Boolean?
+  checkpointValue          String?
+  title                    String
+  description              String?
+  appliesToAllCitizenships Boolean              @default(false)
+  sampleUrl                String?
+  applicableServices       ServiceEntityType[]
+
+  citizenships        RequirementCitizenship[]
+  documents           RequirementDocument[]
+  serviceRequirements ServiceRequirement[]
+  clientDocuments     ClientDocument[]
+
+  visaTypeLinks RequirementVisaType[]
+  routeLinks    RequirementVisarunRoute[]
+  VisaType      VisaType?                 @relation(fields: [visaTypeId], references: [id])
+  visaTypeId    String?
+
+  @@index([serviceType])
 }
 
-enum TelegramChannelStatus {
-  active
-  blocked
-  kicked
-  insufficient_permissions
+model RequirementCitizenship {
+  id            String      @id @default(uuid())
+  requirementId String
+  citizenshipId String
+  requirement   Requirement @relation(fields: [requirementId], references: [id])
+  citizenship   Citizenship @relation(fields: [citizenshipId], references: [id])
+
+  @@index([requirementId])
+  @@index([citizenshipId])
 }
 
-enum OrderStatus {
-  draft
-  submitted
-  paid
-  cancelled
+model RequirementDocument {
+  id            String   @id @default(uuid())
+  requirementId String
+  fileUrl       String
+  uploadedAt    DateTime
+  uploadedById  String
+  comment       String?
+
+  requirement Requirement @relation(fields: [requirementId], references: [id])
+  uploadedBy  User        @relation(fields: [uploadedById], references: [id])
+
+  @@index([requirementId])
+  @@index([uploadedById])
 }
 
-enum ServiceType {
-  visa
-  visarun
+model RequirementVisaType {
+  requirementId String
+  visaTypeId    String
+
+  requirement Requirement @relation(fields: [requirementId], references: [id])
+  visaType    VisaType    @relation(fields: [visaTypeId], references: [id])
+
+  @@id([requirementId, visaTypeId])
+  @@index([visaTypeId])
 }
 
-enum DiscountAppliedType {
-  manual
-  rule
+model RequirementVisarunRoute {
+  requirementId String
+  routeId       String
+
+  requirement Requirement @relation(fields: [requirementId], references: [id])
+  //route            VisarunRoute  @relation(fields: [routeId],       references: [id])
+
+  @@id([requirementId, routeId])
+  @@index([routeId])
 }
 
-enum DiscountType {
-  percent
-  fixed
+model ClientDocument {
+  id            String    @id @default(uuid())
+  clientId      String
+  requirementId String?
+  fileName      String
+  originalName  String
+  fileUrl       String
+  fileType      String
+  fileSize      Int
+  uploadedAt    DateTime  @default(now())
+  uploadedById  String
+  isValid       Boolean   @default(true)
+  expiresAt     DateTime?
+  tags          String[]
+  comment       String?
+
+  client              Client               @relation(fields: [clientId], references: [id])
+  requirement         Requirement?         @relation(fields: [requirementId], references: [id])
+  uploadedBy          User                 @relation(fields: [uploadedById], references: [id])
+  serviceRequirements ServiceRequirement[]
+
+  @@index([clientId])
+  @@index([requirementId])
 }
 
-enum AppliesToService {
-  visa
-  visarun
-  all
-}
+model ServiceRequirement {
+  id              String            @id @default(uuid())
+  requirementId   String
+  serviceType     ServiceEntityType
+  serviceId       String
+  status          RequirementStatus @default(pending)
+  textValue       String?
+  dateValue       DateTime?
+  booleanValue    Boolean?
+  checkpointValue String?
+  documentId      String?
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  reviewedById    String?
+  comment         String?
 
-enum VisaApplicationStatus {
-  pending
-  submitted
-  approved
-  used
-  cancelled
-  denied
-}
+  requirement Requirement     @relation(fields: [requirementId], references: [id])
+  document    ClientDocument? @relation(fields: [documentId], references: [id])
+  reviewedBy  User?           @relation(fields: [reviewedById], references: [id])
 
-enum ProcessingMode {
-  fixed
-  approximate
-}
-
-enum ProcessingUnit {
-  hours
-  days
+  @@unique([serviceType, serviceId, requirementId])
+  @@index([serviceType, serviceId])
+  @@index([requirementId])
 }

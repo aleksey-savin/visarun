@@ -27,15 +27,12 @@ export const getVisaCitizenshipSurchargesByCountryTrpcRoute = visaCitizenshipSur
             name: 'asc',
           },
         },
-        {
-          visaTypeId: 'asc',
-        },
       ],
       select: {
         id: true,
         citizenshipId: true,
         countryId: true,
-        visaTypeId: true,
+        visaTypes: true,
         surchargeAmount: true,
         note: true,
         citizenship: {

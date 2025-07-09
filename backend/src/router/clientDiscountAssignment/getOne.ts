@@ -22,12 +22,6 @@ export const getClientDiscountAssignmentTrpcRoute = clientDiscountAssignmentRead
                 name: true,
               },
             },
-            passports: {
-              select: {
-                id: true,
-                expirationDate: true,
-              },
-            },
           },
         },
         rule: {

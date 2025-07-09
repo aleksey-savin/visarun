@@ -102,7 +102,9 @@ const AllVisaCitizenshipSurchargesPage = () => {
       searchTerm === '' ||
       surcharge.citizenship.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       surcharge.country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      surcharge.visaType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      surcharge.visaTypes.some(vt =>
+        vt.visaType.name.toLowerCase().includes(searchTerm.toLowerCase())
+      ) ||
       surcharge.note?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCitizenship =
@@ -209,7 +211,7 @@ const AllVisaCitizenshipSurchargesPage = () => {
                   <TableRow>
                     <TableHead>Citizenship</TableHead>
                     <TableHead>Country</TableHead>
-                    <TableHead>Visa Type</TableHead>
+                    <TableHead>Visa Types</TableHead>
                     <TableHead>Surcharge Amount</TableHead>
                     <TableHead>Note</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -230,7 +232,13 @@ const AllVisaCitizenshipSurchargesPage = () => {
                         <span className="font-medium">{surcharge.country.name}</span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{surcharge.visaType.name}</Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {surcharge.visaTypes.map(vt => (
+                            <Badge key={vt.visaType.id} variant="secondary" className="text-xs">
+                              {vt.visaType.name}
+                            </Badge>
+                          ))}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <span className="font-mono">${surcharge.surchargeAmount.toFixed(2)}</span>

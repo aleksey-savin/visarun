@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { VisaTypeSelector } from '@/components/Requirements/VisaTypeSelector';
 import { ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,7 +24,7 @@ const EditVisaCitizenshipSurchargePage = () => {
 
   const [citizenshipId, setCitizenshipId] = useState('');
   const [countryId, setCountryId] = useState('');
-  const [visaTypeId, setVisaTypeId] = useState('');
+  const [visaTypeIds, setVisaTypeIds] = useState<string[]>([]);
   const [surchargeAmount, setSurchargeAmount] = useState<number>(0);
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,10 +38,6 @@ const EditVisaCitizenshipSurchargePage = () => {
 
   const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
   const { data: countriesData } = trpc.country.getAll.useQuery();
-  const { data: visaTypesData } = trpc.visaType.getByCountry.useQuery(
-    { countryId: countryId! },
-    { enabled: !!countryId }
-  );
 
   const editVisaCitizenshipSurchargeMutation = trpc.visaCitizenshipSurcharge.edit.useMutation({
     onSuccess: () => {
@@ -58,7 +55,7 @@ const EditVisaCitizenshipSurchargePage = () => {
       const surcharge = surchargeData.visaCitizenshipSurcharge;
       setCitizenshipId(surcharge.citizenshipId);
       setCountryId(surcharge.countryId);
-      setVisaTypeId(surcharge.visaTypeId);
+      setVisaTypeIds(surcharge.visaTypes?.map(vt => vt.visaType.id) || []);
       setSurchargeAmount(surcharge.surchargeAmount);
       setNote(surcharge.note || '');
     }
@@ -77,8 +74,8 @@ const EditVisaCitizenshipSurchargePage = () => {
       return;
     }
 
-    if (!visaTypeId) {
-      toast.error('Please select a visa type');
+    if (visaTypeIds.length === 0) {
+      toast.error('Please select at least one visa type');
       return;
     }
 
@@ -93,10 +90,15 @@ const EditVisaCitizenshipSurchargePage = () => {
       id: id!,
       citizenshipId,
       countryId,
-      visaTypeId,
+      visaTypeIds,
       surchargeAmount,
       note: note.trim() || undefined,
     });
+  };
+
+  const handleCountryChange = (value: string) => {
+    setCountryId(value);
+    setVisaTypeIds([]); // Clear visa types when country changes
   };
 
   if (isLoading) {
@@ -142,7 +144,7 @@ const EditVisaCitizenshipSurchargePage = () => {
         </Button>
       </div>
 
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle>Edit Visa Citizenship Surcharge</CardTitle>
           <p className="text-sm text-muted-foreground">Update the visa surcharge information</p>
@@ -168,13 +170,7 @@ const EditVisaCitizenshipSurchargePage = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="country">Country *</Label>
-                <Select
-                  value={countryId}
-                  onValueChange={value => {
-                    setCountryId(value);
-                    setVisaTypeId(''); // Clear visa type when country changes
-                  }}
-                >
+                <Select value={countryId} onValueChange={handleCountryChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
@@ -190,34 +186,6 @@ const EditVisaCitizenshipSurchargePage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="visaType">Visa Type *</Label>
-              <Select value={visaTypeId} onValueChange={setVisaTypeId} disabled={!countryId}>
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={!countryId ? 'Select a country first' : 'Select visa type'}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {visaTypesData?.visaTypes.map(visaType => (
-                    <SelectItem key={visaType.id} value={visaType.id}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{visaType.name}</span>
-                        <span className="text-xs text-muted-foreground ml-2">
-                          ${visaType.serviceCost.toFixed(2)}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {!countryId && (
-                <p className="text-xs text-muted-foreground">
-                  Please select a country to see available visa types
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="surchargeAmount">Surcharge Amount (USD) *</Label>
               <Input
                 id="surchargeAmount"
@@ -229,6 +197,30 @@ const EditVisaCitizenshipSurchargePage = () => {
                 onChange={e => setSurchargeAmount(parseFloat(e.target.value) || 0)}
               />
             </div>
+
+            {/* Visa Type Selector */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Visa Types *</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Select the visa types this surcharge applies to
+                </p>
+              </CardHeader>
+              <CardContent>
+                {!countryId ? (
+                  <div className="text-sm text-muted-foreground bg-gray-50 p-4 rounded-md">
+                    Please select a country first to see available visa types
+                  </div>
+                ) : (
+                  <VisaTypeSelector
+                    selectedIds={visaTypeIds}
+                    onSelectionChange={setVisaTypeIds}
+                    disabled={isSubmitting}
+                    countryFilter={countryId}
+                  />
+                )}
+              </CardContent>
+            </Card>
 
             <div className="space-y-2">
               <Label htmlFor="note">Note (Optional)</Label>

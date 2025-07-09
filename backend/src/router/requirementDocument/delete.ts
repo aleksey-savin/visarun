@@ -1,0 +1,49 @@
+import { requirementDocumentDeleteProcedure } from '../../lib/trpc.js';
+import { z } from 'zod';
+
+export const zDeleteRequirementDocumentTrpcInput = z.object({
+  id: z.string().uuid(),
+});
+
+export const deleteRequirementDocumentTrpcRoute = requirementDocumentDeleteProcedure
+  .input(zDeleteRequirementDocumentTrpcInput)
+  .mutation(async ({ input, ctx }) => {
+    const { id } = input;
+
+    // Check if requirement document exists
+    const existingDocument = await ctx.prisma.requirementDocument.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        fileUrl: true,
+        requirement: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        uploadedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    if (!existingDocument) {
+      throw new Error('Requirement document not found');
+    }
+
+    // Delete the requirement document
+    await ctx.prisma.requirementDocument.delete({
+      where: { id },
+    });
+
+    return {
+      success: true,
+      message: `Document for requirement "${existingDocument.requirement.title}" has been deleted successfully`,
+      deletedFileUrl: existingDocument.fileUrl,
+    };
+  });

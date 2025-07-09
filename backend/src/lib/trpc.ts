@@ -204,6 +204,60 @@ export const clientVisaDeleteProcedure = trpc.procedure.use(
   requirePermission('clientVisas.delete')
 );
 
+// Requirement management procedures
+export const requirementCreateProcedure = trpc.procedure.use(
+  requirePermission('requirements.create')
+);
+export const requirementReadProcedure = trpc.procedure.use(requirePermission('requirements.read'));
+export const requirementUpdateProcedure = trpc.procedure.use(
+  requirePermission('requirements.update')
+);
+export const requirementDeleteProcedure = trpc.procedure.use(
+  requirePermission('requirements.delete')
+);
+
+// RequirementDocument management procedures
+export const requirementDocumentCreateProcedure = trpc.procedure.use(
+  requirePermission('requirementDocuments.create')
+);
+export const requirementDocumentReadProcedure = trpc.procedure.use(
+  requirePermission('requirementDocuments.read')
+);
+export const requirementDocumentUpdateProcedure = trpc.procedure.use(
+  requirePermission('requirementDocuments.update')
+);
+export const requirementDocumentDeleteProcedure = trpc.procedure.use(
+  requirePermission('requirementDocuments.delete')
+);
+
+// ClientDocument management procedures
+export const clientDocumentCreateProcedure = trpc.procedure.use(
+  requirePermission('clientDocuments.create')
+);
+export const clientDocumentReadProcedure = trpc.procedure.use(
+  requirePermission('clientDocuments.read')
+);
+export const clientDocumentUpdateProcedure = trpc.procedure.use(
+  requirePermission('clientDocuments.update')
+);
+export const clientDocumentDeleteProcedure = trpc.procedure.use(
+  requirePermission('clientDocuments.delete')
+);
+
+// ServiceRequirement management procedures
+export const serviceRequirementCreateProcedure = trpc.procedure.use(
+  requirePermission('serviceRequirements.create')
+);
+export const serviceRequirementReadProcedure = trpc.procedure.use(
+  requirePermission('serviceRequirements.read')
+);
+export const serviceRequirementUpdateProcedure = trpc.procedure.use(
+  requirePermission('serviceRequirements.update')
+);
+export const serviceRequirementDeleteProcedure = trpc.procedure.use(
+  requirePermission('serviceRequirements.delete')
+);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

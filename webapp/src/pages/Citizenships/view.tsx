@@ -180,7 +180,7 @@ const ViewCitizenshipPage = () => {
     createSurchargeMutation.mutate({
       citizenshipId: id!,
       countryId: surchargeCountryId,
-      visaTypeId,
+      visaTypeIds: [visaTypeId],
       surchargeAmount,
       note: surchargeNote || undefined,
     });
@@ -603,11 +603,10 @@ const ViewCitizenshipPage = () => {
                   {citizenship.surcharges.map(
                     (surcharge: {
                       id: string;
-                      visaTypeId: string;
                       surchargeAmount: number;
                       note: string | null;
                       country: { id: string; name: string };
-                      visaType: { id: string; name: string };
+                      visaTypes: { id: string; visaType: { id: string; name: string } }[];
                     }) => (
                       <div
                         key={surcharge.id}
@@ -616,7 +615,8 @@ const ViewCitizenshipPage = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">
-                              {surcharge.country.name} - {surcharge.visaType.name}
+                              {surcharge.country.name} -{' '}
+                              {surcharge.visaTypes.map(vt => vt.visaType.name).join(', ')}
                             </span>
                             <Badge variant="outline" className="bg-blue-50 text-blue-700">
                               ${surcharge.surchargeAmount.toFixed(2)}

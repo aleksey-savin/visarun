@@ -57,9 +57,28 @@ export const editClientTrpcRoute = userUpdateProcedure
             name: true,
           },
         },
-        passports: {
+        documents: {
           orderBy: {
-            expirationDate: 'desc',
+            uploadedAt: 'desc',
+          },
+          include: {
+            requirement: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                serviceType: true,
+                inputType: true,
+              },
+            },
+            uploadedBy: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
           },
         },
       },

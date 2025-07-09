@@ -45,6 +45,17 @@ export const getAccessDeniedRoute = () => '/access-denied';
 
 export const getAllContactMethodsRoute = () => '/contact-methods';
 
+export const getAllRequirementsRoute = () => '/requirements';
+export const getCreateRequirementRoute = () => '/requirements/create';
+export const editRequirementRouteParams = getRouteParams({ id: true });
+export type EditRequirementRouteParams = typeof editRequirementRouteParams;
+export const getEditRequirementRoute = ({ id }: EditRequirementRouteParams) =>
+  `/requirements/edit/${id}`;
+export const viewRequirementRouteParams = getRouteParams({ id: true });
+export type ViewRequirementRouteParams = typeof viewRequirementRouteParams;
+export const getViewRequirementRoute = ({ id }: ViewRequirementRouteParams) =>
+  `/requirements/view/${id}`;
+
 export const viewUserRouteParams = getRouteParams({ id: true });
 export type ViewUserRouteParams = typeof viewUserRouteParams;
 export const getViewUserRoute = ({ id }: ViewUserRouteParams) => `/users/${id}`;

@@ -12,7 +12,7 @@ const INITIAL_RETRY_DELAY = 1000;
 export const trpc = createTRPCProxyClient({
   links: [
     httpBatchLink({
-      url: BACKEND_URL,
+      url: `${BACKEND_URL}/trpc`,
       fetch: async (url, options) => {
         let retries = 0;
         let lastError;

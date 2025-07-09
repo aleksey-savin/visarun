@@ -15,6 +15,9 @@
     "pgc": "prisma generate",
     "prisma:seed": "tsx src/utils/seed.ts",
     "prisma:seed-prod": "node dist/src/utils/seed.js",
+    "requirements:setup": "node migrations/setup-requirements.js",
+    "requirements:test": "node test-requirements.js",
+    "requirements:clean": "tsx -e \"import { PrismaClient } from '@prisma/client'; const prisma = new PrismaClient(); await prisma.requirementDocument.deleteMany({}); await prisma.requirementCitizenship.deleteMany({}); await prisma.requirementVisaType.deleteMany({}); await prisma.requirementVisarunRoute.deleteMany({}); await prisma.requirement.deleteMany({}); console.log('Cleaned all requirement data'); await prisma.$disconnect();\"",
     "prepare": "",
     "build": "rm -rf dist && swc src -d dist --extensions '.ts,.tsx' && cp -r prisma dist/ && echo '{\"type\":\"module\"}' > dist/package.json"
   },

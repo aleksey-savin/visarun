@@ -63,7 +63,30 @@ export const createClientTrpcRoute = userCreateProcedure
             name: true,
           },
         },
-        passports: true,
+        documents: {
+          orderBy: {
+            uploadedAt: 'desc',
+          },
+          include: {
+            requirement: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                serviceType: true,
+                inputType: true,
+              },
+            },
+            uploadedBy: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
 

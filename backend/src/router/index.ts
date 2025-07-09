@@ -19,7 +19,7 @@ import { blacklistedRoute } from './blacklisted/index.js';
 import { visaCitizenshipSurchargeRoute } from './visaCitizenshipSurcharge/index.js';
 import { cityRoute } from './city/index.js';
 import { clientRoutes } from './client/index.js';
-import { clientPassportRoutes } from './clientPassport/index.js';
+
 import { uploadRoutes } from './upload/index.js';
 import { orderRoutes } from './order/index.js';
 import { orderItemRoutes } from './orderItem/index.js';
@@ -29,6 +29,10 @@ import { visaTypeRoutes } from './visaType/index.js';
 import { visaApplicationRoutes } from './visaApplication/index.js';
 import { clientVisaRoutes } from './clientVisa/index.js';
 import { messageTemplateRoute } from './messageTemplate/index.js';
+import { requirementRoutes } from './requirement/index.js';
+import { requirementDocumentRoutes } from './requirementDocument/index.js';
+import { clientDocumentRoutes } from './clientDocument/index.js';
+import { serviceRequirementRoutes } from './serviceRequirement/index.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
@@ -44,7 +48,6 @@ export const appRouter = trpc.router({
   visaCitizenshipSurcharge: visaCitizenshipSurchargeRoute,
   city: cityRoute,
   client: clientRoutes,
-  clientPassport: clientPassportRoutes,
   upload: uploadRoutes,
   order: orderRoutes,
   orderItem: orderItemRoutes,
@@ -54,6 +57,10 @@ export const appRouter = trpc.router({
   visaApplication: visaApplicationRoutes,
   clientVisa: clientVisaRoutes,
   messageTemplate: messageTemplateRoute,
+  requirement: requirementRoutes,
+  requirementDocument: requirementDocumentRoutes,
+  clientDocument: clientDocumentRoutes,
+  serviceRequirement: serviceRequirementRoutes,
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,
   exchangeRates: exchangeRatesRoute,

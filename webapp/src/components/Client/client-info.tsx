@@ -3,7 +3,7 @@ import { trpc } from '../../lib/trpcProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarIcon, Edit, FileText, Plus, Trash2, Eye } from 'lucide-react';
+import { CalendarIcon, Edit, FileText, Plus, Trash2, Eye, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -17,16 +17,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { ClientPassportForm } from './client-passport-form.js';
 import { FileViewer } from './file-viewer.js';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { FileUpload } from '@/components/ui/file-upload';
 
 interface ClientInfoProps {
   clientId: string;
@@ -36,9 +28,16 @@ interface ClientInfoProps {
 
 export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isPassportDialogOpen, setIsPassportDialogOpen] = useState(false);
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{ path: string; name: string } | null>(null);
+  const [newDocumentPath, setNewDocumentPath] = useState<string | null>(null);
+  const [uploadedFileInfo, setUploadedFileInfo] = useState<{
+    fileName: string;
+    originalName: string;
+    fileSize: number;
+    fileType: string;
+  } | null>(null);
+  const [showInlineUpload, setShowInlineUpload] = useState(false);
 
   // Query to get client details
   const { data, error, isLoading, isError, refetch } = trpc.client.getOne.useQuery({
@@ -60,6 +59,35 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
     },
   });
 
+  // Mutation to add document
+  const addDocumentMutation = trpc.clientDocument.create.useMutation({
+    onSuccess: () => {
+      toast.success('Document added successfully');
+      setShowInlineUpload(false);
+      setNewDocumentPath(null);
+      setUploadedFileInfo(null);
+      refetch();
+    },
+    onError: error => {
+      toast.error('Failed to add document', {
+        description: error.message,
+      });
+    },
+  });
+
+  // Mutation to delete document
+  const deleteDocumentMutation = trpc.clientDocument.delete.useMutation({
+    onSuccess: () => {
+      toast.success('Document deleted successfully');
+      refetch();
+    },
+    onError: error => {
+      toast.error('Failed to delete document', {
+        description: error.message,
+      });
+    },
+  });
+
   // Function to handle client deletion
   const handleDeleteClient = () => {
     deleteClientMutation.mutate({ id: clientId });
@@ -71,14 +99,64 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
     return format(new Date(date), 'PPP');
   };
 
-  const handlePassportSuccess = () => {
-    setIsPassportDialogOpen(false);
-    refetch();
-  };
-
   const handleViewFile = (filePath: string, fileName: string) => {
     setSelectedFile({ path: filePath, name: fileName });
     setFileViewerOpen(true);
+  };
+
+  const handleDownloadFile = async (filePath: string, fileName: string) => {
+    try {
+      const fileUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${filePath}`;
+      const response = await fetch(fileUrl);
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('File downloaded successfully');
+    } catch (error) {
+      toast.error('Failed to download file', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  const handleAddDocument = () => {
+    if (!newDocumentPath || !uploadedFileInfo) {
+      toast.error('Please upload a file first');
+      return;
+    }
+
+    addDocumentMutation.mutate({
+      clientId,
+      fileName: uploadedFileInfo.fileName,
+      originalName: uploadedFileInfo.originalName,
+      fileUrl: newDocumentPath,
+      fileType: uploadedFileInfo.fileType,
+      fileSize: uploadedFileInfo.fileSize,
+    });
+  };
+
+  const handleFileUpload = (filePath: string | null) => {
+    setNewDocumentPath(filePath);
+    if (!filePath) {
+      setUploadedFileInfo(null);
+    }
+  };
+
+  const handleDeleteDocument = (documentId: string) => {
+    deleteDocumentMutation.mutate({ id: documentId });
   };
 
   if (isLoading) {
@@ -153,7 +231,7 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
                       This action cannot be undone. This will permanently delete the client profile
-                      and all associated passport records.
+                      and all associated documents.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -219,87 +297,171 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+          {/* Documents Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Documents</h3>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowInlineUpload(!showInlineUpload)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Document
+              </Button>
+            </div>
 
-      {/* Passports Section */}
-      <Card className="w-full">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">Passports</CardTitle>
-            <Dialog open={isPassportDialogOpen} onOpenChange={setIsPassportDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Passport
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add New Passport</DialogTitle>
-                  <DialogDescription>Add a new passport record for this client.</DialogDescription>
-                </DialogHeader>
-                <ClientPassportForm
-                  clientId={clientId}
-                  onSuccess={handlePassportSuccess}
-                  onCancel={() => setIsPassportDialogOpen(false)}
+            {showInlineUpload && (
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <FileUpload
+                  value={newDocumentPath || undefined}
+                  onChange={handleFileUpload}
+                  uploadEndpoint="/api/upload/client-document"
+                  fileFieldName="document"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  maxSize={10 * 1024 * 1024} // 10MB
+                  label="Document File"
+                  description="Upload PDF, DOC, DOCX, JPG, JPEG, or PNG files up to 10MB"
+                  onUploadSuccess={fileInfo => {
+                    setUploadedFileInfo({
+                      fileName: fileInfo.fileName || fileInfo.originalName,
+                      originalName: fileInfo.originalName,
+                      fileSize: fileInfo.size,
+                      fileType: fileInfo.mimetype?.split('/')[1] || 'unknown',
+                    });
+                  }}
                 />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-4">
-          {client.passports && client.passports.length > 0 ? (
-            <div className="space-y-4">
-              {client.passports.map(
-                (passport: { id: string; expirationDate: string; scanPath: string }) => (
-                  <div
-                    key={passport.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                <div className="flex gap-2 mt-4">
+                  <Button
+                    onClick={handleAddDocument}
+                    disabled={
+                      !newDocumentPath || !uploadedFileInfo || addDocumentMutation.isPending
+                    }
+                    size="sm"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex-shrink-0">
-                        <FileText className="h-5 w-5 text-blue-600" />
+                    {addDocumentMutation.isPending ? 'Adding...' : 'Add Document'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowInlineUpload(false);
+                      setNewDocumentPath(null);
+                      setUploadedFileInfo(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {client.documents && client.documents.length > 0 ? (
+              <div className="space-y-3">
+                {client.documents.map(
+                  (document: {
+                    id: string;
+                    fileName: string;
+                    uploadedAt: string;
+                    fileSize: number;
+                    fileUrl: string;
+                    expiresAt: string | null;
+                    comment: string | null;
+                    tags: string[];
+                  }) => (
+                    <div
+                      key={document.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{document.fileName}</p>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>{formatDate(document.uploadedAt)}</span>
+                            {document.fileSize > 0 && (
+                              <span>• {Math.round(document.fileSize / 1024)}KB</span>
+                            )}
+                            {document.expiresAt && (
+                              <span>• Expires: {formatDate(document.expiresAt)}</span>
+                            )}
+                          </div>
+                          {document.comment && (
+                            <p className="text-xs text-gray-600 mt-1 truncate">
+                              {document.comment}
+                            </p>
+                          )}
+                          {document.tags && document.tags.length > 0 && (
+                            <div className="flex gap-1 mt-1">
+                              {document.tags.slice(0, 3).map((tag: string, index: number) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                              {document.tags.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{document.tags.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          Expires: {formatDate(passport.expirationDate)}
-                        </p>
-                        <p className="text-xs text-gray-500">Scan: {passport.scanPath}</p>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewFile(document.fileUrl, document.fileName)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownloadFile(document.fileUrl, document.fileName)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Document</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{document.fileName}"? This action
+                                cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <Button
+                                variant="destructive"
+                                onClick={() => handleDeleteDocument(document.id)}
+                              >
+                                Delete
+                              </Button>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handleViewFile(
-                            passport.scanPath,
-                            `Passport expires ${formatDate(passport.expirationDate)}`
-                          )
-                        }
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">No passports added yet</p>
-              <p className="text-xs">Click "Add Passport" to add the first passport record</p>
-            </div>
-          )}
+                  )
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No documents added yet</p>
+                <p className="text-xs">Click "Add Document" to upload the first document</p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

@@ -50,7 +50,6 @@ export const getOneCitizenshipTrpcRoute = citizenshipReadProcedure
         surcharges: {
           select: {
             id: true,
-            visaTypeId: true,
             surchargeAmount: true,
             note: true,
             country: {
@@ -59,10 +58,15 @@ export const getOneCitizenshipTrpcRoute = citizenshipReadProcedure
                 name: true,
               },
             },
-            visaType: {
+            visaTypes: {
               select: {
                 id: true,
-                name: true,
+                visaType: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -71,9 +75,6 @@ export const getOneCitizenshipTrpcRoute = citizenshipReadProcedure
               country: {
                 name: 'asc',
               },
-            },
-            {
-              visaTypeId: 'asc',
             },
           ],
         },

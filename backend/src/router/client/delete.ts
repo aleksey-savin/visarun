@@ -14,7 +14,7 @@ export const deleteClientTrpcRoute = userDeleteProcedure
     const existingClient = await ctx.prisma.client.findUnique({
       where: { id },
       include: {
-        passports: true,
+        documents: true,
       },
     });
 
@@ -22,9 +22,9 @@ export const deleteClientTrpcRoute = userDeleteProcedure
       throw new Error('Client not found');
     }
 
-    // Delete all associated passports first
-    if (existingClient.passports.length > 0) {
-      await ctx.prisma.clientPassport.deleteMany({
+    // Delete all associated documents first
+    if (existingClient.documents.length > 0) {
+      await ctx.prisma.clientDocument.deleteMany({
         where: { clientId: id },
       });
     }

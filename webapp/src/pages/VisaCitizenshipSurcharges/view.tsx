@@ -195,10 +195,14 @@ const ViewVisaCitizenshipSurchargePage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Visa Type</label>
-                  <Badge variant="secondary" className="w-fit">
-                    {surcharge.visaType.name}
-                  </Badge>
+                  <label className="text-sm font-medium text-muted-foreground">Visa Types</label>
+                  <div className="flex flex-wrap gap-2">
+                    {surcharge.visaTypes.map(vt => (
+                      <Badge key={vt.visaType.id} variant="secondary" className="w-fit">
+                        {vt.visaType.name}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -240,9 +244,13 @@ const ViewVisaCitizenshipSurchargePage = () => {
                 <div className="p-3 bg-blue-50/50 dark:bg-blue-950/30 rounded-md border border-blue-200/50 dark:border-blue-800/50">
                   <p className="text-sm">
                     Citizens of <span className="font-semibold">{surcharge.citizenship.name}</span>{' '}
-                    applying for a <span className="font-semibold">{surcharge.visaType.name}</span>{' '}
-                    visa to <span className="font-semibold">{surcharge.country.name}</span> will be
-                    charged an additional{' '}
+                    applying for{' '}
+                    <span className="font-semibold">
+                      {surcharge.visaTypes.map(vt => vt.visaType.name).join(', ')}
+                    </span>{' '}
+                    visa{surcharge.visaTypes.length > 1 ? 's' : ''} to{' '}
+                    <span className="font-semibold">{surcharge.country.name}</span> will be charged
+                    an additional{' '}
                     <span className="font-semibold text-green-600">
                       ${surcharge.surchargeAmount.toFixed(2)} USD
                     </span>{' '}

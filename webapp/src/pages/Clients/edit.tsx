@@ -121,7 +121,7 @@ const EditClientPage = () => {
       id,
       firstName: data.firstName,
       lastName: data.lastName,
-      citizenshipId: data.citizenshipId || undefined,
+      citizenshipId: data.citizenshipId === 'none' ? null : data.citizenshipId || undefined,
       prevViolations: data.prevViolations || false,
       prevViolationsDesc: data.prevViolationsDesc || undefined,
       isOutsideTheCountry: data.isOutsideTheCountry || false,
@@ -246,14 +246,14 @@ const EditClientPage = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Citizenship</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                    <Select onValueChange={field.onChange} value={field.value || 'none'}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select citizenship" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No citizenship selected</SelectItem>
+                        <SelectItem value="none">No citizenship selected</SelectItem>
                         {citizenshipsData?.citizenships.map(citizenship => (
                           <SelectItem key={citizenship.id} value={citizenship.id}>
                             {citizenship.name}

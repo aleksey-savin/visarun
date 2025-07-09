@@ -22,16 +22,6 @@ export const getClientVisaTrpcRoute = clientVisaReadProcedure
                 name: true,
               },
             },
-            passports: {
-              select: {
-                id: true,
-                expirationDate: true,
-                scanPath: true,
-              },
-              orderBy: {
-                expirationDate: 'desc',
-              },
-            },
           },
         },
         country: {

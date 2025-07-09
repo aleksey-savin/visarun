@@ -8,7 +8,13 @@ import {
   Send,
   Globe,
   UserCheck,
-  Receipt,
+  FileText,
+  DollarSign,
+  Hash,
+  Mail,
+  User,
+  Shield,
+  ClipboardList,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -34,11 +40,14 @@ import {
   getCurrencyExchangeRoute,
   getTelegramChannelsRoute,
   getAllContactMethodsRoute,
+  getAllRequirementsRoute,
   // New entity routes
   getAllCountriesRoute,
   getAllCitizenshipsRoute,
+  getAllVisaTypesRoute,
   getAllVisaCitizenshipSurchargesRoute,
-  getMessageTemplatesRoute,
+
+  //getTelegramTemplatesRoute,
 } from '@/lib/routes';
 
 export function AppSidebar() {
@@ -56,13 +65,16 @@ export function AppSidebar() {
   const [isUsersManagementOpen, setUsersManagementOpen] = useState(false);
   const [isVisaManagementOpen, setVisaManagementOpen] = useState(false);
 
-  const isOnUsersManagementSubpage = location.pathname === getAllUsersRoute();
+  const isOnUsersManagementSubpage =
+    location.pathname === getAllUsersRoute() || location.pathname === getAllRolesRoute();
 
   const isOnVisaManagementSubpage =
     location.pathname === getAllCountriesRoute() ||
     location.pathname.startsWith(`${getAllCountriesRoute()}/`) ||
     location.pathname === getAllCitizenshipsRoute() ||
     location.pathname.startsWith(`${getAllCitizenshipsRoute()}/`) ||
+    location.pathname === getAllVisaTypesRoute() ||
+    location.pathname.startsWith(`${getAllVisaTypesRoute()}/`) ||
     location.pathname === getAllVisaCitizenshipSurchargesRoute() ||
     location.pathname.startsWith(`${getAllVisaCitizenshipSurchargesRoute()}/`);
 
@@ -72,6 +84,13 @@ export function AppSidebar() {
   const canReadRoles = hasPermission('roles.read');
   const canReadTelegram = hasPermission('telegram.channels.read');
   const canManageContactMethods = hasPermission('global.fullAccess');
+
+  // Requirements permissions
+  const canReadRequirements =
+    hasPermission('requirements.read') ||
+    hasPermission('requirements.create') ||
+    hasPermission('requirements.update') ||
+    hasPermission('requirements.delete');
 
   // New entity permissions
   const canReadCountries =
@@ -84,6 +103,11 @@ export function AppSidebar() {
     hasPermission('citizenships.create') ||
     hasPermission('citizenships.update') ||
     hasPermission('citizenships.delete');
+  const canReadVisaTypes =
+    hasPermission('visaTypes.read') ||
+    hasPermission('visaTypes.create') ||
+    hasPermission('visaTypes.update') ||
+    hasPermission('visaTypes.delete');
   const canReadVisaCitizenshipSurcharges =
     hasPermission('visaCitizenshipSurcharges.read') ||
     hasPermission('visaCitizenshipSurcharges.create') ||
@@ -92,11 +116,15 @@ export function AppSidebar() {
 
   // Check if user has any admin permissions
   const hasAnyAdminPermission =
-    canReadUsers || canReadRoles || canReadTelegram || canManageContactMethods;
+    canReadUsers ||
+    canReadRoles ||
+    canReadTelegram ||
+    canManageContactMethods ||
+    canReadRequirements;
 
   // Check if user has any visa management permissions
   const hasAnyVisaPermission =
-    canReadCountries || canReadCitizenships || canReadVisaCitizenshipSurcharges;
+    canReadCountries || canReadCitizenships || canReadVisaTypes || canReadVisaCitizenshipSurcharges;
 
   return (
     <Sidebar>
@@ -128,89 +156,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {hasAnyVisaPermission && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Visa Management</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {/* Visa Management (collapsible section) */}
-                <SidebarMenuItem key="VisaManagement">
-                  <SidebarMenuButton
-                    onClick={() => setVisaManagementOpen(prev => !prev)}
-                    isActive={isOnVisaManagementSubpage}
-                    className="flex items-center justify-between px-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-5 h-5" />
-                      <span>Visa Management</span>
-                    </div>
-                    {isVisaManagementOpen ? (
-                      <ChevronDown className="w-4 h-4" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4" />
-                    )}
-                  </SidebarMenuButton>
 
-                  {/* Nested visa management items */}
-                  {isVisaManagementOpen && (
-                    <SidebarMenuSub>
-                      {canReadCountries && (
-                        <SidebarMenuSubItem key="Countries">
-                          <SidebarMenuButton
-                            asChild
-                            isActive={
-                              location.pathname === getAllCountriesRoute() ||
-                              location.pathname.startsWith(`${getAllCountriesRoute()}/`)
-                            }
-                          >
-                            <Link to={getAllCountriesRoute()}>
-                              <Globe className="w-4 h-4" />
-                              <span>Countries</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuSubItem>
-                      )}
-                      {canReadCitizenships && (
-                        <SidebarMenuSubItem key="Citizenships">
-                          <SidebarMenuButton
-                            asChild
-                            isActive={
-                              location.pathname === getAllCitizenshipsRoute() ||
-                              location.pathname.startsWith(`${getAllCitizenshipsRoute()}/`)
-                            }
-                          >
-                            <Link to={getAllCitizenshipsRoute()}>
-                              <UserCheck className="w-4 h-4" />
-                              <span>Citizenships</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuSubItem>
-                      )}
-                      {canReadVisaCitizenshipSurcharges && (
-                        <SidebarMenuSubItem key="VisaCitizenshipSurcharges">
-                          <SidebarMenuButton
-                            asChild
-                            isActive={
-                              location.pathname === getAllVisaCitizenshipSurchargesRoute() ||
-                              location.pathname.startsWith(
-                                `${getAllVisaCitizenshipSurchargesRoute()}/`
-                              )
-                            }
-                          >
-                            <Link to={getAllVisaCitizenshipSurchargesRoute()}>
-                              <Receipt className="w-4 h-4" />
-                              <span>Visa Surcharges</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuSubItem>
-                      )}
-                    </SidebarMenuSub>
-                  )}
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
         {hasAnyAdminPermission && (
           <SidebarGroup>
             <SidebarGroupLabel>Administration</SidebarGroupLabel>
@@ -226,7 +172,7 @@ export function AppSidebar() {
                     >
                       <div className="flex items-center gap-2">
                         <Users className="w-5 h-5" />
-                        <span>Users Management</span>
+                        <span>User Management</span>
                       </div>
                       {isUsersManagementOpen ? (
                         <ChevronDown className="w-4 h-4" />
@@ -248,6 +194,7 @@ export function AppSidebar() {
                               }
                             >
                               <Link to={getAllUsersRoute()}>
+                                <User className="w-4 h-4" />
                                 <span>Users</span>
                               </Link>
                             </SidebarMenuButton>
@@ -263,6 +210,7 @@ export function AppSidebar() {
                               }
                             >
                               <Link to={getAllRolesRoute()}>
+                                <Shield className="w-4 h-4" />
                                 <span>Roles</span>
                               </Link>
                             </SidebarMenuButton>
@@ -271,6 +219,68 @@ export function AppSidebar() {
                       </SidebarMenuSub>
                     )}
                   </SidebarMenuItem>
+                )}
+
+                {hasAnyVisaPermission && (
+                  <SidebarMenu>
+                    <SidebarMenuItem key="VisaManagement">
+                      <SidebarMenuButton
+                        onClick={() => setVisaManagementOpen(prev => !prev)}
+                        isActive={isOnVisaManagementSubpage}
+                        className="flex items-center justify-between px-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-5 h-5" />
+                          <span>Visa Management</span>
+                        </div>
+                        {isVisaManagementOpen ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                      </SidebarMenuButton>
+
+                      {/* Nested visa management items */}
+                      {isVisaManagementOpen && (
+                        <SidebarMenuSub>
+                          {canReadVisaTypes && (
+                            <SidebarMenuSubItem key="VisaTypes">
+                              <SidebarMenuButton
+                                asChild
+                                isActive={
+                                  location.pathname === getAllVisaTypesRoute() ||
+                                  location.pathname.startsWith(`${getAllVisaTypesRoute()}/`)
+                                }
+                              >
+                                <Link to={getAllVisaTypesRoute()}>
+                                  <FileText className="w-4 h-4" />
+                                  <span>Visa Types</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuSubItem>
+                          )}
+                          {canReadVisaCitizenshipSurcharges && (
+                            <SidebarMenuSubItem key="VisaCitizenshipSurcharges">
+                              <SidebarMenuButton
+                                asChild
+                                isActive={
+                                  location.pathname === getAllVisaCitizenshipSurchargesRoute() ||
+                                  location.pathname.startsWith(
+                                    `${getAllVisaCitizenshipSurchargesRoute()}/`
+                                  )
+                                }
+                              >
+                                <Link to={getAllVisaCitizenshipSurchargesRoute()}>
+                                  <DollarSign className="w-4 h-4" />
+                                  <span>Visa Surcharges</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuSubItem>
+                          )}
+                        </SidebarMenuSub>
+                      )}
+                    </SidebarMenuItem>
+                  </SidebarMenu>
                 )}
 
                 {/* Telegram (коллапсируемый пункт без ссылки) */}
@@ -305,6 +315,7 @@ export function AppSidebar() {
                             }
                           >
                             <Link to={getTelegramChannelsRoute()}>
+                              <Hash className="w-4 h-4" />
                               <span>Telegram Channels &amp; Groups</span>
                             </Link>
                           </SidebarMenuButton>
@@ -314,12 +325,13 @@ export function AppSidebar() {
                         <SidebarMenuSubItem key="Message templates">
                           <SidebarMenuButton
                             asChild
-                            isActive={
-                              location.pathname === getMessageTemplatesRoute() ||
-                              location.pathname.startsWith(`${getMessageTemplatesRoute()}/`)
-                            }
+                            //isActive={
+                            //  location.pathname === getTelegramTemplatesRoute() ||
+                            // location.pathname.startsWith(`${getTelegramTemplatesRoute()}/`)
+                            //}
                           >
-                            <Link to={getMessageTemplatesRoute()}>
+                            <Link to={'.'}>
+                              <Mail className="w-4 h-4" />
                               <span>Message templates</span>
                             </Link>
                           </SidebarMenuButton>
@@ -342,6 +354,54 @@ export function AppSidebar() {
                       <Link to={getAllContactMethodsRoute()}>
                         <MessageCircle className="w-5 h-5" />
                         <span>Contact Methods</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {canReadCountries && (
+                  <SidebarMenuItem key="Countries">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        location.pathname === getAllCountriesRoute() ||
+                        location.pathname.startsWith(`${getAllCountriesRoute()}/`)
+                      }
+                    >
+                      <Link to={getAllCountriesRoute()}>
+                        <Globe className="w-4 h-4" />
+                        <span>Countries</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {canReadCitizenships && (
+                  <SidebarMenuItem key="Citizenships">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        location.pathname === getAllCitizenshipsRoute() ||
+                        location.pathname.startsWith(`${getAllCitizenshipsRoute()}/`)
+                      }
+                    >
+                      <Link to={getAllCitizenshipsRoute()}>
+                        <UserCheck className="w-4 h-4" />
+                        <span>Citizenships</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {canReadRequirements && (
+                  <SidebarMenuItem key="Requirements">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        location.pathname === getAllRequirementsRoute() ||
+                        location.pathname.startsWith(`${getAllRequirementsRoute()}/`)
+                      }
+                    >
+                      <Link to={getAllRequirementsRoute()} className="flex items-center gap-2">
+                        <ClipboardList className="w-5 h-5" />
+                        <span>Requirements</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

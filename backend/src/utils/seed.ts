@@ -104,6 +104,162 @@ async function main() {
     { code: 'cities.read', description: 'View cities', category: 'cities' },
     { code: 'cities.update', description: 'Edit cities', category: 'cities' },
     { code: 'cities.delete', description: 'Delete cities', category: 'cities' },
+
+    // Requirements management
+    { code: 'requirements.create', description: 'Create requirements', category: 'requirements' },
+    { code: 'requirements.read', description: 'View requirements', category: 'requirements' },
+    { code: 'requirements.update', description: 'Edit requirements', category: 'requirements' },
+    { code: 'requirements.delete', description: 'Delete requirements', category: 'requirements' },
+
+    // Requirement documents management
+    {
+      code: 'requirementDocuments.create',
+      description: 'Create requirement documents',
+      category: 'requirementDocuments',
+    },
+    {
+      code: 'requirementDocuments.read',
+      description: 'View requirement documents',
+      category: 'requirementDocuments',
+    },
+    {
+      code: 'requirementDocuments.update',
+      description: 'Edit requirement documents',
+      category: 'requirementDocuments',
+    },
+    {
+      code: 'requirementDocuments.delete',
+      description: 'Delete requirement documents',
+      category: 'requirementDocuments',
+    },
+
+    // Service requirements management
+    {
+      code: 'serviceRequirements.create',
+      description: 'Create service requirements',
+      category: 'serviceRequirements',
+    },
+    {
+      code: 'serviceRequirements.read',
+      description: 'View service requirements',
+      category: 'serviceRequirements',
+    },
+    {
+      code: 'serviceRequirements.update',
+      description: 'Edit service requirements',
+      category: 'serviceRequirements',
+    },
+    {
+      code: 'serviceRequirements.delete',
+      description: 'Delete service requirements',
+      category: 'serviceRequirements',
+    },
+
+    // Orders management
+    { code: 'orders.create', description: 'Create orders', category: 'orders' },
+    { code: 'orders.read', description: 'View orders', category: 'orders' },
+    { code: 'orders.update', description: 'Edit orders', category: 'orders' },
+    { code: 'orders.delete', description: 'Delete orders', category: 'orders' },
+
+    // Order items management
+    { code: 'orderItems.create', description: 'Create order items', category: 'orderItems' },
+    { code: 'orderItems.read', description: 'View order items', category: 'orderItems' },
+    { code: 'orderItems.update', description: 'Edit order items', category: 'orderItems' },
+    { code: 'orderItems.delete', description: 'Delete order items', category: 'orderItems' },
+
+    // Client discount rules management
+    {
+      code: 'clientDiscountRules.create',
+      description: 'Create client discount rules',
+      category: 'clientDiscountRules',
+    },
+    {
+      code: 'clientDiscountRules.read',
+      description: 'View client discount rules',
+      category: 'clientDiscountRules',
+    },
+    {
+      code: 'clientDiscountRules.update',
+      description: 'Edit client discount rules',
+      category: 'clientDiscountRules',
+    },
+    {
+      code: 'clientDiscountRules.delete',
+      description: 'Delete client discount rules',
+      category: 'clientDiscountRules',
+    },
+
+    // Client discount assignments management
+    {
+      code: 'clientDiscountAssignments.create',
+      description: 'Create client discount assignments',
+      category: 'clientDiscountAssignments',
+    },
+    {
+      code: 'clientDiscountAssignments.read',
+      description: 'View client discount assignments',
+      category: 'clientDiscountAssignments',
+    },
+    {
+      code: 'clientDiscountAssignments.update',
+      description: 'Edit client discount assignments',
+      category: 'clientDiscountAssignments',
+    },
+    {
+      code: 'clientDiscountAssignments.delete',
+      description: 'Delete client discount assignments',
+      category: 'clientDiscountAssignments',
+    },
+
+    // Client documents management
+    {
+      code: 'clientDocuments.create',
+      description: 'Create client documents',
+      category: 'clientDocuments',
+    },
+    {
+      code: 'clientDocuments.read',
+      description: 'View client documents',
+      category: 'clientDocuments',
+    },
+    {
+      code: 'clientDocuments.update',
+      description: 'Edit client documents',
+      category: 'clientDocuments',
+    },
+    {
+      code: 'clientDocuments.delete',
+      description: 'Delete client documents',
+      category: 'clientDocuments',
+    },
+
+    // Client visas management
+    { code: 'clientVisas.create', description: 'Create client visas', category: 'clientVisas' },
+    { code: 'clientVisas.read', description: 'View client visas', category: 'clientVisas' },
+    { code: 'clientVisas.update', description: 'Edit client visas', category: 'clientVisas' },
+    { code: 'clientVisas.delete', description: 'Delete client visas', category: 'clientVisas' },
+
+    // Visa applications management
+    {
+      code: 'visaApplications.create',
+      description: 'Create visa applications',
+      category: 'visaApplications',
+    },
+    {
+      code: 'visaApplications.read',
+      description: 'View visa applications',
+      category: 'visaApplications',
+    },
+    {
+      code: 'visaApplications.update',
+      description: 'Edit visa applications',
+      category: 'visaApplications',
+    },
+    {
+      code: 'visaApplications.delete',
+      description: 'Delete visa applications',
+      category: 'visaApplications',
+    },
   ];
 
   // Create permissions with duplicate checking
