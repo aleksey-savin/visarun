@@ -7,6 +7,7 @@ import {
 } from '../../lib/routes';
 import { trpc } from '../../lib/trpcProvider';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -122,7 +123,7 @@ const ViewMessageTemplatePage = () => {
 
       {data?.messageTemplate && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main User Information */}
+          {/* Main Message Template Information */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
@@ -134,6 +135,31 @@ const ViewMessageTemplatePage = () => {
                   {data.messageTemplate.body}
                 </CardDescription>
               </CardHeader>
+
+              <CardContent>
+                {/* Telegram channels section - display attached */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold">Attached Telegram Channels and Groups</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {data.messageTemplate?.telegramChannels &&
+                    data.messageTemplate.telegramChannels.length > 0 ? (
+                      data.messageTemplate.telegramChannels.map(
+                        (channel: { id: string; chatTitle: string }) => (
+                          <Badge
+                            key={channel.id}
+                            variant="outline"
+                            className="bg-slate-400 justify-start"
+                          >
+                            {channel.chatTitle}
+                          </Badge>
+                        )
+                      )
+                    ) : (
+                      <p>No channels attached</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
             </Card>
           </div>
 
@@ -161,7 +187,7 @@ const ViewMessageTemplatePage = () => {
                       className="w-full justify-start"
                       disabled={deleteMessageTemplateMutation.isPending}
                     >
-                      {deleteMessageTemplateMutation.isPending ? 'Deleting...' : 'Delete User'}
+                      {deleteMessageTemplateMutation.isPending ? 'Deleting...' : 'Delete Template'}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>

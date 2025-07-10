@@ -22,6 +22,10 @@ type MessageTemplate = {
   id: string;
   title: string;
   body: string;
+  telegramChannels: {
+    id: string;
+    chatTitle: string;
+  }[];
   //   telegramChannels TelegramChannel[]
 };
 
@@ -126,6 +130,7 @@ const AllMessageTemplatesPage = () => {
                 <TableRow>
                   <TableHead className="w-[100px]">Title</TableHead>
                   <TableHead>Body</TableHead>
+                  <TableHead>Telegram Channels</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -143,6 +148,14 @@ const AllMessageTemplatesPage = () => {
                       onClick={() => handleTemplateClick(messageTemplate.id)}
                     >
                       {messageTemplate.body}
+                    </TableCell>
+                    <TableCell
+                      className="whitespace-pre-wrap max-w-lg"
+                      onClick={() => handleTemplateClick(messageTemplate.id)}
+                    >
+                      {messageTemplate.telegramChannels
+                        .map((channel: { id: string; chatTitle: string }) => channel.chatTitle)
+                        .join(' ')}
                     </TableCell>
                   </TableRow>
                 ))}

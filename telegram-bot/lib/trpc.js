@@ -167,7 +167,7 @@ export const api = {
           chatStatus: "active",
           fromId: from.id.toString(),
           fromIsBot: from.is_bot,
-          fromLastName: from.last_name,
+          fromLastName: from.last_name || "",
           fromFirstName: from.first_name,
           fromUsername: from.username,
         });

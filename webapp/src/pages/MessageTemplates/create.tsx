@@ -13,13 +13,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 
 import { SquarePen, MessageSquareDiff } from 'lucide-react';
 import { trpc } from '@/lib/trpcProvider';
 import { getMessageTemplatesRoute } from '@/lib/routes';
 import { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox.tsx';
+
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 
 // Define the exact schema from backend, enforcing non-optional roles
 const formSchema = z.object({
@@ -110,7 +111,11 @@ const CreateMessageTemplatePage = () => {
                       <FormItem>
                         <FormLabel>Body</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Enter body" {...field} />
+                          <SimpleEditor
+                            className="selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none"
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -153,7 +158,10 @@ const CreateMessageTemplatePage = () => {
                   <FormItem>
                     <div className="space-y-4">
                       {telegramChannelsData?.channels.map(channel => {
-                        const isChecked = field.value.includes({ id: channel.id });
+                        const isChecked =
+                          field.value.filter(
+                            (targetChannel: { id: string }) => targetChannel.id === channel.id
+                          ).length > 0;
                         return (
                           <div
                             key={channel.id}
@@ -170,16 +178,17 @@ const CreateMessageTemplatePage = () => {
                                   )
                                 );
                               } else {
-                                field.onChange([...field.value, channel.id]);
+                                field.onChange([...field.value, { id: channel.id }]);
                               }
                             }}
                           >
                             <Checkbox
+                              className="mt-0.5 cursor-pointer"
                               id={channel.id}
                               checked={isChecked}
                               onCheckedChange={checked => {
                                 if (checked) {
-                                  field.onChange([...field.value, channel.id]);
+                                  field.onChange([...field.value, { id: channel.id }]);
                                 } else {
                                   field.onChange(
                                     field.value.filter(
@@ -189,7 +198,6 @@ const CreateMessageTemplatePage = () => {
                                   );
                                 }
                               }}
-                              className="mt-0.5"
                             />
                             <div className="ml-3 flex-1">
                               <label
