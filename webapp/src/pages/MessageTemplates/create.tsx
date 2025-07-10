@@ -13,7 +13,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 
 import { SquarePen, MessageSquareDiff } from 'lucide-react';
 import { trpc } from '@/lib/trpcProvider';
