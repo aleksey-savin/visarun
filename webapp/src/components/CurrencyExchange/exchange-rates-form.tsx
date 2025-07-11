@@ -1,34 +1,27 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogTitle,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogDescription,
-  AlertDialogCancel,
-  AlertDialogHeader,
-} from '../ui/alert-dialog';
 
 import {
   Form,
   FormControl,
   FormField,
-  FormDescription,
+  // FormDescription,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Switch } from '@/components/ui/switch';
+// import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '../ui/textarea';
+
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { trpc } from '@/lib/trpcProvider';
 
@@ -59,6 +52,7 @@ const ExchangeRatesSchema = z.object({
   }),
   // Exchange Rate for RUB-USDT pair
   exchangeRate: z.string().optional(),
+  broadcastTo: z.array(z.object({ channelId: z.string(), body: z.string() })).min(0),
 });
 
 type ExchangeRatesFormValues = z.infer<typeof ExchangeRatesSchema>;
@@ -74,6 +68,11 @@ interface ExchangeRatesFormProps {
     rubToUsdt: number;
   };
 }
+
+type MessageType = {
+  channelId: string;
+  body: string;
+};
 
 // Helper function to round to nearest 0.1 in our favor
 const roundInOurFavor = (value: number, isUsdtToRub: boolean): number => {
@@ -99,7 +98,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
         type: 'success',
         message: 'Exchange rates updated successfully!',
       });
-      setIsSubmitDialogOpen(false);
+      setIsSubmitting(false);
       if (onRatesUpdated) {
         onRatesUpdated();
       }
@@ -122,8 +121,11 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
       usdtToRub: initialValues ? initialValues.usdtToRub.toString() : '',
       rubToUsdt: initialValues ? initialValues.rubToUsdt.toString() : '',
       exchangeRate: '',
+      broadcastTo: [],
     },
   });
+
+  const { data: telegramChannelsData } = trpc.telegramChannel.getAll.useQuery();
 
   // Watch the exchange rate field value
   const exchangeRate = useWatch({
@@ -145,16 +147,57 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
     }
   }, [exchangeRate, form]);
 
-  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
-  const [broadcastToTelegram, setBroadcastToTelegram] = useState<boolean>(true);
+  const initialMessages = useMemo(() => {
+    return (
+      telegramChannelsData?.channels
+        ?.map(channel => ({
+          channelId: channel.id,
+          body: channel?.messageTemplate?.body || '',
+        }))
+        .filter((message): message is MessageType => message !== null) ?? []
+    );
+  }, [telegramChannelsData]);
 
-  const toggleBroadcastToTelegram = () => {
-    setBroadcastToTelegram(!broadcastToTelegram);
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedChannelId, setSelectedChannelId] = useState('');
+  const [messages, setMessages] = useState<MessageType[]>([]);
+
+  useEffect(() => {
+    if (initialMessages.length > 0) {
+      setMessages(initialMessages);
+      console.log(initialMessages);
+    }
+  }, [initialMessages]);
+
+  function onEditMessage(body: string) {
+    setMessages(prev =>
+      prev.map(message =>
+        message.channelId === selectedChannelId
+          ? { channelId: selectedChannelId, body: body }
+          : message
+      )
+    );
+  }
+
+  function onCancel() {
+    setIsSubmitting(false);
+    setMessages(initialMessages);
+  }
+
+  function onConfirm() {
+    setIsSubmitting(true);
+  }
 
   async function onSubmit(data: ExchangeRatesFormValues) {
     try {
       setFormStatus({ type: null, message: '' });
+
+      data.broadcastTo.map(channel => {
+        const updatedChannel = channel;
+
+        updatedChannel.body =
+          messages.find(message => message.channelId == channel.channelId)?.body || '';
+      });
 
       // Convert string values to numbers and submit
       saveExchangeRate.mutate({
@@ -164,7 +207,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
         vndToUsdt: parseFloat(data.vndToUsdt),
         usdtToRub: parseFloat(data.usdtToRub),
         rubToUsdt: parseFloat(data.rubToUsdt),
-        broadcastToTelegram: broadcastToTelegram,
+        broadcastTo: data.broadcastTo,
       });
     } catch (error) {
       console.error('Error saving exchange rates:', error);
@@ -177,7 +220,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
 
   return (
     <>
-      <Card className="w-full max-w-2xl mx-auto border-none shadow-none">
+      <div className="w-full max-w-4xl space-y-6">
         <CardContent>
           {formStatus.type && (
             <Alert
@@ -197,230 +240,307 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
             <form
               id="exchangeRatesForm"
               onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6"
+              className="space-y-6 flex flex-col"
             >
-              <div className="bg-muted/40 p-4 rounded-md">
-                <h3 className="text-md font-medium mb-3 flex items-center">
-                  <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
-                    RUB ↔ VND
-                  </span>
-                  Russian Ruble to Vietnamese Dong
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="rubToVnd"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">10K RUB</span> ={' '}
-                          <span className="text-muted-foreground">X VND</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+              {isSubmitting ? (
+                <>
+                  <h2 className="text-2xl font-semibold mb-6 text-center">
+                    Check the messages that will be sent to telegram channels!
+                  </h2>
+
+                  <div className="flex flex-col gap-5">
+                    <Textarea
+                      value={
+                        messages.find(message => message.channelId === selectedChannelId)?.body ||
+                        ''
+                      }
+                      onChange={event => {
+                        onEditMessage(event.target.value);
+                      }}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="broadcastTo"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col items-center justify-between rounded-lg border p-3 shadow-sm w-full">
+                          {telegramChannelsData?.channels.map(
+                            (channel: {
+                              id: string;
+                              chatUsername: string;
+                              chatTitle: string;
+                              messageTemplate: { id: string; body: string; title: string } | null;
+                            }) => {
+                              const isChecked =
+                                field.value?.find(
+                                  (targetChannel: { channelId: string }) =>
+                                    targetChannel.channelId === channel.id
+                                ) !== undefined;
+                              return (
+                                <div
+                                  className={`${selectedChannelId == channel.id ? `ring-2 ring-primary/50` : ``} w-full rounded-md`}
+                                  key={channel.id}
+                                >
+                                  <div
+                                    className="w-full flex justify-between flex-row bg-muted/40 p-4 rounded-md transition-all cursor-pointer hover:bg-accent/50 ${isChecked ? 'border-primary bg-primary/5' : 'border-border'}"
+                                    onClick={() => {
+                                      setSelectedChannelId(channel.id);
+                                    }}
+                                  >
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <Checkbox
+                                        className="mt-0.5 cursor-pointer"
+                                        id={channel.id}
+                                        checked={isChecked}
+                                        onCheckedChange={(checked: boolean) => {
+                                          if (checked) {
+                                            field.onChange([
+                                              ...field.value,
+                                              {
+                                                channelId: channel.id,
+                                                body:
+                                                  messages.find(
+                                                    message => message.channelId == channel.id
+                                                  )?.body || '',
+                                              },
+                                            ]);
+                                          } else {
+                                            field.onChange(
+                                              field.value.filter(
+                                                (targetChannel: { channelId: string }) =>
+                                                  targetChannel.channelId !== channel.id
+                                              )
+                                            );
+                                          }
+                                        }}
+                                      />
+
+                                      <h3 className="text-md font-medium flex items-center">
+                                        {channel.chatTitle ? channel.chatTitle : 'Null'}
+                                      </h3>
+                                    </div>
+                                    {selectedChannelId == channel.id && (
+                                      <div className="ml-2">
+                                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            }
+                          )}
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button variant="default" disabled={saveExchangeRate.isPending}>
+                      {saveExchangeRate.isPending ? 'Saving...' : `Save Exchange Rates`}
+                    </Button>
+
+                    <Button
+                      variant="destructive"
+                      disabled={saveExchangeRate.isPending}
+                      onClick={onCancel}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+
+                  {/* <p>{console.log(messages.map(message => message.body + '\n'))}</p> */}
+                </>
+              ) : (
+                <>
+                  <div className="bg-muted/40 p-4 rounded-md">
+                    <h3 className="text-md font-medium mb-3 flex items-center">
+                      <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
+                        RUB ↔ VND
+                      </span>
+                      Russian Ruble to Vietnamese Dong
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="rubToVnd"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1">
+                              <span className="font-semibold">10K RUB</span> ={' '}
+                              <span className="text-muted-foreground">X VND</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="vndToRub"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1">
+                              <span className="font-semibold">1M VND</span> ={' '}
+                              <span className="text-muted-foreground">X RUB</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="bg-muted/40 p-4 rounded-md">
+                    <h3 className="text-md font-medium mb-3 flex items-center">
+                      <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
+                        USDT ↔ VND
+                      </span>
+                      Tether to Vietnamese Dong
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="usdtToVnd"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1">
+                              <span className="font-semibold">1 USDT</span> ={' '}
+                              <span className="text-muted-foreground">X VND</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="vndToUsdt"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1">
+                              <span className="font-semibold">X VND</span> ={' '}
+                              <span className="text-muted-foreground">1 USDT</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="bg-muted/40 p-4 rounded-md">
+                    <h3 className="text-md font-medium mb-3 flex items-center">
+                      <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
+                        USDT ↔ RUB
+                      </span>
+                      Tether to Russian Ruble
+                    </h3>
+
+                    {/* Exchange Rate field */}
+                    <div className="mb-4">
+                      <FormField
+                        control={form.control}
+                        name="exchangeRate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1 font-medium text-primary">
+                              <span className="font-semibold">Market Rate</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Enter market rate"
+                                {...field}
+                                className="border-primary/50"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="usdtToRub"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1">
+                              <span className="font-semibold">1 USDT</span> ={' '}
+                              <span className="text-muted-foreground">X RUB</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder=""
+                                {...field}
+                                readOnly={!!exchangeRate}
+                                className={exchangeRate ? 'bg-muted cursor-not-allowed' : ''}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="rubToUsdt"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1">
+                              <span className="font-semibold">X RUB</span> ={' '}
+                              <span className="text-muted-foreground">1 USDT</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder=""
+                                {...field}
+                                readOnly={!!exchangeRate}
+                                className={exchangeRate ? 'bg-muted cursor-not-allowed' : ''}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    {exchangeRate && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Rates are automatically calculated as Exchange Rate × 0.97 (for USDT to RUB)
+                        and Exchange Rate × 1.03 (for RUB to USDT) with 0.1 rounding in our favor.
+                      </p>
                     )}
-                  />
+                  </div>
 
-                  <FormField
-                    control={form.control}
-                    name="vndToRub"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">1M VND</span> ={' '}
-                          <span className="text-muted-foreground">X RUB</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="bg-muted/40 p-4 rounded-md">
-                <h3 className="text-md font-medium mb-3 flex items-center">
-                  <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
-                    USDT ↔ VND
-                  </span>
-                  Tether to Vietnamese Dong
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="usdtToVnd"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">1 USDT</span> ={' '}
-                          <span className="text-muted-foreground">X VND</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="vndToUsdt"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">X VND</span> ={' '}
-                          <span className="text-muted-foreground">1 USDT</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="bg-muted/40 p-4 rounded-md">
-                <h3 className="text-md font-medium mb-3 flex items-center">
-                  <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
-                    USDT ↔ RUB
-                  </span>
-                  Tether to Russian Ruble
-                </h3>
-
-                {/* Exchange Rate field */}
-                <div className="mb-4">
-                  <FormField
-                    control={form.control}
-                    name="exchangeRate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1 font-medium text-primary">
-                          <span className="font-semibold">Market Rate</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Enter market rate"
-                            {...field}
-                            className="border-primary/50"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="usdtToRub"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">1 USDT</span> ={' '}
-                          <span className="text-muted-foreground">X RUB</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder=""
-                            {...field}
-                            readOnly={!!exchangeRate}
-                            className={exchangeRate ? 'bg-muted cursor-not-allowed' : ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="rubToUsdt"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1">
-                          <span className="font-semibold">X RUB</span> ={' '}
-                          <span className="text-muted-foreground">1 USDT</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder=""
-                            {...field}
-                            readOnly={!!exchangeRate}
-                            className={exchangeRate ? 'bg-muted cursor-not-allowed' : ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                {exchangeRate && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Rates are automatically calculated as Exchange Rate × 0.97 (for USDT to RUB) and
-                    Exchange Rate × 1.03 (for RUB to USDT) with 0.1 rounding in our favor.
-                  </p>
-                )}
-              </div>
-
-              <AlertDialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
-                <AlertDialogTrigger asChild className="w-full">
-                  <Button variant="default" disabled={saveExchangeRate.isPending}>
+                  <Button
+                    variant="default"
+                    disabled={saveExchangeRate.isPending}
+                    onClick={onConfirm}
+                  >
                     {saveExchangeRate.isPending ? 'Saving...' : `Save Exchange Rates`}
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Confirm?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      <div className="space-y-4">
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                          <div className="space-y-0.5">
-                            <FormLabel>Send to Telegram</FormLabel>
-                            <FormDescription>
-                              Broadcast exchange rates to active Telegram channels & groups
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={broadcastToTelegram}
-                              onCheckedChange={toggleBroadcastToTelegram}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      </div>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <Button
-                      type="submit"
-                      form="exchangeRatesForm"
-                      disabled={saveExchangeRate.isPending}
-                    >
-                      {saveExchangeRate.isPending ? 'Saving...' : 'Save Exchange Rates'}
-                    </Button>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                </>
+              )}
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </div>
     </>
   );
 }

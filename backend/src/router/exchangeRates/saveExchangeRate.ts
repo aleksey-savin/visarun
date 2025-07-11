@@ -8,7 +8,7 @@ export const saveExchangeRateTrpcInput = z.object({
   vndToUsdt: z.number().positive(),
   usdtToRub: z.number().positive(),
   rubToUsdt: z.number().positive(),
-  broadcastToTelegram: z.boolean().default(false),
+  broadcastTo: z.array(z.object({ channelId: z.string(), body: z.string() })).min(0),
 });
 
 export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
@@ -38,7 +38,7 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
       },
     });
 
-    if (input.broadcastToTelegram) {
+    if (input.broadcastTo?.length > 0) {
       // Получаем все активные каналы
       const channels = await ctx.prisma.telegramChannel.findMany({
         where: { status: 'active' },
@@ -46,6 +46,8 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
           messageTemplate: true,
         },
       });
+
+      channels.filter(channel => input.broadcastTo.find(includedChannel => includedChannel.channelId == channel.id) !== undefined);
 
       let broadcastResult = { success: false, message: 'No broadcast attempted' };
 
@@ -96,7 +98,7 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
           try {
             const results = await Promise.allSettled(
               channels.map(async channel => {
-                const messageTemplate = channel.messageTemplate?.body || '';
+                const messageTemplate = input.broadcastTo.find(includedChannel => includedChannel.channelId === channel.id)?.body || '';
 
                 try {
                   const response = await fetch(
