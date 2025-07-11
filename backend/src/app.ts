@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
     app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
     // Upload routes
-    app.use('/api/upload', createUploadRoutes());
+    app.use('/upload', createUploadRoutes());
 
     // System initialization note
     console.log('⚠️  Note: To initialize system with default data, run:');

@@ -79,7 +79,7 @@ export const useUploadClientDocument = () => {
       const formData = new FormData();
       formData.append('document', file);
 
-      const response = await fetch('/api/upload/client-document', {
+      const response = await fetch('/upload/client-document', {
         method: 'POST',
         body: formData,
       });

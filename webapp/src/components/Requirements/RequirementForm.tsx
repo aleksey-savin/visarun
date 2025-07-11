@@ -288,7 +288,7 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
                   onChange={filePath => setFormData({ ...formData, sampleUrl: filePath || '' })}
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   maxSize={10 * 1024 * 1024} // 10MB
-                  uploadEndpoint="/api/upload/requirement-document"
+                  uploadEndpoint="/upload/requirement-document"
                   fileFieldName="document"
                   disabled={isLoading}
                 />

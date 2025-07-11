@@ -316,7 +316,7 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
                 <FileUpload
                   value={newDocumentPath || undefined}
                   onChange={handleFileUpload}
-                  uploadEndpoint="/api/upload/client-document"
+                  uploadEndpoint="/upload/client-document"
                   fileFieldName="document"
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   maxSize={10 * 1024 * 1024} // 10MB
