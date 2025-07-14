@@ -8,8 +8,62 @@ export const saveExchangeRateTrpcInput = z.object({
   vndToUsdt: z.number().positive(),
   usdtToRub: z.number().positive(),
   rubToUsdt: z.number().positive(),
-  broadcastToTelegram: z.boolean().default(false),
+  broadcastTo: z.array(z.object({ channelId: z.string(), body: z.string() })).min(0),
 });
+
+function cleanHtmlForTelegram(inputHtml: string): string {
+  const allowedTags = [
+    'b',
+    'strong',
+    'i',
+    'em',
+    'u',
+    'ins',
+    's',
+    'strike',
+    'del',
+    'a',
+    'code',
+    'pre',
+  ];
+
+  let cleaned = inputHtml;
+
+  // Обработка пустых <p></p>
+  cleaned = cleaned.replace(/<p>\s*<\/p>/gi, '\n');
+
+  // Заменим оставшиеся <p> и </p> на \n
+  cleaned = cleaned
+    .replace(/<p[^>]*>/gi, '') // удаляем открывающий <p>
+    .replace(/<\/p>/gi, '\n'); // заменяем закрывающий на \n
+
+  // Заменим <br>, <div>, <h[1-6]> на \n
+  cleaned = cleaned.replace(/<(br|div|h[1-6])[^>]*>/gi, '\n');
+  cleaned = cleaned.replace(/<\/(div|h[1-6])>/gi, '\n');
+
+  // Удалим теги, кроме разрешённых
+  cleaned = cleaned.replace(/<\/?([a-z0-9]+)([^>]*)>/gi, (match, tagName, attrs) => {
+    const tag = tagName.toLowerCase();
+    if (!allowedTags.includes(tag)) return '';
+
+    if (tag === 'a') {
+      const hrefMatch = attrs.match(/\s+href\s*=\s*(['"])(.*?)\1/i);
+      if (hrefMatch) {
+        return `<a href="${hrefMatch[2]}">`;
+      } else if (match.startsWith('</')) {
+        return `</a>`;
+      }
+      return '';
+    }
+
+    return match.startsWith('</') ? `</${tag}>` : `<${tag}>`;
+  });
+
+  // Удалим лишние пробелы и повторяющиеся переносы
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+
+  return cleaned;
+}
 
 export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
   .input(saveExchangeRateTrpcInput)
@@ -38,7 +92,7 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
       },
     });
 
-    if (input.broadcastToTelegram) {
+    if (input.broadcastTo?.length > 0) {
       // Получаем все активные каналы
       const channels = await ctx.prisma.telegramChannel.findMany({
         where: { status: 'active' },
@@ -46,6 +100,12 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
           messageTemplate: true,
         },
       });
+
+      channels.filter(
+        channel =>
+          input.broadcastTo.find(includedChannel => includedChannel.channelId == channel.id) !==
+          undefined
+      );
 
       let broadcastResult = { success: false, message: 'No broadcast attempted' };
 
@@ -96,7 +156,12 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
           try {
             const results = await Promise.allSettled(
               channels.map(async channel => {
-                const messageTemplate = channel.messageTemplate?.body || '';
+                const messageTemplate =
+                  input.broadcastTo.find(
+                    includedChannel => includedChannel.channelId === channel.id
+                  )?.body || '';
+
+                console.log(cleanHtmlForTelegram(messageTemplate));
 
                 try {
                   const response = await fetch(
@@ -108,7 +173,7 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
                       },
                       body: JSON.stringify({
                         chat_id: channel.chatId,
-                        text: messageText.concat(messageTemplate),
+                        text: cleanHtmlForTelegram(messageTemplate),
                         parse_mode: 'HTML', // или 'HTML', если нужны какие-то стили
                       }),
                     }
@@ -122,7 +187,7 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
                 } catch (error: unknown) {
                   console.error(
                     `Error sending to channel ${channel.chatTitle}:`,
-                    error instanceof Error ? error.message : 'Unknown error'
+                    error instanceof Error ? error.stack : 'Unknown error'
                   );
                   return {
                     channelId: channel.chatId,

@@ -28,19 +28,11 @@ import '@/components/tiptap-node/list-node/list-node.scss';
 import '@/components/tiptap-node/image-node/image-node.scss';
 import '@/components/tiptap-node/paragraph-node/paragraph-node.scss';
 
-// --- Tiptap UI ---
-import { HeadingDropdownMenu } from '@/components/tiptap-ui/heading-dropdown-menu';
-import { ListDropdownMenu } from '@/components/tiptap-ui/list-dropdown-menu';
-import { BlockquoteButton } from '@/components/tiptap-ui/blockquote-button';
-import { CodeBlockButton } from '@/components/tiptap-ui/code-block-button';
 import {
-  ColorHighlightPopover,
   ColorHighlightPopoverContent,
-  ColorHighlightPopoverButton,
 } from '@/components/tiptap-ui/color-highlight-popover';
 import { LinkPopover, LinkContent, LinkButton } from '@/components/tiptap-ui/link-popover';
 import { MarkButton } from '@/components/tiptap-ui/mark-button';
-import { TextAlignButton } from '@/components/tiptap-ui/text-align-button';
 import { UndoRedoButton } from '@/components/tiptap-ui/undo-redo-button';
 
 // --- Icons ---
@@ -53,9 +45,6 @@ import { useMobile } from '@/hooks/use-mobile';
 import { useWindowSize } from '@/hooks/use-window-size';
 import { useCursorVisibility } from '@/hooks/use-cursor-visibility';
 
-// --- Components ---
-import { ThemeToggle } from '@/components/tiptap-templates/simple/theme-toggle';
-
 // --- Styles ---
 import '@/components/tiptap-templates/simple/simple-editor.scss';
 
@@ -65,15 +54,7 @@ interface SimpleEditorProps {
   onChange: (value: string) => void;
 }
 
-const getContentWithoutP = (content: string) => {
-  if (content.slice(0, 3) == '<p>') content = content.slice(3);
-  if (content.slice(-4) == '</p>') content = content.slice(0, content.length - 4);
-
-  return content;
-};
-
 const MainToolbarContent = ({
-  onHighlighterClick,
   onLinkClick,
   isMobile,
 }: {
@@ -93,10 +74,10 @@ const MainToolbarContent = ({
       <ToolbarSeparator />
 
       <ToolbarGroup>
-        <HeadingDropdownMenu levels={[1, 2, 3, 4]} />
-        <ListDropdownMenu types={['bulletList', 'orderedList', 'taskList']} />
-        <BlockquoteButton />
-        <CodeBlockButton />
+        {/* <HeadingDropdownMenu levels={[1, 2, 3, 4]} /> */}
+        {/* <ListDropdownMenu types={['bulletList', 'orderedList', 'taskList']} /> */}
+        {/* <BlockquoteButton /> */}
+        {/* <CodeBlockButton /> */}
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -107,11 +88,11 @@ const MainToolbarContent = ({
         <MarkButton type="strike" />
         <MarkButton type="code" />
         <MarkButton type="underline" />
-        {!isMobile ? (
+        {/* {!isMobile ? (
           <ColorHighlightPopover />
         ) : (
           <ColorHighlightPopoverButton onClick={onHighlighterClick} />
-        )}
+        )} */}
         {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
       </ToolbarGroup>
 
@@ -124,22 +105,18 @@ const MainToolbarContent = ({
 
       <ToolbarSeparator />
 
-      <ToolbarGroup>
+      {/* <ToolbarGroup>
         <TextAlignButton align="left" />
         <TextAlignButton align="center" />
         <TextAlignButton align="right" />
         <TextAlignButton align="justify" />
-      </ToolbarGroup>
+      </ToolbarGroup> */}
 
       <ToolbarSeparator />
 
       <Spacer />
 
       {isMobile && <ToolbarSeparator />}
-
-      <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup>
     </>
   );
 };
@@ -202,7 +179,7 @@ export function SimpleEditor({ className, value, onChange }: SimpleEditorProps) 
     ],
     content: value || '<p></p>',
     onUpdate: ({ editor }) => {
-      onChange(getContentWithoutP(editor.getHTML()));
+      onChange(editor.getHTML());
     },
   });
 
@@ -218,7 +195,7 @@ export function SimpleEditor({ className, value, onChange }: SimpleEditorProps) 
   }, [isMobile, mobileView]);
 
   React.useEffect(() => {
-    if (editor && getContentWithoutP(editor.getHTML()) !== value) {
+    if (editor && editor.getHTML() !== value) {
       editor.commands.setContent(`<p>${value}</p>` || '');
     }
   }, [value, editor]);

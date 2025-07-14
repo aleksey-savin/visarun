@@ -46,8 +46,7 @@ import {
   getAllCitizenshipsRoute,
   getAllVisaTypesRoute,
   getAllVisaCitizenshipSurchargesRoute,
-
-  //getTelegramTemplatesRoute,
+  getMessageTemplatesRoute,
 } from '@/lib/routes';
 
 export function AppSidebar() {
@@ -325,12 +324,12 @@ export function AppSidebar() {
                         <SidebarMenuSubItem key="Message templates">
                           <SidebarMenuButton
                             asChild
-                            //isActive={
-                            //  location.pathname === getTelegramTemplatesRoute() ||
-                            // location.pathname.startsWith(`${getTelegramTemplatesRoute()}/`)
-                            //}
+                            isActive={
+                              location.pathname === getMessageTemplatesRoute() ||
+                              location.pathname.startsWith(`${getMessageTemplatesRoute()}/`)
+                            }
                           >
-                            <Link to={'.'}>
+                            <Link to={getMessageTemplatesRoute()}>
                               <Mail className="w-4 h-4" />
                               <span>Message templates</span>
                             </Link>
