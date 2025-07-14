@@ -20,10 +20,10 @@ import { CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '../ui/textarea';
 
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { trpc } from '@/lib/trpcProvider';
+import { SimpleEditor } from '../tiptap-templates/simple/simple-editor';
 
 const ExchangeRatesSchema = z.object({
   // RUB to VND
@@ -165,7 +165,6 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
   useEffect(() => {
     if (initialMessages.length > 0) {
       setMessages(initialMessages);
-      console.log(initialMessages);
     }
   }, [initialMessages]);
 
@@ -198,7 +197,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
         updatedChannel.body =
           messages.find(message => message.channelId == channel.channelId)?.body || '';
       });
-
+      
       // Convert string values to numbers and submit
       saveExchangeRate.mutate({
         rubToVnd: parseFloat(data.rubToVnd) / 10000,
@@ -249,14 +248,13 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                   </h2>
 
                   <div className="flex flex-col gap-5">
-                    <Textarea
+                    <SimpleEditor
+                      className="selection:bg-primary selection:text-primary-foreground overflow-y-scroll dark:bg-input/30 border-input rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none"
                       value={
                         messages.find(message => message.channelId === selectedChannelId)?.body ||
                         ''
                       }
-                      onChange={event => {
-                        onEditMessage(event.target.value);
-                      }}
+                      onChange={onEditMessage}
                     />
 
                     <FormField
@@ -345,8 +343,6 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                       Cancel
                     </Button>
                   </div>
-
-                  {/* <p>{console.log(messages.map(message => message.body + '\n'))}</p> */}
                 </>
               ) : (
                 <>
