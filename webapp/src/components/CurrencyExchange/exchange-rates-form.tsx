@@ -249,7 +249,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
 
                   <div className="flex flex-col gap-5">
                     <SimpleEditor
-                      className="selection:bg-primary selection:text-primary-foreground overflow-y-scroll dark:bg-input/30 border-input rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none"
+                      className=""
                       value={
                         messages.find(message => message.channelId === selectedChannelId)?.body ||
                         ''

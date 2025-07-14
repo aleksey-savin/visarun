@@ -112,7 +112,7 @@ const CreateMessageTemplatePage = () => {
                         <FormLabel>Body</FormLabel>
                         <FormControl>
                           <SimpleEditor
-                            className="selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none"
+                            className=""
                             value={field.value}
                             onChange={field.onChange}
                           />

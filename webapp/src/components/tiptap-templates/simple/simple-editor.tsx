@@ -28,9 +28,7 @@ import '@/components/tiptap-node/list-node/list-node.scss';
 import '@/components/tiptap-node/image-node/image-node.scss';
 import '@/components/tiptap-node/paragraph-node/paragraph-node.scss';
 
-import {
-  ColorHighlightPopoverContent,
-} from '@/components/tiptap-ui/color-highlight-popover';
+import { ColorHighlightPopoverContent } from '@/components/tiptap-ui/color-highlight-popover';
 import { LinkPopover, LinkContent, LinkButton } from '@/components/tiptap-ui/link-popover';
 import { MarkButton } from '@/components/tiptap-ui/mark-button';
 import { UndoRedoButton } from '@/components/tiptap-ui/undo-redo-button';
@@ -202,35 +200,37 @@ export function SimpleEditor({ className, value, onChange }: SimpleEditorProps) 
 
   return (
     <div
-      className={`${className} selection:text-black selection:bg-[rgba(255,255,255,0.7)] max-h-100`}
+      className={`${className} selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none max-h-100`}
     >
       <EditorContext.Provider value={{ editor }}>
-        <Toolbar
-          ref={toolbarRef}
-          style={
-            isMobile
-              ? {
-                  bottom: `calc(100% - ${windowSize.height - bodyRect.y}px)`,
-                }
-              : {}
-          }
-        >
-          {mobileView === 'main' ? (
-            <MainToolbarContent
-              onHighlighterClick={() => setMobileView('highlighter')}
-              onLinkClick={() => setMobileView('link')}
-              isMobile={isMobile}
-            />
-          ) : (
-            <MobileToolbarContent
-              type={mobileView === 'highlighter' ? 'highlighter' : 'link'}
-              onBack={() => setMobileView('main')}
-            />
-          )}
-        </Toolbar>
+        <div className="dark:bg-input/30">
+          <Toolbar
+            ref={toolbarRef}
+            style={
+              isMobile
+                ? {
+                    bottom: `calc(100% - ${windowSize.height - bodyRect.y}px)`,
+                  }
+                : {}
+            }
+          >
+            {mobileView === 'main' ? (
+              <MainToolbarContent
+                onHighlighterClick={() => setMobileView('highlighter')}
+                onLinkClick={() => setMobileView('link')}
+                isMobile={isMobile}
+              />
+            ) : (
+              <MobileToolbarContent
+                type={mobileView === 'highlighter' ? 'highlighter' : 'link'}
+                onBack={() => setMobileView('main')}
+              />
+            )}
+          </Toolbar>
+        </div>
 
         <div className="content-wrapper">
-          <EditorContent editor={editor} role="presentation" className="simple-editor-content" />
+          <EditorContent editor={editor} role="presentation" className="simple-editor-content [&>div]:pt-0!" />
         </div>
       </EditorContext.Provider>
     </div>

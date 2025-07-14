@@ -140,7 +140,7 @@ const ViewMessageTemplatePage = () => {
                 {/* Telegram channels section - display attached */}
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold">Attached Telegram Channels and Groups</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  <div className="flex flex-row gap-2">
                     {data.messageTemplate?.telegramChannels &&
                     data.messageTemplate.telegramChannels.length > 0 ? (
                       data.messageTemplate.telegramChannels.map(
