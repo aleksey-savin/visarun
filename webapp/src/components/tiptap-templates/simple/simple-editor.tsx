@@ -200,7 +200,7 @@ export function SimpleEditor({ className, value, onChange }: SimpleEditorProps) 
 
   return (
     <div
-      className={`${className} selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none max-h-100`}
+      className={`${className} overflow-y-scroll selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input rounded-md border bg-transparent shadow-xs transition-[color,box-shadow] outline-none max-h-100`}
     >
       <EditorContext.Provider value={{ editor }}>
         <div className="dark:bg-input/30">

@@ -173,7 +173,7 @@ export const saveExchangeRateTrpcRoute = exchangeRateCreateProcedure
                       },
                       body: JSON.stringify({
                         chat_id: channel.chatId,
-                        text: cleanHtmlForTelegram(messageTemplate),
+                        text: messageText.concat(cleanHtmlForTelegram(messageTemplate)),
                         parse_mode: 'HTML', // или 'HTML', если нужны какие-то стили
                       }),
                     }
