@@ -78,9 +78,12 @@ RUN pnpm install --prod
 ENV DATABASE_URL=${DATABASE_URL:-"postgresql://postgres:postgres@db:5432/visarun"}
 RUN npx prisma generate
 
+# Copy startup script
+COPY --from=backend-build /app/backend/start.sh ./start.sh
+RUN chmod +x ./start.sh
+
 EXPOSE 3001
-# Fixed path to match the actual build output location
-CMD ["node", "--trace-warnings", "dist/src/app.js"]
+CMD ["./start.sh"]
 
 # Frontend production stage
 FROM nginx:alpine AS webapp-prod
