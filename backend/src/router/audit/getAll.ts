@@ -1,4 +1,4 @@
-import { adminProcedure } from '../../lib/trpc.js';
+import { auditManageProcedure } from '../../lib/trpc.js';
 import {
   analyzeChanges,
   getChangeSummary,
@@ -26,7 +26,7 @@ export const zGetAllAuditLogsTrpcInput = z.object({
   endDate: z.string().datetime().optional(),
 });
 
-export const getAllAuditLogsTrpcRoute = adminProcedure
+export const getAllAuditLogsTrpcRoute = auditManageProcedure
   .input(zGetAllAuditLogsTrpcInput)
   .query(async ({ input, ctx }) => {
     const { page, limit, entityType, action, userId, entityId, startDate, endDate } = input;

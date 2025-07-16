@@ -155,6 +155,13 @@ async function main() {
       category: 'serviceRequirements',
     },
 
+    // Audit management
+    {
+      code: 'audit.manage',
+      description: 'Manage audit logs and recover deleted entities',
+      category: 'audit',
+    },
+
     // Orders management
     { code: 'orders.create', description: 'Create orders', category: 'orders' },
     { code: 'orders.read', description: 'View orders', category: 'orders' },

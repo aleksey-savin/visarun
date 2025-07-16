@@ -1,4 +1,4 @@
-import { adminProcedure } from '../../lib/trpc.js';
+import { auditManageProcedure } from '../../lib/trpc.js';
 import {
   analyzeChanges,
   getChangeSummary,
@@ -12,10 +12,10 @@ import { AuditAction, type AuditLogEntry, type EnhancedAuditLog } from '../../ty
 import { z } from 'zod';
 
 export const zGetOneAuditLogTrpcInput = z.object({
-  id: z.string().cuid(),
+  id: z.string().uuid(),
 });
 
-export const getOneAuditLogTrpcRoute = adminProcedure
+export const getOneAuditLogTrpcRoute = auditManageProcedure
   .input(zGetOneAuditLogTrpcInput)
   .query(async ({ input, ctx }) => {
     const auditLog: AuditLogEntry = await (

@@ -272,11 +272,7 @@ export function getEntityDisplayName(
 }
 
 // Determine if an audit entry represents a significant change
-export function isSignificantChange(
-  action: string,
-  entityType: string,
-  changes: ChangeAnalysis[]
-): boolean {
+export function isSignificantChange(action: string, changes: ChangeAnalysis[]): boolean {
   // All creates and deletes are significant
   if (action === 'CREATE' || action === 'DELETE') {
     return true;

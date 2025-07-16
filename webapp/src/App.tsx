@@ -58,6 +58,10 @@ import CreateMessageTemplatePage from './pages/MessageTemplates/create.js';
 import ViewMessageTemplatePage from './pages/MessageTemplates/view.js';
 import EditMessageTemplatePage from './pages/MessageTemplates/edit.js';
 
+// Audit Log pages
+import AllAuditLogsPage from './pages/AuditLogs/getAll.tsx';
+import ViewAuditLogPage from './pages/AuditLogs/view.tsx';
+
 import {
   getAllUsersRoute,
   getCurrencyExchangeRoute,
@@ -123,6 +127,10 @@ import {
   getEditMessageTemplateRoute,
   viewMessageTemplateRouteParams,
   editMessageTemplateRouteParams,
+  // Audit Log routes
+  getAllAuditLogsRoute,
+  getViewAuditLogRoute,
+  viewAuditLogRouteParams,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -483,6 +491,24 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="users.update">
                       <EditClientPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Audit Log Routes */}
+                <Route
+                  path={getAllAuditLogsRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="audit.manage">
+                      <AllAuditLogsPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewAuditLogRoute(viewAuditLogRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="audit.manage">
+                      <ViewAuditLogPage />
                     </PermissionRoute>
                   }
                 />

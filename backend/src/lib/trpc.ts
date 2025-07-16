@@ -67,6 +67,9 @@ export const requireRoleManagement = requirePermission('roles.create');
 export const requireExchangeRateManagement = requirePermission('exchangeRates.create');
 export const requireTelegramManagement = requirePermission('telegram.channels.manage');
 
+// Audit management procedures
+export const auditManageProcedure = baseProcedure.use(requirePermission('audit.manage'));
+
 // Specific permission-based procedures
 export const userCreateProcedure = baseProcedure.use(requirePermission('users.create'));
 export const userReadProcedure = baseProcedure.use(requirePermission('users.read'));

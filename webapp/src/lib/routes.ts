@@ -115,3 +115,9 @@ export const getViewClientRoute = ({ id }: ViewClientRouteParams) => `/clients/v
 export const editClientRouteParams = getRouteParams({ id: true });
 export type EditClientRouteParams = typeof editClientRouteParams;
 export const getEditClientRoute = ({ id }: EditClientRouteParams) => `/clients/edit/${id}`;
+
+// Audit Log routes
+export const getAllAuditLogsRoute = () => '/audit-logs';
+export const viewAuditLogRouteParams = getRouteParams({ id: true });
+export type ViewAuditLogRouteParams = typeof viewAuditLogRouteParams;
+export const getViewAuditLogRoute = ({ id }: ViewAuditLogRouteParams) => `/audit-logs/view/${id}`;

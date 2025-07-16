@@ -15,6 +15,7 @@ import {
   User,
   Shield,
   ClipboardList,
+  FileSearch,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -47,6 +48,7 @@ import {
   getAllVisaTypesRoute,
   getAllVisaCitizenshipSurchargesRoute,
   getMessageTemplatesRoute,
+  getAllAuditLogsRoute,
 } from '@/lib/routes';
 
 export function AppSidebar() {
@@ -113,13 +115,16 @@ export function AppSidebar() {
     hasPermission('visaCitizenshipSurcharges.update') ||
     hasPermission('visaCitizenshipSurcharges.delete');
 
+  const canManageAudit = hasPermission('audit.manage');
+
   // Check if user has any admin permissions
   const hasAnyAdminPermission =
     canReadUsers ||
     canReadRoles ||
     canReadTelegram ||
     canManageContactMethods ||
-    canReadRequirements;
+    canReadRequirements ||
+    canManageAudit;
 
   // Check if user has any visa management permissions
   const hasAnyVisaPermission =
@@ -401,6 +406,22 @@ export function AppSidebar() {
                       <Link to={getAllRequirementsRoute()} className="flex items-center gap-2">
                         <ClipboardList className="w-5 h-5" />
                         <span>Requirements</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {canManageAudit && (
+                  <SidebarMenuItem key="AuditLogs">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        location.pathname === getAllAuditLogsRoute() ||
+                        location.pathname.startsWith(`${getAllAuditLogsRoute()}/`)
+                      }
+                    >
+                      <Link to={getAllAuditLogsRoute()}>
+                        <FileSearch className="w-4 h-4" />
+                        <span>Audit Logs</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
