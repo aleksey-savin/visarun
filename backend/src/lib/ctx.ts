@@ -1,8 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { type Request, type Response } from 'express';
 import { type TokenPayload } from '../utils/jwt.js';
+import { createAuditMiddleware } from '../middleware/audit.js';
 
 const prisma = new PrismaClient();
+
+// Apply audit middleware to Prisma client
+prisma.$use(createAuditMiddleware());
 
 // Combined context type that includes auth
 export type AppContext = {

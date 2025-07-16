@@ -1,6 +1,8 @@
 import { trpc } from '../../lib/trpc.js';
 import { verifyPassword } from '../../utils/getPasswordHash.js';
 import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.js';
+import { logCustomAudit } from '../../middleware/audit.js';
+import { AuditAction } from '../../types/audit.js';
 import { z } from 'zod';
 
 export const signinSchema = z.object({
@@ -54,6 +56,31 @@ export const signinTrpcRoute = trpc.procedure
       for (const rolePermission of assignment.role.permissions) {
         permissions.add(rolePermission.permission.code);
       }
+    }
+
+    // Log successful login
+    try {
+      await logCustomAudit(
+        ctx.prisma,
+        AuditAction.LOGIN,
+        'User',
+        user.id,
+        {
+          id: user.id,
+          email: user.email,
+          roles: user.roleAssignments.map(assignment => assignment.role.name),
+          permissions: Array.from(permissions),
+          mustChangePassword: user.mustChangePassword,
+        },
+        undefined,
+        {
+          loginTime: new Date(),
+          ipAddress: ctx.req?.ip || ctx.req?.socket?.remoteAddress,
+          userAgent: ctx.req?.headers['user-agent'],
+        }
+      );
+    } catch (error) {
+      console.error('Failed to log login audit:', error);
     }
 
     return {

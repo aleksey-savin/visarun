@@ -186,6 +186,7 @@ model User {
   RequirementDocument      RequirementDocument[]
   ClientDocument           ClientDocument[]
   ServiceRequirement       ServiceRequirement[]
+  AuditLog                 AuditLog[]
 }
 
 model Client {
@@ -593,4 +594,24 @@ model ServiceRequirement {
   @@unique([serviceType, serviceId, requirementId])
   @@index([serviceType, serviceId])
   @@index([requirementId])
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  userId      String
+  entityType  String
+  entityId    String
+  action      AuditAction
+  performedAt DateTime
+  diff        Json
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
