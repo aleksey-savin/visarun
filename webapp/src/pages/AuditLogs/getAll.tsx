@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '../../lib/trpcProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Eye, RotateCcw, Clock, User, Database } from 'lucide-react';
+import { Filter, Eye, RotateCcw, Clock, User, Database } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -76,34 +76,50 @@ const formatUserName = (user: AuditLog['user']) => {
 
 const AllAuditLogsPage = () => {
   const navigate = useNavigate();
-  const [entityIdSearch, setEntityIdSearch] = useState('');
   const [selectedEntityType, setSelectedEntityType] = useState('all');
   const [selectedAction, setSelectedAction] = useState('all');
   const [selectedUser, setSelectedUser] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [recoverLogId, setRecoverLogId] = useState<string | null>(null);
-  const [recoveryPreview, setRecoveryPreview] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [recoveryPreview, setRecoveryPreview] = useState<Record<string, any> | null>(null);
   const [isRecovering, setIsRecovering] = useState(false);
 
-  const limit = 20;
-
   // Get filter options
-  const { data: filterOptions } = trpc.audit.getFilterOptions.useQuery();
+  const {
+    data: filterOptions,
+    isLoading: filtersLoading,
+    error: filtersError,
+  } = trpc.audit.getFilterOptions.useQuery();
+
+  // Debug logging
+  if (filterOptions) {
+    console.log('🎯 Filter options loaded:', filterOptions);
+  }
+  if (filtersError) {
+    console.error('❌ Filter options error:', filtersError);
+  }
 
   // Get audit logs with filters
   const { data, error, isLoading, isError, refetch } = trpc.audit.getAll.useQuery({
     page,
     limit,
     entityType: selectedEntityType === 'all' ? undefined : selectedEntityType,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     action: selectedAction === 'all' ? undefined : (selectedAction as any),
     userId: selectedUser === 'all' ? undefined : selectedUser,
-    entityId: entityIdSearch || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
   });
 
   // Recovery mutation (dry run first)
   const recoverMutation = trpc.audit.recover.useMutation({
     onSuccess: result => {
       if (result.dryRun) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setRecoveryPreview(result as any);
       } else {
         refetch();
@@ -147,11 +163,13 @@ const AllAuditLogsPage = () => {
   const totalPages = data?.pagination?.totalPages || 0;
 
   const resetFilters = () => {
-    setEntityIdSearch('');
     setSelectedEntityType('all');
     setSelectedAction('all');
     setSelectedUser('all');
+    setStartDate('');
+    setEndDate('');
     setPage(1);
+    setLimit(20);
   };
 
   return (
@@ -171,29 +189,38 @@ const AllAuditLogsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Entity ID</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by entity ID..."
-                  value={entityIdSearch}
-                  onChange={e => setEntityIdSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="datetime-local"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="datetime-local"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Entity Type</label>
-              <Select value={selectedEntityType} onValueChange={setSelectedEntityType}>
+              <Select
+                value={selectedEntityType}
+                onValueChange={setSelectedEntityType}
+                disabled={filtersLoading}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="All entity types" />
+                  <SelectValue placeholder={filtersLoading ? 'Loading...' : 'All entity types'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All entity types</SelectItem>
-                  {filterOptions?.entityTypes?.map(type => (
+                  {(filterOptions?.entityTypes || []).map(type => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
                     </SelectItem>
@@ -204,13 +231,17 @@ const AllAuditLogsPage = () => {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Action</label>
-              <Select value={selectedAction} onValueChange={setSelectedAction}>
+              <Select
+                value={selectedAction}
+                onValueChange={setSelectedAction}
+                disabled={filtersLoading}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="All actions" />
+                  <SelectValue placeholder={filtersLoading ? 'Loading...' : 'All actions'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All actions</SelectItem>
-                  {filterOptions?.actions?.map(action => (
+                  {(filterOptions?.actions || []).map(action => (
                     <SelectItem key={action.value} value={action.value}>
                       {action.label}
                     </SelectItem>
@@ -221,13 +252,17 @@ const AllAuditLogsPage = () => {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">User</label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
+              <Select
+                value={selectedUser}
+                onValueChange={setSelectedUser}
+                disabled={filtersLoading}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="All users" />
+                  <SelectValue placeholder={filtersLoading ? 'Loading...' : 'All users'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All users</SelectItem>
-                  {filterOptions?.users?.map(user => (
+                  {(filterOptions?.users || []).map(user => (
                     <SelectItem key={user.value} value={user.value}>
                       {user.label}
                     </SelectItem>
@@ -237,7 +272,26 @@ const AllAuditLogsPage = () => {
             </div>
           </div>
 
-          <div className="flex justify-end mt-4">
+          <div className="flex justify-between items-center mt-4">
+            <div className="text-sm text-muted-foreground">
+              {filtersLoading && 'Loading filters...'}
+              {filtersError && (
+                <div className="text-red-600">
+                  Filter error: {filtersError.message}
+                  <br />
+                  <details className="text-xs mt-1">
+                    <summary>Error details</summary>
+                    <pre className="whitespace-pre-wrap">
+                      {JSON.stringify(filtersError, null, 2)}
+                    </pre>
+                  </details>
+                </div>
+              )}
+              {filterOptions &&
+                !filtersLoading &&
+                !filtersError &&
+                `${filterOptions.entityTypes?.length || 0} entity types, ${filterOptions.users?.length || 0} users`}
+            </div>
             <Button variant="outline" onClick={resetFilters}>
               Clear Filters
             </Button>
@@ -407,24 +461,133 @@ const AllAuditLogsPage = () => {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-6">
-                  <Button
-                    variant="outline"
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                  >
-                    Previous
-                  </Button>
-                  <span className="py-2 px-4 text-sm">
-                    Page {page} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
-                  >
-                    Next
-                  </Button>
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 p-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {(page - 1) * limit + 1} to{' '}
+                    {Math.min(page * limit, data?.pagination?.total || 0)} of{' '}
+                    {data?.pagination?.total || 0} entries
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(1)}
+                      disabled={page === 1}
+                    >
+                      First
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                    >
+                      Previous
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                      {/* Show page numbers */}
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (page <= 3) {
+                          pageNum = i + 1;
+                        } else if (page >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = page - 2 + i;
+                        }
+
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={page === pageNum ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setPage(pageNum)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+
+                      {totalPages > 5 && page < totalPages - 2 && (
+                        <>
+                          <span className="px-2 text-muted-foreground">...</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage(totalPages)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {totalPages}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                    >
+                      Next
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(totalPages)}
+                      disabled={page === totalPages}
+                    >
+                      Last
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Go to page:</span>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={totalPages}
+                        value={page.toString()}
+                        onChange={e => {
+                          const newPage = parseInt(e.target.value);
+                          if (newPage >= 1 && newPage <= totalPages) {
+                            setPage(newPage);
+                          }
+                        }}
+                        className="w-16 h-8"
+                      />
+                      <span className="text-sm text-muted-foreground">of {totalPages}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Items per page:</span>
+                      <Select
+                        value={limit.toString()}
+                        onValueChange={value => {
+                          const newLimit = parseInt(value);
+                          setLimit(newLimit);
+                          const maxPage = Math.ceil((data?.pagination?.total || 0) / newLimit);
+                          setPage(Math.min(page, maxPage));
+                        }}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
               )}
             </>

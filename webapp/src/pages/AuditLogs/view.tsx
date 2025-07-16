@@ -73,6 +73,7 @@ const ViewAuditLogPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recoveryPreview, setRecoveryPreview] = useState<any>(null);
   const [isRecovering, setIsRecovering] = useState(false);
 
@@ -87,6 +88,7 @@ const ViewAuditLogPage = () => {
   const recoverMutation = trpc.audit.recover.useMutation({
     onSuccess: result => {
       if (result.dryRun) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setRecoveryPreview(result as any);
         setShowRecoveryDialog(true);
       } else {
