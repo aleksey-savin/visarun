@@ -6,9 +6,9 @@ import { Prisma } from '@prisma/client';
 export const zEditUserTrpcInput = z.object({
   id: z.string().uuid(),
   email: z.string().email().optional(),
-  firstName: z.string().min(1).max(100).optional(),
-  lastName: z.string().min(1).max(100).optional(),
-  middleName: z.string().min(1).max(100).optional(),
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
+  middleName: z.string().max(100).optional(),
   roleIds: z.array(z.string().uuid()).optional(),
   password: z.string().min(8).max(100).optional(),
 });
@@ -51,8 +51,8 @@ export const editUserTrpcRoute = userUpdateProcedure
     const updateData: Prisma.UserUpdateInput = {};
 
     if (input.email) updateData.email = input.email;
-    if (input.firstName) updateData.firstName = input.firstName;
-    if (input.lastName) updateData.lastName = input.lastName;
+    if (input.firstName !== undefined) updateData.firstName = input.firstName;
+    if (input.lastName !== undefined) updateData.lastName = input.lastName;
     if (input.middleName !== undefined) updateData.middleName = input.middleName;
 
     // Hash password if it's being updated

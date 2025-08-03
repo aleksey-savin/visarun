@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 export const zEditClientTrpcInput = z.object({
   id: z.string().uuid(),
-  firstName: z.string().min(1).max(100).optional(),
-  lastName: z.string().min(1).max(100).optional(),
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
   citizenshipId: z.string().uuid().optional().nullable(),
   prevViolations: z.boolean().optional(),
   prevViolationsDesc: z.string().optional().nullable(),

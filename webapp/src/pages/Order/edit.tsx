@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -99,86 +99,99 @@ const EditOrderPage = () => {
     return steps;
   };
 
-  const performSave = async (data: OrderFormData) => {
-    if (isSaving || !orderData?.order) return;
+  const performSave = useCallback(
+    async (data: OrderFormData) => {
+      if (isSaving || !orderData?.order) return;
 
-    // Validate required fields before saving
-    if (!data.contactMethodId || !data.contactValue) {
-      return;
-    }
+      // Validate required fields before saving
+      if (!data.contactMethodId || !data.contactValue) {
+        return;
+      }
 
-    setIsSaving(true);
-    setSaveStatus('saving');
-    setErrorMessage(null);
-    try {
-      const order = orderData.order;
-      const user = order.user;
+      setIsSaving(true);
+      setSaveStatus('saving');
+      setErrorMessage(null);
+      try {
+        const order = orderData.order;
+        const user = order.user;
 
-      // Update user name information
-      await updateUserMutation.mutateAsync({
-        id: user.id,
-        firstName: data.firstName || '',
-        lastName: data.lastName || '',
-      });
-
-      // Update client information if there are order items
-      const clientId = order.items[0]?.clientId;
-      if (clientId) {
-        await updateClientMutation.mutateAsync({
-          id: clientId,
+        // Update user name information
+        await updateUserMutation.mutateAsync({
+          id: user.id,
           firstName: data.firstName || '',
           lastName: data.lastName || '',
         });
-      }
 
-      // Update contact method
-      const existingContactMethod = user.contactMethods?.[0];
+        // Update client information if there are order items
+        const clientId = order.items[0]?.clientId;
+        if (clientId) {
+          await updateClientMutation.mutateAsync({
+            id: clientId,
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+          });
+        }
 
-      if (existingContactMethod) {
-        // Check if contact method type changed
-        if (existingContactMethod.method.id !== data.contactMethodId) {
-          // If contact method type changed, create new one
+        // Update contact method
+        const existingContactMethod = user.contactMethods?.[0];
+
+        if (existingContactMethod) {
+          // Check if contact method type changed
+          if (existingContactMethod.method.id !== data.contactMethodId) {
+            // If contact method type changed, create new one
+            await createContactMethodMutation.mutateAsync({
+              userId: user.id,
+              contactMethodId: data.contactMethodId,
+              value: data.contactValue,
+            });
+          } else {
+            // Update existing contact method value
+            await updateContactMethodMutation.mutateAsync({
+              id: existingContactMethod.id,
+              value: data.contactValue,
+            });
+          }
+        } else {
+          // Create new contact method if none exists
           await createContactMethodMutation.mutateAsync({
             userId: user.id,
             contactMethodId: data.contactMethodId,
             value: data.contactValue,
           });
-        } else {
-          // Update existing contact method value
-          await updateContactMethodMutation.mutateAsync({
-            id: existingContactMethod.id,
-            value: data.contactValue,
-          });
         }
-      } else {
-        // Create new contact method if none exists
-        await createContactMethodMutation.mutateAsync({
-          userId: user.id,
-          contactMethodId: data.contactMethodId,
-          value: data.contactValue,
-        });
+
+        setLastSavedTime(new Date());
+        setSaveStatus('saved');
+      } catch (error) {
+        console.log(error);
+        setSaveStatus('error');
+        setErrorMessage('Failed to save order');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [
+      isSaving,
+      orderData?.order,
+      updateUserMutation,
+      updateClientMutation,
+      updateContactMethodMutation,
+      createContactMethodMutation,
+    ]
+  );
+
+  const debouncedSave = useCallback(
+    (data: OrderFormData) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
 
-      setLastSavedTime(new Date());
-      setSaveStatus('saved');
-    } catch (error) {
-      console.log(error);
-      setSaveStatus('error');
-      setErrorMessage('Failed to save order');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const debouncedSave = (data: OrderFormData) => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(() => {
-      performSave(data);
-    }, 1000); // 1 second debounce
-  };
+      saveTimeoutRef.current = setTimeout(() => {
+        performSave(data);
+      }, 1000); // 1 second debounce
+    },
+    [performSave]
+  );
 
   // Populate form when order data loads
   useEffect(() => {
@@ -220,7 +233,7 @@ const EditOrderPage = () => {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [form, orderData]);
+  }, [form, orderData, debouncedSave]);
 
   const onSubmit = async (data: OrderFormData) => {
     setIsSubmitting(true);
@@ -416,7 +429,7 @@ const EditOrderPage = () => {
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
-                                <Input placeholder="Second Name" {...field} />
+                                <Input placeholder="Last Name" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
