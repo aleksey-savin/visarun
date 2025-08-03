@@ -6,10 +6,19 @@ export const zEditClientTrpcInput = z.object({
   firstName: z.string().max(100).optional(),
   lastName: z.string().max(100).optional(),
   citizenshipId: z.string().uuid().optional().nullable(),
+  passportExpirationDate: z
+    .string()
+    .optional()
+    .nullable()
+    .transform(val => (val ? new Date(val) : null)),
   prevViolations: z.boolean().optional(),
   prevViolationsDesc: z.string().optional().nullable(),
   isOutsideTheCountry: z.boolean().optional(),
-  isOutsideTheCountryAt: z.date().optional().nullable(),
+  isOutsideTheCountryAt: z
+    .string()
+    .optional()
+    .nullable()
+    .transform(val => (val ? new Date(val) : null)),
 });
 
 export const editClientTrpcRoute = userUpdateProcedure

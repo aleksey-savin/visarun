@@ -7,6 +7,7 @@ export interface ClientWithRelatedClients {
   isPrimary: boolean;
   userId: string | null;
   citizenshipId: string | null;
+  passportExpirationDate: Date | null;
   prevViolations: boolean;
   prevViolationsDesc: string | null;
   isOutsideTheCountry: boolean;
@@ -81,6 +82,7 @@ export const clientSelectFields = {
   isPrimary: true,
   userId: true,
   citizenshipId: true,
+  passportExpirationDate: true,
   prevViolations: true,
   prevViolationsDesc: true,
   isOutsideTheCountry: true,
@@ -276,10 +278,24 @@ export async function getClientWithRelatedClients(
 ): Promise<ClientWithRelatedClients | null> {
   const selectFields = includeDocuments ? clientSelectFieldsWithDocuments : clientSelectFields;
 
-  const client = await prisma.client.findFirst({
-    where,
-    select: selectFields,
-  });
+  let client;
+
+  if ('userId' in where) {
+    // When searching by userId, find the primary client specifically
+    client = await prisma.client.findFirst({
+      where: {
+        userId: where.userId,
+        isPrimary: true,
+      },
+      select: selectFields,
+    });
+  } else {
+    // When searching by id, find the specific client
+    client = await prisma.client.findFirst({
+      where,
+      select: selectFields,
+    });
+  }
 
   if (!client) {
     return null;

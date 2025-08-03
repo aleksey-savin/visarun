@@ -44,6 +44,7 @@ export const getOrderTrpcRoute = orderReadProcedure
                 id: true,
                 firstName: true,
                 lastName: true,
+                citizenshipId: true,
                 citizenship: {
                   select: {
                     id: true,

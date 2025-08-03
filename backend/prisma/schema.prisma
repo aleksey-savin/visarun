@@ -197,6 +197,7 @@ model Client {
   userId                   String?
   isPrimary                Boolean                    @default(false)
   citizenshipId            String?
+  passportExpirationDate   DateTime?
   prevViolations           Boolean                    @default(false)
   prevViolationsDesc       String?
   isOutsideTheCountry      Boolean                    @default(false)

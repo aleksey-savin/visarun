@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 
 export const zGetAllCitizenshipsTrpcInput = z.object({
-  limit: z.number().int().min(1).max(100).default(50),
+  limit: z.number().int().min(1).max(100).optional(),
   offset: z.number().int().min(0).default(0),
   search: z.string().min(1).optional(),
   favourite: z.boolean().optional(),
@@ -51,7 +51,7 @@ export const getAllCitizenshipsTrpcRoute = citizenshipReadProcedure
           },
         },
       },
-      take: limit,
+      ...(limit && { take: limit }),
       skip: offset,
     });
 
@@ -59,9 +59,9 @@ export const getAllCitizenshipsTrpcRoute = citizenshipReadProcedure
       citizenships,
       pagination: {
         total,
-        limit,
+        limit: limit || total,
         offset,
-        hasMore: offset + limit < total,
+        hasMore: limit ? offset + limit < total : false,
       },
     };
   });
