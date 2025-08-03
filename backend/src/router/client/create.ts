@@ -12,8 +12,8 @@ const zContactMethodInput = z.object({
 // User data input schema (for when creating a new user)
 const zUserDataInput = z.object({
   email: z.string().email().optional(),
-  firstName: z.string().min(1).max(100),
-  lastName: z.string().min(1).max(100),
+  firstName: z.string().max(100),
+  lastName: z.string().max(100),
   middleName: z.string().min(1).max(100).optional(),
   password: z.string().min(8).max(100).optional(),
   contactMethods: z.array(zContactMethodInput).optional(),
@@ -23,8 +23,8 @@ export const zCreateClientTrpcInput = z
   .object({
     userId: z.string().uuid().optional(),
     // Client data
-    firstName: z.string().min(1).max(100),
-    lastName: z.string().min(1).max(100),
+    firstName: z.string().max(100),
+    lastName: z.string().max(100),
     citizenshipId: z.string().uuid().optional(),
     prevViolations: z.boolean().default(false),
     prevViolationsDesc: z.string().optional(),

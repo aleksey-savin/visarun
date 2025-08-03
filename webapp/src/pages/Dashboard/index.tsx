@@ -25,33 +25,33 @@ export default function DashboardPage() {
         </Button>
       </CardTitle>
       <CardContent className="p-6">
-        <div className="flex gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           <div className="flex flex-col space-y-3">
-            <Skeleton className="h-[125px] w-[360px] rounded-xl" />
+            <Skeleton className="h-[125px] w-full rounded-xl" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-[360px]" />
-              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/5" />
             </div>
           </div>
           <div className="flex flex-col space-y-3">
-            <Skeleton className="h-[125px] w-[360px] rounded-xl" />
+            <Skeleton className="h-[125px] w-full rounded-xl" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-[360px]" />
-              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/5" />
             </div>
           </div>
           <div className="flex flex-col space-y-3">
-            <Skeleton className="h-[125px] w-[360px] rounded-xl" />
+            <Skeleton className="h-[125px] w-full rounded-xl" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-[360px]" />
-              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/5" />
             </div>
           </div>
           <div className="flex flex-col space-y-3">
-            <Skeleton className="h-[125px] w-[360px] rounded-xl" />
+            <Skeleton className="h-[125px] w-full rounded-xl" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-[360px]" />
-              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/5" />
             </div>
           </div>
         </div>

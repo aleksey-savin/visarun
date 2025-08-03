@@ -15,6 +15,7 @@ interface OrderWithItems {
 export const zGetAllOrdersTrpcInput = z.object({
   status: z.enum(['draft', 'submitted', 'paid', 'cancelled']).optional(),
   userId: z.string().uuid().optional(),
+  search: z.string().optional(),
   dateFrom: z.date().optional(),
   dateTo: z.date().optional(),
   limit: z.number().min(1).max(100).optional().default(20),
@@ -45,6 +46,43 @@ export const getAllOrdersTrpcRoute = orderReadProcedure
       }
 
       whereClause.userId = input.userId;
+    }
+
+    // Search functionality
+    if (input.search) {
+      const searchTerm = input.search.toLowerCase();
+      whereClause.OR = [
+        {
+          id: {
+            contains: searchTerm,
+            mode: 'insensitive',
+          },
+        },
+        {
+          user: {
+            firstName: {
+              contains: searchTerm,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          user: {
+            lastName: {
+              contains: searchTerm,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          user: {
+            email: {
+              contains: searchTerm,
+              mode: 'insensitive',
+            },
+          },
+        },
+      ];
     }
 
     // Filter by date range

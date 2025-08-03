@@ -249,11 +249,20 @@ export async function createUserForClient(
   // Validate requirements
   validateUserCreationRequirements(userData);
 
+  // Find the client role
+  const clientRole = await prisma.role.findFirst({
+    where: { name: 'client' },
+  });
+
+  if (!clientRole) {
+    throw new Error('Client role not found in database');
+  }
+
   // Create user with client-specific defaults
   return createUserWithValidation(prisma, {
     ...userData,
     mustChangePassword: true, // Always true for client-created users
     isActive: false, // Always false for client-created users
-    roleIds: [], // No roles assigned by default for client-created users
+    roleIds: [clientRole.id], // Assign client role by default
   });
 }

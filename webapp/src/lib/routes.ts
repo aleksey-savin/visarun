@@ -121,3 +121,13 @@ export const getAllAuditLogsRoute = () => '/audit-logs';
 export const viewAuditLogRouteParams = getRouteParams({ id: true });
 export type ViewAuditLogRouteParams = typeof viewAuditLogRouteParams;
 export const getViewAuditLogRoute = ({ id }: ViewAuditLogRouteParams) => `/audit-logs/view/${id}`;
+
+// Order routes
+export const getAllOrdersRoute = () => '/orders';
+export const getCreateOrderRoute = () => '/order/create';
+export const editOrderRouteParams = getRouteParams({ id: true });
+export type EditOrderRouteParams = typeof editOrderRouteParams;
+export const getEditOrderRoute = ({ id }: EditOrderRouteParams) => `/order/edit/${id}`;
+export const viewOrderRouteParams = getRouteParams({ id: true });
+export type ViewOrderRouteParams = typeof viewOrderRouteParams;
+export const getViewOrderRoute = ({ id }: ViewOrderRouteParams) => `/orders/view/${id}`;

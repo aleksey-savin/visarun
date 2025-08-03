@@ -3,8 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { User, Crown, Mail, Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-// import { useNavigate } from 'react-router-dom';
-// import { getViewClientRoute } from '@/lib/routes';
+import { useNavigate } from 'react-router-dom';
+import { getViewClientRoute } from '@/lib/routes';
 import { Card } from '../ui/card';
 import { ContactMethodIcon } from '../ContactMethod';
 
@@ -57,15 +57,16 @@ interface Client {
 
 interface ClientCardProps {
   client: Client;
+  isFirstResult?: boolean;
 }
 
-const ClientCard = ({ client }: ClientCardProps) => {
-  //const navigate = useNavigate();
+const ClientCard = ({ client, isFirstResult = false }: ClientCardProps) => {
+  const navigate = useNavigate();
   const [copiedContact, setCopiedContact] = useState<string | null>(null);
 
-  const handleClientClick = (clientId: string) => {
-    console.log(clientId);
-    //navigate(getViewClientRoute({ id: clientId }));
+  const handleClientNameClick = (event: React.MouseEvent, clientId: string) => {
+    event.stopPropagation();
+    navigate(getViewClientRoute({ id: clientId }));
   };
 
   const handleCopyToClipboard = (text: string, event: React.MouseEvent, contactId: string) => {
@@ -85,8 +86,7 @@ const ClientCard = ({ client }: ClientCardProps) => {
   return (
     <Card
       key={client.id}
-      className="p-6 bg-secondary transition-colors cursor-pointer hover:shadow-[inset_0px_0px_20px_3px_#FAFAFA59] focus:shadow-[inset_0px_0px_20px_3px_#FAFAFA59] focus-visible:shadow-[inset_0px_0px_20px_3px_#FAFAFA59]"
-      onClick={() => handleClientClick(client.id)}
+      className={`p-6 bg-secondary ${isFirstResult ? 'shadow-[inset_0px_0px_20px_3px_#FAFAFA59] transition-colors' : ''}`}
       tabIndex={0}
     >
       <div className="flex items-start justify-between">
@@ -94,13 +94,17 @@ const ClientCard = ({ client }: ClientCardProps) => {
           <div className="flex items-center gap-2 flex-wrap">
             {client.isPrimary && (
               <div className="flex gap-1">
-                <Badge variant="secondary" className="bg-purple-900 text-xs">
+                <Badge
+                  variant="primary"
+                  className="cursor-pointer"
+                  onClick={e => handleClientNameClick(e, client.id)}
+                >
                   <Crown />
                   <span>
                     {client.firstName || ''} {client.lastName || ''}
                   </span>
                 </Badge>
-                <Badge variant="secondary" className="bg-emerald-900 text-xs">
+                <Badge variant="secondary">
                   <span>+ {client.relatedClients?.length}</span>
                   <User />
                 </Badge>
@@ -108,10 +112,14 @@ const ClientCard = ({ client }: ClientCardProps) => {
             )}
             {!client.isPrimary && (
               <div className="flex gap-1">
-                <Badge variant="secondary" className="bg-purple-900 text-xs">
+                <Badge variant="primary">
                   <Crown />
                 </Badge>
-                <Badge variant="secondary" className="bg-emerald-900 text-xs">
+                <Badge
+                  variant="secondary"
+                  className="cursor-pointer"
+                  onClick={e => handleClientNameClick(e, client.id)}
+                >
                   <User />
                   {client.firstName || ''} {client.lastName || ''}
                 </Badge>
@@ -119,15 +127,18 @@ const ClientCard = ({ client }: ClientCardProps) => {
             )}
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className="bg-muted text-xs">
-              {client.citizenship?.name} ({client.citizenship?.abbreviation})
-            </Badge>
+            {client.citizenship && (
+              <Badge variant="secondary" className="bg-muted">
+                {client.citizenship?.name} ({client.citizenship?.abbreviation})
+              </Badge>
+            )}
+
             {client.isPrimary &&
               client.user?.contactMethods?.map(contact => (
                 <Badge
                   key={contact.id}
                   variant="secondary"
-                  className={`text-xs cursor-pointer transition-all duration-300 ${
+                  className={`cursor-pointer transition-all duration-300 ${
                     copiedContact === contact.id
                       ? 'bg-green-500/20 text-green-300'
                       : 'bg-muted hover:bg-muted/80'
@@ -146,7 +157,7 @@ const ClientCard = ({ client }: ClientCardProps) => {
             {client.isPrimary && client.user?.email && (
               <Badge
                 variant="secondary"
-                className={`text-xs cursor-pointer transition-all duration-300 ${
+                className={`cursor-pointer transition-all duration-300 ${
                   copiedContact === 'email'
                     ? 'bg-green-500/20 text-green-300'
                     : 'bg-muted hover:bg-muted/80'

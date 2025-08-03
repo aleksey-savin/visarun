@@ -18,6 +18,23 @@ export const getOrderTrpcRoute = orderReadProcedure
             middleName: true,
             lastName: true,
             email: true,
+            contactMethods: {
+              select: {
+                id: true,
+                value: true,
+                url: true,
+                method: {
+                  select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                  },
+                },
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+            },
           },
         },
         items: {

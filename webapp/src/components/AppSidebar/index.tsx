@@ -17,6 +17,7 @@ import {
   ClipboardList,
   FileSearch,
   Gauge,
+  ShoppingCart,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -51,6 +52,7 @@ import {
   getMessageTemplatesRoute,
   getAllAuditLogsRoute,
   getDashboardRoute,
+  getAllOrdersRoute,
 } from '@/lib/routes';
 
 export function AppSidebar() {
@@ -118,6 +120,11 @@ export function AppSidebar() {
     hasPermission('visaCitizenshipSurcharges.delete');
 
   const canManageAudit = hasPermission('audit.manage');
+  const canReadOrders =
+    hasPermission('orders.read') ||
+    hasPermission('orders.create') ||
+    hasPermission('orders.update') ||
+    hasPermission('orders.delete');
 
   // Check if user has any admin permissions
   const hasAnyAdminPermission =
@@ -126,7 +133,8 @@ export function AppSidebar() {
     canReadTelegram ||
     canManageContactMethods ||
     canReadRequirements ||
-    canManageAudit;
+    canManageAudit ||
+    canReadOrders;
 
   // Check if user has any visa management permissions
   const hasAnyVisaPermission =
@@ -422,6 +430,22 @@ export function AppSidebar() {
                       <Link to={getAllRequirementsRoute()} className="flex items-center gap-2">
                         <ClipboardList className="w-5 h-5" />
                         <span>Requirements</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {canReadOrders && (
+                  <SidebarMenuItem key="Orders">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        location.pathname === getAllOrdersRoute() ||
+                        location.pathname.startsWith(`${getAllOrdersRoute()}/`)
+                      }
+                    >
+                      <Link to={getAllOrdersRoute()}>
+                        <ShoppingCart className="w-4 h-4" />
+                        <span>Orders</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

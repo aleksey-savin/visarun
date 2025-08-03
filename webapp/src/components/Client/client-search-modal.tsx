@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button';
 
 import { Search, UserPlus } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
+import { getCreateOrderRoute } from '@/lib/routes';
 import ClientCard from './client-card';
 
 interface ClientSearchModalProps {
@@ -19,6 +21,7 @@ interface ClientSearchModalProps {
 }
 
 export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalProps) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [addClientIsActive, setAddClientIsActive] = useState(false);
@@ -75,9 +78,67 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
     }
   }, [searchResults]);
 
+  // Process search results to add primary clients if only non-primary clients found
+  const processedClients = useMemo(() => {
+    if (!searchResults?.clients) return [];
+
+    const clients = [...searchResults.clients];
+
+    // Check if all clients are non-primary
+    const hasOnlyNonPrimaryClients =
+      clients.length > 0 && clients.every(client => !client.isPrimary);
+
+    if (hasOnlyNonPrimaryClients) {
+      // Get unique user IDs from non-primary clients
+      const userIds = new Set(clients.map(client => client.user?.id).filter(Boolean));
+
+      // For each user, find their primary client and add it if not already in results
+      userIds.forEach(userId => {
+        const user = clients.find(client => client.user?.id === userId)?.user;
+        if (user) {
+          // Create a primary client representation for this user
+          const primaryClient = {
+            id: `primary-${userId}`,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isPrimary: true,
+            userId: userId as string | null,
+            citizenshipId: null,
+            prevViolations: false,
+            prevViolationsDesc: null,
+            isOutsideTheCountry: false,
+            isOutsideTheCountryAt: null,
+            user: user,
+            citizenship: null,
+            documents: [],
+            relatedClients: clients.filter(
+              client => client.user?.id === userId && !client.isPrimary
+            ),
+          };
+
+          // Add primary client if not already in results
+          const alreadyExists = clients.some(
+            client => client.isPrimary && client.user?.id === userId
+          );
+
+          if (!alreadyExists) {
+            clients.push(primaryClient);
+          }
+        }
+      });
+    }
+
+    return clients;
+  }, [searchResults]);
+
+  const handleAddNewClient = () => {
+    onOpenChange(false);
+    navigate(getCreateOrderRoute());
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-2xl flex flex-col bg-secondary [&>button]:hidden">
+      <DialogContent className="min-w-2xl flex flex-col bg-secondary [&>button]:hidden max-h-[90svh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between gap-2 text-foreground text-lg">
             <div className="flex gap-2 items-center">
@@ -87,6 +148,7 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
               variant={addClientIsActive ? 'default' : 'secondary'}
               disabled={!addClientIsActive}
               className="border"
+              onClick={handleAddNewClient}
             >
               Add new
             </Button>
@@ -95,7 +157,7 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
             Search for clients by name, email, or contact information
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-6 flex-1">
+        <div className="flex flex-col gap-6 flex-1 min-h-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
@@ -139,8 +201,10 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
               No clients found for "{debouncedQuery}"
             </div>
           ) : (
-            <div className="space-y-6">
-              {searchResults?.clients.map(client => <ClientCard key={client.id} client={client} />)}
+            <div className="space-y-6 flex-1 overflow-y-auto scrollbar-hide min-h-0">
+              {processedClients.map((client, index) => (
+                <ClientCard key={client.id} client={client} isFirstResult={index === 0} />
+              ))}
             </div>
           )}
         </div>

@@ -59,8 +59,14 @@ import ViewMessageTemplatePage from './pages/MessageTemplates/view.js';
 import EditMessageTemplatePage from './pages/MessageTemplates/edit.js';
 
 // Audit Log pages
-import AllAuditLogsPage from './pages/AuditLogs/getAll.tsx';
-import ViewAuditLogPage from './pages/AuditLogs/view.tsx';
+import AllAuditLogsPage from './pages/AuditLogs/getAll.js';
+import ViewAuditLogPage from './pages/AuditLogs/view.js';
+
+// Order pages
+import AllOrdersPage from './pages/Order/index.js';
+import CreateOrderPage from './pages/Order/create.js';
+import EditOrderPage from './pages/Order/edit.js';
+import ViewOrderPage from './pages/Order/view.js';
 
 import {
   getAllUsersRoute,
@@ -131,6 +137,13 @@ import {
   getAllAuditLogsRoute,
   getViewAuditLogRoute,
   viewAuditLogRouteParams,
+  // Order routes
+  getAllOrdersRoute,
+  getCreateOrderRoute,
+  getEditOrderRoute,
+  getViewOrderRoute,
+  editOrderRouteParams,
+  viewOrderRouteParams,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -512,6 +525,26 @@ const App = () => {
                     </PermissionRoute>
                   }
                 />
+
+                {/* Order Routes */}
+                <Route
+                  path={getAllOrdersRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="orders.read">
+                      <AllOrdersPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewOrderRoute(viewOrderRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="orders.read">
+                      <ViewOrderPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route path={getCreateOrderRoute()} element={<CreateOrderPage />} />
+                <Route path={getEditOrderRoute(editOrderRouteParams)} element={<EditOrderPage />} />
               </Route>
 
               {/* Fallback route */}
