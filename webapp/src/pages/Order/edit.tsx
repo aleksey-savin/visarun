@@ -639,6 +639,8 @@ const EditOrderPage = () => {
                                       }, 100);
                                     }}
                                     captionLayout="dropdown"
+                                    fromYear={new Date().getFullYear()}
+                                    toYear={2100}
                                   />
                                 </PopoverContent>
                               </Popover>
