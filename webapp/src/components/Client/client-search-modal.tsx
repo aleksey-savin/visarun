@@ -104,6 +104,7 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
             isPrimary: true,
             userId: userId as string | null,
             citizenshipId: null,
+            passportExpirationDate: null,
             prevViolations: false,
             prevViolationsDesc: null,
             isOutsideTheCountry: false,

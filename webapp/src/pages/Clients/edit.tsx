@@ -114,7 +114,7 @@ const EditClientPage = () => {
     setIsSubmitting(true);
 
     const isOutsideTheCountryAt = data.isOutsideTheCountryAt
-      ? new Date(data.isOutsideTheCountryAt + 'T00:00:00')
+      ? new Date(data.isOutsideTheCountryAt + 'T00:00:00').toISOString()
       : null;
 
     editClientMutation.mutate({
@@ -122,6 +122,7 @@ const EditClientPage = () => {
       firstName: data.firstName,
       lastName: data.lastName,
       citizenshipId: data.citizenshipId === 'none' ? null : data.citizenshipId || undefined,
+      passportExpirationDate: undefined,
       prevViolations: data.prevViolations || false,
       prevViolationsDesc: data.prevViolationsDesc || undefined,
       isOutsideTheCountry: data.isOutsideTheCountry || false,
