@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { trpc } from '@/lib/trpcProvider';
 import { useAuth } from '@/lib/auth';
-import { getCurrencyExchangeRoute } from '@/lib/routes';
+import { getDashboardRoute } from '@/lib/routes';
 
 import { ExchangeRatesDisplay } from '@/components/CurrencyExchange/exchange-rates-display';
 import { CurrencyExchangeForm } from '@/components/CurrencyExchange/exchange-calc-form';
@@ -34,7 +34,7 @@ const HomePage = () => {
   // Redirect to currency exchange page if user is already authenticated
   useEffect(() => {
     if (isAuthenticated && !isAuthLoading) {
-      navigate(getCurrencyExchangeRoute(), { replace: true });
+      navigate(getDashboardRoute(), { replace: true });
     }
   }, [isAuthenticated, isAuthLoading, navigate]);
 

@@ -11,15 +11,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  CalendarIcon,
-  ArrowLeft,
-  Mail,
-  Phone,
-  MessageCircle,
-  ExternalLink,
-  User,
-} from 'lucide-react';
+import { CalendarIcon, ArrowLeft, Mail, ExternalLink, User } from 'lucide-react';
+import { ContactMethodIcon } from '@/components/ContactMethod';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -240,15 +233,7 @@ const ViewUserPage = () => {
                           className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex-shrink-0">
-                            {contactMethod.method.name === 'email' && (
-                              <Mail className="h-4 w-4 text-blue-600" />
-                            )}
-                            {contactMethod.method.name === 'phone' && (
-                              <Phone className="h-4 w-4 text-green-600" />
-                            )}
-                            {['telegram', 'whatsapp', 'viber', 'line', 'wechat', 'skype'].includes(
-                              contactMethod.method.name
-                            ) && <MessageCircle className="h-4 w-4 text-purple-600" />}
+                            <ContactMethodIcon method={contactMethod.method} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium capitalize">

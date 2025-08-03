@@ -40,7 +40,7 @@ type User = {
   firstName: string;
   middleName?: string | null;
   lastName: string;
-  email: string;
+  email: string | null;
   roleAssignments: {
     id: string;
     assignedAt: string;
@@ -105,7 +105,7 @@ const AllUsersPage = () => {
     const matchesSearch =
       searchTerm === '' ||
       fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const userRoles = user.roleAssignments.map(assignment => assignment.role.name);
     const matchesRole =

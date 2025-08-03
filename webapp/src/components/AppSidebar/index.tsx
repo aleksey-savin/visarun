@@ -16,6 +16,7 @@ import {
   Shield,
   ClipboardList,
   FileSearch,
+  Gauge,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -49,6 +50,7 @@ import {
   getAllVisaCitizenshipSurchargesRoute,
   getMessageTemplatesRoute,
   getAllAuditLogsRoute,
+  getDashboardRoute,
 } from '@/lib/routes';
 
 export function AppSidebar() {
@@ -131,16 +133,30 @@ export function AppSidebar() {
     canReadCountries || canReadCitizenships || canReadVisaTypes || canReadVisaCitizenshipSurcharges;
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <SidebarGroupLabel className="flex justify-between pt-10">
-          <div className="text-2xl font-medium">Visarun Vietnam</div>
-        </SidebarGroupLabel>
+    <Sidebar collapsible="none" className="bg-secondary border rounded-l-xl h-full">
+      <SidebarHeader className="border-b flex py-2.5 px-6 justify-between gap-2">
+        <div className="flex gap-2 items-center justify-center">
+          <span className="font-semibold">Visarun Vietnam</span>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent className="pt-10">
+          <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem key="Dashboard">
+                <SidebarMenuButton
+                  asChild
+                  isActive={
+                    location.pathname === getDashboardRoute() ||
+                    location.pathname.startsWith(`${getDashboardRoute()}/`)
+                  }
+                >
+                  <Link to={getDashboardRoute()} className="flex items-center gap-2">
+                    <Gauge />
+                    <span>Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {canAccessExchangeRates && (
                 <SidebarMenuItem key="Currency Exchange">
                   <SidebarMenuButton

@@ -50,11 +50,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, MessageCircle, Search, Filter } from 'lucide-react';
+import { ContactMethodIcon } from '@/components/ContactMethod';
 import { toast } from 'sonner';
 
 const contactMethodSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
   description: z.string().max(500, 'Description too long').optional(),
+  icon: z.string().max(2000, 'Icon too large').optional(),
 });
 
 type ContactMethodFormData = z.infer<typeof contactMethodSchema>;
@@ -65,6 +67,7 @@ export default function ContactMethodsManagementPage() {
     id: string;
     name: string;
     description: string | null;
+    icon: string | null;
   } | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -139,6 +142,7 @@ export default function ContactMethodsManagementPage() {
     defaultValues: {
       name: '',
       description: '',
+      icon: '',
     },
   });
 
@@ -147,6 +151,7 @@ export default function ContactMethodsManagementPage() {
     defaultValues: {
       name: '',
       description: '',
+      icon: '',
     },
   });
 
@@ -187,6 +192,7 @@ export default function ContactMethodsManagementPage() {
     createMutation.mutate({
       name: data.name,
       description: data.description || undefined,
+      icon: data.icon || undefined,
     });
   };
 
@@ -196,6 +202,7 @@ export default function ContactMethodsManagementPage() {
       id: editingContactMethod.id,
       name: data.name,
       description: data.description || undefined,
+      icon: data.icon || undefined,
     });
   };
 
@@ -208,11 +215,13 @@ export default function ContactMethodsManagementPage() {
     id: string;
     name: string;
     description: string | null;
+    icon: string | null;
   }) => {
     setEditingContactMethod(contactMethod);
     editForm.reset({
       name: contactMethod.name,
       description: contactMethod.description || '',
+      icon: contactMethod.icon || '',
     });
   };
 
@@ -324,6 +333,7 @@ export default function ContactMethodsManagementPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[60px]">Icon</TableHead>
                         <TableHead className="w-[200px]">Name</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead className="w-[120px]">Usage</TableHead>
@@ -335,6 +345,11 @@ export default function ContactMethodsManagementPage() {
                         const usageCount = getContactMethodUsageCount(contactMethod.id);
                         return (
                           <TableRow key={contactMethod.id} className="hover:bg-muted/50">
+                            <TableCell>
+                              <div className="flex items-center justify-center">
+                                <ContactMethodIcon method={contactMethod} className="w-6 h-6" />
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center space-x-2">
                                 <span className="font-medium capitalize">{contactMethod.name}</span>
@@ -393,7 +408,7 @@ export default function ContactMethodsManagementPage() {
                         <div className="flex justify-between items-start">
                           <div className="flex items-center space-x-2">
                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <MessageCircle className="h-4 w-4 text-primary" />
+                              <ContactMethodIcon method={contactMethod} className="w-4 h-4" />
                             </div>
                             <div>
                               <h3 className="font-medium capitalize">{contactMethod.name}</h3>
@@ -534,6 +549,32 @@ export default function ContactMethodsManagementPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={createForm.control}
+                name="icon"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Icon (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="SVG icon code (e.g., <svg>...</svg>)"
+                        {...field}
+                        rows={3}
+                      />
+                    </FormControl>
+                    {field.value && (
+                      <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
+                        <span className="text-sm text-muted-foreground">Preview:</span>
+                        <div
+                          className="w-6 h-6 flex items-center justify-center"
+                          dangerouslySetInnerHTML={{ __html: field.value }}
+                        />
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <DialogFooter>
                 <Button
                   type="button"
@@ -582,6 +623,32 @@ export default function ContactMethodsManagementPage() {
                     <FormControl>
                       <Textarea placeholder="Brief description of this contact method" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="icon"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Icon (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="SVG icon code (e.g., <svg>...</svg>)"
+                        {...field}
+                        rows={3}
+                      />
+                    </FormControl>
+                    {field.value && (
+                      <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
+                        <span className="text-sm text-muted-foreground">Preview:</span>
+                        <div
+                          className="w-6 h-6 flex items-center justify-center"
+                          dangerouslySetInnerHTML={{ __html: field.value }}
+                        />
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

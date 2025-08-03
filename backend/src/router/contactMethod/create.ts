@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const zCreateContactMethodTrpcInput = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
+  icon: z.string().max(2000).optional(),
 });
 
 export const createContactMethodTrpcRoute = adminProcedure
@@ -21,6 +22,7 @@ export const createContactMethodTrpcRoute = adminProcedure
       data: {
         name: input.name,
         description: input.description,
+        icon: input.icon,
       },
     });
 
@@ -29,6 +31,7 @@ export const createContactMethodTrpcRoute = adminProcedure
         id: contactMethod.id,
         name: contactMethod.name,
         description: contactMethod.description,
+        icon: contactMethod.icon,
       },
     };
   });

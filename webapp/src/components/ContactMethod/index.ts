@@ -1,0 +1,1 @@
+export { ContactMethodIcon } from './ContactMethodIcon';

@@ -95,8 +95,8 @@ const EditClientPage = () => {
   React.useEffect(() => {
     if (data?.client) {
       const client = data.client;
-      form.setValue('firstName', client.firstName);
-      form.setValue('lastName', client.lastName);
+      form.setValue('firstName', client.firstName || '');
+      form.setValue('lastName', client.lastName || '');
       form.setValue('citizenshipId', client.citizenshipId);
       form.setValue('prevViolations', client.prevViolations);
       form.setValue('prevViolationsDesc', client.prevViolationsDesc);

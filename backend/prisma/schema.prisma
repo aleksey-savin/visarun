@@ -165,7 +165,7 @@ model UserRoleAssignment {
 
 model User {
   id                       String                     @id @default(uuid())
-  email                    String                     @unique
+  email                    String?                    @unique
   firstName                String
   middleName               String?
   lastName                 String
@@ -174,6 +174,7 @@ model User {
   updatedAt                DateTime                   @default(now()) @updatedAt
   password                 String
   mustChangePassword       Boolean                    @default(false)
+  isActive                 Boolean                    @default(true)
   Client                   Client[]
   ClientDiscountAssignment ClientDiscountAssignment[]
   exchangeRates            ExchangeRate[]
@@ -192,13 +193,14 @@ model User {
 model Client {
   id                       String                     @id @default(uuid())
   userId                   String?
+  isPrimary                Boolean                    @default(false)
   citizenshipId            String?
   prevViolations           Boolean                    @default(false)
   prevViolationsDesc       String?
   isOutsideTheCountry      Boolean                    @default(false)
   isOutsideTheCountryAt    DateTime?
-  firstName                String
-  lastName                 String
+  firstName                String?
+  lastName                 String?
   citizenship              Citizenship?               @relation(fields: [citizenshipId], references: [id])
   user                     User?                      @relation(fields: [userId], references: [id])
   ClientDiscountAssignment ClientDiscountAssignment[]
@@ -215,6 +217,7 @@ model ContactMethod {
   id          String              @id @default(uuid())
   name        String              @unique
   description String?
+  icon        String?
   assignments UserContactMethod[]
 }
 
@@ -237,6 +240,8 @@ model UserContactMethod {
 model Citizenship {
   id                     String                     @id @default(uuid())
   name                   String                     @unique
+  emoji                  String
+  abbreviation           String                     @unique
   favourite              Boolean                    @default(false)
   blacklisted            Blacklisted[]
   Client                 Client[]

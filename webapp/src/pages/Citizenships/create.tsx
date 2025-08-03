@@ -14,6 +14,8 @@ const CreateCitizenshipPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
+    emoji: '',
+    abbreviation: '',
     favourite: false,
   });
 
@@ -31,6 +33,14 @@ const CreateCitizenshipPage = () => {
     e.preventDefault();
     if (!formData.name.trim()) {
       toast.error('Citizenship name is required');
+      return;
+    }
+    if (!formData.emoji.trim()) {
+      toast.error('Emoji is required');
+      return;
+    }
+    if (!formData.abbreviation.trim()) {
+      toast.error('Abbreviation is required');
       return;
     }
     createCitizenshipMutation.mutate(formData);
@@ -69,9 +79,36 @@ const CreateCitizenshipPage = () => {
                 type="text"
                 value={formData.name}
                 onChange={e => handleInputChange('name', e.target.value)}
-                placeholder="Enter citizenship name"
+                placeholder="Enter citizenship name (e.g., United States)"
                 required
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="emoji">Flag Emoji *</Label>
+                <Input
+                  id="emoji"
+                  type="text"
+                  value={formData.emoji}
+                  onChange={e => handleInputChange('emoji', e.target.value)}
+                  placeholder="🇺🇸"
+                  maxLength={10}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="abbreviation">Country Code *</Label>
+                <Input
+                  id="abbreviation"
+                  type="text"
+                  value={formData.abbreviation}
+                  onChange={e => handleInputChange('abbreviation', e.target.value.toUpperCase())}
+                  placeholder="US"
+                  maxLength={3}
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-4">

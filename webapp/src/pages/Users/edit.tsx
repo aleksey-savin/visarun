@@ -22,7 +22,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { UserCheck, Shield } from 'lucide-react';
-import { Plus, Edit, Trash2, MessageCircle, Mail, Phone, ExternalLink } from 'lucide-react';
+import { Plus, Edit, Trash2, MessageCircle, ExternalLink } from 'lucide-react';
+import { ContactMethodIcon } from '@/components/ContactMethod';
 import {
   Select,
   SelectContent,
@@ -165,7 +166,7 @@ export default function EditUserPage() {
     const roleIds = userData.user.roleAssignments?.map(assignment => assignment.role.id) || [];
 
     form.reset({
-      email: userData.user.email,
+      email: userData.user.email || '',
       firstName: userData.user.firstName,
       lastName: userData.user.lastName,
       middleName: userData.user.middleName || '',
@@ -212,17 +213,6 @@ export default function EditUserPage() {
       value: contactMethod.value,
       url: contactMethod.url || '',
     });
-  };
-
-  const getContactMethodIcon = (name: string) => {
-    switch (name) {
-      case 'email':
-        return <Mail className="h-4 w-4" />;
-      case 'phone':
-        return <Phone className="h-4 w-4" />;
-      default:
-        return <MessageCircle className="h-4 w-4" />;
-    }
   };
 
   const getAvailableContactMethods = () => {
@@ -392,7 +382,7 @@ export default function EditUserPage() {
                 className="flex items-center justify-between p-3 border rounded-lg bg-gray-50 mb-3"
               >
                 <div className="flex items-center gap-3">
-                  {getContactMethodIcon(contactMethod.method.name)}
+                  <ContactMethodIcon method={contactMethod.method} />
                   <div>
                     <Badge variant="outline" className="capitalize mb-1">
                       {contactMethod.method.name}
@@ -560,7 +550,7 @@ export default function EditUserPage() {
                               {getAvailableContactMethods().map(method => (
                                 <SelectItem key={method.id} value={method.id}>
                                   <div className="flex items-center gap-2">
-                                    {getContactMethodIcon(method.name)}
+                                    <ContactMethodIcon method={method} />
                                     <span className="capitalize">{method.name}</span>
                                   </div>
                                 </SelectItem>

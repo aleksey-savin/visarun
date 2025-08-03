@@ -9,7 +9,7 @@ const REFRESH_TOKEN_EXPIRES_IN = '7d';
 // Type for token payload
 export interface TokenPayload {
   id: string; // Changed from userId to id to match your auth middleware
-  email: string;
+  email: string | null;
   roles: string[];
   permissions: string[];
   mustChangePassword: boolean;

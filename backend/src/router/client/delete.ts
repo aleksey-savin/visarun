@@ -1,5 +1,6 @@
 import { userDeleteProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
+import { removePrimaryClient } from '../../utils/clientPrimary.js';
 
 export const zDeleteClientTrpcInput = z.object({
   id: z.string().uuid(),
@@ -13,13 +14,21 @@ export const deleteClientTrpcRoute = userDeleteProcedure
     // Check if client exists
     const existingClient = await ctx.prisma.client.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        isPrimary: true,
         documents: true,
       },
     });
 
     if (!existingClient) {
       throw new Error('Client not found');
+    }
+
+    // If this is a primary client, handle the primary status transfer
+    if (existingClient.isPrimary && existingClient.userId) {
+      await removePrimaryClient(ctx.prisma, id);
     }
 
     // Delete all associated documents first

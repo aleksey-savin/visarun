@@ -46,6 +46,8 @@ import {
 type Citizenship = {
   id: string;
   name: string;
+  emoji: string;
+  abbreviation: string;
   favourite: boolean;
   _count: {
     visaFree: number;
@@ -190,7 +192,9 @@ const AllCitizenshipsPage = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[60px]">Flag</TableHead>
                         <TableHead className="w-[200px]">Citizenship Name</TableHead>
+                        <TableHead className="w-[80px]">Code</TableHead>
                         <TableHead className="w-[100px]">Favourite</TableHead>
                         <TableHead className="w-[100px]">Visa Free</TableHead>
                         <TableHead className="w-[100px]">Blacklisted</TableHead>
@@ -202,6 +206,9 @@ const AllCitizenshipsPage = () => {
                       {citizenships.map((citizenship: Citizenship) => (
                         <TableRow key={citizenship.id} className="hover:bg-muted/50">
                           <TableCell>
+                            <div className="text-2xl">{citizenship.emoji}</div>
+                          </TableCell>
+                          <TableCell>
                             <Link
                               to={getViewCitizenshipRoute({ id: citizenship.id })}
                               className="flex items-center space-x-2 font-medium hover:underline"
@@ -209,6 +216,11 @@ const AllCitizenshipsPage = () => {
                               <Users className="h-4 w-4 text-primary" />
                               <span>{citizenship.name}</span>
                             </Link>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="font-mono text-xs">
+                              {citizenship.abbreviation}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             {citizenship.favourite ? (
@@ -273,11 +285,16 @@ const AllCitizenshipsPage = () => {
                     <CardContent className="px-4 py-4">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center space-x-2">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Users className="h-4 w-4 text-primary" />
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-lg">
+                            {citizenship.emoji}
                           </div>
                           <div>
                             <h3 className="font-medium">{citizenship.name}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="secondary" className="font-mono text-xs">
+                                {citizenship.abbreviation}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-1">

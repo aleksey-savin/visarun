@@ -5,7 +5,7 @@ const getRouteParams = <T extends Record<string, boolean>>(object: T) => {
   >;
 };
 
-export const getDashboardRoute = () => '/';
+export const getDashboardRoute = () => '/dashboard';
 export const getCurrencyExchangeRoute = () => '/currency-exchange';
 
 export const getAllUsersRoute = () => '/users';

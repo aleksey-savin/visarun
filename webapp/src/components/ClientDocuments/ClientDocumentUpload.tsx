@@ -35,7 +35,7 @@ interface ClientDocumentUploadProps {
     comment?: string | null;
     expiresAt?: Date | string | null;
     tags: string[];
-    client: { id: string; firstName: string; lastName: string };
+    client: { id: string; firstName: string | null; lastName: string | null };
     requirement?: { id: string; title: string } | null;
   }) => void;
 }

@@ -10,7 +10,7 @@ export enum AuditAction {
 export interface AuditContext {
   user?: {
     id: string;
-    email: string;
+    email: string | null;
     roles: string[];
     permissions: string[];
   };

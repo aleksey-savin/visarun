@@ -6,6 +6,7 @@ export const zEditContactMethodTrpcInput = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
+  icon: z.string().max(2000).optional(),
 });
 
 export const editContactMethodTrpcRoute = adminProcedure
@@ -36,6 +37,7 @@ export const editContactMethodTrpcRoute = adminProcedure
 
     if (input.name) updateData.name = input.name;
     if (input.description !== undefined) updateData.description = input.description;
+    if (input.icon !== undefined) updateData.icon = input.icon;
 
     // Update contact method
     const updatedContactMethod = await ctx.prisma.contactMethod.update({
@@ -48,6 +50,7 @@ export const editContactMethodTrpcRoute = adminProcedure
         id: updatedContactMethod.id,
         name: updatedContactMethod.name,
         description: updatedContactMethod.description,
+        icon: updatedContactMethod.icon,
       },
     };
   });

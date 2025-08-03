@@ -13,6 +13,8 @@ export const getOneCitizenshipTrpcRoute = citizenshipReadProcedure
       select: {
         id: true,
         name: true,
+        emoji: true,
+        abbreviation: true,
         favourite: true,
         visaFree: {
           select: {

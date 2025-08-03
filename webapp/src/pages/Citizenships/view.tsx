@@ -286,8 +286,12 @@ const ViewCitizenshipPage = () => {
           <Button variant="outline" size="icon" onClick={() => navigate(getAllCitizenshipsRoute())}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="text-4xl">{citizenship.emoji}</div>
             <h1 className="text-3xl font-bold capitalize">{citizenship.name}</h1>
+            <Badge variant="secondary" className="font-mono text-sm">
+              {citizenship.abbreviation}
+            </Badge>
             {citizenship.favourite && <Star className="h-8 w-8 text-yellow-500 fill-current" />}
           </div>
         </div>
@@ -305,12 +309,22 @@ const ViewCitizenshipPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <h3 className="font-medium text-sm text-muted-foreground mb-2">
                     Citizenship Name
                   </h3>
-                  <p className="text-lg font-medium">{citizenship.name}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{citizenship.emoji}</span>
+                    <p className="text-lg font-medium">{citizenship.name}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-medium text-sm text-muted-foreground mb-2">Country Code</h3>
+                  <Badge variant="outline" className="font-mono text-sm">
+                    {citizenship.abbreviation}
+                  </Badge>
                 </div>
 
                 <div>
