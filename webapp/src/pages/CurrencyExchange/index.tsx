@@ -112,7 +112,7 @@ const CurrencyExchangePage = () => {
   // If we have rates, show the full content, otherwise just show the appropriate message
   if (rates) {
     return (
-      <div className="container mx-auto max-w-4xl">
+      <div className="container mx-auto max-w-4xl mt-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-center mb-2">Currency Exchange</h1>
           <p className="text-center text-muted-foreground mb-4">Convert between RUB, VND, USDT</p>

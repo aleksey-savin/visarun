@@ -434,7 +434,7 @@ const EditOrderPage = () => {
 
   return (
     <>
-      <CardTitle className="border-b flex py-1.5 px-6 justify-between gap-2 items-center h-[45px]">
+      <CardTitle className="sticky top-0 z-10 bg-background border-b flex py-1.5 px-6 justify-between gap-2 items-center h-[45px]">
         <div className="flex gap-3 items-center text-sm">
           <Puzzle />
           {breadcrumbSteps.map((step, index) => (

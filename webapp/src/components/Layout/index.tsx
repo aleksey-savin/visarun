@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
 import { useState, useEffect } from 'react';
 import { ForcedPasswordChange } from '@/components/ChangePassword/forced-password-change';
+import { PageHeader } from '@/components/PageHeader';
 
 export default function Layout() {
   const { isPasswordChangeRequired, passwordChangeCompleted } = useAuth();
@@ -36,6 +37,7 @@ export default function Layout() {
             <ModeToggle />
             </div> **/}
         <Card className="h-full w-full rounded-l-none border-l-0 overflow-auto scrollbar-hide p-0 m-0">
+          <PageHeader />
           <Outlet />
         </Card>
 

@@ -2,10 +2,10 @@ import { trpc } from '../../lib/trpcProvider';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { PlusIcon, Filter, Search } from 'lucide-react';
+import { Filter, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { getCreateMessageTemplateRoute, getViewMessageTemplateRoute } from '@/lib/routes';
+
+import { getViewMessageTemplateRoute } from '@/lib/routes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import {
@@ -52,19 +52,7 @@ const AllMessageTemplatesPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Message Templates</h1>
-          <p className="text-muted-foreground">
-            Manage templates and attach them to telegram channels
-          </p>
-        </div>
-        <Button onClick={() => navigate(getCreateMessageTemplateRoute())}>
-          <PlusIcon className="mr-2 h-4 w-4" /> Create Message Template
-        </Button>
-      </div>
-
+    <div className="grid gap-6 p-6">
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

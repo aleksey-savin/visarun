@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { trpc } from '../../lib/trpcProvider';
 import {
-  getCreateVisaCitizenshipSurchargeRoute,
   getEditVisaCitizenshipSurchargeRoute,
   getViewVisaCitizenshipSurchargeRoute,
 } from '../../lib/routes';
@@ -36,7 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Plus, Eye, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 
@@ -45,7 +44,6 @@ const AllVisaCitizenshipSurchargesPage = () => {
   const { hasPermission } = useAuth();
 
   // Permission checks
-  const canCreate = hasPermission('visaCitizenshipSurcharges.create');
   const canRead = hasPermission('visaCitizenshipSurcharges.read');
   const canUpdate = hasPermission('visaCitizenshipSurcharges.update');
   const canDelete = hasPermission('visaCitizenshipSurcharges.delete');
@@ -116,22 +114,7 @@ const AllVisaCitizenshipSurchargesPage = () => {
   });
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Visa Citizenship Surcharges</h1>
-          <p className="text-muted-foreground">
-            Manage visa surcharges for different citizenship and country combinations
-          </p>
-        </div>
-        {canCreate && (
-          <Button onClick={() => navigate(getCreateVisaCitizenshipSurchargeRoute())}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Surcharge
-          </Button>
-        )}
-      </div>
-
+    <div className="grid gap-6 p-6">
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

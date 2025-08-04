@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button';
-import { CardContent, CardTitle } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClientSearchModal } from '@/components/Client/client-search-modal.js';
 import { useState } from 'react';
-
+import { CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Gauge, UserPlus } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -15,13 +15,14 @@ export default function DashboardPage() {
 
   return (
     <>
-      <CardTitle className="border-b flex py-1.5 px-6 justify-between gap-2">
+      <CardTitle className="sticky top-0 z-10 border-b flex py-1.5 px-6 justify-between gap-2">
         <div className="flex gap-2 items-center">
           <Gauge />
           <span className="font-semibold">Dashboard</span>
         </div>
         <Button size="sm" onClick={handleClientClick} className="relative">
-          Client <UserPlus />
+          Client
+          <UserPlus className="ml-1 h-4 w-4" />
         </Button>
       </CardTitle>
       <CardContent className="p-6">

@@ -173,14 +173,7 @@ const AllAuditLogsPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Audit Logs</h1>
-          <p className="text-muted-foreground">Track and manage system changes</p>
-        </div>
-      </div>
-
+    <div className="grid gap-6 p-6">
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -337,7 +330,6 @@ const AllAuditLogsPage = () => {
                         <TableHead>Action</TableHead>
                         <TableHead>Entity</TableHead>
                         <TableHead>User</TableHead>
-                        <TableHead>Changes</TableHead>
                         <TableHead>Performed At</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -362,14 +354,7 @@ const AllAuditLogsPage = () => {
                               <span>{formatUserName(log.user)}</span>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="text-sm">{log.changeSummary}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {log.changeCount} field{log.changeCount !== 1 ? 's' : ''} changed
-                              </div>
-                            </div>
-                          </TableCell>
+
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-muted-foreground" />

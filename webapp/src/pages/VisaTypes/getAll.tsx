@@ -1,11 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { trpc } from '../../lib/trpcProvider';
-import {
-  getCreateVisaTypeRoute,
-  getEditVisaTypeRoute,
-  getViewVisaTypeRoute,
-} from '../../lib/routes';
+import { getEditVisaTypeRoute, getViewVisaTypeRoute } from '../../lib/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -36,7 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Plus, Eye, Edit, Trash2, Search, Filter, Globe, Clock, DollarSign } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, Filter, Globe, Clock, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 
@@ -46,8 +42,6 @@ const AllVisaTypesPage = () => {
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
 
-  // Permission checks
-  const canCreate = hasPermission('visaTypes.create');
   const canRead = hasPermission('visaTypes.read');
   const canUpdate = hasPermission('visaTypes.update');
   const canDelete = hasPermission('visaTypes.delete');
@@ -134,20 +128,7 @@ const AllVisaTypesPage = () => {
   });
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Visa Types</h1>
-          <p className="text-muted-foreground">Manage visa types for different countries</p>
-        </div>
-        {canCreate && (
-          <Button onClick={() => navigate(getCreateVisaTypeRoute())}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Visa Type
-          </Button>
-        )}
-      </div>
-
+    <div className="grid gap-6 p-6">
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

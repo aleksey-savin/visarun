@@ -19,7 +19,6 @@ import {
 import { useRequirements, useDeleteRequirement } from '../../hooks/useRequirements';
 import { useVisaTypes } from '../../hooks/useVisaTypes';
 import {
-  Plus,
   Search,
   Filter,
   FileText,
@@ -35,11 +34,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import {
-  getCreateRequirementRoute,
-  getViewRequirementRoute,
-  getEditRequirementRoute,
-} from '../../lib/routes';
+import { getViewRequirementRoute, getEditRequirementRoute } from '../../lib/routes';
 
 export const RequirementsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -135,7 +130,7 @@ export const RequirementsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="grid gap-6 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">Requirements Management</h1>
@@ -156,21 +151,7 @@ export const RequirementsPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      {/* Page Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Requirements Management</h1>
-          <p className="text-muted-foreground">
-            Manage requirements for visa applications and services
-          </p>
-        </div>
-        <Button onClick={() => navigate(getCreateRequirementRoute())}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Requirement
-        </Button>
-      </div>
-
+    <div className="grid gap-6 p-6">
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>

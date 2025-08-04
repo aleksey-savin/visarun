@@ -107,20 +107,7 @@ export default function AllOrdersPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Orders</h1>
-          <p className="text-muted-foreground">Manage and view all orders in the system</p>
-        </div>
-        <Button asChild>
-          <Link to={getCreateOrderRoute()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Order
-          </Link>
-        </Button>
-      </div>
-
+    <div className="grid gap-6 p-6">
       <Card>
         <CardHeader>
           <CardTitle>Filters</CardTitle>

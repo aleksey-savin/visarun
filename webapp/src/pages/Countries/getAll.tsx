@@ -1,19 +1,9 @@
 import { useState } from 'react';
-import { getCreateCountryRoute, getViewCountryRoute } from '../../lib/routes';
+import { getViewCountryRoute } from '../../lib/routes';
 import { trpc } from '../../lib/trpcProvider';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import {
-  PlusIcon,
-  Globe,
-  CheckCircle,
-  XCircle,
-  Search,
-  Filter,
-  Eye,
-  Edit,
-  Trash2,
-} from 'lucide-react';
+import { Globe, CheckCircle, XCircle, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -100,17 +90,7 @@ const AllCountriesPage = () => {
   });
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Countries</h1>
-          <p className="text-muted-foreground">Manage countries and their visa requirements</p>
-        </div>
-        <Button onClick={() => navigate(getCreateCountryRoute())}>
-          <PlusIcon className="mr-2 h-4 w-4" /> Create Country
-        </Button>
-      </div>
-
+    <div className="grid gap-6 p-6">
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

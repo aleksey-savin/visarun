@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { getCreateCitizenshipRoute, getViewCitizenshipRoute } from '../../lib/routes';
+import { getViewCitizenshipRoute } from '../../lib/routes';
 import { trpc } from '../../lib/trpcProvider';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PlusIcon, Users, Star, StarOff, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
+import { Users, Star, StarOff, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -103,17 +103,7 @@ const AllCitizenshipsPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Citizenships</h1>
-          <p className="text-muted-foreground">Manage citizenships and their visa requirements</p>
-        </div>
-        <Button onClick={() => navigate(getCreateCitizenshipRoute())}>
-          <PlusIcon className="mr-2 h-4 w-4" /> Create Citizenship
-        </Button>
-      </div>
-
+    <div className="grid gap-6 p-6">
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -356,9 +346,9 @@ const AllCitizenshipsPage = () => {
                   <PaginationItem>
                     <PaginationPrevious
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      className={
-                        currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'
-                      }
+                      className={` w-auto
+                        ${currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          `}
                     />
                   </PaginationItem>
 
@@ -390,11 +380,11 @@ const AllCitizenshipsPage = () => {
                   <PaginationItem>
                     <PaginationNext
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      className={
+                      className={`w-auto ${
                         currentPage === totalPages
                           ? 'pointer-events-none opacity-50'
                           : 'cursor-pointer'
-                      }
+                      }`}
                     />
                   </PaginationItem>
                 </PaginationContent>

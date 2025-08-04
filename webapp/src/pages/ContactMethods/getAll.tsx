@@ -226,17 +226,7 @@ export default function ContactMethodsManagementPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Contact Methods</h1>
-          <p className="text-muted-foreground">Manage available contact method types for users</p>
-        </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add Contact Method
-        </Button>
-      </div>
-
+    <div className="grid gap-6 p-6">
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
