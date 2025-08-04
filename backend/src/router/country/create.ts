@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 export const zCreateCountryTrpcInput = z.object({
   name: z.string().min(1).max(100),
+  favourite: z.boolean().default(false),
   eVisaAvailable: z.boolean().default(false),
   multivisaAvailable: z.boolean().default(false),
 });
@@ -37,12 +38,14 @@ export const createCountryTrpcRoute = countryCreateProcedure
     const newCountry = await ctx.prisma.country.create({
       data: {
         name: input.name,
+        favourite: input.favourite,
         eVisaAvailable: input.eVisaAvailable,
         multivisaAvailable: input.multivisaAvailable,
       },
       select: {
         id: true,
         name: true,
+        favourite: true,
         eVisaAvailable: true,
         multivisaAvailable: true,
       },

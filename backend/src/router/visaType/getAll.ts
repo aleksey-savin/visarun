@@ -7,6 +7,7 @@ export const zGetAllVisaTypesTrpcInput = z.object({
   offset: z.number().int().min(0).default(0),
   countryId: z.string().uuid().optional(),
   isMultientry: z.boolean().optional(),
+  favourite: z.boolean().optional().default(false),
   processingMode: z.enum(['fixed', 'approximate']).optional(),
   processingUnit: z.enum(['hours', 'days']).optional(),
   search: z.string().min(1).optional(),

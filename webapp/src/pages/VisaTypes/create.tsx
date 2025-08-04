@@ -25,6 +25,7 @@ const CreateVisaTypePage = () => {
   const [serviceCost, setServiceCost] = useState<number>(0);
   const [countryId, setCountryId] = useState('');
   const [isMultientry, setIsMultientry] = useState(false);
+  const [favourite, setFavourite] = useState(false);
   const [multientryExtraCost, setMultientryExtraCost] = useState<number | null>(null);
   const [processingMode, setProcessingMode] = useState<'fixed' | 'approximate'>('fixed');
   const [processingUnit, setProcessingUnit] = useState<'hours' | 'days'>('days');
@@ -100,6 +101,7 @@ const CreateVisaTypePage = () => {
       serviceCost,
       countryId,
       isMultientry,
+      favourite,
       multientryExtraCost: isMultientry ? (multientryExtraCost ?? undefined) : undefined,
       processingMode,
       processingUnit,
@@ -288,6 +290,19 @@ const CreateVisaTypePage = () => {
                 />
                 <Label htmlFor="submissionDayIncluded">
                   Submission day included in processing time
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="favourite"
+                  checked={favourite}
+                  onCheckedChange={checked => setFavourite(checked === true)}
+                />
+                <Label htmlFor="favourite" className="text-sm font-medium">
+                  Mark as Favourite
                 </Label>
               </div>
             </div>

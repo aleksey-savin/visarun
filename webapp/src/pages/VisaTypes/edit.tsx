@@ -25,6 +25,7 @@ const EditVisaTypePage = () => {
   const [serviceCost, setServiceCost] = useState<number>(0);
   const [countryId, setCountryId] = useState('');
   const [isMultientry, setIsMultientry] = useState(false);
+  const [favourite, setFavourite] = useState(false);
   const [multientryExtraCost, setMultientryExtraCost] = useState<number | null>(null);
   const [processingMode, setProcessingMode] = useState<'fixed' | 'approximate'>('fixed');
   const [processingUnit, setProcessingUnit] = useState<'hours' | 'days'>('days');
@@ -52,23 +53,25 @@ const EditVisaTypePage = () => {
     },
   });
 
-  // Load existing data
+  // Load existing data - only set values when both visa type and countries data are available
   useEffect(() => {
-    if (visaTypeData?.visaType) {
+    if (visaTypeData?.visaType && countriesData?.countries) {
       const vt = visaTypeData.visaType;
+
       setName(vt.name);
       setServiceCost(vt.serviceCost);
       setCountryId(vt.countryId);
       setIsMultientry(vt.isMultientry);
+      setFavourite(vt.favourite);
       setMultientryExtraCost(vt.multientryExtraCost);
-      setProcessingMode(vt.processingMode);
-      setProcessingUnit(vt.processingUnit);
+      setProcessingMode(vt.processingMode as 'fixed' | 'approximate');
+      setProcessingUnit(vt.processingUnit as 'hours' | 'days');
       setProcessingValueFixed(vt.processingValueFixed);
       setProcessingValueMin(vt.processingValueMin);
       setProcessingValueMax(vt.processingValueMax);
       setSubmissionDayIncluded(vt.submissionDayIncluded);
     }
-  }, [visaTypeData]);
+  }, [visaTypeData, countriesData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,6 +132,7 @@ const EditVisaTypePage = () => {
       serviceCost,
       countryId,
       isMultientry,
+      favourite,
       multientryExtraCost: isMultientry ? (multientryExtraCost ?? undefined) : undefined,
       processingMode,
       processingUnit,
@@ -142,7 +146,7 @@ const EditVisaTypePage = () => {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || !countriesData) {
     return (
       <div className="container mx-auto py-8">
         <div className="flex items-center justify-center h-64">
@@ -192,7 +196,7 @@ const EditVisaTypePage = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="country">Country *</Label>
-                <Select value={countryId} onValueChange={setCountryId}>
+                <Select value={countryId || ''} onValueChange={setCountryId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
@@ -254,7 +258,7 @@ const EditVisaTypePage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="processingMode">Processing Mode *</Label>
                   <Select
-                    value={processingMode}
+                    value={processingMode || ''}
                     onValueChange={(value: 'fixed' | 'approximate') => setProcessingMode(value)}
                   >
                     <SelectTrigger>
@@ -270,7 +274,7 @@ const EditVisaTypePage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="processingUnit">Processing Unit *</Label>
                   <Select
-                    value={processingUnit}
+                    value={processingUnit || ''}
                     onValueChange={(value: 'hours' | 'days') => setProcessingUnit(value)}
                   >
                     <SelectTrigger>
@@ -335,6 +339,19 @@ const EditVisaTypePage = () => {
                 />
                 <Label htmlFor="submissionDayIncluded">
                   Submission day included in processing time
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="favourite"
+                  checked={favourite}
+                  onCheckedChange={checked => setFavourite(checked === true)}
+                />
+                <Label htmlFor="favourite" className="text-sm font-medium">
+                  Mark as Favourite
                 </Label>
               </div>
             </div>

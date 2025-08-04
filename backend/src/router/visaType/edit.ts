@@ -7,6 +7,7 @@ export const zEditVisaTypeTrpcInput = z.object({
   serviceCost: z.number().min(0).optional(),
   countryId: z.string().uuid().optional(),
   isMultientry: z.boolean().optional(),
+  favourite: z.boolean().optional().default(false),
   multientryExtraCost: z.number().min(0).optional(),
   processingMode: z.enum(['fixed', 'approximate']).optional(),
   processingUnit: z.enum(['hours', 'days']).optional(),

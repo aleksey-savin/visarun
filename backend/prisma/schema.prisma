@@ -256,6 +256,7 @@ model Citizenship {
 model Country {
   id                 String                     @id @default(uuid())
   name               String                     @unique
+  favourite          Boolean                    @default(false)
   eVisaAvailable     Boolean                    @default(false)
   multivisaAvailable Boolean                    @default(false)
   blacklisted        Blacklisted[]
@@ -424,6 +425,7 @@ model ClientDiscountAssignment {
 model VisaType {
   id                    String                             @id @default(uuid())
   name                  String
+  favourite             Boolean                            @default(false)
   serviceCost           Float
   countryId             String
   isMultientry          Boolean

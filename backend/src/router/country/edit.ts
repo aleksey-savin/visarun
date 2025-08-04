@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const zEditCountryTrpcInput = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100),
+  favourite: z.boolean().default(false),
   eVisaAvailable: z.boolean(),
   multivisaAvailable: z.boolean(),
 });
@@ -53,12 +54,14 @@ export const editCountryTrpcRoute = countryUpdateProcedure
       where: { id: input.id },
       data: {
         name: input.name,
+        favourite: input.favourite,
         eVisaAvailable: input.eVisaAvailable,
         multivisaAvailable: input.multivisaAvailable,
       },
       select: {
         id: true,
         name: true,
+        favourite: true,
         eVisaAvailable: true,
         multivisaAvailable: true,
       },

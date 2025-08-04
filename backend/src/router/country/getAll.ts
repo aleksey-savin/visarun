@@ -6,6 +6,7 @@ export const getAllCountriesTrpcRoute = countryReadProcedure.query(async ({ ctx 
     select: {
       id: true,
       name: true,
+      favourite: true,
       eVisaAvailable: true,
       multivisaAvailable: true,
       _count: {

@@ -14,6 +14,7 @@ const CreateCountryPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
+    favourite: false,
     eVisaAvailable: false,
     multivisaAvailable: false,
   });
@@ -100,6 +101,18 @@ const CreateCountryPage = () => {
                 <Label htmlFor="multivisaAvailable" className="text-sm font-medium">
                   Multivisa Available
                 </Label>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="favourite"
+                    checked={formData.favourite}
+                    onCheckedChange={checked => handleInputChange('favourite', checked as boolean)}
+                  />
+                  <Label htmlFor="favourite" className="text-sm font-medium">
+                    Mark as Favourite
+                  </Label>
+                </div>
               </div>
             </div>
 

@@ -13,6 +13,7 @@ export const getOneCountryTrpcRoute = countryReadProcedure
       select: {
         id: true,
         name: true,
+        favourite: true,
         eVisaAvailable: true,
         multivisaAvailable: true,
         cities: {

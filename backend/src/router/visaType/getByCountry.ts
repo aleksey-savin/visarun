@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 export const zGetVisaTypesByCountryTrpcInput = z.object({
   countryId: z.string().uuid(),
   isMultientry: z.boolean().optional(),
+  favourite: z.boolean().optional(),
   processingMode: z.enum(['fixed', 'approximate']).optional(),
   processingUnit: z.enum(['hours', 'days']).optional(),
 });
@@ -12,7 +13,7 @@ export const zGetVisaTypesByCountryTrpcInput = z.object({
 export const getVisaTypesByCountryTrpcRoute = visaTypeReadProcedure
   .input(zGetVisaTypesByCountryTrpcInput)
   .query(async ({ input, ctx }) => {
-    const { countryId, isMultientry, processingMode, processingUnit } = input;
+    const { countryId, isMultientry, favourite, processingMode, processingUnit } = input;
 
     // Check if country exists
     const country = await ctx.prisma.country.findUnique({
@@ -34,6 +35,10 @@ export const getVisaTypesByCountryTrpcRoute = visaTypeReadProcedure
 
     if (isMultientry !== undefined) {
       where.isMultientry = isMultientry;
+    }
+
+    if (favourite !== undefined) {
+      where.favourite = favourite;
     }
 
     if (processingMode) {

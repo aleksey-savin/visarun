@@ -31,6 +31,7 @@ import { getAllOrdersRoute, type EditOrderRouteParams } from '@/lib/routes';
 import { trpc } from '@/lib/trpc';
 
 import { Badge } from '@/components/ui/badge';
+import VisaSection from '@/components/Order/visa-section';
 
 // Form schema
 const orderSchema = z.object({
@@ -103,6 +104,7 @@ const EditOrderPage = () => {
   const updateUserMutation = trpc.user.edit.useMutation();
   const updateContactMethodMutation = trpc.userContactMethod.edit.useMutation();
   const createContactMethodMutation = trpc.userContactMethod.create.useMutation();
+
   const updateOrderMutation = trpc.order.edit.useMutation({
     onSuccess: () => {
       refetchOrder(); // Refetch order data to get updated timestamp
@@ -686,6 +688,15 @@ const EditOrderPage = () => {
 
                     <hr className="my-6" />
 
+                    <VisaSection
+                      refetchOrder={refetchOrder}
+                      orderData={orderData}
+                      primaryClientData={primaryClientData}
+                      setErrorMessage={setErrorMessage}
+                    />
+
+                    <hr className="my-6" />
+
                     {/* Action Buttons */}
                     <div className="flex justify-between">
                       <div></div>
@@ -695,6 +706,7 @@ const EditOrderPage = () => {
                     </div>
                   </form>
                 </Form>
+
                 {/* Service Puzzle Section */}
                 <Card className="mt-6 p-0 bg-muted border-none">
                   <CardContent className="p-3">
@@ -702,12 +714,7 @@ const EditOrderPage = () => {
                       <div className="font-medium">Service puzzle</div>
                       <Card className="flex items-center gap-1 p-1 bg-secondary rounded-md border-none">
                         <div className="flex gap-2">
-                          <Button
-                            disabled
-                            variant="secondary"
-                            size="sm"
-                            className="bg-[#172554] border-none"
-                          >
+                          <Button disabled variant="accent" size="sm">
                             Visa
                           </Button>
                           <Button disabled variant="secondary" size="sm" className="border-none">
