@@ -435,7 +435,7 @@ const EditOrderPage = () => {
   return (
     <>
       <CardTitle className="sticky top-0 z-10 bg-background border-b flex py-1.5 px-6 justify-between gap-2 items-center h-[45px]">
-        <div className="flex gap-3 items-center text-sm">
+        <div className="flex gap-3 items-center text-sm min-h-[45px]">
           <Puzzle />
           {breadcrumbSteps.map((step, index) => (
             <div key={step.name} className="flex items-center gap-3">
@@ -754,7 +754,7 @@ const EditOrderPage = () => {
           </div>
 
           {/* Summary Sidebar */}
-          <div className="space-y-4">
+          <div className="space-y-4 sticky top-[69px] self-start">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium">Summary</CardTitle>
