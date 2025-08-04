@@ -25,6 +25,11 @@ export const deleteOrderItemTrpcRoute = orderItemDeleteProcedure
       throw new Error('Can only delete order items from draft orders');
     }
 
+    // Delete associated visa applications first (if any)
+    await ctx.prisma.visaApplication.deleteMany({
+      where: { orderItemId: input.id },
+    });
+
     // Delete order item
     await ctx.prisma.orderItem.delete({
       where: { id: input.id },

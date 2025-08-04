@@ -445,20 +445,21 @@ model VisaType {
 }
 
 model VisaApplication {
-  id                    String                @id @default(uuid())
-  orderItemId           String
-  applicationCode       String
-  submittedByAgent      Boolean
-  countryId             String
-  visaTypeId            String
-  note                  String?
-  revisedActivationDate DateTime?
-  statusNote            String?
-  status                VisaApplicationStatus
-  clientVisas           ClientVisa[]
-  country               Country               @relation(fields: [countryId], references: [id])
-  orderItem             OrderItem             @relation(fields: [orderItemId], references: [id])
-  visaType              VisaType              @relation(fields: [visaTypeId], references: [id])
+  id                      String                @id @default(uuid())
+  orderItemId             String
+  plannedCountryEntryDate DateTime?
+  applicationCode         String
+  submittedByAgent        Boolean
+  countryId               String
+  visaTypeId              String
+  note                    String?
+  revisedActivationDate   DateTime?
+  statusNote              String?
+  status                  VisaApplicationStatus
+  clientVisas             ClientVisa[]
+  country                 Country               @relation(fields: [countryId], references: [id])
+  orderItem               OrderItem             @relation(fields: [orderItemId], references: [id])
+  visaType                VisaType              @relation(fields: [visaTypeId], references: [id])
 }
 
 model ClientVisa {

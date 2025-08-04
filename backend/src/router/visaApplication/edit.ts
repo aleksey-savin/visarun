@@ -7,6 +7,11 @@ export const zEditVisaApplicationTrpcInput = z.object({
   submittedByAgent: z.boolean().optional(),
   countryId: z.string().uuid().optional(),
   visaTypeId: z.string().uuid().optional(),
+  plannedCountryEntryDate: z
+    .string()
+    .datetime()
+    .optional()
+    .transform(val => (val ? new Date(val) : undefined)),
   note: z.string().optional(),
   revisedActivationDate: z.date().optional(),
   statusNote: z.string().optional(),

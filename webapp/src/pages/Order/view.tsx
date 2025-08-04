@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { trpc } from '@/lib/trpc';
+import { formatCurrency } from '@/utils/currency.js';
 import { AlertTriangle, ArrowLeft, Edit, FileText, User, Package } from 'lucide-react';
 import { getEditOrderRoute, getAllOrdersRoute } from '@/lib/routes';
 
@@ -24,13 +25,6 @@ export default function ViewOrderPage() {
   } = trpc.order.getOne.useQuery({ id: id! }, { enabled: !!id });
 
   const order = orderData?.order;
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount);
-  };
 
   const formatDate = (date: string | Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -120,7 +114,7 @@ export default function ViewOrderPage() {
                   {order.items
                     ? formatCurrency(
                         order.items.reduce((sum, item) => sum + item.finalPrice, 0),
-                        'USD'
+                        'VND'
                       )
                     : 'N/A'}
                 </p>
@@ -227,17 +221,17 @@ export default function ViewOrderPage() {
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Base Price</p>
-                          <p className="font-medium">{formatCurrency(item.basePrice, 'USD')}</p>
+                          <p className="font-medium">{formatCurrency(item.basePrice, 'VND')}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Discount</p>
                           <p className="font-medium text-green-600">
-                            -{formatCurrency(item.discountAmount, 'USD')}
+                            -{formatCurrency(item.discountAmount, 'VND')}
                           </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Final Price</p>
-                          <p className="font-medium">{formatCurrency(item.finalPrice, 'USD')}</p>
+                          <p className="font-medium">{formatCurrency(item.finalPrice, 'VND')}</p>
                         </div>
                       </div>
                     </div>
@@ -255,21 +249,21 @@ export default function ViewOrderPage() {
                         Base Total:{' '}
                         {formatCurrency(
                           order.items.reduce((sum, item) => sum + item.basePrice, 0),
-                          'USD'
+                          'VND'
                         )}
                       </p>
                       <p className="text-sm text-green-600">
                         Total Discount: -
                         {formatCurrency(
                           order.items.reduce((sum, item) => sum + item.discountAmount, 0),
-                          'USD'
+                          'VND'
                         )}
                       </p>
                       <p className="text-lg font-semibold">
                         Final Total:{' '}
                         {formatCurrency(
                           order.items.reduce((sum, item) => sum + item.finalPrice, 0),
-                          'USD'
+                          'VND'
                         )}
                       </p>
                     </>

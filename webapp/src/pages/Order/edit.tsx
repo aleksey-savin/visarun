@@ -32,6 +32,7 @@ import { trpc } from '@/lib/trpc';
 
 import { Badge } from '@/components/ui/badge';
 import VisaSection from '@/components/Order/visa-section';
+import { formatCurrency } from '@/utils/currency.js';
 
 // Form schema
 const orderSchema = z.object({
@@ -56,6 +57,15 @@ const EditOrderPage = () => {
   const [passportDate, setPassportDate] = useState<Date | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper function to calculate total amount from order items
+  const calculateTotalAmount = (order: any) => {
+    if (!order?.items || order.items.length === 0) {
+      return '0 VND';
+    }
+    const total = order.items.reduce((sum: number, item: any) => sum + (item.finalPrice || 0), 0);
+    return formatCurrency(total, 'VND');
+  };
 
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
@@ -478,7 +488,7 @@ const EditOrderPage = () => {
                     </div>
                   )}
                 </Badge>
-                <span className="text-muted-foreground text-sm">0 VND</span>
+                <span className="text-muted-foreground text-sm">{calculateTotalAmount(order)}</span>
               </CardTitle>
               <CardContent className="p-0">
                 <Form {...form}>
@@ -693,6 +703,9 @@ const EditOrderPage = () => {
                       orderData={orderData}
                       primaryClientData={primaryClientData}
                       setErrorMessage={setErrorMessage}
+                      updateOrderMutation={updateOrderMutation}
+                      setLastSavedTime={setLastSavedTime}
+                      setSaveStatus={setSaveStatus}
                     />
 
                     <hr className="my-6" />

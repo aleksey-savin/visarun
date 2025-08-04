@@ -7,6 +7,11 @@ export const zCreateVisaApplicationTrpcInput = z.object({
   submittedByAgent: z.boolean().default(false),
   countryId: z.string().uuid(),
   visaTypeId: z.string().uuid(),
+  plannedCountryEntryDate: z
+    .string()
+    .datetime()
+    .optional()
+    .transform(val => (val ? new Date(val) : undefined)),
   note: z.string().optional(),
   revisedActivationDate: z.date().optional(),
   statusNote: z.string().optional(),
@@ -81,6 +86,7 @@ export const createVisaApplicationTrpcRoute = visaApplicationCreateProcedure
         submittedByAgent: input.submittedByAgent,
         countryId: input.countryId,
         visaTypeId: input.visaTypeId,
+        plannedCountryEntryDate: input.plannedCountryEntryDate,
         note: input.note,
         revisedActivationDate: input.revisedActivationDate,
         statusNote: input.statusNote,

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/utils/currency.js';
 
 import {
   FileText,
@@ -129,15 +130,6 @@ const ViewRequirementPage: React.FC = () => {
       return `~${processingValueMin}-${processingValueMax} ${processingUnit}`;
     }
     return 'Processing time TBD';
-  };
-
-  const formatPrice = (serviceCost: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(serviceCost);
   };
 
   if (isLoading) {
@@ -337,7 +329,7 @@ const ViewRequirementPage: React.FC = () => {
                         </Badge>
                         <Badge variant="outline" className="text-xs">
                           <DollarSign className="w-3 h-3 mr-1" />
-                          {formatPrice(link.visaType.serviceCost)}
+                          {formatCurrency(link.visaType.serviceCost)}
                         </Badge>
                       </div>
                     </div>

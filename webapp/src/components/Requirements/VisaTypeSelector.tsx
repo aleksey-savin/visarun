@@ -8,6 +8,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Separator } from '../ui/separator';
 import { Search, Plus, X, Flag, Calendar, DollarSign, CheckCircle, Loader2 } from 'lucide-react';
 import { useVisaTypes } from '../../hooks/useVisaTypes';
+import { formatCurrency } from '../../utils/currency';
 
 interface VisaTypeSelectorProps {
   selectedIds: string[];
@@ -67,15 +68,6 @@ export const VisaTypeSelector: React.FC<VisaTypeSelectorProps> = ({
       return `~${processingValueMin}-${processingValueMax} ${processingUnit}`;
     }
     return 'Processing time TBD';
-  };
-
-  const formatPrice = (serviceCost: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(serviceCost);
   };
 
   if (error) {
@@ -235,7 +227,7 @@ export const VisaTypeSelector: React.FC<VisaTypeSelectorProps> = ({
                               </Badge>
                               <Badge variant="outline" className="text-xs">
                                 <DollarSign className="w-3 h-3 mr-1" />
-                                {formatPrice(visaType.serviceCost)}
+                                {formatCurrency(visaType.serviceCost)}
                               </Badge>
                             </div>
                           </div>

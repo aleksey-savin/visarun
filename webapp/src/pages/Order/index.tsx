@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatCurrency } from '@/utils/currency.js';
 import {
   Select,
   SelectContent,
@@ -82,13 +83,6 @@ export default function AllOrdersPage() {
 
   const handleDeleteOrder = (id: string) => {
     deleteOrderMutation.mutate({ id });
-  };
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount);
   };
 
   const formatDate = (date: Date) => {
@@ -221,7 +215,7 @@ export default function AllOrdersPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {order.totals ? formatCurrency(order.totals.finalPrice, 'USD') : 'N/A'}
+                      {order.totals ? formatCurrency(order.totals.finalPrice, 'VND') : 'N/A'}
                     </TableCell>
                     <TableCell>
                       <Badge

@@ -19,6 +19,7 @@ import { Puzzle, Copy, Crown } from 'lucide-react';
 import { getEditOrderRoute } from '@/lib/routes';
 import { trpc } from '@/lib/trpc';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/utils/currency.js';
 
 // Form schema
 const orderSchema = z.object({
@@ -62,6 +63,24 @@ const CreateOrderPage = () => {
     isLoading: contactMethodsLoading,
     error: contactMethodsError,
   } = trpc.contactMethod.getAll.useQuery();
+
+  // Fetch order data if order is already created
+  const { data: orderData } = trpc.order.getOne.useQuery(
+    { id: createdOrderId || '' },
+    { enabled: !!createdOrderId }
+  );
+
+  // Helper function to calculate total amount from order items
+  const calculateTotalAmount = (orderData: any) => {
+    if (!orderData?.order?.items || orderData.order.items.length === 0) {
+      return '0 VND';
+    }
+    const total = orderData.order.items.reduce(
+      (sum: number, item: any) => sum + (item.finalPrice || 0),
+      0
+    );
+    return formatCurrency(total, 'VND');
+  };
 
   // Helper function to determine active breadcrumb step
   const getBreadcrumbSteps = (status: string) => {
@@ -235,7 +254,9 @@ const CreateOrderPage = () => {
                 <Badge variant="primary">
                   <Crown />
                 </Badge>
-                <span className="text-muted-foreground text-sm">0 VND</span>
+                <span className="text-muted-foreground text-sm">
+                  {calculateTotalAmount(orderData)}
+                </span>
               </CardTitle>
               <CardContent className="p-0">
                 <Form {...form}>
