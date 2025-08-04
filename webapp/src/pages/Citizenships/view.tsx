@@ -34,6 +34,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/utils/currency.js';
 
 const ViewCitizenshipPage = () => {
   const { id } = useParams();
@@ -574,12 +575,12 @@ const ViewCitizenshipPage = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="amount">Surcharge Amount (USD)</Label>
+                        <Label htmlFor="amount">Surcharge Amount (VND)</Label>
                         <Input
                           id="amount"
                           type="number"
                           min="0"
-                          step="0.01"
+                          step="1"
                           value={surchargeAmount}
                           onChange={e => setSurchargeAmount(parseFloat(e.target.value) || 0)}
                           placeholder="0.00"
@@ -633,7 +634,7 @@ const ViewCitizenshipPage = () => {
                               {surcharge.visaTypes.map(vt => vt.visaType.name).join(', ')}
                             </span>
                             <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                              ${surcharge.surchargeAmount.toFixed(2)}
+                              {formatCurrency(surcharge.surchargeAmount, 'VND')}
                             </Badge>
                           </div>
                           {surcharge.note && (

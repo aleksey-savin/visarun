@@ -227,7 +227,7 @@ export const VisaTypeSelector: React.FC<VisaTypeSelectorProps> = ({
                               </Badge>
                               <Badge variant="outline" className="text-xs">
                                 <DollarSign className="w-3 h-3 mr-1" />
-                                {formatCurrency(visaType.serviceCost)}
+                                {formatCurrency(visaType.serviceCost, 'VND')}
                               </Badge>
                             </div>
                           </div>

@@ -329,7 +329,7 @@ const ViewRequirementPage: React.FC = () => {
                         </Badge>
                         <Badge variant="outline" className="text-xs">
                           <DollarSign className="w-3 h-3 mr-1" />
-                          {formatCurrency(link.visaType.serviceCost)}
+                          {formatCurrency(link.visaType.serviceCost, 'VND')}
                         </Badge>
                       </div>
                     </div>

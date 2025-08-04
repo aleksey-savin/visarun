@@ -164,7 +164,7 @@ const CreateVisaTypePage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="serviceCost">Service Cost (USD) *</Label>
+                <Label htmlFor="serviceCost">Service Cost (VND) *</Label>
                 <Input
                   id="serviceCost"
                   type="number"
@@ -187,12 +187,12 @@ const CreateVisaTypePage = () => {
                 </div>
                 {isMultientry && (
                   <div className="mt-2">
-                    <Label htmlFor="multientryExtraCost">Multi-entry Extra Cost (USD)</Label>
+                    <Label htmlFor="multientryExtraCost">Multi-entry Extra Cost (VND)</Label>
                     <Input
                       id="multientryExtraCost"
                       type="number"
                       min="0"
-                      step="0.01"
+                      step="1"
                       placeholder="0.00"
                       value={multientryExtraCost || ''}
                       onChange={e => setMultientryExtraCost(parseFloat(e.target.value) || null)}

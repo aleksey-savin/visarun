@@ -138,12 +138,12 @@ const CreateVisaCitizenshipSurchargePage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="surchargeAmount">Surcharge Amount (USD) *</Label>
+              <Label htmlFor="surchargeAmount">Surcharge Amount (VND) *</Label>
               <Input
                 id="surchargeAmount"
                 type="number"
                 min="0"
-                step="0.01"
+                step="1"
                 placeholder="0.00"
                 value={surchargeAmount || ''}
                 onChange={e => setSurchargeAmount(parseFloat(e.target.value) || 0)}

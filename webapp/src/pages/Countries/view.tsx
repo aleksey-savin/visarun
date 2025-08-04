@@ -42,6 +42,8 @@ import { useAuth } from '@/lib/auth';
 import { getAllCountriesRoute, getEditCountryRoute } from '@/lib/routes';
 import { VisaTypeSelector } from '@/components/Requirements/VisaTypeSelector';
 
+import { formatCurrency } from '@/utils/currency.js';
+
 const ViewCountryPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -917,12 +919,12 @@ const ViewCountryPage = () => {
                             />
                           </div>
                           <div>
-                            <Label htmlFor="surcharge-amount">Surcharge Amount (USD)</Label>
+                            <Label htmlFor="surcharge-amount">Surcharge Amount (VND)</Label>
                             <Input
                               id="surcharge-amount"
                               type="number"
                               min="0"
-                              step="0.01"
+                              step="1"
                               value={surchargeAmount || ''}
                               onChange={e => setSurchargeAmount(parseFloat(e.target.value) || 0)}
                               placeholder="0.00"
@@ -994,7 +996,7 @@ const ViewCountryPage = () => {
                                 {surcharge.visaTypes.map(vt => vt.visaType.name).join(', ')}
                               </span>
                               <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                                ${surcharge.surchargeAmount.toFixed(2)}
+                                {formatCurrency(surcharge.surchargeAmount, 'VND')}
                               </Badge>
                             </div>
                             {surcharge.note && (

@@ -186,7 +186,7 @@ const EditVisaCitizenshipSurchargePage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="surchargeAmount">Surcharge Amount (USD) *</Label>
+              <Label htmlFor="surchargeAmount">Surcharge Amount (VND) *</Label>
               <Input
                 id="surchargeAmount"
                 type="number"

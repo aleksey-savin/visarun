@@ -22,6 +22,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { RequirementsList } from '@/components/Requirements';
 import { useState } from 'react';
+import { formatCurrency } from '@/utils/currency.js';
 
 const ViewVisaTypePage = () => {
   const navigate = useNavigate();
@@ -140,10 +141,9 @@ const ViewVisaTypePage = () => {
                     <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">Service Cost:</span>
                         <span className="font-mono font-medium">
-                          ${visaType.serviceCost.toFixed(2)}
+                          {formatCurrency(visaType.serviceCost, 'VND')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">

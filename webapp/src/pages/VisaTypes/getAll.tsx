@@ -40,6 +40,8 @@ import { Plus, Eye, Edit, Trash2, Search, Filter, Globe, Clock, DollarSign } fro
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 
+import { formatCurrency } from '@/utils/currency.js';
+
 const AllVisaTypesPage = () => {
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
@@ -270,8 +272,9 @@ const AllVisaTypesPage = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-mono">{visaType.serviceCost.toFixed(2)}</span>
+                              <span className="font-mono">
+                                {formatCurrency(visaType.serviceCost, 'VND')}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell>

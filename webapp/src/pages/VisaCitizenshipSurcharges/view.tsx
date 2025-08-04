@@ -21,6 +21,7 @@ import {
 import { ArrowLeft, Edit, Trash2, DollarSign, FileText, Globe, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
+import { formatCurrency } from '@/utils/currency.js';
 
 const ViewVisaCitizenshipSurchargePage = () => {
   const { id } = useParams();
@@ -210,7 +211,7 @@ const ViewVisaCitizenshipSurchargePage = () => {
                     Surcharge Amount
                   </label>
                   <div className="text-2xl font-bold text-green-600">
-                    ${surcharge.surchargeAmount.toFixed(2)} USD
+                    ${formatCurrency(surcharge.surchargeAmount, 'VND')}
                   </div>
                 </div>
               </div>
