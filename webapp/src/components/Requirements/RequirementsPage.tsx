@@ -130,7 +130,7 @@ export const RequirementsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="grid gap-6 p-6">
+      <div className="grid gap-6 p-6 pb-0">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">Requirements Management</h1>
@@ -151,7 +151,7 @@ export const RequirementsPage: React.FC = () => {
   }
 
   return (
-    <div className="grid gap-6 p-6">
+    <div className="grid gap-6 p-6 pb-0">
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>

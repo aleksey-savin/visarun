@@ -122,7 +122,7 @@ const AllUsersPage = () => {
   const uniqueRoles = [...new Set(allRoles)];
 
   return (
-    <div className="grid gap-6 p-6">
+    <div className="grid gap-6 p-6 pb-0">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

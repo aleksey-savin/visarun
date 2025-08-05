@@ -107,7 +107,7 @@ export default function AllOrdersPage() {
   }
 
   return (
-    <div className="grid gap-6 p-6">
+    <div className="grid gap-6 p-6 pb-0">
       <Card>
         <CardHeader>
           <CardTitle>Filters</CardTitle>

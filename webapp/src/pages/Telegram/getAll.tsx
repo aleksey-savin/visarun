@@ -142,7 +142,7 @@ const AllTelegramChannelsPage = () => {
   const uniqueTypes = [...new Set(channels.map(channel => channel.chatType))];
 
   return (
-    <div className="grid gap-6 p-6">
+    <div className="grid gap-6 p-6 pb-0">
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

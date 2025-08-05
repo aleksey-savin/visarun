@@ -36,7 +36,7 @@ export default function Layout() {
             </Button>
             <ModeToggle />
             </div> **/}
-        <Card className="h-full w-full rounded-l-none border-l-0 overflow-auto scrollbar-hide p-0 m-0">
+        <Card className="h-full w-full rounded-l-none border-l-0 overflow-auto scrollbar-hide p-0 m-0 pb-6">
           <PageHeader />
           <Outlet />
         </Card>

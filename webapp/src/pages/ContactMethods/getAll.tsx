@@ -226,7 +226,7 @@ export default function ContactMethodsManagementPage() {
   };
 
   return (
-    <div className="grid gap-6 p-6">
+    <div className="grid gap-6 p-6 pb-0">
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
