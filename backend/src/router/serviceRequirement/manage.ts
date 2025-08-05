@@ -56,7 +56,7 @@ export const initializeServiceRequirementsTrpcRoute = serviceRequirementCreatePr
         serviceType,
         serviceId,
         clientId: clientId || visaApplication.orderItem.clientId,
-        visaTypeId: visaTypeId || visaApplication.visaTypeId,
+        visaTypeId: visaTypeId || visaApplication.visaTypeId || undefined,
         citizenshipId: citizenshipId || visaApplication.orderItem.client.citizenshipId || undefined,
       };
 

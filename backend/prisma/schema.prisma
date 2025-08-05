@@ -448,10 +448,10 @@ model VisaApplication {
   id                      String                @id @default(uuid())
   orderItemId             String
   plannedCountryEntryDate DateTime?
-  applicationCode         String
+  applicationCode         String?
   submittedByAgent        Boolean
   countryId               String
-  visaTypeId              String
+  visaTypeId              String?
   note                    String?
   revisedActivationDate   DateTime?
   statusNote              String?
@@ -459,7 +459,7 @@ model VisaApplication {
   clientVisas             ClientVisa[]
   country                 Country               @relation(fields: [countryId], references: [id])
   orderItem               OrderItem             @relation(fields: [orderItemId], references: [id])
-  visaType                VisaType              @relation(fields: [visaTypeId], references: [id])
+  visaType                VisaType?             @relation(fields: [visaTypeId], references: [id])
 }
 
 model ClientVisa {
@@ -613,6 +613,7 @@ enum AuditAction {
   create
   update
   delete
+  login
 }
 
 model AuditLog {

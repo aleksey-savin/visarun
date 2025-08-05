@@ -84,6 +84,11 @@ export const createClientVisaTrpcRoute = clientVisaCreateProcedure
       throw new Error('Visa application visa type does not match specified visa type');
     }
 
+    // Check if visa application has a visa type assigned
+    if (!visaApplication.visaTypeId) {
+      throw new Error('Cannot create client visa from visa application without assigned visa type');
+    }
+
     // Check if visa application is in approved status
     if (visaApplication.status !== 'approved') {
       throw new Error('Can only create client visa from approved visa application');

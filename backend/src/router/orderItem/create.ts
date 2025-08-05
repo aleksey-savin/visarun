@@ -20,6 +20,7 @@ export const zCreateOrderItemTrpcInput = z.object({
     .optional()
     .transform(val => (val ? new Date(val) : undefined)),
   visaTypeId: z.string().uuid().optional(),
+  applicationCode: z.string().optional(),
 });
 
 export const createOrderItemTrpcRoute = orderItemCreateProcedure
@@ -173,54 +174,35 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
     let visaApplication = null;
     if (input.serviceType === 'visa') {
       try {
-        // Generate unique application code
-        const timestamp = Date.now().toString();
-        const applicationCode = `VA-${timestamp}`;
+        // Always create visa application for visa order items
+        const visaTypeId = input.visaTypeId;
 
-        // Get the first available visa type for this country if not specified
-        let visaTypeId = input.visaTypeId;
-        if (!visaTypeId) {
-          const firstVisaType = await ctx.prisma.visaType.findFirst({
-            where: { countryId: input.serviceTypeId },
-          });
-          if (firstVisaType) {
-            visaTypeId = firstVisaType.id;
-          }
+        const visaApplicationData: {
+          orderItemId: string;
+          applicationCode?: string;
+          submittedByAgent: boolean;
+          countryId: string;
+          plannedCountryEntryDate?: Date;
+          status: string;
+          visaTypeId?: string;
+        } = {
+          orderItemId: orderItem.id,
+          submittedByAgent: false,
+          countryId: input.serviceTypeId,
+          plannedCountryEntryDate: input.plannedCountryEntryDate,
+          status: 'pending',
+        };
+
+        if (visaTypeId) {
+          visaApplicationData.visaTypeId = visaTypeId;
         }
 
-        // Create visa application even without visaTypeId (we'll set a default or handle it later)
-        if (!visaTypeId) {
-          // For now, we'll create a placeholder visa type or handle this case
-          console.warn(
-            `No visa type found for country ${input.serviceTypeId}, creating VisaApplication without visaTypeId`
-          );
-
-          // Create a basic visa type if none exists
-          const defaultVisaType = await ctx.prisma.visaType.create({
-            data: {
-              countryId: input.serviceTypeId,
-              name: 'Tourist Visa',
-              serviceCost: 100,
-              isMultientry: false,
-              processingMode: 'fixed',
-              processingUnit: 'days',
-              processingValueFixed: 7,
-              submissionDayIncluded: false,
-            },
-          });
-          visaTypeId = defaultVisaType.id;
+        if (input.applicationCode) {
+          visaApplicationData.applicationCode = input.applicationCode;
         }
 
         visaApplication = await ctx.prisma.visaApplication.create({
-          data: {
-            orderItemId: orderItem.id,
-            applicationCode,
-            submittedByAgent: false,
-            countryId: input.serviceTypeId,
-            visaTypeId,
-            plannedCountryEntryDate: input.plannedCountryEntryDate,
-            status: 'pending',
-          },
+          data: visaApplicationData,
           include: {
             country: {
               select: {

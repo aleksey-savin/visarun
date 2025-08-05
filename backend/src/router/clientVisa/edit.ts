@@ -111,6 +111,10 @@ export const editClientVisaTrpcRoute = clientVisaUpdateProcedure
         throw new Error('Visa application country does not match specified country');
       }
 
+      if (!visaApplication.visaTypeId) {
+        throw new Error('Cannot link to visa application without assigned visa type');
+      }
+
       if (visaApplication.visaTypeId !== visaTypeId) {
         throw new Error('Visa application visa type does not match specified visa type');
       }
