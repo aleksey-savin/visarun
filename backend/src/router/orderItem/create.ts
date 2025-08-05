@@ -1,5 +1,6 @@
 import { orderItemCreateProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
+import { VisaApplicationStatus } from '@prisma/client';
 
 export const zCreateOrderItemTrpcInput = z.object({
   orderId: z.string().uuid(),
@@ -183,14 +184,14 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
           submittedByAgent: boolean;
           countryId: string;
           plannedCountryEntryDate?: Date;
-          status: string;
+          status: VisaApplicationStatus;
           visaTypeId?: string;
         } = {
           orderItemId: orderItem.id,
           submittedByAgent: false,
           countryId: input.serviceTypeId,
           plannedCountryEntryDate: input.plannedCountryEntryDate,
-          status: 'pending',
+          status: VisaApplicationStatus.pending,
         };
 
         if (visaTypeId) {
