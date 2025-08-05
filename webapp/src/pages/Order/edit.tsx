@@ -959,9 +959,10 @@ const EditOrderPage = () => {
           {/* Summary Sidebar */}
           <div className="grid space-y-4 sticky top-[69px] self-start lg:col-span-3">
             <span className="text-sm font-semibold">Summary</span>
-            <PrimaryClientBadge client={order.user} />
+
             <Card className="p-3 bg-secondary">
               <CardContent className="space-y-4 p-0">
+                <PrimaryClientBadge client={order.user} />
                 {(() => {
                   const currentOrder = optimisticOrder || order;
                   const visaItems =
