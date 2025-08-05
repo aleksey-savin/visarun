@@ -1,24 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { trpc } from '../../lib/trpcProvider';
 import { getAllCountriesRoute, getViewCountryRoute } from '../../lib/routes';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Globe, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import FormPageLayout from '@/components/forms/FormPageLayout';
+import CountryForm, { type CountryFormData } from '@/components/forms/CountryForm';
 
 const EditCountryPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: '',
-    favourite: false,
-    eVisaAvailable: false,
-    multivisaAvailable: false,
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
 
   const { data, isLoading, isError, error } = trpc.country.getOne.useQuery(
     { id: id! },
@@ -28,166 +21,109 @@ const EditCountryPage = () => {
   const editCountryMutation = trpc.country.edit.useMutation({
     onSuccess: () => {
       toast.success('Country updated successfully');
+      setSaveStatus('saved');
+      setLastSavedTime(new Date());
+      setIsSubmitting(false);
       navigate(getViewCountryRoute({ id: id! }));
     },
     onError: error => {
       toast.error(error.message);
+      setSaveStatus('error');
+      setIsSubmitting(false);
     },
   });
 
-  useEffect(() => {
-    if (data?.country) {
-      setFormData({
-        name: data.country.name,
-        favourite: data.country.favourite,
-        eVisaAvailable: data.country.eVisaAvailable,
-        multivisaAvailable: data.country.multivisaAvailable,
-      });
-    }
-  }, [data]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name.trim()) {
-      toast.error('Country name is required');
-      return;
-    }
+  const handleSubmit = (formData: CountryFormData) => {
+    setIsSubmitting(true);
+    setSaveStatus('saving');
     editCountryMutation.mutate({
       id: id!,
       ...formData,
     });
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleCancel = () => {
+    navigate(getViewCountryRoute({ id: id! }));
   };
 
   if (isLoading) {
+    const breadcrumbs = [
+      {
+        label: 'Countries',
+        onClick: () => navigate(getAllCountriesRoute()),
+      },
+      {
+        label: 'Loading...',
+        onClick: () => {},
+      },
+    ];
+
     return (
-      <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
+      <FormPageLayout breadcrumbs={breadcrumbs}>
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </FormPageLayout>
     );
   }
 
   if (isError || !data?.country) {
+    const breadcrumbs = [
+      {
+        label: 'Countries',
+        onClick: () => navigate(getAllCountriesRoute()),
+      },
+      {
+        label: 'Error',
+        onClick: () => {},
+      },
+    ];
+
     return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        <h3 className="font-medium text-lg mb-2">Error Loading Country</h3>
-        <p>{error?.message || 'Country not found'}</p>
-        <Button onClick={() => navigate(getAllCountriesRoute())} className="mt-4" variant="outline">
-          Back to Countries
-        </Button>
-      </div>
+      <FormPageLayout breadcrumbs={breadcrumbs}>
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <h3 className="font-medium text-lg mb-2">Error Loading Country</h3>
+          <p>{error?.message || 'Country not found'}</p>
+          <button
+            onClick={() => navigate(getAllCountriesRoute())}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Back to Countries
+          </button>
+        </div>
+      </FormPageLayout>
     );
   }
 
+  const country = data.country;
+
+  const breadcrumbs = [
+    {
+      label: country.name,
+      onClick: () => navigate(getViewCountryRoute({ id: id! })),
+    },
+    {
+      label: 'Edit Country',
+      onClick: () => {},
+    },
+  ];
+
   return (
-    <>
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(getViewCountryRoute({ id: id! }))}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Country
-        </Button>
-        <div className="text-3xl sm:text-5xl font-semibold capitalize">Edit Country</div>
-      </div>
-
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
-            Country Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Country Name *</Label>
-              <Input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={e => handleInputChange('name', e.target.value)}
-                placeholder="Enter country name"
-                required
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="eVisaAvailable"
-                  checked={formData.eVisaAvailable}
-                  onCheckedChange={checked =>
-                    handleInputChange('eVisaAvailable', checked as boolean)
-                  }
-                />
-                <Label htmlFor="eVisaAvailable" className="text-sm font-medium">
-                  eVisa Available
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="multivisaAvailable"
-                  checked={formData.multivisaAvailable}
-                  onCheckedChange={checked =>
-                    handleInputChange('multivisaAvailable', checked as boolean)
-                  }
-                />
-                <Label htmlFor="multivisaAvailable" className="text-sm font-medium">
-                  Multivisa Available
-                </Label>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="favourite"
-                  checked={formData.favourite}
-                  onCheckedChange={checked => handleInputChange('favourite', checked as boolean)}
-                />
-                <Label htmlFor="favourite" className="text-sm font-medium">
-                  Mark as Favourite
-                </Label>
-              </div>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={editCountryMutation.isPending} className="flex-1">
-                {editCountryMutation.isPending ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Update Country
-                  </>
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate(getViewCountryRoute({ id: id! }))}
-                disabled={editCountryMutation.isPending}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </>
+    <FormPageLayout breadcrumbs={breadcrumbs} saveStatus={saveStatus} lastSavedTime={lastSavedTime}>
+      <CountryForm
+        initialData={{
+          name: country.name,
+          favourite: country.favourite,
+          eVisaAvailable: country.eVisaAvailable,
+          multivisaAvailable: country.multivisaAvailable,
+        }}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={isSubmitting}
+        submitText="Update Country"
+        title="Country Information"
+      />
+    </FormPageLayout>
   );
 };
 

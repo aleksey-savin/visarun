@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,12 +26,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Puzzle, Copy, Crown, CalendarIcon } from 'lucide-react';
+import { Puzzle, Copy, Crown, CalendarIcon, AlertTriangle, Check, ArrowRight } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getAllOrdersRoute, type EditOrderRouteParams } from '@/lib/routes';
+
 import { trpc } from '@/lib/trpc';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { Badge } from '@/components/ui/badge';
 import VisaSection from '@/components/Order/visa-section';
+
 import { formatCurrency } from '@/utils/currency.js';
 
 // Form schema
@@ -56,16 +60,90 @@ const EditOrderPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [passportDate, setPassportDate] = useState<Date | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [optimisticPrimaryClientData, setOptimisticPrimaryClientData] = useState<any>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const primaryClientDataRef = useRef<any>(null);
+
+  // Query client for cache invalidation
+  const queryClient = useQueryClient();
+
+  // Helper function to check if passport expires within 6 months
+  const isPassportExpiringWithin6Months = (expirationDate: Date | null) => {
+    if (!expirationDate) return false;
+    const sixMonthsFromNow = new Date();
+    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+    return expirationDate <= sixMonthsFromNow;
+  };
+
+  // Type for order item updates
+  interface OrderItemUpdate {
+    visaTypeId?: string;
+    basePrice?: number;
+    finalPrice?: number;
+  }
+
+  // Optimistic order state for immediate UI updates
+  const [optimisticOrder, setOptimisticOrder] = useState<any>(null);
+  const pendingOperations = useRef<Set<string>>(new Set());
+  const [isCopied, setIsCopied] = useState(false);
 
   // Helper function to calculate total amount from order items
   const calculateTotalAmount = (order: any) => {
     if (!order?.items || order.items.length === 0) {
-      return '0 VND';
+      return formatCurrency(0, 'VND');
     }
     const total = order.items.reduce((sum: number, item: any) => sum + (item.finalPrice || 0), 0);
     return formatCurrency(total, 'VND');
   };
+
+  // Function to update order item optimistically
+  const updateOptimisticOrderItem = useCallback((orderItemId: string, updates: OrderItemUpdate) => {
+    setOptimisticOrder((prevOrder: any) => {
+      if (!prevOrder?.items) return prevOrder;
+
+      const updatedItems = prevOrder.items.map((item: any) => {
+        if (item.id === orderItemId) {
+          return { ...item, ...updates };
+        }
+        return item;
+      });
+
+      return { ...prevOrder, items: updatedItems };
+    });
+  }, []);
+
+  // Function to add order item optimistically
+  const addOptimisticOrderItem = useCallback((newOrderItem: any) => {
+    setOptimisticOrder((prevOrder: any) => {
+      if (!prevOrder) return prevOrder;
+
+      const existingItems = prevOrder.items || [];
+      return {
+        ...prevOrder,
+        items: [...existingItems, newOrderItem],
+      };
+    });
+
+    // Track pending operation if it's a temporary item
+    if (newOrderItem.id && newOrderItem.id.startsWith('temp-')) {
+      pendingOperations.current.add(newOrderItem.id);
+    }
+  }, []);
+
+  // Function to remove order item optimistically
+  const removeOptimisticOrderItem = useCallback((orderItemId: string) => {
+    setOptimisticOrder((prevOrder: any) => {
+      if (!prevOrder?.items) return prevOrder;
+
+      const filteredItems = prevOrder.items.filter((item: any) => item.id !== orderItemId);
+      return { ...prevOrder, items: filteredItems };
+    });
+
+    // Remove from pending operations if it was a temporary item
+    if (orderItemId && orderItemId.startsWith('temp-')) {
+      pendingOperations.current.delete(orderItemId);
+    }
+  }, []);
 
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
@@ -79,12 +157,28 @@ const EditOrderPage = () => {
     },
   });
 
+  // Watch form values for citizenship and passport date changes
+  const watchedValues = form.watch([
+    'citizenshipId',
+    'passportExpirationDate',
+    'firstName',
+    'lastName',
+  ]);
+  const [citizenshipId, passportExpirationDate, firstName, lastName] = watchedValues;
+
+  // Helper function to check if visa section should be shown
+  const shouldShowVisaSection = () => {
+    const hasCitizenship = citizenshipId && citizenshipId !== 'none';
+    const passportNotExpiringSoon =
+      passportExpirationDate && !isPassportExpiringWithin6Months(passportExpirationDate);
+    return hasCitizenship && passportNotExpiringSoon;
+  };
+
   // Fetch order data
   const {
     data: orderData,
     isLoading: orderLoading,
     error: orderError,
-    refetch: refetchOrder,
   } = trpc.order.getOne.useQuery({ id });
 
   // Fetch contact methods from database
@@ -97,29 +191,36 @@ const EditOrderPage = () => {
   // Fetch citizenships from database
   const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
 
+  // Fetch countries from database
+  const { data: countriesData } = trpc.country.getAll.useQuery();
+
+  // Fetch visa applications for this order
+  const { data: visaApplicationsData } = trpc.visaApplication.getByOrderId.useQuery(
+    { orderId: orderData?.order?.id || '' },
+    { enabled: !!orderData?.order?.id }
+  );
+
   // Fetch primary client for the user
-  const { data: primaryClientData, refetch: refetchPrimaryClient } =
-    trpc.client.getByUserId.useQuery(
-      { userId: (orderData?.order as any)?.user?.id || '' },
-      { enabled: !!(orderData?.order as any)?.user?.id }
-    );
+  const { data: primaryClientDataQuery } = trpc.client.getByUserId.useQuery(
+    { userId: (orderData?.order as any)?.user?.id || '' },
+    { enabled: !!(orderData?.order as any)?.user?.id }
+  );
+
+  // Use optimistic data if available, otherwise use query data
+  const primaryClientData = optimisticPrimaryClientData || primaryClientDataQuery;
+
+  // Update ref when data changes
+  primaryClientDataRef.current = primaryClientData;
 
   // Mutations
   const updateClientMutation = trpc.client.edit.useMutation({
-    onSuccess: () => {
-      refetchPrimaryClient(); // Refetch primary client after update
-    },
     onError: () => {},
   });
   const updateUserMutation = trpc.user.edit.useMutation();
   const updateContactMethodMutation = trpc.userContactMethod.edit.useMutation();
   const createContactMethodMutation = trpc.userContactMethod.create.useMutation();
 
-  const updateOrderMutation = trpc.order.edit.useMutation({
-    onSuccess: () => {
-      refetchOrder(); // Refetch order data to get updated timestamp
-    },
-  });
+  const updateOrderMutation = trpc.order.edit.useMutation({});
 
   // Helper function to determine active breadcrumb step
   const getBreadcrumbSteps = (status: string) => {
@@ -151,17 +252,31 @@ const EditOrderPage = () => {
 
   const autoSave = useCallback(
     async (data: OrderFormData, saveType: 'user' | 'client' | 'both') => {
-      if (isSaving || !orderData?.order) return;
+      console.log('AutoSave called:', { citizenshipId: data.citizenshipId, saveType });
+      const currentOrderData = orderData?.order;
+      const currentPrimaryClientData = primaryClientDataRef.current;
+
+      if (isSaving || !currentOrderData) {
+        console.log('AutoSave blocked:', { isSaving, hasOrder: !!currentOrderData });
+        return;
+      }
 
       setIsSaving(true);
       setSaveStatus('saving');
       setErrorMessage(null);
 
       try {
-        const order = orderData.order as any;
+        const order = currentOrderData as any;
         const user = order.user;
-        const primaryClient = primaryClientData?.client;
+        // Use ref to get current primary client data
+        const primaryClient = currentPrimaryClientData?.client;
         const clientId = primaryClient?.id;
+        console.log('AutoSave - primaryClient:', primaryClient, 'clientId:', clientId);
+
+        if (!clientId && (saveType === 'client' || saveType === 'both')) {
+          console.error('No client ID found for client update');
+          throw new Error('Client ID is required for client update');
+        }
 
         // Save user data if requested
         if (saveType === 'user' || saveType === 'both') {
@@ -206,10 +321,6 @@ const EditOrderPage = () => {
 
         // Save client data if requested
         if (saveType === 'client' || saveType === 'both') {
-          if (!clientId) {
-            throw new Error('Client ID is required for client update');
-          }
-
           // Safe date conversion for tRPC transmission - use ISO string
           let passportExpirationDate = null;
           if (data.passportExpirationDate) {
@@ -254,28 +365,40 @@ const EditOrderPage = () => {
           status: order.status,
         });
 
+        // If citizenship was updated, invalidate primary client data to update blacklist state
+        if (saveType === 'client' || saveType === 'both') {
+          // Invalidate and refetch query data
+          await queryClient.invalidateQueries({
+            queryKey: ['client', 'getByUserId', { userId: user.id }],
+          });
+        }
+
+        // Optimistically update the last saved time without refetching
         setLastSavedTime(new Date());
         setSaveStatus('saved');
       } catch {
         setSaveStatus('error');
         setErrorMessage('Failed to auto-save. Please try again.');
+
+        // Reset optimistic data only on client save errors
+        if (saveType === 'client' || saveType === 'both') {
+          setOptimisticPrimaryClientData(primaryClientDataQuery);
+        }
       } finally {
         setIsSaving(false);
       }
     },
     [
       isSaving,
-      orderData?.order,
-      primaryClientData?.client,
       updateUserMutation,
       updateClientMutation,
       updateContactMethodMutation,
       createContactMethodMutation,
       updateOrderMutation,
+      queryClient,
     ]
   );
 
-  // Manual save function for form submission
   const performSave = useCallback(
     async (data: OrderFormData) => {
       await autoSave(data, 'both');
@@ -296,6 +419,33 @@ const EditOrderPage = () => {
     },
     [autoSave]
   );
+
+  // Initialize optimistic data when query data loads for the first time
+  useEffect(() => {
+    if (primaryClientDataQuery && !optimisticPrimaryClientData) {
+      setOptimisticPrimaryClientData(primaryClientDataQuery);
+    }
+  }, [primaryClientDataQuery, optimisticPrimaryClientData]);
+
+  // Initialize and sync optimistic order when order data loads or changes
+  useEffect(() => {
+    if (orderData?.order) {
+      setOptimisticOrder((prevOptimistic: any) => {
+        // If no optimistic state yet, use the real data
+        if (!prevOptimistic) {
+          return orderData.order;
+        }
+
+        // If we have pending operations, preserve optimistic state
+        if (pendingOperations.current.size > 0) {
+          return prevOptimistic;
+        }
+
+        // Otherwise, sync with real data
+        return orderData.order;
+      });
+    }
+  }, [orderData?.order]);
 
   // Populate form when order data loads
   useEffect(() => {
@@ -352,14 +502,15 @@ const EditOrderPage = () => {
     }
   }, [orderData, contactMethodsData, primaryClientData, form]);
 
-  // Watch form values and trigger appropriate autosave
+  // Watch form values and trigger appropriate autosave (excluding citizenship)
   useEffect(() => {
     const subscription = form.watch((data, { name }) => {
-      // Remove the isDirty check as it may not work properly with Select components
+      // Skip citizenship changes - they are handled manually
+      if (name === 'citizenshipId') return;
+
       if (!name) return;
 
       // Skip auto-save if this is the initial form load
-      // We'll use a simple check: if we have orderData but no user interaction yet
       if (
         orderData?.order &&
         !form.formState.isDirty &&
@@ -380,8 +531,8 @@ const EditOrderPage = () => {
       } else if (name === 'firstName' || name === 'lastName') {
         // Name changes - save both user and client (and update order timestamp)
         debouncedAutoSave(data as OrderFormData, 'both');
-      } else if (name === 'citizenshipId' || name === 'passportExpirationDate') {
-        // Client-specific changes - save client only (and update order timestamp)
+      } else if (name === 'passportExpirationDate') {
+        // Passport date changes - save client only (and update order timestamp)
         debouncedAutoSave(data as OrderFormData, 'client');
       }
     });
@@ -432,6 +583,23 @@ const EditOrderPage = () => {
   const currentStatus = order.status;
   const breadcrumbSteps = getBreadcrumbSteps(currentStatus);
 
+  const PrimaryClientBadge = ({ client }: { client: any }) => {
+    // Use form state for optimistic updates, fallback to client data
+    const displayFirstName = firstName || client.firstName;
+    const displayLastName = lastName || client.lastName;
+
+    return (
+      <Badge variant="primary">
+        <Crown />
+        {(displayLastName || displayFirstName) && (
+          <div className="flex items-center gap-2">
+            {displayFirstName} {displayLastName}
+          </div>
+        )}
+      </Badge>
+    );
+  };
+
   return (
     <>
       <CardTitle className="sticky top-0 z-10 bg-background border-b flex py-1.5 px-6 justify-between gap-2 items-center h-[45px]">
@@ -456,39 +624,36 @@ const EditOrderPage = () => {
             </div>
           ))}
         </div>
-        <div className="text-sm text-muted-foreground">
-          {saveStatus === 'saving'
-            ? 'Saving...'
-            : saveStatus === 'error'
-              ? errorMessage || 'Failed to save'
-              : saveStatus === 'saved' && lastSavedTime
-                ? `Saved at ${lastSavedTime.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })} ✓`
-                : order.updatedAt
-                  ? `Saved at ${new Date(order.updatedAt).toLocaleTimeString([], {
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>
+            {saveStatus === 'saving'
+              ? 'Saving...'
+              : saveStatus === 'error'
+                ? errorMessage || 'Failed to save'
+                : saveStatus === 'saved' && lastSavedTime
+                  ? `Saved at ${lastSavedTime.toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
                     })} ✓`
-                  : 'Saved ✓'}
+                  : order.updatedAt
+                    ? `Saved at ${new Date(order.updatedAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })} ✓`
+                    : 'Saved ✓'}
+          </span>
         </div>
       </CardTitle>
       <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
           {/* Main Form */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-7">
             <Card className="p-6 bg-secondary">
               <CardTitle className="flex items-center justify-between gap-2 text-lg">
-                <Badge variant="primary">
-                  <Crown />
-                  {(order.user.lastName || order.user.firstName) && (
-                    <div className="flex items-center gap-2">
-                      {order.user.firstName} {order.user.lastName}
-                    </div>
-                  )}
-                </Badge>
-                <span className="text-muted-foreground text-sm">{calculateTotalAmount(order)}</span>
+                <PrimaryClientBadge client={order.user} />
+                <span className="text-muted-foreground text-sm">
+                  {calculateTotalAmount(optimisticOrder || order)}
+                </span>
               </CardTitle>
               <CardContent className="p-0">
                 <Form {...form}>
@@ -584,11 +749,28 @@ const EditOrderPage = () => {
                               <Select
                                 onValueChange={value => {
                                   field.onChange(value);
-                                  // Manually trigger dirty state and autosave
-                                  setTimeout(() => {
+
+                                  // Optimistic update for primaryClientData
+                                  if (primaryClientDataQuery?.client) {
+                                    const updatedData = {
+                                      ...primaryClientDataQuery,
+                                      client: {
+                                        ...primaryClientDataQuery.client,
+                                        citizenshipId: value === 'none' ? null : value,
+                                      },
+                                    };
+                                    setOptimisticPrimaryClientData(updatedData);
+
+                                    // Trigger autosave directly
                                     const currentData = form.getValues();
-                                    debouncedAutoSave(currentData as OrderFormData, 'client');
-                                  }, 100);
+                                    currentData.citizenshipId = value;
+
+                                    // Call autoSave directly to avoid debounce issues
+                                    console.log('About to call autoSave with:', currentData);
+                                    setTimeout(() => {
+                                      autoSave(currentData as OrderFormData, 'client');
+                                    }, 100);
+                                  }
                                 }}
                                 value={field.value}
                                 defaultValue={field.value}
@@ -643,12 +825,7 @@ const EditOrderPage = () => {
                                       field.onChange(date);
                                       setIsCalendarOpen(false);
 
-                                      // Manually trigger dirty state and autosave
-                                      setTimeout(() => {
-                                        console.log();
-                                        const currentData = form.getValues();
-                                        debouncedAutoSave(currentData as OrderFormData, 'client');
-                                      }, 100);
+                                      // Use regular form.watch for passport date changes
                                     }}
                                     captionLayout="dropdown"
                                     fromYear={new Date().getFullYear()}
@@ -698,15 +875,31 @@ const EditOrderPage = () => {
 
                     <hr className="my-6" />
 
-                    <VisaSection
-                      refetchOrder={refetchOrder}
-                      orderData={orderData}
-                      primaryClientData={primaryClientData}
-                      setErrorMessage={setErrorMessage}
-                      updateOrderMutation={updateOrderMutation}
-                      setLastSavedTime={setLastSavedTime}
-                      setSaveStatus={setSaveStatus}
-                    />
+                    {shouldShowVisaSection() ? (
+                      <VisaSection
+                        orderData={orderData}
+                        primaryClientData={primaryClientData}
+                        setErrorMessage={setErrorMessage}
+                        updateOrderMutation={updateOrderMutation}
+                        setLastSavedTime={setLastSavedTime}
+                        setSaveStatus={setSaveStatus}
+                        updateOptimisticOrderItem={updateOptimisticOrderItem}
+                        addOptimisticOrderItem={addOptimisticOrderItem}
+                        removeOptimisticOrderItem={removeOptimisticOrderItem}
+                      />
+                    ) : (
+                      <Alert className="bg-yellow-50 border-yellow-200">
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                        <AlertDescription className="text-yellow-800">
+                          {!citizenshipId || citizenshipId === 'none'
+                            ? 'Please select a citizenship to add services.'
+                            : passportExpirationDate &&
+                                isPassportExpiringWithin6Months(passportExpirationDate || null)
+                              ? 'Passport expires within 6 months. Client should renew their passport before applying for services.'
+                              : 'Please set passport expiration date to add services.'}
+                        </AlertDescription>
+                      </Alert>
+                    )}
 
                     <hr className="my-6" />
 
@@ -727,7 +920,17 @@ const EditOrderPage = () => {
                       <div className="font-medium">Service puzzle</div>
                       <Card className="flex items-center gap-1 p-1 bg-secondary rounded-md border-none">
                         <div className="flex gap-2">
-                          <Button disabled variant="accent" size="sm">
+                          <Button
+                            disabled={
+                              !citizenshipId ||
+                              citizenshipId === 'none' ||
+                              (passportExpirationDate
+                                ? isPassportExpiringWithin6Months(passportExpirationDate)
+                                : false)
+                            }
+                            variant="accent"
+                            size="sm"
+                          >
                             Visa
                           </Button>
                           <Button disabled variant="secondary" size="sm" className="border-none">
@@ -754,57 +957,163 @@ const EditOrderPage = () => {
           </div>
 
           {/* Summary Sidebar */}
-          <div className="space-y-4 sticky top-[69px] self-start">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-sm font-medium w-fit">
-                  {order.user.firstName} {order.user.lastName}
-                </div>
+          <div className="grid space-y-4 sticky top-[69px] self-start lg:col-span-3">
+            <span className="text-sm font-semibold">Summary</span>
+            <PrimaryClientBadge client={order.user} />
+            <Card className="p-3 bg-secondary">
+              <CardContent className="space-y-4 p-0">
+                {(() => {
+                  const currentOrder = optimisticOrder || order;
+                  const visaItems =
+                    currentOrder?.items?.filter((item: any) => item.serviceType === 'visa') || [];
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Visa</span>
-                    <span>dd.mm.yy</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Country</span>
-                    <span>hh.mm</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Type</span>
-                    <span></span>
-                  </div>
-                </div>
+                  const generateSummaryText = () => {
+                    const primaryClient = optimisticPrimaryClientData || primaryClientData?.client;
+                    const clientName = primaryClient
+                      ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() ||
+                        'Client'
+                      : 'Client';
+                    const total = calculateTotalAmount(currentOrder);
+                    const currentDate = new Date().toLocaleDateString('en-GB');
 
-                <hr />
+                    let summary = `VISA SERVICE ORDER\n`;
+                    summary += `Date: ${currentDate}\n`;
+                    summary += `Client: ${clientName}\n`;
 
-                <div className="text-sm">
-                  <div className="text-muted-foreground mb-1">Multi</div>
-                </div>
+                    if (visaItems.length > 0) {
+                      summary += `SERVICES:\n`;
+                      summary += `${'='.repeat(50)}\n`;
 
-                <hr />
+                      visaItems.forEach((item: any, index: number) => {
+                        const country = countriesData?.countries?.find(
+                          (c: any) => c.id === item.serviceTypeId
+                        );
+                        const countryName = country?.name || 'Unknown Country';
+                        const amount = formatCurrency(item.finalPrice || 0, 'VND');
 
-                <div className="text-sm">
-                  <div className="font-medium">Client summ</div>
-                  <div className="text-muted-foreground">Total:</div>
-                </div>
+                        // Check if it's multi-entry from visa application data
+                        const visaApp = visaApplicationsData?.visaApplications?.find(
+                          (app: any) => app.countryId === item.serviceTypeId
+                        );
+                        const isMulti =
+                          (visaApp as any)?.isMultientry ||
+                          item.note?.toLowerCase().includes('multi') ||
+                          item.finalPrice > (item.basePrice || 0);
+                        const multiType = isMulti ? ' (Multi-Entry)' : ' (Single-Entry)';
 
-                <Button variant="outline" size="sm" className="w-full">
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy
-                </Button>
+                        // Get visa type name and entry date
+                        const visaTypeName = visaApp?.visaType?.name || 'Standard';
+                        const entryDate = visaApp?.plannedCountryEntryDate
+                          ? new Date(visaApp.plannedCountryEntryDate).toLocaleDateString('en-GB')
+                          : 'Not specified';
+
+                        summary += `${index + 1}. Visa Service - ${countryName}\n`;
+                        summary += `   Type: ${visaTypeName}${multiType}\n`;
+                        summary += `   Entry Date: ${entryDate}\n`;
+                        summary += `   Amount: ${amount}\n\n`;
+                      });
+
+                      summary += `${'='.repeat(50)}\n`;
+                    } else {
+                      summary += `No services added yet\n\n`;
+                    }
+
+                    summary += `TOTAL AMOUNT: ${total}\n`;
+                    summary += `\nThank you for choosing our visa services.`;
+                    return summary;
+                  };
+
+                  const copyToClipboard = async () => {
+                    try {
+                      await navigator.clipboard.writeText(generateSummaryText());
+                      setIsCopied(true);
+                      setTimeout(() => setIsCopied(false), 2000);
+                    } catch (err) {
+                      console.error('Failed to copy to clipboard:', err);
+                    }
+                  };
+
+                  return (
+                    <>
+                      {visaItems.length > 0 ? (
+                        <div className="space-y-2 text-sm">
+                          {visaItems.map((item: any, index: number) => {
+                            const country = countriesData?.countries?.find(
+                              (c: any) => c.id === item.serviceTypeId
+                            );
+                            const countryName = country?.name || 'Unknown Country';
+                            const amount = formatCurrency(item.finalPrice || 0, 'VND');
+
+                            // Check if it's multi-entry from visa application data
+                            const visaApp = visaApplicationsData?.visaApplications?.find(
+                              (app: any) => app.countryId === item.serviceTypeId
+                            );
+                            const isMulti =
+                              (visaApp as any)?.isMultientry ||
+                              item.note?.toLowerCase().includes('multi') ||
+                              item.finalPrice > (item.basePrice || 0);
+
+                            // Get visa type name
+                            const visaTypeName = visaApp?.visaType?.name || 'Standard';
+
+                            return (
+                              <div
+                                key={item.id || index}
+                                className="flex justify-between items-center"
+                              >
+                                <span className="text-muted-foreground flex items-center gap-1">
+                                  Visa - {countryName} - {visaTypeName} {isMulti ? '- Multi' : ''}
+                                </span>
+                                <span className="font-medium">{amount}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground text-center py-4">
+                          No services added yet
+                        </div>
+                      )}
+
+                      <hr />
+
+                      <div className="text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">Total:</span>
+                          <span className="font-bold text-lg">
+                            {calculateTotalAmount(currentOrder)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className={`w-full transition-all duration-300 ${
+                          isCopied ? 'bg-green-500/10' : 'hover:bg-muted/50'
+                        }`}
+                        onClick={copyToClipboard}
+                      >
+                        {isCopied ? (
+                          <Check className="w-4 h-4 animate-pulse" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                        {isCopied ? 'Copied!' : 'Copy'}
+                      </Button>
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
 
-            <div className="flex items-center justify-between text-sm">
+            <Button
+              variant="secondary"
+              className="flex border-none items-center justify-between text-sm"
+            >
               <span>Next step</span>
-              <Button variant="ghost" size="sm">
-                →
-              </Button>
-            </div>
+              <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </CardContent>

@@ -26,7 +26,8 @@ import { trpc } from '@/lib/trpc';
 import { useDebouncedCallback } from '../../hooks/useDebounce';
 
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { AlertCircle } from 'lucide-react';
 
 interface OrderItemUpdate {
   serviceTypeId?: string;
@@ -37,34 +38,31 @@ interface OrderItemUpdate {
 }
 
 interface VisaSectionProps {
-  refetchOrder: () => void;
-  orderData: {
-    order: {
-      id: string;
-      status: string;
-    };
-    orderItems?: Array<{
-      id: string;
-      serviceType: string;
-      serviceTypeId: string;
-      note?: string;
-    }>;
-  };
+  orderData: any;
   primaryClientData: any;
   setErrorMessage: (message: string) => void;
   updateOrderMutation?: any;
   setLastSavedTime?: (time: Date) => void;
   setSaveStatus?: (status: 'idle' | 'saving' | 'saved' | 'error') => void;
+
+  updateOptimisticOrderItem?: (
+    orderItemId: string,
+    updates: { visaTypeId?: string; basePrice?: number; finalPrice?: number }
+  ) => void;
+  addOptimisticOrderItem?: (newOrderItem: any) => void;
+  removeOptimisticOrderItem?: (orderItemId: string) => void;
 }
 
 const VisaSection = ({
-  refetchOrder,
   orderData,
   primaryClientData,
   setErrorMessage,
   updateOrderMutation,
   setLastSavedTime,
   setSaveStatus,
+  updateOptimisticOrderItem,
+  addOptimisticOrderItem,
+  removeOptimisticOrderItem,
 }: VisaSectionProps) => {
   const [addedCountryCards, setAddedCountryCards] = useState<Set<string>>(new Set());
   const [selectedVisaTypes, setSelectedVisaTypes] = useState<Record<string, string>>({});
@@ -74,6 +72,10 @@ const VisaSection = ({
     Record<string, 'idle' | 'saving' | 'saved' | 'error'>
   >({});
   const [visaApplications, setVisaApplications] = useState<Record<string, any>>({});
+  const [isMultientryEnabled, setIsMultientryEnabled] = useState<Record<string, boolean>>({});
+
+  // Track when visa type updates are in progress
+  const visaTypeUpdateInProgress = useRef<boolean>(false);
 
   // Query client for cache invalidation
   const queryClient = useQueryClient();
@@ -103,9 +105,8 @@ const VisaSection = ({
   // Order item mutations
   const createOrderItemMutation = trpc.orderItem.create.useMutation({
     onSuccess: async () => {
-      await refetchOrder();
       await refetchVisaOrderItems();
-      // Invalidate relevant queries
+      // Invalidate relevant queries for optimistic updates
       queryClient.invalidateQueries({ queryKey: ['orderItems'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       // Update order timestamp to reflect changes
@@ -128,10 +129,9 @@ const VisaSection = ({
   });
   const updateOrderItemMutation = trpc.orderItem.edit.useMutation({
     onSuccess: async () => {
-      await refetchOrder();
       await refetchVisaOrderItems();
       await refetchVisaApplications();
-      // Invalidate relevant queries
+      // Invalidate relevant queries for optimistic updates
       queryClient.invalidateQueries({ queryKey: ['orderItems'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['visaApplications'] });
@@ -151,6 +151,10 @@ const VisaSection = ({
         setLastSavedTime(new Date());
         setSaveStatus('saved');
       }
+      // Note: Removed order refetch trigger - now using optimistic UI updates
+      if (visaTypeUpdateInProgress.current) {
+        visaTypeUpdateInProgress.current = false;
+      }
     },
     onError: (error, variables) => {
       console.error('Failed to update order item:', error);
@@ -166,10 +170,9 @@ const VisaSection = ({
   });
   const deleteOrderItemMutation = trpc.orderItem.delete.useMutation({
     onSuccess: async () => {
-      await refetchOrder();
       await refetchVisaOrderItems();
       await refetchVisaApplications();
-      // Invalidate relevant queries
+      // Invalidate relevant queries for optimistic updates
       queryClient.invalidateQueries({ queryKey: ['orderItems'] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['visaApplications'] });
@@ -201,8 +204,7 @@ const VisaSection = ({
   const updateVisaApplicationMutation = trpc.visaApplication.edit.useMutation({
     onSuccess: async () => {
       await refetchVisaApplications();
-      await refetchOrder();
-      // Update save status in UI
+      // Update save status in UI with optimistic update
       if (setLastSavedTime && setSaveStatus) {
         setLastSavedTime(new Date());
         setSaveStatus('saved');
@@ -264,6 +266,10 @@ const VisaSection = ({
               setSaveStatus('saved');
             }
 
+            // If this update included price changes, trigger order refetch to update total
+            // Note: Removed order refetch trigger - now using optimistic UI updates
+            // Price updates are handled optimistically in the UI
+
             // Reset to idle after 2 seconds
             setTimeout(() => {
               setAutosaveStatus(prev => ({ ...prev, [countryId]: 'idle' }));
@@ -305,10 +311,10 @@ const VisaSection = ({
       entryDate,
       entryTime,
       selectedVisaType,
-      autosaveStatus,
       onEntryDateSelect,
       onEntryTimeBlur,
       onVisaTypeSelect,
+      onMultiEntryToggle,
       onDeleteCountry,
     }: {
       countryId: string;
@@ -321,6 +327,7 @@ const VisaSection = ({
       onEntryDateSelect: (countryId: string, date: Date | null) => void;
       onEntryTimeBlur: (countryId: string, time: string) => void;
       onVisaTypeSelect: (countryId: string, visaType: string) => void;
+      onMultiEntryToggle: (countryId: string, isMultientry: boolean) => void;
       onDeleteCountry: (countryId: string) => void;
     }) => {
       // Convert between "HH:MM" and "HH:MM:SS" formats
@@ -384,25 +391,6 @@ const VisaSection = ({
                 <Badge variant={isBlacklisted ? 'destructive' : 'accent'}>
                   Visa - {country.name}
                 </Badge>
-                {/* Autosave Status Indicator */}
-                {autosaveStatus === 'saving' && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3 animate-spin" />
-                    <span>Saving...</span>
-                  </div>
-                )}
-                {autosaveStatus === 'saved' && (
-                  <div className="flex items-center gap-1 text-xs text-green-600">
-                    <CheckCircle className="h-3 w-3" />
-                    <span>Saved</span>
-                  </div>
-                )}
-                {autosaveStatus === 'error' && (
-                  <div className="flex items-center gap-1 text-xs text-red-600">
-                    <AlertCircle className="h-3 w-3" />
-                    <span>Save failed</span>
-                  </div>
-                )}
               </div>
             </div>
             <Button
@@ -488,9 +476,12 @@ const VisaSection = ({
               countryId={countryId}
               selectedVisaType={selectedVisaType}
               onVisaTypeSelect={onVisaTypeSelect}
+              onMultiEntryToggle={onMultiEntryToggle}
+              currentMultientryState={isMultientryEnabled[countryId] || false}
               disabled={isBlacklisted}
               createdOrderItems={createdOrderItems}
               debouncedUpdateOrderItem={debouncedUpdateOrderItem}
+              updateOptimisticOrderItem={updateOptimisticOrderItem}
             />
           </div>
         </Card>
@@ -510,10 +501,21 @@ const VisaSection = ({
   }) => {
     const { data: countryData } = trpc.country.getOne.useQuery({ id: countryId });
 
-    const isBlacklisted =
+    const [isBlacklisted, setIsBlacklisted] = useState(
       countryData?.country?.blacklisted?.some(
         entry => entry.citizenshipId === primaryClientData?.client?.citizenshipId
-      ) || false;
+      ) || false
+    );
+
+    useEffect(() => {
+      console.log('CitizenshipId:', primaryClientData?.client?.citizenshipId);
+      console.log('Is blacklisted: ' + isBlacklisted);
+      setIsBlacklisted(
+        countryData?.country?.blacklisted?.some(
+          entry => entry.citizenshipId === primaryClientData?.client?.citizenshipId
+        ) || false
+      );
+    }, [countryData, primaryClientData?.client?.citizenshipId]);
 
     // Reset visa type when country becomes blacklisted
     useEffect(() => {
@@ -547,6 +549,7 @@ const VisaSection = ({
         onEntryDateSelect={handleEntryDateSelect}
         onEntryTimeBlur={handleEntryTimeBlur}
         onVisaTypeSelect={handleVisaTypeSelect}
+        onMultiEntryToggle={handleMultiEntryToggle}
         onDeleteCountry={handleDeleteCountry}
       />
     );
@@ -573,15 +576,18 @@ const VisaSection = ({
       setSelectedVisaTypes(prev => ({ ...prev, [countryId]: '' }));
       setEntryDates(prev => ({ ...prev, [countryId]: null }));
       setEntryTimes(prev => ({ ...prev, [countryId]: '10:00' }));
+      setIsMultientryEnabled(prev => ({ ...prev, [countryId]: false }));
 
       // Set saving status
       if (setSaveStatus) {
         setSaveStatus('saving');
       }
 
-      // Create order item in background
-      const basePrice = 100; // Default price for visa
-      const orderItemResponse = await createOrderItemMutation.mutateAsync({
+      // Create optimistic order item first
+      const basePrice = 0; // Default price for visa
+      const tempOrderItemId = `temp-${Date.now()}-${countryId}`;
+      const optimisticOrderItem = {
+        id: tempOrderItemId,
         orderId: orderData.order.id,
         clientId: primaryClientData.client.id,
         serviceType: 'visa' as const,
@@ -592,21 +598,80 @@ const VisaSection = ({
         note: `Visa service for ${country.name}`,
         plannedCountryEntryDate: undefined,
         visaTypeId: undefined,
-      });
+      };
 
-      // Update with actual order item ID
-      setCreatedOrderItems(prev => ({ ...prev, [countryId]: orderItemResponse.orderItem.id }));
-
-      // Store visa application data if created
-      if (orderItemResponse.visaApplication) {
-        setVisaApplications(prev => ({
-          ...prev,
-          [countryId]: orderItemResponse.visaApplication as any,
-        }));
+      // Add to optimistic state immediately
+      if (addOptimisticOrderItem) {
+        addOptimisticOrderItem(optimisticOrderItem);
       }
 
-      // Refetch visa applications to get the latest data
-      await refetchVisaApplications();
+      // Store temp ID for tracking
+      setCreatedOrderItems(prev => ({ ...prev, [countryId]: tempOrderItemId }));
+
+      try {
+        // Create order item on server
+        const orderItemResponse = await createOrderItemMutation.mutateAsync({
+          orderId: orderData.order.id,
+          clientId: primaryClientData.client.id,
+          serviceType: 'visa' as const,
+          serviceTypeId: countryId,
+          basePrice,
+          finalPrice: basePrice,
+          discountAmount: 0,
+          note: `Visa service for ${country.name}`,
+          plannedCountryEntryDate: undefined,
+          visaTypeId: undefined,
+        });
+
+        // Replace temp item with actual order item
+        const actualOrderItem = orderItemResponse.orderItem;
+
+        // Remove the temporary optimistic item
+        if (removeOptimisticOrderItem) {
+          removeOptimisticOrderItem(tempOrderItemId);
+        }
+
+        // Add the real item
+        if (addOptimisticOrderItem) {
+          addOptimisticOrderItem(actualOrderItem);
+        }
+
+        // Update with actual order item ID
+        setCreatedOrderItems(prev => ({ ...prev, [countryId]: actualOrderItem.id }));
+
+        // Store visa application data if created
+        if (orderItemResponse.visaApplication) {
+          setVisaApplications(prev => ({
+            ...prev,
+            [countryId]: orderItemResponse.visaApplication as any,
+          }));
+        }
+
+        // Refetch visa applications to get the latest data
+        await refetchVisaApplications();
+      } catch (error) {
+        console.error('Failed to create order item:', error);
+
+        // Remove the optimistic item on error
+        if (removeOptimisticOrderItem) {
+          removeOptimisticOrderItem(tempOrderItemId);
+        }
+
+        // Revert UI state
+        setAddedCountryCards(prev => {
+          const updated = new Set(prev);
+          updated.delete(countryId);
+          return updated;
+        });
+        setCreatedOrderItems(prev => {
+          const updated = { ...prev };
+          delete updated[countryId];
+          return updated;
+        });
+
+        setErrorMessage('Failed to add country. Please try again.');
+        throw error;
+      }
 
       // Update save status in UI
       if (setLastSavedTime && setSaveStatus) {
@@ -646,15 +711,24 @@ const VisaSection = ({
     }
   };
 
-  // Load existing visa order items on component mount
+  // Load existing visa order items and their visa applications
   useEffect(() => {
-    if (visaOrderItemsData?.orderItems && countriesData?.countries) {
+    if (
+      visaOrderItemsData?.orderItems &&
+      visaApplicationsData?.visaApplications &&
+      countriesData?.countries
+    ) {
       const visaOrderItems = visaOrderItemsData.orderItems.filter(
         item => item.serviceType === 'visa'
       );
 
       const newAddedCountries = new Set<string>();
       const newCreatedOrderItems: Record<string, string> = {};
+      const newSelectedVisaTypes: Record<string, string> = {};
+      const newEntryDates: Record<string, Date | null> = {};
+      const newEntryTimes: Record<string, string> = {};
+      const newVisaApplications: Record<string, any> = {};
+      const newIsMultientryEnabled: Record<string, boolean> = {};
 
       visaOrderItems.forEach(item => {
         if (item.serviceTypeId) {
@@ -665,58 +739,61 @@ const VisaSection = ({
           if (isCountry) {
             newAddedCountries.add(countryId);
             newCreatedOrderItems[countryId] = item.id;
+
+            // Find corresponding visa application for this order item
+            const visaApp = visaApplicationsData.visaApplications.find(
+              (app: any) => app.orderItemId === item.id
+            );
+
+            if (visaApp) {
+              // Store visa application data
+              newVisaApplications[countryId] = visaApp;
+
+              // Set selected visa type from visa application
+              if (visaApp.visaTypeId) {
+                newSelectedVisaTypes[countryId] = visaApp.visaTypeId;
+              }
+
+              // Set multi-entry status from visa application
+              newIsMultientryEnabled[countryId] = (visaApp as any).isMultientry || false;
+
+              // Parse planned entry date and time
+              if (visaApp.plannedCountryEntryDate) {
+                const entryDateTime = new Date(visaApp.plannedCountryEntryDate);
+                newEntryDates[countryId] = entryDateTime;
+
+                // Extract time in HH:MM format
+                const hours = entryDateTime.getHours().toString().padStart(2, '0');
+                const minutes = entryDateTime.getMinutes().toString().padStart(2, '0');
+                newEntryTimes[countryId] = `${hours}:${minutes}`;
+              } else {
+                newEntryDates[countryId] = null;
+                newEntryTimes[countryId] = '10:00';
+              }
+            }
           }
         }
       });
 
       setAddedCountryCards(newAddedCountries);
       setCreatedOrderItems(newCreatedOrderItems);
-    }
-  }, [visaOrderItemsData?.orderItems, countriesData?.countries]);
-
-  // Load visa application data
-  useEffect(() => {
-    if (visaApplicationsData?.visaApplications && countriesData?.countries) {
-      const newSelectedVisaTypes: Record<string, string> = {};
-      const newEntryDates: Record<string, Date | null> = {};
-      const newEntryTimes: Record<string, string> = {};
-      const newVisaApplications: Record<string, any> = {};
-
-      visaApplicationsData.visaApplications.forEach((visaApp: any) => {
-        const countryId = visaApp.countryId;
-
-        // Store visa application data
-        newVisaApplications[countryId] = visaApp as any;
-
-        // Set selected visa type
-        if (visaApp.visaTypeId) {
-          newSelectedVisaTypes[countryId] = visaApp.visaTypeId;
-        }
-
-        // Parse planned entry date and time
-        if (visaApp.plannedCountryEntryDate) {
-          const entryDateTime = new Date(visaApp.plannedCountryEntryDate);
-          newEntryDates[countryId] = entryDateTime;
-
-          // Extract time in HH:MM format
-          const hours = entryDateTime.getHours().toString().padStart(2, '0');
-          const minutes = entryDateTime.getMinutes().toString().padStart(2, '0');
-          newEntryTimes[countryId] = `${hours}:${minutes}`;
-        } else {
-          newEntryDates[countryId] = null;
-          newEntryTimes[countryId] = '10:00';
-        }
-      });
-
       setVisaApplications(newVisaApplications);
       setSelectedVisaTypes(newSelectedVisaTypes);
       setEntryDates(newEntryDates);
       setEntryTimes(newEntryTimes);
+      setIsMultientryEnabled(newIsMultientryEnabled);
     }
-  }, [visaApplicationsData?.visaApplications, countriesData?.countries]);
+  }, [
+    visaOrderItemsData?.orderItems,
+    visaApplicationsData?.visaApplications,
+    countriesData?.countries,
+  ]);
 
   const handleVisaTypeSelect = useCallback(
     (countryId: string, visaType: string) => {
+      // Mark that a visa type update is in progress
+      visaTypeUpdateInProgress.current = true;
+
       setSelectedVisaTypes(prev => ({ ...prev, [countryId]: visaType }));
 
       // Update visa application with selected visa type
@@ -727,6 +804,26 @@ const VisaSection = ({
           visaTypeId: visaType,
         });
       }
+    },
+    [visaApplications, updateVisaApplicationMutation]
+  );
+
+  const handleMultiEntryToggle = useCallback(
+    (countryId: string, isMultientry: boolean) => {
+      setIsMultientryEnabled(prev => ({ ...prev, [countryId]: isMultientry }));
+
+      // Update visa application with multi-entry status
+      const visaApp = visaApplications[countryId];
+      if (visaApp) {
+        updateVisaApplicationMutation.mutate({
+          id: visaApp.id,
+          isMultientry: isMultientry,
+        });
+      }
+
+      // Note: Price update will be handled by the VisaTypeSelector component
+      // when the multi-entry state changes, and order refetch will happen
+      // after the price is successfully updated on the server
     },
     [visaApplications, updateVisaApplicationMutation]
   );
@@ -788,18 +885,30 @@ const VisaSection = ({
     const countryToDeleteRef = countryToDelete;
     const orderItemId = createdOrderItems[countryToDeleteRef];
 
+    // Store current state for potential rollback
+    const currentState = {
+      addedCountryCards: new Set(addedCountryCards),
+      createdOrderItems: { ...createdOrderItems },
+      selectedVisaTypes: { ...selectedVisaTypes },
+      entryDates: { ...entryDates },
+      entryTimes: { ...entryTimes },
+      isMultientryEnabled: { ...isMultientryEnabled },
+      autosaveStatus: { ...autosaveStatus },
+      visaApplications: { ...visaApplications },
+    };
+
     try {
       // Set saving status
       if (setSaveStatus) {
         setSaveStatus('saving');
       }
 
-      // Delete from server first
-      if (orderItemId) {
-        await deleteOrderItemMutation.mutateAsync({ id: orderItemId });
+      // Remove from optimistic state immediately
+      if (removeOptimisticOrderItem && orderItemId) {
+        removeOptimisticOrderItem(orderItemId);
       }
 
-      // Clear state after successful deletion
+      // Clear local state immediately for optimistic UI
       setAddedCountryCards(prev => {
         const updated = new Set(prev);
         updated.delete(countryToDeleteRef);
@@ -825,6 +934,11 @@ const VisaSection = ({
         delete updated[countryToDeleteRef];
         return updated;
       });
+      setIsMultientryEnabled(prev => {
+        const updated = { ...prev };
+        delete updated[countryToDeleteRef];
+        return updated;
+      });
       setAutosaveStatus(prev => {
         const updated = { ...prev };
         delete updated[countryToDeleteRef];
@@ -836,6 +950,11 @@ const VisaSection = ({
         return updated;
       });
 
+      // Delete from server
+      if (orderItemId) {
+        await deleteOrderItemMutation.mutateAsync({ id: orderItemId });
+      }
+
       // Update save status in UI
       if (setLastSavedTime && setSaveStatus) {
         setLastSavedTime(new Date());
@@ -844,6 +963,37 @@ const VisaSection = ({
     } catch (error) {
       console.error('Failed to delete order item:', error);
       setErrorMessage('Failed to delete country. Please try again.');
+
+      // Rollback optimistic changes on error
+      if (addOptimisticOrderItem && orderItemId) {
+        // Re-add the item to optimistic state
+        const orderItem = currentState.createdOrderItems[countryToDeleteRef];
+        if (orderItem) {
+          // We need to reconstruct the order item - this is a simplified version
+          // In a real app, you might want to store the full order item data
+          const country = countriesData?.countries?.find(c => c.id === countryToDeleteRef);
+          if (country) {
+            addOptimisticOrderItem({
+              id: orderItemId,
+              serviceType: 'visa',
+              serviceTypeId: countryToDeleteRef,
+              basePrice: 0,
+              finalPrice: 0,
+              note: `Visa service for ${country.name}`,
+            });
+          }
+        }
+      }
+
+      // Restore local state
+      setAddedCountryCards(currentState.addedCountryCards);
+      setCreatedOrderItems(currentState.createdOrderItems);
+      setSelectedVisaTypes(currentState.selectedVisaTypes);
+      setEntryDates(currentState.entryDates);
+      setEntryTimes(currentState.entryTimes);
+      setIsMultientryEnabled(currentState.isMultientryEnabled);
+      setAutosaveStatus(currentState.autosaveStatus);
+      setVisaApplications(currentState.visaApplications);
     } finally {
       setShowDeleteModal(false);
       setCountryToDelete(null);
@@ -953,13 +1103,18 @@ const VisaSection = ({
     countryId,
     selectedVisaType,
     onVisaTypeSelect,
+    onMultiEntryToggle,
+    currentMultientryState,
     disabled = false,
     createdOrderItems,
     debouncedUpdateOrderItem,
+    updateOptimisticOrderItem,
   }: {
     countryId: string;
     selectedVisaType: string;
     onVisaTypeSelect: (countryId: string, visaType: string) => void;
+    onMultiEntryToggle: (countryId: string, isMultientry: boolean) => void;
+    currentMultientryState: boolean;
     disabled?: boolean;
     createdOrderItems: Record<string, string>;
     debouncedUpdateOrderItem: (
@@ -967,8 +1122,14 @@ const VisaSection = ({
       updates: OrderItemUpdate,
       countryId: string
     ) => void;
+    updateOptimisticOrderItem?: (
+      orderItemId: string,
+      updates: { visaTypeId?: string; basePrice?: number; finalPrice?: number }
+    ) => void;
   }) => {
     const { data: visaTypesData } = trpc.visaType.getByCountry.useQuery({ countryId });
+
+    const selectedVisaTypeData = visaTypesData?.visaTypes?.find(vt => vt.id === selectedVisaType);
 
     const handleVisaTypeClick = useCallback(
       (visaTypeId: string) => {
@@ -980,20 +1141,79 @@ const VisaSection = ({
         if (orderItemId && visaTypesData?.visaTypes) {
           const selectedVisaTypeData = visaTypesData.visaTypes.find(vt => vt.id === visaTypeId);
           if (selectedVisaTypeData?.serviceCost) {
-            const newPrice = selectedVisaTypeData.serviceCost;
+            const basePrice = selectedVisaTypeData.serviceCost;
+            const isMultientry = currentMultientryState;
+            const extraCost = isMultientry ? selectedVisaTypeData.multientryExtraCost || 0 : 0;
+            const finalPrice = basePrice + extraCost;
+
+            // Update optimistic UI immediately
+            if (updateOptimisticOrderItem) {
+              updateOptimisticOrderItem(orderItemId, {
+                visaTypeId: visaTypeId,
+                basePrice: finalPrice,
+                finalPrice: finalPrice,
+              });
+            }
+
             debouncedUpdateOrderItem(
               orderItemId,
               {
                 visaTypeId: visaTypeId,
-                basePrice: newPrice,
-                finalPrice: newPrice,
+                basePrice: finalPrice,
+                finalPrice: finalPrice,
               },
               countryId
             );
           }
         }
       },
-      [countryId, onVisaTypeSelect, createdOrderItems, visaTypesData, debouncedUpdateOrderItem]
+      [
+        countryId,
+        onVisaTypeSelect,
+        createdOrderItems,
+        visaTypesData,
+        debouncedUpdateOrderItem,
+        updateOptimisticOrderItem,
+      ]
+    );
+
+    const handleMultiToggle = useCallback(
+      (isMultientry: boolean) => {
+        onMultiEntryToggle(countryId, isMultientry);
+
+        // Update order item price immediately
+        const orderItemId = createdOrderItems[countryId];
+        if (orderItemId && selectedVisaTypeData?.serviceCost) {
+          const basePrice = selectedVisaTypeData.serviceCost;
+          const extraCost = isMultientry ? selectedVisaTypeData.multientryExtraCost || 0 : 0;
+          const finalPrice = basePrice + extraCost;
+
+          // Update optimistic UI immediately
+          if (updateOptimisticOrderItem) {
+            updateOptimisticOrderItem(orderItemId, {
+              basePrice: finalPrice,
+              finalPrice: finalPrice,
+            });
+          }
+
+          debouncedUpdateOrderItem(
+            orderItemId,
+            {
+              basePrice: finalPrice,
+              finalPrice: finalPrice,
+            },
+            countryId
+          );
+        }
+      },
+      [
+        onMultiEntryToggle,
+        countryId,
+        createdOrderItems,
+        selectedVisaTypeData,
+        debouncedUpdateOrderItem,
+        updateOptimisticOrderItem,
+      ]
     );
 
     return (
@@ -1002,14 +1222,28 @@ const VisaSection = ({
           Visa type
         </Label>
         <div className="flex flex-wrap gap-2">
-          {visaTypesData?.visaTypes
-            ?.sort((a, b) => {
-              // Sort favorites first, then alphabetically
-              if (a.favourite && !b.favourite) return -1;
-              if (!a.favourite && b.favourite) return 1;
-              return a.name.localeCompare(b.name);
-            })
-            ?.map(visaType => (
+          {(() => {
+            const sortedVisaTypes =
+              visaTypesData?.visaTypes?.sort((a, b) => {
+                // Sort favorites first
+                if (a.favourite && !b.favourite) return -1;
+                if (!a.favourite && b.favourite) return 1;
+
+                // Then sort by processing unit: days first, then hours
+                if (a.processingUnit === 'days' && b.processingUnit === 'hours') return -1;
+                if (a.processingUnit === 'hours' && b.processingUnit === 'days') return 1;
+
+                // Finally sort alphabetically
+                return a.name.localeCompare(b.name);
+              }) || [];
+
+            // Group visa types
+            const favorites = sortedVisaTypes.filter(vt => vt.favourite);
+            const nonFavorites = sortedVisaTypes.filter(vt => !vt.favourite);
+            const nonFavoritesDays = nonFavorites.filter(vt => vt.processingUnit === 'days');
+            const nonFavoritesHours = nonFavorites.filter(vt => vt.processingUnit === 'hours');
+
+            const renderVisaTypeButton = (visaType: any, isLastInGroup: boolean = false) => (
               <Button
                 key={visaType.id}
                 variant={selectedVisaType === visaType.id ? 'accent' : 'secondary'}
@@ -1023,18 +1257,59 @@ const VisaSection = ({
                     handleVisaTypeClick(visaType.id);
                   }
                 }}
-                className="transition-all duration-200"
+                className={`transition-all duration-200 ${isLastInGroup ? 'mr-2' : ''}`}
               >
                 {visaType.name}
               </Button>
-            ))}
+            );
+
+            const result: React.ReactElement[] = [];
+
+            // Add favorites
+            favorites.forEach((visaType, index) => {
+              const isLastInGroup =
+                index === favorites.length - 1 &&
+                (nonFavoritesDays.length > 0 || nonFavoritesHours.length > 0);
+              result.push(renderVisaTypeButton(visaType, isLastInGroup));
+            });
+
+            // Add days processing
+            nonFavoritesDays.forEach((visaType, index) => {
+              const isLastInGroup =
+                index === nonFavoritesDays.length - 1 && nonFavoritesHours.length > 0;
+              result.push(renderVisaTypeButton(visaType, isLastInGroup));
+            });
+
+            // Add hours processing
+            nonFavoritesHours.forEach(visaType => {
+              result.push(renderVisaTypeButton(visaType));
+            });
+
+            return result;
+          })()}
+          {/* Multi Switch */}
+          {selectedVisaTypeData?.isMultientry && selectedVisaType && (
+            <div className="ps-2 flex items-center justify-start gap-2">
+              <Switch
+                checked={currentMultientryState}
+                onCheckedChange={handleMultiToggle}
+                disabled={disabled}
+              />
+              <Label className={cn('text-sm font-medium', disabled && 'text-muted-foreground')}>
+                Multi
+              </Label>
+            </div>
+          )}
         </div>
+
         <div className="flex justify-end items-center">
           <span className="font-semibold">
-            {formatCurrency(
-              visaTypesData?.visaTypes?.find(vt => vt.id === selectedVisaType)?.serviceCost || 0,
-              'VND'
-            )}
+            {(() => {
+              const basePrice = selectedVisaTypeData?.serviceCost || 0;
+              const isMultientry = currentMultientryState;
+              const extraCost = isMultientry ? selectedVisaTypeData?.multientryExtraCost || 0 : 0;
+              return formatCurrency(basePrice + extraCost, 'VND');
+            })()}
           </span>
         </div>
       </div>
@@ -1043,7 +1318,9 @@ const VisaSection = ({
 
   return (
     <div>
-      <Label className="text-sm mb-2">Add Visa</Label>
+      <div className="flex items-center justify-between mb-2">
+        <Label className="text-sm">Add Visa</Label>
+      </div>
       <div className="space-y-6">
         {/* Add Visa Header with Country Buttons */}
         <div className="flex flex-wrap items-center gap-4">
