@@ -22,10 +22,20 @@ export const createVisaTypeTrpcRoute = visaTypeCreateProcedure
     // Check if country exists
     const country = await ctx.prisma.country.findUnique({
       where: { id: input.countryId },
+      select: {
+        id: true,
+        name: true,
+        multivisaAvailable: true,
+      },
     });
 
     if (!country) {
       throw new Error('Country not found');
+    }
+
+    // Validate multi-entry settings based on country configuration
+    if (input.isMultientry && !country.multivisaAvailable) {
+      throw new Error('Multi-entry visas are not available for this country');
     }
 
     // Validate processing values based on mode
@@ -54,8 +64,14 @@ export const createVisaTypeTrpcRoute = visaTypeCreateProcedure
       }
     }
 
+    // Auto-clear multientryExtraCost if isMultientry is false or country doesn't support multivisa
+    let finalMultientryExtraCost = input.multientryExtraCost;
+    if (!input.isMultientry || !country.multivisaAvailable) {
+      finalMultientryExtraCost = undefined;
+    }
+
     // Validate multientry extra cost
-    if (input.isMultientry && input.multientryExtraCost === undefined) {
+    if (input.isMultientry && finalMultientryExtraCost === undefined) {
       throw new Error('Multientry extra cost is required when visa type is multientry');
     }
 
@@ -67,7 +83,7 @@ export const createVisaTypeTrpcRoute = visaTypeCreateProcedure
         countryId: input.countryId,
         isMultientry: input.isMultientry,
         favourite: input.favourite,
-        multientryExtraCost: input.multientryExtraCost,
+        multientryExtraCost: finalMultientryExtraCost,
         processingMode: input.processingMode,
         processingUnit: input.processingUnit,
         processingValueFixed: input.processingValueFixed,

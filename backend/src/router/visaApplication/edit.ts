@@ -7,6 +7,7 @@ export const zEditVisaApplicationTrpcInput = z.object({
   submittedByAgent: z.boolean().optional(),
   countryId: z.string().uuid().optional(),
   visaTypeId: z.string().uuid().optional(),
+  isMultientry: z.boolean().optional(),
   plannedCountryEntryDate: z
     .string()
     .datetime()

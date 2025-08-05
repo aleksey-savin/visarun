@@ -32,14 +32,30 @@ export const editVisaTypeTrpcRoute = visaTypeUpdateProcedure
     }
 
     // Check if country exists if countryId is being updated
+    let country;
     if (updateData.countryId) {
-      const country = await ctx.prisma.country.findUnique({
+      country = await ctx.prisma.country.findUnique({
         where: { id: updateData.countryId },
+        select: {
+          id: true,
+          name: true,
+          multivisaAvailable: true,
+        },
       });
 
       if (!country) {
         throw new Error('Country not found');
       }
+    } else {
+      // If country is not being updated, get current country info
+      country = await ctx.prisma.country.findUnique({
+        where: { id: existingVisaType.countryId },
+        select: {
+          id: true,
+          name: true,
+          multivisaAvailable: true,
+        },
+      });
     }
 
     // Validate processing values based on mode (use existing or new mode)
@@ -86,24 +102,43 @@ export const editVisaTypeTrpcRoute = visaTypeUpdateProcedure
       }
     }
 
-    // Validate multientry extra cost
+    // Validate multi-entry settings based on country configuration
     const isMultientry =
       updateData.isMultientry !== undefined
         ? updateData.isMultientry
         : existingVisaType.isMultientry;
-    const multientryExtraCost =
+
+    if (isMultientry && country && !country.multivisaAvailable) {
+      throw new Error('Multi-entry visas are not available for this country');
+    }
+
+    // Auto-clear multientryExtraCost if isMultientry is false or country doesn't support multivisa
+    let finalMultientryExtraCost =
       updateData.multientryExtraCost !== undefined
         ? updateData.multientryExtraCost
         : existingVisaType.multientryExtraCost;
 
-    if (isMultientry && multientryExtraCost === null) {
+    if (!isMultientry || (country && !country.multivisaAvailable)) {
+      finalMultientryExtraCost = null;
+    }
+
+    // Validate multientry extra cost
+    if (isMultientry && finalMultientryExtraCost === null) {
       throw new Error('Multientry extra cost is required when visa type is multientry');
     }
+
+    // Prepare final update data
+    const finalUpdateData = {
+      ...updateData,
+      ...((!isMultientry || (country && !country.multivisaAvailable)) && {
+        multientryExtraCost: null,
+      }),
+    };
 
     // Update visa type
     const visaType = await ctx.prisma.visaType.update({
       where: { id },
-      data: updateData,
+      data: finalUpdateData,
       include: {
         country: {
           select: {

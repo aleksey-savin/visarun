@@ -452,6 +452,7 @@ model VisaApplication {
   submittedByAgent        Boolean
   countryId               String
   visaTypeId              String?
+  isMultientry            Boolean               @default(false)
   note                    String?
   revisedActivationDate   DateTime?
   statusNote              String?
