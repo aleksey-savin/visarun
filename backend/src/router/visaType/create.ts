@@ -115,7 +115,28 @@ export const createVisaTypeTrpcRoute = visaTypeCreateProcedure
       },
     });
 
+    // Auto-assign global surcharges for this country to the new visa type
+    const globalSurcharges = await ctx.prisma.visaCitizenshipSurcharge.findMany({
+      where: {
+        countryId: input.countryId,
+        isGlobal: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (globalSurcharges.length > 0) {
+      await ctx.prisma.visaCitizenshipSurchargeVisaType.createMany({
+        data: globalSurcharges.map(surcharge => ({
+          surchargeId: surcharge.id,
+          visaTypeId: visaType.id,
+        })),
+      });
+    }
+
     return {
       visaType,
+      assignedGlobalSurchargesCount: globalSurcharges.length,
     };
   });

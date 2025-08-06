@@ -5,7 +5,8 @@ export const zEditVisaCitizenshipSurchargeTrpcInput = z.object({
   id: z.string().uuid(),
   citizenshipId: z.string().uuid(),
   countryId: z.string().uuid(),
-  visaTypeIds: z.array(z.string().uuid()).min(1, 'At least one visa type must be selected'),
+  visaTypeIds: z.array(z.string().uuid()).optional(),
+  isGlobal: z.boolean().default(false),
   surchargeAmount: z.number().min(0),
   note: z.preprocess(
     val => (typeof val === 'string' && val.trim() === '' ? null : val),
@@ -50,55 +51,99 @@ export const editVisaCitizenshipSurchargeTrpcRoute = visaCitizenshipSurchargeUpd
       throw new Error('Country not found');
     }
 
-    // Check if all visa types exist and belong to the specified country
-    const visaTypes = await ctx.prisma.visaType.findMany({
-      where: {
-        id: { in: input.visaTypeIds },
-        countryId: input.countryId,
-      },
-    });
-
-    if (visaTypes.length !== input.visaTypeIds.length) {
-      throw new Error('Some visa types not found or do not belong to the specified country');
+    // Validate isGlobal and visaTypeIds relationship
+    if (input.isGlobal && input.visaTypeIds && input.visaTypeIds.length > 0) {
+      throw new Error('Cannot specify visa types when isGlobal is true');
     }
 
-    // Check if another surcharge with the same citizenship, country and any of the visa types combination exists (excluding current one)
-    const conflictingSurcharge = await ctx.prisma.visaCitizenshipSurcharge.findFirst({
-      where: {
-        citizenshipId: input.citizenshipId,
-        countryId: input.countryId,
-        id: {
-          not: input.id,
+    if (!input.isGlobal && (!input.visaTypeIds || input.visaTypeIds.length === 0)) {
+      throw new Error('At least one visa type must be selected when isGlobal is false');
+    }
+
+    // Get visa types based on global setting
+    let finalVisaTypeIds: string[];
+
+    if (input.isGlobal) {
+      // Get all visa types for this country
+      const allVisaTypes = await ctx.prisma.visaType.findMany({
+        where: { countryId: input.countryId },
+        select: { id: true },
+      });
+      finalVisaTypeIds = allVisaTypes.map(vt => vt.id);
+    } else {
+      // Use provided visa type IDs
+      finalVisaTypeIds = input.visaTypeIds!;
+
+      // Check if all visa types exist and belong to the specified country
+      const visaTypes = await ctx.prisma.visaType.findMany({
+        where: {
+          id: { in: finalVisaTypeIds },
+          countryId: input.countryId,
         },
-        visaTypes: {
-          some: {
-            visaTypeId: { in: input.visaTypeIds },
+      });
+
+      if (visaTypes.length !== finalVisaTypeIds.length) {
+        throw new Error('Some visa types not found or do not belong to the specified country');
+      }
+    }
+
+    // Check for conflicts based on global setting
+    if (input.isGlobal) {
+      // Check if any other surcharge exists for this citizenship and country combination (excluding current one)
+      const conflictingSurcharge = await ctx.prisma.visaCitizenshipSurcharge.findFirst({
+        where: {
+          citizenshipId: input.citizenshipId,
+          countryId: input.countryId,
+          id: {
+            not: input.id,
           },
         },
-      },
-      include: {
-        visaTypes: {
-          select: {
-            visaTypeId: true,
-            visaType: {
-              select: {
-                id: true,
-                name: true,
+      });
+
+      if (conflictingSurcharge) {
+        throw new Error(
+          'Another surcharge already exists for this citizenship and country combination'
+        );
+      }
+    } else {
+      // Check if another surcharge with the same citizenship, country and any of the visa types combination exists (excluding current one)
+      const conflictingSurcharge = await ctx.prisma.visaCitizenshipSurcharge.findFirst({
+        where: {
+          citizenshipId: input.citizenshipId,
+          countryId: input.countryId,
+          id: {
+            not: input.id,
+          },
+          visaTypes: {
+            some: {
+              visaTypeId: { in: finalVisaTypeIds },
+            },
+          },
+        },
+        include: {
+          visaTypes: {
+            select: {
+              visaTypeId: true,
+              visaType: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    if (conflictingSurcharge) {
-      const conflictingVisaTypes = conflictingSurcharge.visaTypes
-        .filter(vt => input.visaTypeIds.includes(vt.visaTypeId))
-        .map(vt => vt.visaType.name);
+      if (conflictingSurcharge) {
+        const conflictingVisaTypes = conflictingSurcharge.visaTypes
+          .filter(vt => finalVisaTypeIds.includes(vt.visaTypeId))
+          .map(vt => vt.visaType.name);
 
-      throw new Error(
-        `Surcharge already exists for this citizenship, country and visa type(s): ${conflictingVisaTypes.join(', ')}`
-      );
+        throw new Error(
+          `Surcharge already exists for this citizenship, country and visa type(s): ${conflictingVisaTypes.join(', ')}`
+        );
+      }
     }
 
     // Update the visa citizenship surcharge
@@ -109,9 +154,10 @@ export const editVisaCitizenshipSurchargeTrpcRoute = visaCitizenshipSurchargeUpd
         countryId: input.countryId,
         surchargeAmount: input.surchargeAmount,
         note: input.note || null,
+        isGlobal: input.isGlobal,
         visaTypes: {
           deleteMany: {},
-          create: input.visaTypeIds.map(visaTypeId => ({
+          create: finalVisaTypeIds.map(visaTypeId => ({
             visaTypeId,
           })),
         },
@@ -122,6 +168,7 @@ export const editVisaCitizenshipSurchargeTrpcRoute = visaCitizenshipSurchargeUpd
         countryId: true,
         surchargeAmount: true,
         note: true,
+        isGlobal: true,
         citizenship: {
           select: {
             id: true,
@@ -150,5 +197,6 @@ export const editVisaCitizenshipSurchargeTrpcRoute = visaCitizenshipSurchargeUpd
 
     return {
       visaCitizenshipSurcharge: updatedVisaCitizenshipSurcharge,
+      affectedVisaTypesCount: finalVisaTypeIds.length,
     };
   });

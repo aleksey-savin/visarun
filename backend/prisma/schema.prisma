@@ -303,6 +303,7 @@ model VisaCitizenshipSurcharge {
   surchargeAmount Float
   note            String?
   countryId       String
+  isGlobal        Boolean                            @default(false)
   citizenship     Citizenship                        @relation(fields: [citizenshipId], references: [id])
   country         Country                            @relation(fields: [countryId], references: [id])
   visaTypes       VisaCitizenshipSurchargeVisaType[]

@@ -194,6 +194,7 @@ const AllVisaCitizenshipSurchargesPage = () => {
                   <TableRow>
                     <TableHead>Citizenship</TableHead>
                     <TableHead>Country</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Visa Types</TableHead>
                     <TableHead>Surcharge Amount</TableHead>
                     <TableHead>Note</TableHead>
@@ -215,16 +216,32 @@ const AllVisaCitizenshipSurchargesPage = () => {
                         <span className="font-medium">{surcharge.country.name}</span>
                       </TableCell>
                       <TableCell>
+                        <Badge
+                          variant={surcharge.isGlobal ? 'default' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {surcharge.isGlobal ? 'Global' : 'Specific'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {surcharge.visaTypes.map(vt => (
-                            <Badge key={vt.visaType.id} variant="secondary" className="text-xs">
-                              {vt.visaType.name}
-                            </Badge>
-                          ))}
+                          {surcharge.isGlobal ? (
+                            <span className="text-sm text-muted-foreground italic">
+                              All visa types in country
+                            </span>
+                          ) : (
+                            surcharge.visaTypes.map(vt => (
+                              <Badge key={vt.visaType.id} variant="secondary" className="text-xs">
+                                {vt.visaType.name}
+                              </Badge>
+                            ))
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="font-mono">${surcharge.surchargeAmount.toFixed(2)}</span>
+                        <span className="font-mono">
+                          {surcharge.surchargeAmount.toLocaleString()} VND
+                        </span>
                       </TableCell>
                       <TableCell>
                         {surcharge.note ? (

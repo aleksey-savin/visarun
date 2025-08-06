@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { trpc } from '../../lib/trpcProvider';
 import { getAllVisaTypesRoute } from '../../lib/routes';
 import { toast } from 'sonner';
-import FormPageLayout from '@/components/forms/FormPageLayout';
-import VisaTypeForm, { type VisaTypeFormData } from '@/components/forms/VisaTypeForm';
+import FormPageLayout from '@/components/Forms/FormPageLayout';
+import VisaTypeForm, { type VisaTypeFormData } from '@/components/Forms/VisaTypeForm';
 
 const EditVisaTypePage = () => {
   const navigate = useNavigate();

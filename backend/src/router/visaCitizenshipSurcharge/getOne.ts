@@ -16,6 +16,7 @@ export const getOneVisaCitizenshipSurchargeTrpcRoute = visaCitizenshipSurchargeR
         countryId: true,
         surchargeAmount: true,
         note: true,
+        isGlobal: true,
         citizenship: {
           select: {
             id: true,

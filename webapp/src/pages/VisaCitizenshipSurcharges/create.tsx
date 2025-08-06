@@ -2,38 +2,26 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { trpc } from '../../lib/trpcProvider';
 import { getAllVisaCitizenshipSurchargesRoute } from '../../lib/routes';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { VisaTypeSelector } from '@/components/Requirements/VisaTypeSelector';
-import { ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import FormPageLayout from '@/components/Forms/FormPageLayout';
+import VisaCitizenshipSurchargeForm, {
+  type VisaCitizenshipSurchargeFormData,
+} from '@/components/Forms/VisaCitizenshipSurchargeForm';
 
 const CreateVisaCitizenshipSurchargePage = () => {
   const navigate = useNavigate();
-
-  const [citizenshipId, setCitizenshipId] = useState('');
-  const [countryId, setCountryId] = useState('');
-  const [visaTypeIds, setVisaTypeIds] = useState<string[]>([]);
-  const [surchargeAmount, setSurchargeAmount] = useState<number>(0);
-  const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
   const { data: countriesData } = trpc.country.getAll.useQuery();
 
   const createVisaCitizenshipSurchargeMutation = trpc.visaCitizenshipSurcharge.create.useMutation({
-    onSuccess: () => {
-      toast.success('Visa citizenship surcharge created successfully');
+    onSuccess: data => {
+      const message =
+        data.affectedVisaTypesCount > 0
+          ? `Visa citizenship surcharge created successfully. Applied to ${data.affectedVisaTypesCount} visa types.`
+          : 'Visa citizenship surcharge created successfully';
+      toast.success(message);
       navigate(getAllVisaCitizenshipSurchargesRoute());
     },
     onError: error => {
@@ -42,171 +30,48 @@ const CreateVisaCitizenshipSurchargePage = () => {
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!citizenshipId) {
-      toast.error('Please select a citizenship');
-      return;
-    }
-
-    if (!countryId) {
-      toast.error('Please select a country');
-      return;
-    }
-
-    if (visaTypeIds.length === 0) {
-      toast.error('Please select at least one visa type');
-      return;
-    }
-
-    if (surchargeAmount < 0) {
-      toast.error('Surcharge amount cannot be negative');
-      return;
-    }
-
+  const handleSubmit = (data: VisaCitizenshipSurchargeFormData) => {
     setIsSubmitting(true);
-
-    createVisaCitizenshipSurchargeMutation.mutate({
-      citizenshipId,
-      countryId,
-      visaTypeIds,
-      surchargeAmount,
-      note: note.trim() || undefined,
-    });
+    createVisaCitizenshipSurchargeMutation.mutate(data);
   };
 
-  const handleCountryChange = (value: string) => {
-    setCountryId(value);
-    setVisaTypeIds([]); // Clear visa types when country changes
+  const handleCancel = () => {
+    navigate(getAllVisaCitizenshipSurchargesRoute());
   };
+
+  const breadcrumbs = [
+    {
+      label: 'Visa Citizenship Surcharges',
+      onClick: () => navigate(getAllVisaCitizenshipSurchargesRoute()),
+    },
+    {
+      label: 'Create New Surcharge',
+      onClick: () => {},
+    },
+  ];
+
+  if (!citizenshipsData || !countriesData) {
+    return (
+      <FormPageLayout breadcrumbs={breadcrumbs}>
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      </FormPageLayout>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Surcharges
-        </Button>
-      </div>
-
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle>Create Visa Citizenship Surcharge</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Add a new visa surcharge for a specific citizenship and country combination
-          </p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="citizenship">Citizenship *</Label>
-                <Select value={citizenshipId} onValueChange={setCitizenshipId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select citizenship" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {citizenshipsData?.citizenships.map(citizenship => (
-                      <SelectItem key={citizenship.id} value={citizenship.id}>
-                        {citizenship.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="country">Country *</Label>
-                <Select value={countryId} onValueChange={handleCountryChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countriesData?.countries.map(country => (
-                      <SelectItem key={country.id} value={country.id}>
-                        {country.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="surchargeAmount">Surcharge Amount (VND) *</Label>
-              <Input
-                id="surchargeAmount"
-                type="number"
-                min="0"
-                step="1"
-                placeholder="0.00"
-                value={surchargeAmount || ''}
-                onChange={e => setSurchargeAmount(parseFloat(e.target.value) || 0)}
-              />
-            </div>
-
-            {/* Visa Type Selector */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Visa Types *</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Select the visa types this surcharge applies to
-                </p>
-              </CardHeader>
-              <CardContent>
-                {!countryId ? (
-                  <div className="text-sm text-muted-foreground bg-gray-50 p-4 rounded-md">
-                    Please select a country first to see available visa types
-                  </div>
-                ) : (
-                  <VisaTypeSelector
-                    selectedIds={visaTypeIds}
-                    onSelectionChange={setVisaTypeIds}
-                    disabled={isSubmitting}
-                    countryFilter={countryId}
-                  />
-                )}
-              </CardContent>
-            </Card>
-
-            <div className="space-y-2">
-              <Label htmlFor="note">Note (Optional)</Label>
-              <Textarea
-                id="note"
-                placeholder="Add any additional notes about this surcharge..."
-                value={note}
-                onChange={e => setNote(e.target.value)}
-                maxLength={500}
-                rows={3}
-              />
-              <div className="text-xs text-muted-foreground text-right">
-                {note.length}/500 characters
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                <Save className="h-4 w-4 mr-2" />
-                {isSubmitting ? 'Creating...' : 'Create Surcharge'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <FormPageLayout breadcrumbs={breadcrumbs}>
+      <VisaCitizenshipSurchargeForm
+        citizenships={citizenshipsData.citizenships}
+        countries={countriesData.countries}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={isSubmitting}
+        submitText="Create Surcharge"
+        title="Visa Citizenship Surcharge Information"
+      />
+    </FormPageLayout>
   );
 };
 

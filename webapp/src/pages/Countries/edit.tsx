@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { trpc } from '../../lib/trpcProvider';
 import { getAllCountriesRoute, getViewCountryRoute } from '../../lib/routes';
 import { toast } from 'sonner';
-import FormPageLayout from '@/components/forms/FormPageLayout';
-import CountryForm, { type CountryFormData } from '@/components/forms/CountryForm';
+import FormPageLayout from '@/components/Forms/FormPageLayout';
+import CountryForm, { type CountryFormData } from '@/components/Forms/CountryForm';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -161,8 +161,8 @@ const EditCountryPage = () => {
           favourite: country.favourite,
           eVisaAvailable: country.eVisaAvailable,
           multivisaAvailable: country.multivisaAvailable,
-          multivisaIsGlobal: (country as any).multivisaIsGlobal,
-          multivisaGlobalExtraCost: (country as any).multivisaGlobalExtraCost,
+          multivisaIsGlobal: country.multivisaIsGlobal,
+          multivisaGlobalExtraCost: country.multivisaGlobalExtraCost ?? undefined,
         }}
         onSubmit={handleSubmit}
         onCancel={handleCancel}

@@ -21,7 +21,6 @@ import {
 import { ArrowLeft, Edit, Trash2, DollarSign, FileText, Globe, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
-import { formatCurrency } from '@/utils/currency.js';
 
 const ViewVisaCitizenshipSurchargePage = () => {
   const { id } = useParams();
@@ -196,13 +195,30 @@ const ViewVisaCitizenshipSurchargePage = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Application Type
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={surcharge.isGlobal ? 'default' : 'secondary'} className="w-fit">
+                      {surcharge.isGlobal ? 'Global (All Visa Types)' : 'Specific Visa Types'}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Visa Types</label>
                   <div className="flex flex-wrap gap-2">
-                    {surcharge.visaTypes.map(vt => (
-                      <Badge key={vt.visaType.id} variant="secondary" className="w-fit">
-                        {vt.visaType.name}
-                      </Badge>
-                    ))}
+                    {surcharge.isGlobal ? (
+                      <div className="text-sm text-muted-foreground italic p-2 bg-muted rounded">
+                        Applies to all current and future visa types in {surcharge.country.name}
+                      </div>
+                    ) : (
+                      surcharge.visaTypes.map(vt => (
+                        <Badge key={vt.visaType.id} variant="secondary" className="w-fit">
+                          {vt.visaType.name}
+                        </Badge>
+                      ))
+                    )}
                   </div>
                 </div>
 
@@ -211,7 +227,7 @@ const ViewVisaCitizenshipSurchargePage = () => {
                     Surcharge Amount
                   </label>
                   <div className="text-2xl font-bold text-green-600">
-                    ${formatCurrency(surcharge.surchargeAmount, 'VND')}
+                    {surcharge.surchargeAmount.toLocaleString()} VND
                   </div>
                 </div>
               </div>
@@ -247,13 +263,15 @@ const ViewVisaCitizenshipSurchargePage = () => {
                     Citizens of <span className="font-semibold">{surcharge.citizenship.name}</span>{' '}
                     applying for{' '}
                     <span className="font-semibold">
-                      {surcharge.visaTypes.map(vt => vt.visaType.name).join(', ')}
+                      {surcharge.isGlobal
+                        ? 'any visa type'
+                        : surcharge.visaTypes.map(vt => vt.visaType.name).join(', ')}
                     </span>{' '}
-                    visa{surcharge.visaTypes.length > 1 ? 's' : ''} to{' '}
+                    {surcharge.isGlobal ? '' : surcharge.visaTypes.length > 1 ? 'visas' : 'visa'} to{' '}
                     <span className="font-semibold">{surcharge.country.name}</span> will be charged
                     an additional{' '}
                     <span className="font-semibold text-green-600">
-                      ${surcharge.surchargeAmount.toFixed(2)} USD
+                      {surcharge.surchargeAmount.toLocaleString()} VND
                     </span>{' '}
                     surcharge.
                   </p>
