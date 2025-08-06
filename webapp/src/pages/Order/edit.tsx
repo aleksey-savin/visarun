@@ -26,7 +26,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Puzzle, Copy, Crown, CalendarIcon, AlertTriangle, Check, ArrowRight } from 'lucide-react';
+import {
+  Puzzle,
+  Copy,
+  Crown,
+  CalendarIcon,
+  AlertTriangle,
+  Check,
+  ArrowRight,
+  Minimize2,
+} from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getAllOrdersRoute, type EditOrderRouteParams } from '@/lib/routes';
 
@@ -904,11 +913,8 @@ const EditOrderPage = () => {
                     <hr className="my-6" />
 
                     {/* Action Buttons */}
-                    <div className="flex justify-between">
-                      <div></div>
-                      <Button type="submit" disabled={isSubmitting || isSaving}>
-                        Save & close
-                      </Button>
+                    <div className="flex justify-end">
+                      <Button>Confirm</Button>
                     </div>
                   </form>
                 </Form>
@@ -1114,6 +1120,15 @@ const EditOrderPage = () => {
             >
               <span>Next step</span>
               <ArrowRight className="w-4 h-4" />
+            </Button>
+            <Button
+              type="submit"
+              variant="secondary"
+              className="flex border-none items-center justify-between text-sm"
+              disabled={isSubmitting || isSaving}
+            >
+              Save & close
+              <Minimize2 />
             </Button>
           </div>
         </div>

@@ -26,6 +26,8 @@ export const createVisaTypeTrpcRoute = visaTypeCreateProcedure
         id: true,
         name: true,
         multivisaAvailable: true,
+        multivisaIsGlobal: true,
+        multivisaGlobalExtraCost: true,
       },
     });
 
@@ -33,9 +35,19 @@ export const createVisaTypeTrpcRoute = visaTypeCreateProcedure
       throw new Error('Country not found');
     }
 
-    // Validate multi-entry settings based on country configuration
-    if (input.isMultientry && !country.multivisaAvailable) {
-      throw new Error('Multi-entry visas are not available for this country');
+    // Handle global multivisa settings
+    let finalIsMultientry = input.isMultientry;
+    let finalMultientryExtraCost = input.multientryExtraCost;
+
+    if (country.multivisaIsGlobal && country.multivisaGlobalExtraCost !== null) {
+      // Override with global settings
+      finalIsMultientry = true;
+      finalMultientryExtraCost = country.multivisaGlobalExtraCost;
+    } else {
+      // Validate multi-entry settings based on country configuration
+      if (input.isMultientry && !country.multivisaAvailable) {
+        throw new Error('Multi-entry visas are not available for this country');
+      }
     }
 
     // Validate processing values based on mode
@@ -64,15 +76,17 @@ export const createVisaTypeTrpcRoute = visaTypeCreateProcedure
       }
     }
 
-    // Auto-clear multientryExtraCost if isMultientry is false or country doesn't support multivisa
-    let finalMultientryExtraCost = input.multientryExtraCost;
-    if (!input.isMultientry || !country.multivisaAvailable) {
-      finalMultientryExtraCost = undefined;
-    }
+    // Validate multientry extra cost (only if not using global settings)
+    if (!country.multivisaIsGlobal) {
+      // Auto-clear multientryExtraCost if isMultientry is false or country doesn't support multivisa
+      if (!finalIsMultientry || !country.multivisaAvailable) {
+        finalMultientryExtraCost = undefined;
+      }
 
-    // Validate multientry extra cost
-    if (input.isMultientry && finalMultientryExtraCost === undefined) {
-      throw new Error('Multientry extra cost is required when visa type is multientry');
+      // Validate multientry extra cost
+      if (finalIsMultientry && finalMultientryExtraCost === undefined) {
+        throw new Error('Multientry extra cost is required when visa type is multientry');
+      }
     }
 
     // Create visa type
@@ -81,7 +95,7 @@ export const createVisaTypeTrpcRoute = visaTypeCreateProcedure
         name: input.name,
         serviceCost: input.serviceCost,
         countryId: input.countryId,
-        isMultientry: input.isMultientry,
+        isMultientry: finalIsMultientry,
         favourite: input.favourite,
         multientryExtraCost: finalMultientryExtraCost,
         processingMode: input.processingMode,

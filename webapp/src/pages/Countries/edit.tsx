@@ -5,6 +5,16 @@ import { getAllCountriesRoute, getViewCountryRoute } from '../../lib/routes';
 import { toast } from 'sonner';
 import FormPageLayout from '@/components/forms/FormPageLayout';
 import CountryForm, { type CountryFormData } from '@/components/forms/CountryForm';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const EditCountryPage = () => {
   const { id } = useParams();
@@ -12,6 +22,8 @@ const EditCountryPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<CountryFormData | null>(null);
 
   const { data, isLoading, isError, error } = trpc.country.getOne.useQuery(
     { id: id! },
@@ -19,27 +31,60 @@ const EditCountryPage = () => {
   );
 
   const editCountryMutation = trpc.country.edit.useMutation({
-    onSuccess: () => {
-      toast.success('Country updated successfully');
+    onSuccess: data => {
+      const message =
+        data.affectedVisaTypesCount > 0
+          ? `Country updated successfully. ${data.affectedVisaTypesCount} visa types were updated with global multi-entry settings.`
+          : 'Country updated successfully';
+      toast.success(message);
       setSaveStatus('saved');
       setLastSavedTime(new Date());
       setIsSubmitting(false);
+      setShowConfirmDialog(false);
+      setPendingFormData(null);
       navigate(getViewCountryRoute({ id: id! }));
     },
     onError: error => {
       toast.error(error.message);
       setSaveStatus('error');
       setIsSubmitting(false);
+      setShowConfirmDialog(false);
+      setPendingFormData(null);
     },
   });
 
   const handleSubmit = (formData: CountryFormData) => {
+    // Check if global multivisa is being enabled with a cost
+    if (formData.multivisaIsGlobal && formData.multivisaGlobalExtraCost !== undefined) {
+      // Need to get visa types count first
+      setPendingFormData(formData);
+      // For now, we'll show the dialog and let the backend handle the count
+      setShowConfirmDialog(true);
+    } else {
+      executeUpdate(formData);
+    }
+  };
+
+  const executeUpdate = (formData: CountryFormData) => {
     setIsSubmitting(true);
     setSaveStatus('saving');
     editCountryMutation.mutate({
       id: id!,
       ...formData,
     });
+  };
+
+  const handleConfirmGlobalUpdate = () => {
+    if (pendingFormData) {
+      executeUpdate(pendingFormData);
+    }
+  };
+
+  const handleCancelGlobalUpdate = () => {
+    setShowConfirmDialog(false);
+    setPendingFormData(null);
+    setIsSubmitting(false);
+    setSaveStatus('idle');
   };
 
   const handleCancel = () => {
@@ -116,6 +161,8 @@ const EditCountryPage = () => {
           favourite: country.favourite,
           eVisaAvailable: country.eVisaAvailable,
           multivisaAvailable: country.multivisaAvailable,
+          multivisaIsGlobal: (country as any).multivisaIsGlobal,
+          multivisaGlobalExtraCost: (country as any).multivisaGlobalExtraCost,
         }}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
@@ -123,6 +170,33 @@ const EditCountryPage = () => {
         submitText="Update Country"
         title="Country Information"
       />
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Global Multi-entry Update</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to enable global multi-entry settings for this country. This will:
+              <br />
+              <br />
+              • Set all existing visa types for this country to multi-entry
+              <br />• Update their multi-entry extra cost to{' '}
+              {pendingFormData?.multivisaGlobalExtraCost?.toLocaleString()} VND
+              <br />
+              • Make multi-entry settings non-editable for individual visa types
+              <br />
+              <br />
+              This action will affect all visa types for this country. Do you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelGlobalUpdate}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmGlobalUpdate}>
+              Yes, Update All Visa Types
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </FormPageLayout>
   );
 };

@@ -254,18 +254,20 @@ model Citizenship {
 }
 
 model Country {
-  id                 String                     @id @default(uuid())
-  name               String                     @unique
-  favourite          Boolean                    @default(false)
-  eVisaAvailable     Boolean                    @default(false)
-  multivisaAvailable Boolean                    @default(false)
-  blacklisted        Blacklisted[]
-  cities             City[]
-  ClientVisa         ClientVisa[]
-  VisaApplication    VisaApplication[]
-  surcharges         VisaCitizenshipSurcharge[]
-  visaFree           VisaFree[]
-  VisaType           VisaType[]
+  id                       String                     @id @default(uuid())
+  name                     String                     @unique
+  favourite                Boolean                    @default(false)
+  eVisaAvailable           Boolean                    @default(false)
+  multivisaAvailable       Boolean                    @default(false)
+  multivisaIsGlobal        Boolean                    @default(false)
+  multivisaGlobalExtraCost Float?
+  blacklisted              Blacklisted[]
+  cities                   City[]
+  ClientVisa               ClientVisa[]
+  VisaApplication          VisaApplication[]
+  surcharges               VisaCitizenshipSurcharge[]
+  visaFree                 VisaFree[]
+  VisaType                 VisaType[]
 }
 
 model City {

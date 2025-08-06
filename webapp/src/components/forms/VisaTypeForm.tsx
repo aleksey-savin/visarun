@@ -46,7 +46,11 @@ export type VisaTypeFormData = z.infer<typeof visaTypeSchema>;
 interface Country {
   id: string;
   name: string;
+  favourite: boolean;
+  eVisaAvailable: boolean;
   multivisaAvailable: boolean;
+  multivisaIsGlobal: boolean;
+  multivisaGlobalExtraCost: number | null;
 }
 
 interface VisaTypeFormProps {
@@ -93,12 +97,21 @@ const VisaTypeForm = ({
   // Get selected country info
   const selectedCountry = countries.find(country => country.id === countryId);
   const isMultivisaAvailable = selectedCountry?.multivisaAvailable ?? false;
+  const isGlobalMultivisa = selectedCountry?.multivisaIsGlobal ?? false;
+  const globalMultivisaCost = selectedCountry?.multivisaGlobalExtraCost ?? null;
 
-  // Handle country change - reset multi-entry settings if not supported
+  // Handle country change - set global settings or reset multi-entry settings
   useEffect(() => {
-    if (countryId && selectedCountry && !selectedCountry.multivisaAvailable) {
-      form.setValue('isMultientry', false);
-      form.setValue('multientryExtraCost', undefined);
+    if (countryId && selectedCountry) {
+      if (selectedCountry.multivisaIsGlobal && selectedCountry.multivisaGlobalExtraCost !== null) {
+        // Apply global settings
+        form.setValue('isMultientry', true);
+        form.setValue('multientryExtraCost', selectedCountry.multivisaGlobalExtraCost);
+      } else if (!selectedCountry.multivisaAvailable) {
+        // Reset if multivisa not available
+        form.setValue('isMultientry', false);
+        form.setValue('multientryExtraCost', undefined);
+      }
     }
   }, [countryId, selectedCountry, form]);
 
@@ -260,16 +273,21 @@ const VisaTypeForm = ({
                           <Checkbox
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            disabled={!isMultivisaAvailable}
+                            disabled={!isMultivisaAvailable || isGlobalMultivisa}
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel
-                            className={`text-sm font-medium ${!isMultivisaAvailable ? 'text-muted-foreground' : ''}`}
+                            className={`text-sm font-medium ${!isMultivisaAvailable || isGlobalMultivisa ? 'text-muted-foreground' : ''}`}
                           >
                             Multi-entry visa available
                           </FormLabel>
-                          {!isMultivisaAvailable && countryId && (
+                          {isGlobalMultivisa && countryId && (
+                            <p className="text-xs text-muted-foreground">
+                              Global multi-entry settings are enabled for this country
+                            </p>
+                          )}
+                          {!isMultivisaAvailable && countryId && !isGlobalMultivisa && (
                             <p className="text-xs text-muted-foreground">
                               Multi-entry visas are not available for the selected country
                             </p>
@@ -297,14 +315,21 @@ const VisaTypeForm = ({
                                 onChange={e =>
                                   field.onChange(parseFloat(e.target.value) || undefined)
                                 }
+                                disabled={isGlobalMultivisa}
                               />
-                              {field.value === undefined && (
+                              {field.value === undefined && !isGlobalMultivisa && (
                                 <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 pointer-events-none">
                                   *
                                 </span>
                               )}
                             </div>
                           </FormControl>
+                          {isGlobalMultivisa && (
+                            <p className="text-xs text-muted-foreground">
+                              Cost is set globally for this country:{' '}
+                              {globalMultivisaCost?.toLocaleString()} VND
+                            </p>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -497,14 +522,28 @@ const VisaTypeForm = ({
               />
 
               {/* Info Alert */}
-              {!isMultivisaAvailable && countryId && (
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertDescription>
-                    The selected country does not support multi-entry visas. Only single-entry visa
-                    types can be created.
-                  </AlertDescription>
-                </Alert>
+              {countryId && (
+                <>
+                  {isGlobalMultivisa && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        This country has global multi-entry settings enabled. All visa types will be
+                        multi-entry with a cost of {globalMultivisaCost?.toLocaleString()} VND.
+                        These settings cannot be changed for individual visa types.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {!isMultivisaAvailable && !isGlobalMultivisa && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        The selected country does not support multi-entry visas. Only single-entry
+                        visa types can be created.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </>
               )}
 
               <div className="flex gap-4 pt-4">

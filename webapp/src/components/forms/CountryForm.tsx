@@ -23,6 +23,8 @@ const countrySchema = z.object({
   favourite: z.boolean(),
   eVisaAvailable: z.boolean(),
   multivisaAvailable: z.boolean(),
+  multivisaIsGlobal: z.boolean().optional(),
+  multivisaGlobalExtraCost: z.number().min(0, 'Extra cost cannot be negative').optional(),
 });
 
 export type CountryFormData = z.infer<typeof countrySchema>;
@@ -51,8 +53,14 @@ const CountryForm = ({
       favourite: initialData?.favourite || false,
       eVisaAvailable: initialData?.eVisaAvailable || false,
       multivisaAvailable: initialData?.multivisaAvailable || false,
+      multivisaIsGlobal: initialData?.multivisaIsGlobal || false,
+      multivisaGlobalExtraCost: initialData?.multivisaGlobalExtraCost || undefined,
     },
   });
+
+  // Watch form values for conditional rendering
+  const watchedValues = form.watch(['multivisaAvailable', 'multivisaIsGlobal']);
+  const [multivisaAvailable, multivisaIsGlobal] = watchedValues;
 
   const handleSubmit = (data: CountryFormData) => {
     onSubmit(data);
@@ -119,7 +127,17 @@ const CountryForm = ({
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={checked => {
+                            field.onChange(checked);
+                            // Reset global settings when multivisa is disabled
+                            if (!checked) {
+                              form.setValue('multivisaIsGlobal', false);
+                              form.setValue('multivisaGlobalExtraCost', undefined);
+                            }
+                          }}
+                        />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="text-sm font-medium">
@@ -133,12 +151,91 @@ const CountryForm = ({
                   )}
                 />
 
+                {multivisaAvailable && (
+                  <div className="ml-6 space-y-4 border-l-2 border-muted pl-4">
+                    <FormField
+                      control={form.control}
+                      name="multivisaIsGlobal"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={checked => {
+                                field.onChange(checked);
+                                // Reset global cost when global is disabled
+                                if (!checked) {
+                                  form.setValue('multivisaGlobalExtraCost', undefined);
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-medium">
+                              Global Multi-entry Settings
+                            </FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                              Apply same multi-entry cost to all visa types in this country
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    {multivisaIsGlobal && (
+                      <FormField
+                        control={form.control}
+                        name="multivisaGlobalExtraCost"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Global Multi-entry Extra Cost (VND)</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  placeholder="Enter global extra cost"
+                                  {...field}
+                                  value={field.value || ''}
+                                  onChange={e =>
+                                    field.onChange(parseFloat(e.target.value) || undefined)
+                                  }
+                                />
+                                {!field.value && (
+                                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 pointer-events-none">
+                                    *
+                                  </span>
+                                )}
+                              </div>
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">
+                              This cost will be applied to all visa types in this country
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                )}
+
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    If multi-entry visas are disabled, all visa types for this country will be
-                    single-entry only. Existing multi-entry visa types will be automatically
-                    converted to single-entry.
+                    {multivisaIsGlobal ? (
+                      <>
+                        Global multi-entry settings will automatically update all existing visa
+                        types for this country. They will be set to multi-entry with the specified
+                        extra cost.
+                      </>
+                    ) : (
+                      <>
+                        If multi-entry visas are disabled, all visa types for this country will be
+                        single-entry only. Existing multi-entry visa types will be automatically
+                        converted to single-entry.
+                      </>
+                    )}
                   </AlertDescription>
                 </Alert>
               </div>

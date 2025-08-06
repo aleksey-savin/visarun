@@ -40,6 +40,8 @@ export const editVisaTypeTrpcRoute = visaTypeUpdateProcedure
           id: true,
           name: true,
           multivisaAvailable: true,
+          multivisaIsGlobal: true,
+          multivisaGlobalExtraCost: true,
         },
       });
 
@@ -54,6 +56,8 @@ export const editVisaTypeTrpcRoute = visaTypeUpdateProcedure
           id: true,
           name: true,
           multivisaAvailable: true,
+          multivisaIsGlobal: true,
+          multivisaGlobalExtraCost: true,
         },
       });
     }
@@ -102,37 +106,47 @@ export const editVisaTypeTrpcRoute = visaTypeUpdateProcedure
       }
     }
 
-    // Validate multi-entry settings based on country configuration
-    const isMultientry =
-      updateData.isMultientry !== undefined
-        ? updateData.isMultientry
-        : existingVisaType.isMultientry;
+    // Handle global multivisa settings
+    let finalIsMultientry: boolean;
+    let finalMultientryExtraCost: number | null;
 
-    if (isMultientry && country && !country.multivisaAvailable) {
-      throw new Error('Multi-entry visas are not available for this country');
-    }
+    if (country && country.multivisaIsGlobal && country.multivisaGlobalExtraCost !== null) {
+      // Override with global settings
+      finalIsMultientry = true;
+      finalMultientryExtraCost = country.multivisaGlobalExtraCost;
+    } else {
+      // Use provided or existing values
+      finalIsMultientry =
+        updateData.isMultientry !== undefined
+          ? updateData.isMultientry
+          : existingVisaType.isMultientry;
 
-    // Auto-clear multientryExtraCost if isMultientry is false or country doesn't support multivisa
-    let finalMultientryExtraCost =
-      updateData.multientryExtraCost !== undefined
-        ? updateData.multientryExtraCost
-        : existingVisaType.multientryExtraCost;
+      // Validate multi-entry settings based on country configuration
+      if (finalIsMultientry && country && !country.multivisaAvailable) {
+        throw new Error('Multi-entry visas are not available for this country');
+      }
 
-    if (!isMultientry || (country && !country.multivisaAvailable)) {
-      finalMultientryExtraCost = null;
-    }
+      // Auto-clear multientryExtraCost if isMultientry is false or country doesn't support multivisa
+      finalMultientryExtraCost =
+        updateData.multientryExtraCost !== undefined
+          ? updateData.multientryExtraCost
+          : existingVisaType.multientryExtraCost;
 
-    // Validate multientry extra cost
-    if (isMultientry && finalMultientryExtraCost === null) {
-      throw new Error('Multientry extra cost is required when visa type is multientry');
+      if (!finalIsMultientry || (country && !country.multivisaAvailable)) {
+        finalMultientryExtraCost = null;
+      }
+
+      // Validate multientry extra cost
+      if (finalIsMultientry && finalMultientryExtraCost === null) {
+        throw new Error('Multientry extra cost is required when visa type is multientry');
+      }
     }
 
     // Prepare final update data
     const finalUpdateData = {
       ...updateData,
-      ...((!isMultientry || (country && !country.multivisaAvailable)) && {
-        multientryExtraCost: null,
-      }),
+      isMultientry: finalIsMultientry,
+      multientryExtraCost: finalMultientryExtraCost,
     };
 
     // Update visa type
