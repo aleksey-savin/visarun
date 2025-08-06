@@ -148,7 +148,7 @@ Response:
 
 ### Middleware Architecture
 
-1. **Prisma Middleware** (`src/middleware/audit.ts`):
+1. **Prisma Middleware** (`src/middleware/audit.js`):
    - Intercepts all Prisma operations
    - Fetches current data before updates/deletes
    - Calculates only changed fields for storage efficiency

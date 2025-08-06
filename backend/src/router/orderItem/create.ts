@@ -39,6 +39,9 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
     // Check if client exists
     const client = await ctx.prisma.client.findUnique({
       where: { id: input.clientId },
+      include: {
+        citizenship: true,
+      },
     });
 
     if (!client) {
@@ -72,6 +75,60 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
         discountRule.appliesToService !== input.serviceType
       ) {
         throw new Error('Discount rule does not apply to this service type');
+      }
+    }
+
+    // Calculate citizenship surcharge for visa services
+    let citizenshipSurcharge = 0;
+    let surchargeNote = null;
+
+    if (input.serviceType === 'visa' && client.citizenship) {
+      if (client?.citizenship) {
+        // Look for applicable citizenship surcharge
+        const surchargeQuery = {
+          citizenshipId: client.citizenship.id,
+          countryId: input.serviceTypeId,
+        };
+
+        let surcharge = null;
+
+        // If visa type is specified, look for specific surcharge first
+        if (input.visaTypeId) {
+          surcharge = await ctx.prisma.visaCitizenshipSurcharge.findFirst({
+            where: {
+              ...surchargeQuery,
+              isGlobal: false,
+              visaTypes: {
+                some: {
+                  visaTypeId: input.visaTypeId,
+                },
+              },
+            },
+            include: {
+              citizenship: true,
+              country: true,
+            },
+          });
+        }
+
+        // If no specific surcharge found, look for global surcharge
+        if (!surcharge) {
+          surcharge = await ctx.prisma.visaCitizenshipSurcharge.findFirst({
+            where: {
+              ...surchargeQuery,
+              isGlobal: true,
+            },
+            include: {
+              citizenship: true,
+              country: true,
+            },
+          });
+        }
+
+        if (surcharge) {
+          citizenshipSurcharge = surcharge.surchargeAmount;
+          surchargeNote = surcharge.note;
+        }
       }
     }
 
@@ -113,6 +170,9 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
       }
     }
 
+    // Recalculate final price including citizenship surcharge
+    const adjustedFinalPrice = input.finalPrice + citizenshipSurcharge;
+
     // Create order item
     const orderItem = await ctx.prisma.orderItem.create({
       data: {
@@ -124,9 +184,13 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
         discountRuleId: input.discountRuleId,
         discountAmount: input.discountAmount,
         discountComment: input.discountComment,
-        note: input.note,
+        note: surchargeNote
+          ? input.note
+            ? `${input.note} | Citizenship surcharge: ${surchargeNote}`
+            : `Citizenship surcharge: ${surchargeNote}`
+          : input.note,
         basePrice: input.basePrice,
-        finalPrice: input.finalPrice,
+        finalPrice: adjustedFinalPrice,
       },
       include: {
         order: {
@@ -235,5 +299,13 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
     return {
       orderItem,
       visaApplication,
+      surchargeApplied:
+        citizenshipSurcharge > 0
+          ? {
+              amount: citizenshipSurcharge,
+              note: surchargeNote,
+              message: `Дополнительный сбор для граждан ${client.citizenship?.name} составляет ${citizenshipSurcharge} VND`,
+            }
+          : null,
     };
   });

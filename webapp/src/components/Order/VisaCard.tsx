@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, memo, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect, useCallback, memo, useRef, useMemo } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,11 +22,13 @@ import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 
 import { trpc } from '@/lib/trpc';
-import { useDebouncedCallback } from '../../hooks/useDebounce';
 
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { AlertCircle } from 'lucide-react';
+import { useOrderEditStore } from '@/stores';
+import { useLoadVisaTypes } from '@/hooks/useOrderEditData';
+import { useSurcharge } from '@/hooks/useSurcharge';
 
 interface OrderItemUpdate {
   serviceTypeId?: string;
@@ -37,65 +38,60 @@ interface OrderItemUpdate {
   visaTypeId?: string;
 }
 
-interface VisaSectionProps {
+interface VisaCardProps {
   orderData: any;
-  primaryClientData: any;
-  setErrorMessage: (message: string) => void;
-  updateOrderMutation?: any;
-  setLastSavedTime?: (time: Date) => void;
-  setSaveStatus?: (status: 'idle' | 'saving' | 'saved' | 'error') => void;
-
-  updateOptimisticOrderItem?: (
-    orderItemId: string,
-    updates: { visaTypeId?: string; basePrice?: number; finalPrice?: number }
-  ) => void;
-  addOptimisticOrderItem?: (newOrderItem: any) => void;
-  removeOptimisticOrderItem?: (orderItemId: string) => void;
 }
 
-const VisaSection = ({
-  orderData,
-  primaryClientData,
-  setErrorMessage,
-  updateOrderMutation,
-  setLastSavedTime,
-  setSaveStatus,
-  updateOptimisticOrderItem,
-  addOptimisticOrderItem,
-  removeOptimisticOrderItem,
-}: VisaSectionProps) => {
+const VisaCard = memo(({ orderData }: VisaCardProps) => {
+  // Access Zustand store directly
+  const {
+    optimisticOrder,
+    optimisticPrimaryClientData,
+    setErrorMessage,
+    setLastSavedTime,
+    setSaveStatus,
+    setOptimisticOrder,
+    updateOptimisticOrderItem,
+    addOptimisticOrderItem,
+    removeOptimisticOrderItem,
+    setVisaApplications,
+  } = useOrderEditStore();
+
+  // Use optimistic data from Zustand store
+  const currentPrimaryClientData = optimisticPrimaryClientData;
+
+  // Stabilize citizenship ID to prevent unnecessary re-queries
+  const stableCitizenshipId = useMemo(() => {
+    const citizenshipId = currentPrimaryClientData?.client?.citizenshipId;
+    return citizenshipId;
+  }, [currentPrimaryClientData?.client?.citizenshipId]);
   const [addedCountryCards, setAddedCountryCards] = useState<Set<string>>(new Set());
   const [selectedVisaTypes, setSelectedVisaTypes] = useState<Record<string, string>>({});
   const [entryDates, setEntryDates] = useState<Record<string, Date | null>>({});
   const [entryTimes, setEntryTimes] = useState<Record<string, string>>({});
-  const [autosaveStatus, setAutosaveStatus] = useState<
-    Record<string, 'idle' | 'saving' | 'saved' | 'error'>
-  >({});
-  const [visaApplications, setVisaApplications] = useState<Record<string, any>>({});
+  const [localVisaApps, setLocalVisaApps] = useState<Record<string, any>>({});
   const [isMultientryEnabled, setIsMultientryEnabled] = useState<Record<string, boolean>>({});
 
   // Track when visa type updates are in progress
   const visaTypeUpdateInProgress = useRef<boolean>(false);
 
-  // Query client for cache invalidation
-  const queryClient = useQueryClient();
+  // Track recent user selections to prevent server data from overwriting them
+  const recentUserSelections = useRef<Map<string, { timestamp: number; visaTypeId: string }>>(
+    new Map()
+  );
+  const recentMultiEntrySelections = useRef<
+    Map<string, { timestamp: number; isMultientry: boolean }>
+  >(new Map());
+  const recentEntryDateSelections = useRef<Map<string, { timestamp: number; date: Date | null }>>(
+    new Map()
+  );
+  const recentEntryTimeSelections = useRef<Map<string, { timestamp: number; time: string }>>(
+    new Map()
+  );
+  const focusedTimeInputs = useRef<Set<string>>(new Set());
 
-  // Fetch countries from database
-  const { data: countriesData } = trpc.country.getAll.useQuery();
-
-  // Fetch existing visa order items for this order
-  const { data: visaOrderItemsData, refetch: refetchVisaOrderItems } =
-    trpc.orderItem.getAllByOrderId.useQuery(
-      { orderId: orderData?.order?.id || '' },
-      { enabled: !!orderData?.order?.id }
-    );
-
-  // Fetch visa applications for this order
-  const { data: visaApplicationsData, refetch: refetchVisaApplications } =
-    trpc.visaApplication.getByOrderId.useQuery(
-      { orderId: orderData?.order?.id || '' },
-      { enabled: !!orderData?.order?.id }
-    );
+  // Get data from Zustand store
+  const { countries: countriesData, visaApplications: visaApplicationsData } = useOrderEditStore();
 
   // State for selected countries and their cards
   const [createdOrderItems, setCreatedOrderItems] = useState<Record<string, string>>({});
@@ -104,56 +100,49 @@ const VisaSection = ({
 
   // Order item mutations
   const createOrderItemMutation = trpc.orderItem.create.useMutation({
-    onSuccess: async () => {
-      await refetchVisaOrderItems();
-      // Invalidate relevant queries for optimistic updates
-      queryClient.invalidateQueries({ queryKey: ['orderItems'] });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      // Update order timestamp to reflect changes
-      if (updateOrderMutation && orderData?.order) {
-        try {
-          await updateOrderMutation.mutateAsync({
-            id: orderData.order.id,
-            status: orderData.order.status,
-          });
-        } catch (error) {
-          console.error('Failed to update order timestamp:', error);
-        }
-      }
+    onSuccess: async data => {
       // Update save status in UI
       if (setLastSavedTime && setSaveStatus) {
         setLastSavedTime(new Date());
         setSaveStatus('saved');
+      }
+      // Update optimistic order with new data
+      if (data.orderItem && setOptimisticOrder) {
+        const updatedOrder = { ...orderData.order };
+        const existingItemIndex = updatedOrder.items.findIndex(
+          (item: any) => item.id === data.orderItem.id
+        );
+
+        if (existingItemIndex >= 0) {
+          // Update existing item
+          updatedOrder.items = updatedOrder.items.map((item: any) =>
+            item.id === data.orderItem.id ? data.orderItem : item
+          );
+        } else {
+          // Add new item
+          updatedOrder.items = [...updatedOrder.items, data.orderItem];
+        }
+        setOptimisticOrder(updatedOrder);
       }
     },
   });
   const updateOrderItemMutation = trpc.orderItem.edit.useMutation({
-    onSuccess: async () => {
-      await refetchVisaOrderItems();
-      await refetchVisaApplications();
-      // Invalidate relevant queries for optimistic updates
-      queryClient.invalidateQueries({ queryKey: ['orderItems'] });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['visaApplications'] });
-      // Update order timestamp to reflect changes
-      if (updateOrderMutation && orderData?.order) {
-        try {
-          await updateOrderMutation.mutateAsync({
-            id: orderData.order.id,
-            status: orderData.order.status,
-          });
-        } catch (error) {
-          console.error('Failed to update order timestamp:', error);
-        }
-      }
+    onSuccess: async data => {
       // Update save status in UI
       if (setLastSavedTime && setSaveStatus) {
         setLastSavedTime(new Date());
         setSaveStatus('saved');
       }
-      // Note: Removed order refetch trigger - now using optimistic UI updates
       if (visaTypeUpdateInProgress.current) {
         visaTypeUpdateInProgress.current = false;
+      }
+      // Update optimistic order with new data
+      if (data.orderItem && setOptimisticOrder && orderData?.order) {
+        const updatedOrder = { ...orderData.order };
+        updatedOrder.items = updatedOrder.items.map((item: any) =>
+          item.id === data.orderItem.id ? data.orderItem : item
+        );
+        setOptimisticOrder(updatedOrder);
       }
     },
     onError: (error, variables) => {
@@ -164,29 +153,12 @@ const VisaSection = ({
         key => createdOrderItems[key] === variables.id
       );
       if (countryId) {
-        setAutosaveStatus(prev => ({ ...prev, [countryId]: 'error' }));
+        setSaveStatus('error');
       }
     },
   });
   const deleteOrderItemMutation = trpc.orderItem.delete.useMutation({
     onSuccess: async () => {
-      await refetchVisaOrderItems();
-      await refetchVisaApplications();
-      // Invalidate relevant queries for optimistic updates
-      queryClient.invalidateQueries({ queryKey: ['orderItems'] });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['visaApplications'] });
-      // Update order timestamp to reflect changes
-      if (updateOrderMutation && orderData?.order) {
-        try {
-          await updateOrderMutation.mutateAsync({
-            id: orderData.order.id,
-            status: orderData.order.status,
-          });
-        } catch (error) {
-          console.error('Failed to update order timestamp:', error);
-        }
-      }
       // Update save status in UI
       if (setLastSavedTime && setSaveStatus) {
         setLastSavedTime(new Date());
@@ -202,22 +174,60 @@ const VisaSection = ({
 
   // Visa application mutations
   const updateVisaApplicationMutation = trpc.visaApplication.edit.useMutation({
+    onMutate: async variables => {
+      // Optimistically update visa applications data immediately
+      const { id, visaTypeId, isMultientry, plannedCountryEntryDate } = variables;
+
+      // Find the visa application being updated
+      const visaApps = visaApplicationsData || [];
+      const updatedVisaApps = visaApps.map(app => {
+        if (app.id === id) {
+          return {
+            ...app,
+            ...(visaTypeId !== undefined && { visaTypeId }),
+            ...(isMultientry !== undefined && { isMultientry }),
+            ...(plannedCountryEntryDate !== undefined && {
+              plannedCountryEntryDate: new Date(plannedCountryEntryDate),
+            }),
+          };
+        }
+        return app;
+      });
+
+      // Update the store with optimistic data
+      setVisaApplications(updatedVisaApps);
+
+      return { previousVisaApps: visaApps };
+    },
     onSuccess: async () => {
-      await refetchVisaApplications();
       // Update save status in UI with optimistic update
       if (setLastSavedTime && setSaveStatus) {
         setLastSavedTime(new Date());
         setSaveStatus('saved');
       }
+
+      // Clear recent user selections after successful server update
+      setTimeout(() => {
+        recentUserSelections.current.clear();
+        recentMultiEntrySelections.current.clear();
+        recentEntryDateSelections.current.clear();
+        recentEntryTimeSelections.current.clear();
+      }, 1000); // Clear after 1 second to allow for any pending effects
     },
-    onError: error => {
+    onError: (error, _variables, context) => {
       console.error('Failed to update visa application:', error);
       setErrorMessage('Failed to save visa changes. Please try again.');
+      setSaveStatus('error');
+
+      // Rollback optimistic update on error
+      if (context?.previousVisaApps) {
+        setVisaApplications(context.previousVisaApps);
+      }
     },
   });
 
-  // Optimistic autosave function with request queuing
-  const debouncedUpdateOrderItem = useDebouncedCallback(
+  // Non-blocking autosave function with request queuing
+  const debouncedUpdateOrderItem = useCallback(
     (orderItemId: string, updates: OrderItemUpdate, countryId: string) => {
       // Validate inputs
       if (!orderItemId || !countryId || !updates) {
@@ -236,7 +246,6 @@ const VisaSection = ({
       requestQueue.current.set(orderItemId, { updates, timestamp });
 
       // Show saving status immediately (optimistic)
-      setAutosaveStatus(prev => ({ ...prev, [countryId]: 'saving' }));
       if (setSaveStatus) {
         setSaveStatus('saving');
       }
@@ -253,53 +262,37 @@ const VisaSection = ({
         // Remove from queue and process
         requestQueue.current.delete(orderItemId);
 
-        // Fire and forget - don't await, don't block UI
-        updateOrderItemMutation
-          .mutateAsync({
+        // Fire and forget - completely non-blocking
+        updateOrderItemMutation.mutate(
+          {
             id: orderItemId,
             ...queuedRequest.updates,
-          })
-          .then(() => {
-            // Success - show saved status
-            setAutosaveStatus(prev => ({ ...prev, [countryId]: 'saved' }));
-            if (setSaveStatus) {
-              setSaveStatus('saved');
-            }
-
-            // If this update included price changes, trigger order refetch to update total
-            // Note: Removed order refetch trigger - now using optimistic UI updates
-            // Price updates are handled optimistically in the UI
-
-            // Reset to idle after 2 seconds
-            setTimeout(() => {
-              setAutosaveStatus(prev => ({ ...prev, [countryId]: 'idle' }));
-            }, 2000);
-          })
-          .catch(error => {
-            console.error('Failed to autosave order item:', error);
-            setAutosaveStatus(prev => ({ ...prev, [countryId]: 'error' }));
-            if (setSaveStatus) {
-              setSaveStatus('error');
-            }
-
-            // Provide more specific error messaging
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            if (errorMessage.includes('draft')) {
-              setErrorMessage('Cannot save changes - order is no longer editable');
-            } else if (errorMessage.includes('not found')) {
-              setErrorMessage('Order item not found - please refresh the page');
-            } else {
-              setErrorMessage('Failed to save changes automatically. Please try again.');
-            }
-
-            // Reset error status after 5 seconds
-            setTimeout(() => {
-              setAutosaveStatus(prev => ({ ...prev, [countryId]: 'idle' }));
-            }, 5000);
-          });
-      }, 100); // Small delay to allow for request batching
+          },
+          {
+            onSuccess: () => {
+              // Success - show saved status
+              if (setLastSavedTime && setSaveStatus) {
+                setLastSavedTime(new Date());
+                setSaveStatus('saved');
+              }
+            },
+            onError: (error: any) => {
+              console.error('Failed to autosave order item:', error);
+              if (setSaveStatus) {
+                setSaveStatus('error');
+              }
+            },
+          }
+        );
+      }, 800); // Debounce delay
     },
-    800 // Reduced debounce time since we have request queuing
+    [
+      updateOrderItemMutation,
+      orderData?.order?.status,
+      setSaveStatus,
+      setErrorMessage,
+      setLastSavedTime,
+    ]
   );
 
   // CountryCard component to handle individual country logic with blacklist checking
@@ -310,26 +303,32 @@ const VisaSection = ({
       isBlacklisted,
       entryDate,
       entryTime,
-      selectedVisaType,
+
       onEntryDateSelect,
       onEntryTimeBlur,
-      onVisaTypeSelect,
-      onMultiEntryToggle,
       onDeleteCountry,
     }: {
       countryId: string;
-      country: { id: string; name: string } | undefined;
+      country: { id: string; name: string };
       isBlacklisted: boolean;
       entryDate: Date | null;
       entryTime: string;
-      selectedVisaType: string;
-      autosaveStatus: 'idle' | 'saving' | 'saved' | 'error';
       onEntryDateSelect: (countryId: string, date: Date | null) => void;
       onEntryTimeBlur: (countryId: string, time: string) => void;
       onVisaTypeSelect: (countryId: string, visaType: string) => void;
       onMultiEntryToggle: (countryId: string, isMultientry: boolean) => void;
       onDeleteCountry: (countryId: string) => void;
     }) => {
+      // Local state for time input to avoid re-renders during typing
+      const [localTime, setLocalTime] = useState(entryTime);
+
+      // Update local time when prop changes (but not during user input)
+      useEffect(() => {
+        if (!focusedTimeInputs.current.has(countryId)) {
+          setLocalTime(entryTime);
+        }
+      }, [entryTime, countryId]);
+
       // Convert between "HH:MM" and "HH:MM:SS" formats
       const convertToTimeInput = (time: string) => {
         if (!time || time === '00:00') return '10:00';
@@ -342,46 +341,21 @@ const VisaSection = ({
         return time; // Keep in HH:MM format
       };
 
-      const [localTime, setLocalTime] = useState(convertToTimeInput(entryTime));
-      const [isDirty, setIsDirty] = useState(false);
+      const handleTimeChange = useCallback((newTime: string) => {
+        // Only update local state during typing
+        setLocalTime(convertFromTimeInput(newTime));
+      }, []);
 
-      // Update local time when prop changes from parent
-      useEffect(() => {
-        if (!isDirty) {
-          setLocalTime(convertToTimeInput(entryTime));
-        }
-      }, [entryTime, isDirty]);
-
-      const handleTimeChange = useCallback(
-        (newTime: string) => {
-          // Validate time if date is today
-          const isToday = entryDate && entryDate.toDateString() === new Date().toDateString();
-
-          if (isToday) {
-            const now = new Date();
-            const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-            if (newTime < currentTime) {
-              // Don't allow past times for today
-              return;
-            }
-          }
-
-          setLocalTime(newTime);
-          setIsDirty(true);
-        },
-        [entryDate]
-      );
+      const handleTimeFocus = useCallback(() => {
+        // Track that this input is focused
+        focusedTimeInputs.current.add(countryId);
+      }, [countryId]);
 
       const handleTimeBlur = useCallback(() => {
-        if (isDirty && convertFromTimeInput(localTime) !== entryTime) {
-          // Update parent with current local value
-          onEntryTimeBlur(countryId, convertFromTimeInput(localTime));
-        }
-        setIsDirty(false);
-      }, [isDirty, localTime, entryTime, countryId, onEntryTimeBlur]);
-
-      if (!country) return null;
+        // Remove from focused set and save the current value to parent
+        focusedTimeInputs.current.delete(countryId);
+        onEntryTimeBlur(countryId, convertFromTimeInput(localTime));
+      }, [localTime, countryId, onEntryTimeBlur]);
 
       return (
         <Card className={cn('p-3 bg-secondary')}>
@@ -391,6 +365,11 @@ const VisaSection = ({
                 <Badge variant={isBlacklisted ? 'destructive' : 'accent'}>
                   Visa - {country.name}
                 </Badge>
+                <SurchargeDisplayBadge
+                  countryId={countryId}
+                  visaTypeId={selectedVisaTypes[countryId]}
+                  citizenshipId={stableCitizenshipId}
+                />
               </div>
             </div>
             <Button
@@ -447,8 +426,9 @@ const VisaSection = ({
                   <Input
                     type="time"
                     step="60"
-                    value={localTime}
+                    value={convertToTimeInput(localTime)}
                     onChange={e => handleTimeChange(e.target.value)}
+                    onFocus={handleTimeFocus}
                     onBlur={handleTimeBlur}
                     disabled={isBlacklisted}
                     min={
@@ -463,25 +443,24 @@ const VisaSection = ({
                   />
                 </div>
               </div>
-              <VisaFreeInfo
-                countryId={countryId}
-                clientCitizenshipId={primaryClientData?.client?.citizenshipId}
-              />
+              <VisaFreeInfo countryId={countryId} clientCitizenshipId={stableCitizenshipId} />
             </div>
           </div>
 
           {/* Visa Type */}
           <div className={isBlacklisted ? 'opacity-50' : ''}>
-            <VisaTypeSelector
+            <MemoizedVisaTypeSelector
               countryId={countryId}
-              selectedVisaType={selectedVisaType}
-              onVisaTypeSelect={onVisaTypeSelect}
-              onMultiEntryToggle={onMultiEntryToggle}
+              selectedVisaType={selectedVisaTypes[countryId] || ''}
+              onVisaTypeSelect={handleVisaTypeSelect}
+              onMultiEntryToggle={handleMultiEntryToggle}
               currentMultientryState={isMultientryEnabled[countryId] || false}
               disabled={isBlacklisted}
               createdOrderItems={createdOrderItems}
               debouncedUpdateOrderItem={debouncedUpdateOrderItem}
               updateOptimisticOrderItem={updateOptimisticOrderItem}
+              optimisticOrder={optimisticOrder}
+              orderData={orderData}
             />
           </div>
         </Card>
@@ -497,45 +476,24 @@ const VisaSection = ({
     country,
   }: {
     countryId: string;
-    country: { id: string; name: string } | undefined;
+    country: { id: string; name: string };
   }) => {
-    const { data: countryData } = trpc.country.getOne.useQuery({ id: countryId });
-
-    const [isBlacklisted, setIsBlacklisted] = useState(
-      countryData?.country?.blacklisted?.some(
-        entry => entry.citizenshipId === primaryClientData?.client?.citizenshipId
-      ) || false
+    // Load detailed country data to get blacklist information
+    const { data: countryData } = trpc.country.getOne.useQuery(
+      { id: countryId },
+      { enabled: !!countryId }
     );
 
-    useEffect(() => {
-      console.log('CitizenshipId:', primaryClientData?.client?.citizenshipId);
-      console.log('Is blacklisted: ' + isBlacklisted);
-      setIsBlacklisted(
-        countryData?.country?.blacklisted?.some(
-          entry => entry.citizenshipId === primaryClientData?.client?.citizenshipId
-        ) || false
-      );
-    }, [countryData, primaryClientData?.client?.citizenshipId]);
-
-    // Reset visa type when country becomes blacklisted
-    useEffect(() => {
-      if (isBlacklisted && selectedVisaTypes[countryId] && country) {
-        setSelectedVisaTypes(prev => ({ ...prev, [countryId]: '' }));
-
-        // Update order item to remove visa type
-        const orderItemId = createdOrderItems[countryId];
-        if (orderItemId) {
-          const entryDate = entryDates[countryId];
-          const entryTime = entryTimes[countryId] || '00:00';
-          const baseNote = `Visa service for ${country.name}`;
-          const dateTimeNote = entryDate
-            ? ` - Entry: ${format(entryDate, 'dd.MM.yy')} at ${entryTime}`
-            : '';
-
-          debouncedUpdateOrderItem(orderItemId, { note: `${baseNote}${dateTimeNote}` }, countryId);
-        }
+    // Check if current citizenship is blacklisted for this country
+    const isBlacklisted = useMemo(() => {
+      if (!countryData?.country?.blacklisted || !stableCitizenshipId) {
+        return false;
       }
-    }, [isBlacklisted, countryId, country]);
+
+      return countryData.country.blacklisted.some(
+        entry => entry.citizenshipId === stableCitizenshipId
+      );
+    }, [countryData?.country?.blacklisted, stableCitizenshipId]);
 
     return (
       <CountryCard
@@ -544,8 +502,6 @@ const VisaSection = ({
         isBlacklisted={isBlacklisted}
         entryDate={entryDates[countryId] || null}
         entryTime={entryTimes[countryId] || '10:00'}
-        selectedVisaType={selectedVisaTypes[countryId] || ''}
-        autosaveStatus={autosaveStatus[countryId] || 'idle'}
         onEntryDateSelect={handleEntryDateSelect}
         onEntryTimeBlur={handleEntryTimeBlur}
         onVisaTypeSelect={handleVisaTypeSelect}
@@ -559,13 +515,17 @@ const VisaSection = ({
     event.preventDefault();
     event.stopPropagation();
 
-    if (!orderData?.order || !primaryClientData?.client) {
+    if (!orderData?.order || !currentPrimaryClientData?.client) {
+      console.error('❌ Missing required data:', {
+        hasOrder: !!orderData?.order,
+        hasClient: !!currentPrimaryClientData?.client,
+      });
       setErrorMessage('Order or client data not available');
       return;
     }
 
     try {
-      const country = countriesData?.countries?.find(c => c.id === countryId);
+      const country = countriesData?.find(c => c.id === countryId);
       if (!country) {
         setErrorMessage('Country not found');
         return;
@@ -583,36 +543,37 @@ const VisaSection = ({
         setSaveStatus('saving');
       }
 
-      // Create optimistic order item first
+      // Create order item directly without optimistic updates
       const basePrice = 0; // Default price for visa
-      const tempOrderItemId = `temp-${Date.now()}-${countryId}`;
-      const optimisticOrderItem = {
-        id: tempOrderItemId,
-        orderId: orderData.order.id,
-        clientId: primaryClientData.client.id,
-        serviceType: 'visa' as const,
-        serviceTypeId: countryId,
-        basePrice,
-        finalPrice: basePrice,
-        discountAmount: 0,
-        note: `Visa service for ${country.name}`,
-        plannedCountryEntryDate: undefined,
-        visaTypeId: undefined,
-      };
 
-      // Add to optimistic state immediately
+      // Generate temporary ID for optimistic update
+      const tempOrderItemId = `temp_${countryId}_${Date.now()}`;
+
+      // Immediately add to optimistic order for Summary Section
       if (addOptimisticOrderItem) {
-        addOptimisticOrderItem(optimisticOrderItem);
+        addOptimisticOrderItem({
+          id: tempOrderItemId,
+          serviceType: 'visa',
+          serviceTypeId: countryId,
+          basePrice,
+          finalPrice: basePrice,
+          discountAmount: 0,
+          note: `Visa service for ${country.name}`,
+        });
       }
 
-      // Store temp ID for tracking
-      setCreatedOrderItems(prev => ({ ...prev, [countryId]: tempOrderItemId }));
+      // Clear any old visa application data for this country to prevent stale blacklist data
+      setLocalVisaApps(prev => {
+        const updated = { ...prev };
+        delete updated[countryId];
+        return updated;
+      });
 
       try {
         // Create order item on server
         const orderItemResponse = await createOrderItemMutation.mutateAsync({
           orderId: orderData.order.id,
-          clientId: primaryClientData.client.id,
+          clientId: currentPrimaryClientData.client.id,
           serviceType: 'visa' as const,
           serviceTypeId: countryId,
           basePrice,
@@ -623,39 +584,30 @@ const VisaSection = ({
           visaTypeId: undefined,
         });
 
-        // Replace temp item with actual order item
-        const actualOrderItem = orderItemResponse.orderItem;
-
-        // Remove the temporary optimistic item
+        // Remove temporary optimistic item and replace with real one
         if (removeOptimisticOrderItem) {
           removeOptimisticOrderItem(tempOrderItemId);
         }
 
-        // Add the real item
-        if (addOptimisticOrderItem) {
-          addOptimisticOrderItem(actualOrderItem);
-        }
-
-        // Update with actual order item ID
+        // Store the actual order item ID
+        const actualOrderItem = orderItemResponse.orderItem;
         setCreatedOrderItems(prev => ({ ...prev, [countryId]: actualOrderItem.id }));
 
         // Store visa application data if created
         if (orderItemResponse.visaApplication) {
-          setVisaApplications(prev => ({
+          setLocalVisaApps(prev => ({
             ...prev,
             [countryId]: orderItemResponse.visaApplication as any,
           }));
         }
 
-        // Refetch visa applications to get the latest data
-        await refetchVisaApplications();
+        // Force refresh visa applications to clear any stale blacklist data
+        setTimeout(() => {
+          // This ensures visa applications are refreshed with clean data
+          setLocalVisaApps(prev => ({ ...prev }));
+        }, 100);
       } catch (error) {
         console.error('Failed to create order item:', error);
-
-        // Remove the optimistic item on error
-        if (removeOptimisticOrderItem) {
-          removeOptimisticOrderItem(tempOrderItemId);
-        }
 
         // Revert UI state
         setAddedCountryCards(prev => {
@@ -713,62 +665,111 @@ const VisaSection = ({
 
   // Load existing visa order items and their visa applications
   useEffect(() => {
-    if (
-      visaOrderItemsData?.orderItems &&
-      visaApplicationsData?.visaApplications &&
-      countriesData?.countries
-    ) {
-      const visaOrderItems = visaOrderItemsData.orderItems.filter(
-        item => item.serviceType === 'visa'
-      );
+    const currentOrder = optimisticOrder || orderData?.order;
+    if (currentOrder?.items && visaApplicationsData && countriesData) {
+      const visaOrderItems = currentOrder.items.filter((item: any) => item.serviceType === 'visa');
 
-      const newAddedCountries = new Set<string>();
-      const newCreatedOrderItems: Record<string, string> = {};
-      const newSelectedVisaTypes: Record<string, string> = {};
-      const newEntryDates: Record<string, Date | null> = {};
-      const newEntryTimes: Record<string, string> = {};
-      const newVisaApplications: Record<string, any> = {};
-      const newIsMultientryEnabled: Record<string, boolean> = {};
+      // Start with current state to preserve user changes
+      const newAddedCountries = new Set(addedCountryCards);
+      const newCreatedOrderItems: Record<string, string> = { ...createdOrderItems };
+      const newSelectedVisaTypes: Record<string, string> = { ...selectedVisaTypes };
+      const newEntryDates: Record<string, Date | null> = { ...entryDates };
+      const newEntryTimes: Record<string, string> = { ...entryTimes };
+      const newVisaApplications: Record<string, any> = { ...localVisaApps };
+      const newIsMultientryEnabled: Record<string, boolean> = { ...isMultientryEnabled };
 
-      visaOrderItems.forEach(item => {
+      visaOrderItems.forEach((item: any) => {
         if (item.serviceTypeId) {
           // For visa items, serviceTypeId should be countryId
           const countryId = item.serviceTypeId;
-          const isCountry = countriesData.countries.some(c => c.id === countryId);
+          const isCountry = countriesData.some(c => c.id === countryId);
 
           if (isCountry) {
             newAddedCountries.add(countryId);
             newCreatedOrderItems[countryId] = item.id;
 
             // Find corresponding visa application for this order item
-            const visaApp = visaApplicationsData.visaApplications.find(
-              (app: any) => app.orderItemId === item.id
-            );
+            const visaApp = visaApplicationsData.find((app: any) => app.orderItemId === item.id);
 
             if (visaApp) {
               // Store visa application data
               newVisaApplications[countryId] = visaApp;
 
-              // Set selected visa type from visa application
+              // Set selected visa type from visa application, but only if user hasn't selected something recently
               if (visaApp.visaTypeId) {
-                newSelectedVisaTypes[countryId] = visaApp.visaTypeId;
+                const recentSelection = recentUserSelections.current.get(countryId);
+                const currentTime = Date.now();
+                const isRecentSelection =
+                  recentSelection && currentTime - recentSelection.timestamp < 30000; // 30 seconds
+
+                if (!isRecentSelection && !newSelectedVisaTypes[countryId]) {
+                  newSelectedVisaTypes[countryId] = visaApp.visaTypeId;
+                } else if (isRecentSelection) {
+                  // Keep the recent user selection
+                  newSelectedVisaTypes[countryId] = recentSelection.visaTypeId;
+                }
               }
 
-              // Set multi-entry status from visa application
-              newIsMultientryEnabled[countryId] = (visaApp as any).isMultientry || false;
+              // Set multi-entry status from visa application, but only if user hasn't selected something recently
+              const recentMultiEntrySelection = recentMultiEntrySelections.current.get(countryId);
+              const currentTime = Date.now();
+              const isRecentMultiEntrySelection =
+                recentMultiEntrySelection &&
+                currentTime - recentMultiEntrySelection.timestamp < 30000;
 
-              // Parse planned entry date and time
+              if (!isRecentMultiEntrySelection && newIsMultientryEnabled[countryId] === undefined) {
+                newIsMultientryEnabled[countryId] = (visaApp as any).isMultientry || false;
+              } else if (isRecentMultiEntrySelection) {
+                // Keep the recent user selection
+                newIsMultientryEnabled[countryId] = recentMultiEntrySelection.isMultientry;
+              }
+
+              // Parse planned entry date and time, but only if user hasn't selected something recently
+              const recentDateSelection = recentEntryDateSelections.current.get(countryId);
+              const recentTimeSelection = recentEntryTimeSelections.current.get(countryId);
+              const isRecentDateSelection =
+                recentDateSelection && currentTime - recentDateSelection.timestamp < 30000;
+              const isRecentTimeSelection =
+                recentTimeSelection && currentTime - recentTimeSelection.timestamp < 30000;
+              const isTimeInputFocused = focusedTimeInputs.current.has(countryId);
+
               if (visaApp.plannedCountryEntryDate) {
                 const entryDateTime = new Date(visaApp.plannedCountryEntryDate);
-                newEntryDates[countryId] = entryDateTime;
+
+                if (!isRecentDateSelection && !newEntryDates[countryId]) {
+                  newEntryDates[countryId] = entryDateTime;
+                } else if (isRecentDateSelection) {
+                  newEntryDates[countryId] = recentDateSelection.date;
+                }
 
                 // Extract time in HH:MM format
                 const hours = entryDateTime.getHours().toString().padStart(2, '0');
                 const minutes = entryDateTime.getMinutes().toString().padStart(2, '0');
-                newEntryTimes[countryId] = `${hours}:${minutes}`;
+                const serverTime = `${hours}:${minutes}`;
+
+                if (!isRecentTimeSelection && !isTimeInputFocused && !newEntryTimes[countryId]) {
+                  newEntryTimes[countryId] = serverTime;
+                } else if (isRecentTimeSelection) {
+                  newEntryTimes[countryId] = recentTimeSelection.time;
+                } else if (isTimeInputFocused) {
+                  // Keep current value if input is focused
+                  newEntryTimes[countryId] = entryTimes[countryId] || serverTime;
+                }
               } else {
-                newEntryDates[countryId] = null;
-                newEntryTimes[countryId] = '10:00';
+                if (!isRecentDateSelection && newEntryDates[countryId] === undefined) {
+                  newEntryDates[countryId] = null;
+                } else if (isRecentDateSelection) {
+                  newEntryDates[countryId] = recentDateSelection.date;
+                }
+
+                if (!isRecentTimeSelection && !isTimeInputFocused && !newEntryTimes[countryId]) {
+                  newEntryTimes[countryId] = '10:00';
+                } else if (isRecentTimeSelection) {
+                  newEntryTimes[countryId] = recentTimeSelection.time;
+                } else if (isTimeInputFocused) {
+                  // Keep current value if input is focused
+                  newEntryTimes[countryId] = entryTimes[countryId] || '10:00';
+                }
               }
             }
           }
@@ -777,63 +778,100 @@ const VisaSection = ({
 
       setAddedCountryCards(newAddedCountries);
       setCreatedOrderItems(newCreatedOrderItems);
-      setVisaApplications(newVisaApplications);
+      setLocalVisaApps(newVisaApplications);
       setSelectedVisaTypes(newSelectedVisaTypes);
       setEntryDates(newEntryDates);
       setEntryTimes(newEntryTimes);
       setIsMultientryEnabled(newIsMultientryEnabled);
     }
-  }, [
-    visaOrderItemsData?.orderItems,
-    visaApplicationsData?.visaApplications,
-    countriesData?.countries,
-  ]);
+  }, [optimisticOrder, orderData?.order, visaApplicationsData, countriesData, setVisaApplications]);
 
   const handleVisaTypeSelect = useCallback(
     (countryId: string, visaType: string) => {
-      // Mark that a visa type update is in progress
-      visaTypeUpdateInProgress.current = true;
+      // Track this as a recent user selection
+      recentUserSelections.current.set(countryId, {
+        timestamp: Date.now(),
+        visaTypeId: visaType,
+      });
 
-      setSelectedVisaTypes(prev => ({ ...prev, [countryId]: visaType }));
+      // Update UI state immediately for instant feedback using functional update
+      setSelectedVisaTypes(prev => {
+        // Force a new object reference to ensure React detects the change
+        const newState = { ...prev };
+        newState[countryId] = visaType;
+        return newState;
+      });
 
-      // Update visa application with selected visa type
-      const visaApp = visaApplications[countryId];
-      if (visaApp && visaType) {
-        updateVisaApplicationMutation.mutate({
-          id: visaApp.id,
-          visaTypeId: visaType,
-        });
+      // Show saving status immediately
+      if (setSaveStatus) {
+        setSaveStatus('saving');
       }
+
+      // Use requestAnimationFrame for better timing of server update
+      requestAnimationFrame(() => {
+        const visaApp = localVisaApps[countryId];
+        if (visaApp && visaType) {
+          updateVisaApplicationMutation.mutate({
+            id: visaApp.id,
+            visaTypeId: visaType,
+          });
+        }
+      });
     },
-    [visaApplications, updateVisaApplicationMutation]
+    [localVisaApps, updateVisaApplicationMutation, setSaveStatus]
   );
 
   const handleMultiEntryToggle = useCallback(
     (countryId: string, isMultientry: boolean) => {
-      setIsMultientryEnabled(prev => ({ ...prev, [countryId]: isMultientry }));
+      // Track this as a recent user selection
+      recentMultiEntrySelections.current.set(countryId, {
+        timestamp: Date.now(),
+        isMultientry: isMultientry,
+      });
 
-      // Update visa application with multi-entry status
-      const visaApp = visaApplications[countryId];
-      if (visaApp) {
-        updateVisaApplicationMutation.mutate({
-          id: visaApp.id,
-          isMultientry: isMultientry,
-        });
+      // Update UI state immediately for instant feedback
+      setIsMultientryEnabled(prev => {
+        const newState = { ...prev };
+        newState[countryId] = isMultientry;
+        return newState;
+      });
+
+      // Show saving status immediately
+      if (setSaveStatus) {
+        setSaveStatus('saving');
       }
 
-      // Note: Price update will be handled by the VisaTypeSelector component
-      // when the multi-entry state changes, and order refetch will happen
-      // after the price is successfully updated on the server
+      // Use requestAnimationFrame for better timing of server update
+      requestAnimationFrame(() => {
+        const visaApp = localVisaApps[countryId];
+        if (visaApp) {
+          updateVisaApplicationMutation.mutate({
+            id: visaApp.id,
+            isMultientry: isMultientry,
+          });
+        }
+      });
     },
-    [visaApplications, updateVisaApplicationMutation]
+    [localVisaApps, updateVisaApplicationMutation, setSaveStatus]
   );
 
   const handleEntryDateSelect = useCallback(
     (countryId: string, date: Date | null) => {
+      // Track this as a recent user selection
+      recentEntryDateSelections.current.set(countryId, {
+        timestamp: Date.now(),
+        date: date,
+      });
+
       setEntryDates(prev => ({ ...prev, [countryId]: date }));
 
+      // Show saving status immediately
+      if (setSaveStatus) {
+        setSaveStatus('saving');
+      }
+
       // Update visa application with entry date and time
-      const visaApp = visaApplications[countryId];
+      const visaApp = localVisaApps[countryId];
 
       if (visaApp && date) {
         const time = entryTimes[countryId] || '10:00';
@@ -848,15 +886,30 @@ const VisaSection = ({
         });
       }
     },
-    [visaApplications, entryTimes, updateVisaApplicationMutation]
+    [localVisaApps, entryTimes, updateVisaApplicationMutation, setSaveStatus]
   );
 
   const handleEntryTimeBlur = useCallback(
     (countryId: string, time: string) => {
-      setEntryTimes(prev => ({ ...prev, [countryId]: time }));
+      // Track this as a recent user selection
+      recentEntryTimeSelections.current.set(countryId, {
+        timestamp: Date.now(),
+        time: time,
+      });
+
+      // Update local state
+      setEntryTimes(prev => {
+        const newState = { ...prev, [countryId]: time };
+        return newState;
+      });
+
+      // Show saving status immediately
+      if (setSaveStatus) {
+        setSaveStatus('saving');
+      }
 
       // Update visa application with entry time
-      const visaApp = visaApplications[countryId];
+      const visaApp = localVisaApps[countryId];
       const date = entryDates[countryId];
 
       if (visaApp && date && time && time !== '00:00') {
@@ -871,7 +924,7 @@ const VisaSection = ({
         });
       }
     },
-    [visaApplications, entryDates, updateVisaApplicationMutation]
+    [localVisaApps, entryDates, updateVisaApplicationMutation, setSaveStatus]
   );
 
   const handleDeleteCountry = (countryId: string) => {
@@ -893,8 +946,7 @@ const VisaSection = ({
       entryDates: { ...entryDates },
       entryTimes: { ...entryTimes },
       isMultientryEnabled: { ...isMultientryEnabled },
-      autosaveStatus: { ...autosaveStatus },
-      visaApplications: { ...visaApplications },
+      visaApplications: { ...localVisaApps },
     };
 
     try {
@@ -939,12 +991,8 @@ const VisaSection = ({
         delete updated[countryToDeleteRef];
         return updated;
       });
-      setAutosaveStatus(prev => {
-        const updated = { ...prev };
-        delete updated[countryToDeleteRef];
-        return updated;
-      });
-      setVisaApplications(prev => {
+
+      setLocalVisaApps(prev => {
         const updated = { ...prev };
         delete updated[countryToDeleteRef];
         return updated;
@@ -971,14 +1019,13 @@ const VisaSection = ({
         if (orderItem) {
           // We need to reconstruct the order item - this is a simplified version
           // In a real app, you might want to store the full order item data
-          const country = countriesData?.countries?.find(c => c.id === countryToDeleteRef);
+          const country = countriesData?.find(c => c.id === countryToDeleteRef);
           if (country) {
             addOptimisticOrderItem({
               id: orderItemId,
               serviceType: 'visa',
               serviceTypeId: countryToDeleteRef,
               basePrice: 0,
-              finalPrice: 0,
               note: `Visa service for ${country.name}`,
             });
           }
@@ -992,8 +1039,7 @@ const VisaSection = ({
       setEntryDates(currentState.entryDates);
       setEntryTimes(currentState.entryTimes);
       setIsMultientryEnabled(currentState.isMultientryEnabled);
-      setAutosaveStatus(currentState.autosaveStatus);
-      setVisaApplications(currentState.visaApplications);
+      setLocalVisaApps(currentState.visaApplications);
     } finally {
       setShowDeleteModal(false);
       setCountryToDelete(null);
@@ -1012,27 +1058,31 @@ const VisaSection = ({
     isLoading: boolean;
     onClick: (event: React.MouseEvent, countryId: string) => void;
   }) => {
+    // Load detailed country data to get blacklist information
     const { data: countryData } = trpc.country.getOne.useQuery(
       { id: country.id },
-      {
-        enabled: !!primaryClientData?.client?.citizenshipId,
-        select: data => ({
-          isBlacklisted:
-            data?.country?.blacklisted?.some(
-              entry => entry.citizenshipId === primaryClientData?.client?.citizenshipId
-            ) || false,
-        }),
-      }
+      { enabled: !!country.id }
     );
 
-    const actuallyBlacklisted = countryData?.isBlacklisted || false;
+    const actuallyBlacklisted = useMemo(() => {
+      if (!countryData?.country?.blacklisted || !stableCitizenshipId) {
+        return false;
+      }
+      return countryData.country.blacklisted.some(
+        entry => entry.citizenshipId === stableCitizenshipId
+      );
+    }, [countryData?.country?.blacklisted, stableCitizenshipId]);
+
+    const isDisabled = isAdded || isLoading || actuallyBlacklisted;
 
     return (
       <Button
         variant={isAdded ? 'accent' : actuallyBlacklisted ? 'destructive' : 'secondary'}
         size="sm"
-        onClick={event => onClick(event, country.id)}
-        disabled={isAdded || isLoading || actuallyBlacklisted}
+        onClick={event => {
+          onClick(event, country.id);
+        }}
+        disabled={isDisabled}
         title={actuallyBlacklisted ? 'Entry prohibited - blacklisted citizenship' : undefined}
       >
         {actuallyBlacklisted ? '' : '+'} {country.name}
@@ -1048,7 +1098,11 @@ const VisaSection = ({
     countryId: string;
     clientCitizenshipId?: string | null;
   }) => {
-    const { data: countryData } = trpc.country.getOne.useQuery({ id: countryId });
+    // Load detailed country data to get visa free and blacklist information
+    const { data: countryData } = trpc.country.getOne.useQuery(
+      { id: countryId },
+      { enabled: !!countryId }
+    );
     const entryDate = entryDates[countryId];
 
     if (!clientCitizenshipId || !countryData?.country?.visaFree) {
@@ -1109,6 +1163,8 @@ const VisaSection = ({
     createdOrderItems,
     debouncedUpdateOrderItem,
     updateOptimisticOrderItem,
+    optimisticOrder,
+    orderData,
   }: {
     countryId: string;
     selectedVisaType: string;
@@ -1126,93 +1182,120 @@ const VisaSection = ({
       orderItemId: string,
       updates: { visaTypeId?: string; basePrice?: number; finalPrice?: number }
     ) => void;
+    optimisticOrder: any;
+    orderData: any;
   }) => {
-    const { data: visaTypesData } = trpc.visaType.getByCountry.useQuery({ countryId });
+    const visaTypes = useLoadVisaTypes(countryId);
 
-    const selectedVisaTypeData = visaTypesData?.visaTypes?.find(vt => vt.id === selectedVisaType);
+    const selectedVisaTypeData = useMemo(
+      () => visaTypes?.find(vt => vt.id === selectedVisaType),
+      [visaTypes, selectedVisaType]
+    );
 
     const handleVisaTypeClick = useCallback(
       (visaTypeId: string) => {
-        // Update UI state immediately (optimistic) - no blocking
+        // Prevent double-clicks and ensure immediate response
+        if (selectedVisaType === visaTypeId) {
+          return;
+        }
+
+        // Update parent callback synchronously for immediate visual feedback
         onVisaTypeSelect(countryId, visaTypeId);
 
-        // Update order item with correct price from VisaType
+        // Update order item optimistically for instant UI feedback
         const orderItemId = createdOrderItems[countryId];
-        if (orderItemId && visaTypesData?.visaTypes) {
-          const selectedVisaTypeData = visaTypesData.visaTypes.find(vt => vt.id === visaTypeId);
+        if (orderItemId && visaTypes) {
+          const selectedVisaTypeData = visaTypes.find((vt: any) => vt.id === visaTypeId);
           if (selectedVisaTypeData?.serviceCost) {
             const basePrice = selectedVisaTypeData.serviceCost;
             const isMultientry = currentMultientryState;
             const extraCost = isMultientry ? selectedVisaTypeData.multientryExtraCost || 0 : 0;
+
             const finalPrice = basePrice + extraCost;
 
-            // Update optimistic UI immediately
+            // Update optimistic UI immediately for instant feedback
             if (updateOptimisticOrderItem) {
               updateOptimisticOrderItem(orderItemId, {
                 visaTypeId: visaTypeId,
-                basePrice: finalPrice,
-                finalPrice: finalPrice,
+                basePrice: disabled ? 0 : finalPrice,
               });
             }
 
-            debouncedUpdateOrderItem(
-              orderItemId,
-              {
-                visaTypeId: visaTypeId,
-                basePrice: finalPrice,
-                finalPrice: finalPrice,
-              },
-              countryId
-            );
+            // Use requestAnimationFrame for better timing
+            requestAnimationFrame(() => {
+              debouncedUpdateOrderItem(
+                orderItemId,
+                {
+                  visaTypeId: visaTypeId,
+                  basePrice: disabled ? 0 : finalPrice,
+                  // Don't send finalPrice - let backend calculate it with surcharges
+                },
+                countryId
+              );
+            });
           }
         }
       },
       [
         countryId,
+        selectedVisaType,
         onVisaTypeSelect,
         createdOrderItems,
-        visaTypesData,
-        debouncedUpdateOrderItem,
         updateOptimisticOrderItem,
+        debouncedUpdateOrderItem,
+        visaTypes,
+        currentMultientryState,
+        disabled,
       ]
     );
 
     const handleMultiToggle = useCallback(
       (isMultientry: boolean) => {
+        // Prevent unnecessary updates if state is already correct
+        if (currentMultientryState === isMultientry) {
+          return;
+        }
+
+        // Update state immediately for instant UI feedback
         onMultiEntryToggle(countryId, isMultientry);
 
-        // Update order item price immediately
+        // Update order item price optimistically first
         const orderItemId = createdOrderItems[countryId];
         if (orderItemId && selectedVisaTypeData?.serviceCost) {
           const basePrice = selectedVisaTypeData.serviceCost;
           const extraCost = isMultientry ? selectedVisaTypeData.multientryExtraCost || 0 : 0;
+
           const finalPrice = basePrice + extraCost;
 
-          // Update optimistic UI immediately
+          // Update optimistic UI immediately for instant feedback
           if (updateOptimisticOrderItem) {
             updateOptimisticOrderItem(orderItemId, {
-              basePrice: finalPrice,
-              finalPrice: finalPrice,
+              basePrice: disabled ? 0 : finalPrice,
             });
           }
 
-          debouncedUpdateOrderItem(
-            orderItemId,
-            {
-              basePrice: finalPrice,
-              finalPrice: finalPrice,
-            },
-            countryId
-          );
+          // Use requestAnimationFrame for better timing
+          requestAnimationFrame(() => {
+            debouncedUpdateOrderItem(
+              orderItemId,
+              {
+                basePrice: disabled ? 0 : finalPrice,
+                // Don't send finalPrice - let backend calculate it with surcharges
+              },
+              countryId
+            );
+          });
         }
       },
       [
+        currentMultientryState,
         onMultiEntryToggle,
         countryId,
         createdOrderItems,
         selectedVisaTypeData,
         debouncedUpdateOrderItem,
         updateOptimisticOrderItem,
+        disabled,
       ]
     );
 
@@ -1224,7 +1307,7 @@ const VisaSection = ({
         <div className="flex flex-wrap gap-2">
           {(() => {
             const sortedVisaTypes =
-              visaTypesData?.visaTypes?.sort((a, b) => {
+              visaTypes?.sort((a: any, b: any) => {
                 // Sort favorites first
                 if (a.favourite && !b.favourite) return -1;
                 if (!a.favourite && b.favourite) return 1;
@@ -1238,30 +1321,36 @@ const VisaSection = ({
               }) || [];
 
             // Group visa types
-            const favorites = sortedVisaTypes.filter(vt => vt.favourite);
-            const nonFavorites = sortedVisaTypes.filter(vt => !vt.favourite);
-            const nonFavoritesDays = nonFavorites.filter(vt => vt.processingUnit === 'days');
-            const nonFavoritesHours = nonFavorites.filter(vt => vt.processingUnit === 'hours');
-
-            const renderVisaTypeButton = (visaType: any, isLastInGroup: boolean = false) => (
-              <Button
-                key={visaType.id}
-                variant={selectedVisaType === visaType.id ? 'accent' : 'secondary'}
-                size="sm"
-                type="button"
-                disabled={disabled}
-                onClick={event => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  if (!disabled) {
-                    handleVisaTypeClick(visaType.id);
-                  }
-                }}
-                className={`transition-all duration-200 ${isLastInGroup ? 'mr-2' : ''}`}
-              >
-                {visaType.name}
-              </Button>
+            const favorites = sortedVisaTypes.filter((vt: any) => vt.favourite);
+            const nonFavorites = sortedVisaTypes.filter((vt: any) => !vt.favourite);
+            const nonFavoritesDays = nonFavorites.filter((vt: any) => vt.processingUnit === 'days');
+            const nonFavoritesHours = nonFavorites.filter(
+              (vt: any) => vt.processingUnit === 'hours'
             );
+
+            const renderVisaTypeButton = (visaType: any, isLastInGroup: boolean = false) => {
+              const isSelected = selectedVisaType === visaType.id;
+
+              return (
+                <Button
+                  key={visaType.id}
+                  variant={isSelected ? 'accent' : 'secondary'}
+                  size="sm"
+                  type="button"
+                  disabled={disabled}
+                  onClick={event => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (!disabled && selectedVisaType !== visaType.id) {
+                      handleVisaTypeClick(visaType.id);
+                    }
+                  }}
+                  className={`transition-all duration-200 ${isLastInGroup ? 'mr-2' : ''}`}
+                >
+                  {(visaType as any).name}
+                </Button>
+              );
+            };
 
             const result: React.ReactElement[] = [];
 
@@ -1305,16 +1394,49 @@ const VisaSection = ({
         <div className="flex justify-end items-center">
           <span className="font-semibold">
             {(() => {
+              // If client is blacklisted, price is 0
+              if (disabled) {
+                return formatCurrency(0, 'VND');
+              }
+
+              // Check if we have an actual order item with finalPrice (includes surcharges)
+              const orderItemId = createdOrderItems[countryId];
+              const currentOrder = optimisticOrder || orderData?.order;
+
+              if (orderItemId && currentOrder?.items) {
+                const orderItem = currentOrder.items.find((item: any) => item.id === orderItemId);
+                if (orderItem) {
+                  // Use finalPrice if > 0, otherwise fall back to basePrice
+                  const displayPrice =
+                    orderItem.finalPrice > 0 ? orderItem.finalPrice : orderItem.basePrice;
+                  return formatCurrency(displayPrice, 'VND');
+                }
+              }
+
+              // Fallback to calculated price if no order item exists yet
               const basePrice = selectedVisaTypeData?.serviceCost || 0;
               const isMultientry = currentMultientryState;
               const extraCost = isMultientry ? selectedVisaTypeData?.multientryExtraCost || 0 : 0;
-              return formatCurrency(basePrice + extraCost, 'VND');
+              const totalPrice = basePrice + extraCost;
+
+              return formatCurrency(totalPrice, 'VND');
             })()}
           </span>
         </div>
       </div>
     );
   };
+
+  const MemoizedVisaTypeSelector = memo(VisaTypeSelector, (prevProps, nextProps) => {
+    return (
+      prevProps.selectedVisaType === nextProps.selectedVisaType &&
+      prevProps.currentMultientryState === nextProps.currentMultientryState &&
+      prevProps.disabled === nextProps.disabled &&
+      prevProps.countryId === nextProps.countryId
+    );
+  });
+
+  MemoizedVisaTypeSelector.displayName = 'VisaTypeSelector';
 
   return (
     <div>
@@ -1325,7 +1447,7 @@ const VisaSection = ({
         {/* Add Visa Header with Country Buttons */}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex flex-wrap gap-2">
-            {countriesData?.countries
+            {countriesData
               ?.filter(country => country.eVisaAvailable)
               ?.sort((a, b) => {
                 // Sort favorites first, then alphabetically
@@ -1348,8 +1470,8 @@ const VisaSection = ({
         {/* Country Cards */}
         {Array.from(addedCountryCards)
           .sort((countryIdA, countryIdB) => {
-            const countryA = countriesData?.countries?.find(c => c.id === countryIdA);
-            const countryB = countriesData?.countries?.find(c => c.id === countryIdB);
+            const countryA = countriesData?.find(c => c.id === countryIdA);
+            const countryB = countriesData?.find(c => c.id === countryIdB);
 
             if (!countryA || !countryB) return 0;
 
@@ -1359,7 +1481,8 @@ const VisaSection = ({
             return countryA.name.localeCompare(countryB.name);
           })
           .map(countryId => {
-            const country = countriesData?.countries?.find(c => c.id === countryId);
+            const country = countriesData?.find(c => c.id === countryId);
+            if (!country) return null;
             return (
               <CountryCardWithBlacklistCheck
                 key={`country-card-${countryId}`}
@@ -1367,7 +1490,8 @@ const VisaSection = ({
                 country={country}
               />
             );
-          })}
+          })
+          .filter(Boolean)}
       </div>
       {/* Delete Confirmation Dialog */}
       <Dialog
@@ -1422,6 +1546,55 @@ const VisaSection = ({
       </Dialog>
     </div>
   );
-};
+});
 
-export default VisaSection;
+// Component for displaying surcharge badge
+const SurchargeDisplayBadge = memo(
+  ({
+    countryId,
+    visaTypeId,
+    citizenshipId,
+  }: {
+    countryId: string;
+    visaTypeId?: string;
+    citizenshipId?: string;
+  }) => {
+    // Always call hooks at the top level
+    const { surcharge: specificSurcharge, hasSurcharge: hasSpecificSurcharge } = useSurcharge(
+      citizenshipId,
+      countryId,
+      visaTypeId
+    );
+
+    const { surcharge: globalSurcharge, hasSurcharge: hasGlobalSurcharge } = useSurcharge(
+      citizenshipId,
+      countryId,
+      undefined
+    );
+
+    // If no citizenship ID, don't show anything
+    if (!citizenshipId || !countryId) return null;
+
+    // Priority: specific surcharge > global surcharge
+    let surchargeToShow = null;
+    let hasSurchargeToShow = false;
+
+    if (visaTypeId && hasSpecificSurcharge) {
+      // Show specific surcharge if visa type is selected and specific surcharge exists
+      surchargeToShow = specificSurcharge;
+      hasSurchargeToShow = true;
+    } else if (hasGlobalSurcharge) {
+      // Show global surcharge if no specific surcharge or no visa type selected
+      surchargeToShow = globalSurcharge;
+      hasSurchargeToShow = true;
+    }
+
+    if (!hasSurchargeToShow || !surchargeToShow) return null;
+
+    const message = `Additional charge ${formatCurrency(surchargeToShow.surchargeAmount, 'VND')} is applied to citizens of ${surchargeToShow.citizenship.name}`;
+
+    return <Badge variant="destructive">{message}</Badge>;
+  }
+);
+
+export default VisaCard;

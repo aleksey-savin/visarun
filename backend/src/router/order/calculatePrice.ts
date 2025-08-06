@@ -10,6 +10,8 @@ export const zCalculateOrderPriceTrpcInput = z.object({
       basePrice: z.number().min(0),
       discountRuleId: z.string().uuid().optional(),
       manualDiscountAmount: z.number().min(0).optional().default(0),
+      countryId: z.string().uuid().optional(),
+      visaTypeId: z.string().uuid().optional(),
     })
   ),
 });
@@ -20,6 +22,7 @@ export const calculateOrderPriceTrpcRoute = orderReadProcedure
     const calculatedItems = [];
     let totalBasePrice = 0;
     let totalDiscountAmount = 0;
+    let totalSurchargeAmount = 0;
     let totalFinalPrice = 0;
 
     for (const item of input.items) {
@@ -105,7 +108,72 @@ export const calculateOrderPriceTrpcRoute = orderReadProcedure
         discountAppliedType = 'manual';
       }
 
-      const finalPrice = Math.max(0, item.basePrice - discountAmount);
+      // Calculate citizenship surcharge for visa services
+      let surchargeAmount = 0;
+      let appliedSurcharge = null;
+
+      if (item.serviceType === 'visa' && item.countryId && client.citizenship) {
+        // Look for applicable citizenship surcharge
+        const surchargeQuery = {
+          citizenshipId: client.citizenship.id,
+          countryId: item.countryId,
+        };
+
+        let surcharge = null;
+
+        if (item.visaTypeId) {
+          // First, try to find a specific surcharge for this visa type
+          surcharge = await ctx.prisma.visaCitizenshipSurcharge.findFirst({
+            where: {
+              ...surchargeQuery,
+              isGlobal: false,
+              visaTypes: {
+                some: {
+                  visaTypeId: item.visaTypeId,
+                },
+              },
+            },
+            include: {
+              citizenship: true,
+              country: true,
+              visaTypes: {
+                include: {
+                  visaType: true,
+                },
+              },
+            },
+          });
+        }
+
+        // If no specific surcharge found, look for a global surcharge for this citizenship and country
+        if (!surcharge) {
+          surcharge = await ctx.prisma.visaCitizenshipSurcharge.findFirst({
+            where: {
+              ...surchargeQuery,
+              isGlobal: true,
+            },
+            include: {
+              citizenship: true,
+              country: true,
+            },
+          });
+        }
+
+        if (surcharge) {
+          surchargeAmount = surcharge.surchargeAmount;
+          appliedSurcharge = {
+            id: surcharge.id,
+            citizenship: surcharge.citizenship.name,
+            country: surcharge.country.name,
+            amount: surcharge.surchargeAmount,
+            isGlobal: surcharge.isGlobal,
+            note: surcharge.note,
+          };
+        }
+      }
+
+      const priceAfterDiscount = Math.max(0, item.basePrice - discountAmount);
+      const finalPrice = priceAfterDiscount + surchargeAmount;
 
       const calculatedItem = {
         clientId: item.clientId,
@@ -126,6 +194,8 @@ export const calculateOrderPriceTrpcRoute = orderReadProcedure
         discountAmount,
         discountAppliedType,
         appliedDiscountRule,
+        surchargeAmount,
+        appliedSurcharge,
         finalPrice,
         savings: item.basePrice - finalPrice,
       };
@@ -133,6 +203,7 @@ export const calculateOrderPriceTrpcRoute = orderReadProcedure
       calculatedItems.push(calculatedItem);
       totalBasePrice += item.basePrice;
       totalDiscountAmount += discountAmount;
+      totalSurchargeAmount += surchargeAmount;
       totalFinalPrice += finalPrice;
     }
 
@@ -141,9 +212,19 @@ export const calculateOrderPriceTrpcRoute = orderReadProcedure
       totals: {
         basePrice: totalBasePrice,
         discountAmount: totalDiscountAmount,
+        surchargeAmount: totalSurchargeAmount,
         finalPrice: totalFinalPrice,
         totalSavings: totalBasePrice - totalFinalPrice,
         discountPercentage: totalBasePrice > 0 ? (totalDiscountAmount / totalBasePrice) * 100 : 0,
       },
+      notifications: calculatedItems
+        .filter(item => item.surchargeAmount > 0)
+        .map(item => ({
+          type: 'surcharge' as const,
+          message: `Дополнительный сбор для граждан ${item.client.citizenship?.name} при въезде в ${item.appliedSurcharge?.country}: ${item.surchargeAmount} VND`,
+          details: item.appliedSurcharge?.note || 'Специальный сбор для определённых граждан',
+          clientId: item.clientId,
+          amount: item.surchargeAmount,
+        })),
     };
   });

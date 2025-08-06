@@ -4,6 +4,7 @@ import { getAllOrderItemsByOrderIdTrpcRoute } from './getAllByOrderId.js';
 import { getAllOrderItemsByClientIdTrpcRoute } from './getAllByClientId.js';
 import { editOrderItemTrpcRoute } from './edit.js';
 import { deleteOrderItemTrpcRoute } from './delete.js';
+import { recalculateOrderItemSurchargesTrpcRoute } from './recalculateSurcharges.js';
 
 export const orderItemRoutes = {
   create: createOrderItemTrpcRoute,
@@ -12,4 +13,5 @@ export const orderItemRoutes = {
   getAllByClientId: getAllOrderItemsByClientIdTrpcRoute,
   edit: editOrderItemTrpcRoute,
   delete: deleteOrderItemTrpcRoute,
+  recalculateSurcharges: recalculateOrderItemSurchargesTrpcRoute,
 };

@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 
 export const zEditUserContactMethodTrpcInput = z.object({
   id: z.string().uuid(),
+  contactMethodId: z.string().uuid().optional(),
   value: z.string().min(1).max(500).optional(),
   url: z.string().url().optional(),
 });
@@ -29,9 +30,42 @@ export const editUserContactMethodTrpcRoute = userUpdateProcedure
       throw new Error('User contact method not found');
     }
 
+    // If contactMethodId is being changed, verify the new contact method exists
+    if (
+      input.contactMethodId &&
+      input.contactMethodId !== existingUserContactMethod.contactMethodId
+    ) {
+      const newContactMethod = await ctx.prisma.contactMethod.findUnique({
+        where: { id: input.contactMethodId },
+      });
+
+      if (!newContactMethod) {
+        throw new Error('New contact method not found');
+      }
+
+      // Check if user already has the new contact method type
+      const existingWithNewType = await ctx.prisma.userContactMethod.findUnique({
+        where: {
+          userId_contactMethodId: {
+            userId: existingUserContactMethod.userId,
+            contactMethodId: input.contactMethodId,
+          },
+        },
+      });
+
+      if (existingWithNewType && existingWithNewType.id !== input.id) {
+        throw new Error('User already has this contact method type assigned');
+      }
+    }
+
     // Prepare data for update
     const updateData: Prisma.UserContactMethodUpdateInput = {};
 
+    if (input.contactMethodId) {
+      updateData.method = {
+        connect: { id: input.contactMethodId },
+      };
+    }
     if (input.value) updateData.value = input.value;
     if (input.url !== undefined) updateData.url = input.url;
 
