@@ -49,6 +49,11 @@ export const getOrderTrpcRoute = orderReadProcedure
                   select: {
                     id: true,
                     name: true,
+                    abbreviation: true,
+                    blacklisted: true,
+                    surcharges: true,
+                    visaFree: true,
+                    RequirementCitizenship: true,
                   },
                 },
               },
@@ -73,7 +78,85 @@ export const getOrderTrpcRoute = orderReadProcedure
       throw new Error('Order not found');
     }
 
-    return {
-      order,
-    };
+    if (order) {
+      const clients = await ctx.prisma.client.findMany({
+        where: {
+          userId: order.userId,
+        },
+        include: {
+          citizenship: true,
+        },
+      });
+
+      // Fetch visa applications for items with serviceType = 'visa'
+      const visaItems = order.items.filter(item => item.serviceType === 'visa');
+      const visaItemIds = visaItems.map(item => item.id);
+
+      const visaApplications =
+        visaItemIds.length > 0
+          ? await ctx.prisma.visaApplication.findMany({
+              where: {
+                orderItemId: { in: visaItemIds },
+              },
+              select: {
+                id: true,
+                orderItemId: true,
+                plannedCountryEntryDate: true,
+                applicationCode: true,
+                submittedByAgent: true,
+                isMultientry: true,
+                note: true,
+                revisedActivationDate: true,
+                statusNote: true,
+                status: true,
+                country: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+                visaType: {
+                  select: {
+                    id: true,
+                    name: true,
+                    serviceCost: true,
+                    isMultientry: true,
+                    multientryExtraCost: true,
+                    processingMode: true,
+                    processingUnit: true,
+                    processingValueFixed: true,
+                    processingValueMin: true,
+                    processingValueMax: true,
+                  },
+                },
+                clientVisas: {
+                  select: {
+                    id: true,
+                    validFrom: true,
+                    validTo: true,
+                    notifiedExpiry: true,
+                  },
+                },
+              },
+            })
+          : [];
+
+      // Create a map for O(1) lookup since it's one-to-one relationship
+      const visaApplicationMap = new Map(visaApplications.map(va => [va.orderItemId, va]));
+
+      // Add visa applications to corresponding items
+      const itemsWithVisaApplications = order.items.map(item => {
+        if (item.serviceType === 'visa') {
+          const visaApplication = visaApplicationMap.get(item.id);
+          return { ...item, visaApplication: visaApplication || null };
+        }
+        return { ...item, visaApplication: null };
+      });
+
+      return {
+        ...order,
+        items: itemsWithVisaApplications,
+        clients,
+      };
+    }
   });

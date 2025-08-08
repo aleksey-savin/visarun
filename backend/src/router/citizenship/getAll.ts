@@ -5,14 +5,15 @@ import { Prisma } from '@prisma/client';
 export const zGetAllCitizenshipsTrpcInput = z.object({
   limit: z.number().int().min(1).max(100).optional(),
   offset: z.number().int().min(0).default(0),
-  search: z.string().min(1).optional(),
+  search: z.string().optional(),
   favourite: z.boolean().optional(),
+  citizenshipId: z.string().uuid().optional(),
 });
 
 export const getAllCitizenshipsTrpcRoute = citizenshipReadProcedure
   .input(zGetAllCitizenshipsTrpcInput)
   .query(async ({ input, ctx }) => {
-    const { limit, offset, search, favourite } = input;
+    const { limit, offset, search, favourite, citizenshipId } = input;
 
     // Build where clause
     const where: Prisma.CitizenshipWhereInput = {};
@@ -34,7 +35,7 @@ export const getAllCitizenshipsTrpcRoute = citizenshipReadProcedure
     });
 
     // Get citizenships
-    const citizenships = await ctx.prisma.citizenship.findMany({
+    let citizenships = await ctx.prisma.citizenship.findMany({
       where,
       orderBy: [{ favourite: 'desc' }, { name: 'asc' }],
       select: {
@@ -54,6 +55,31 @@ export const getAllCitizenshipsTrpcRoute = citizenshipReadProcedure
       ...(limit && { take: limit }),
       skip: offset,
     });
+
+    // If citizenshipId is provided and not already in results, fetch and prepend it
+    if (citizenshipId && !citizenships.some(c => c.id === citizenshipId)) {
+      const specificCitizenship = await ctx.prisma.citizenship.findUnique({
+        where: { id: citizenshipId },
+        select: {
+          id: true,
+          name: true,
+          emoji: true,
+          abbreviation: true,
+          favourite: true,
+          _count: {
+            select: {
+              visaFree: true,
+              blacklisted: true,
+              surcharges: true,
+            },
+          },
+        },
+      });
+
+      if (specificCitizenship) {
+        citizenships = [specificCitizenship, ...citizenships];
+      }
+    }
 
     return {
       citizenships,

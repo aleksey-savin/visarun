@@ -24,7 +24,7 @@ export default function ViewOrderPage() {
     error,
   } = trpc.order.getOne.useQuery({ id: id! }, { enabled: !!id });
 
-  const order = orderData?.order;
+  const order = orderData;
 
   const formatDate = (date: string | Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -113,7 +113,10 @@ export default function ViewOrderPage() {
                 <p className="text-lg font-semibold">
                   {order.items
                     ? formatCurrency(
-                        order.items.reduce((sum, item) => sum + item.finalPrice, 0),
+                        order.items.reduce(
+                          (sum: number, item: { finalPrice: number }) => sum + item.finalPrice,
+                          0
+                        ),
                         'VND'
                       )
                     : 'N/A'}
@@ -175,69 +178,77 @@ export default function ViewOrderPage() {
         <CardContent>
           {order.items && order.items.length > 0 ? (
             <div className="space-y-4">
-              {order.items.map(item => (
-                <div key={item.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline">{item.serviceType}</Badge>
-                        <span className="text-sm text-muted-foreground">
-                          Service ID: {item.serviceTypeId}
-                        </span>
-                      </div>
-
-                      <div className="mb-2">
-                        <p className="text-sm font-medium text-muted-foreground">Client</p>
-                        <p>
-                          {item.client.firstName} {item.client.lastName}
-                        </p>
-                        {item.client.citizenship && (
-                          <p className="text-sm text-muted-foreground">
-                            Citizenship: {item.client.citizenship.name}
-                          </p>
-                        )}
-                      </div>
-
-                      {item.note && (
-                        <div className="mb-2">
-                          <p className="text-sm font-medium text-muted-foreground">Note</p>
-                          <p className="text-sm">{item.note}</p>
+              {order.items.map(
+                (
+                  item: any // eslint-disable-line @typescript-eslint/no-explicit-any
+                ) => (
+                  <div key={item.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline">{item.serviceType}</Badge>
+                          <span className="text-sm text-muted-foreground">
+                            Service ID: {item.serviceTypeId}
+                          </span>
                         </div>
-                      )}
 
-                      {item.discountRule && (
                         <div className="mb-2">
-                          <p className="text-sm font-medium text-muted-foreground">Discount Rule</p>
-                          <p className="text-sm">
-                            {item.discountRule.name} ({item.discountRule.discountType}:{' '}
-                            {item.discountRule.discountValue})
+                          <p className="text-sm font-medium text-muted-foreground">Client</p>
+                          <p>
+                            {item.client.firstName || ''} {item.client.lastName || ''}
                           </p>
-                          {item.discountComment && (
-                            <p className="text-xs text-muted-foreground">{item.discountComment}</p>
+                          {item.client.citizenship && (
+                            <p className="text-sm text-muted-foreground">
+                              Citizenship: {item.client.citizenship.name}
+                            </p>
                           )}
                         </div>
-                      )}
 
-                      <div className="grid grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Base Price</p>
-                          <p className="font-medium">{formatCurrency(item.basePrice, 'VND')}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Discount</p>
-                          <p className="font-medium text-green-600">
-                            -{formatCurrency(item.discountAmount, 'VND')}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Final Price</p>
-                          <p className="font-medium">{formatCurrency(item.finalPrice, 'VND')}</p>
+                        {item.note && (
+                          <div className="mb-2">
+                            <p className="text-sm font-medium text-muted-foreground">Note</p>
+                            <p className="text-sm">{item.note}</p>
+                          </div>
+                        )}
+
+                        {item.discountRule && (
+                          <div className="mb-2">
+                            <p className="text-sm font-medium text-muted-foreground">
+                              Discount Rule
+                            </p>
+                            <p className="text-sm">
+                              {item.discountRule.name} ({item.discountRule.discountType}:{' '}
+                              {item.discountRule.discountValue})
+                            </p>
+                            {item.discountComment && (
+                              <p className="text-xs text-muted-foreground">
+                                {item.discountComment}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">Base Price</p>
+                            <p className="font-medium">{formatCurrency(item.basePrice, 'VND')}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Discount</p>
+                            <p className="font-medium text-green-600">
+                              -{formatCurrency(item.discountAmount, 'VND')}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Final Price</p>
+                            <p className="font-medium">{formatCurrency(item.finalPrice, 'VND')}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
 
               <Separator />
 
@@ -248,21 +259,24 @@ export default function ViewOrderPage() {
                       <p className="text-sm text-muted-foreground">
                         Base Total:{' '}
                         {formatCurrency(
-                          order.items.reduce((sum, item) => sum + item.basePrice, 0),
+                          order.items.reduce((sum: number, item: any) => sum + item.basePrice, 0), // eslint-disable-line @typescript-eslint/no-explicit-any
                           'VND'
                         )}
                       </p>
                       <p className="text-sm text-green-600">
                         Total Discount: -
                         {formatCurrency(
-                          order.items.reduce((sum, item) => sum + item.discountAmount, 0),
+                          order.items.reduce(
+                            (sum: number, item: any) => sum + item.discountAmount, // eslint-disable-line @typescript-eslint/no-explicit-any
+                            0
+                          ),
                           'VND'
                         )}
                       </p>
                       <p className="text-lg font-semibold">
                         Final Total:{' '}
                         {formatCurrency(
-                          order.items.reduce((sum, item) => sum + item.finalPrice, 0),
+                          order.items.reduce((sum: number, item: any) => sum + item.finalPrice, 0), // eslint-disable-line @typescript-eslint/no-explicit-any
                           'VND'
                         )}
                       </p>

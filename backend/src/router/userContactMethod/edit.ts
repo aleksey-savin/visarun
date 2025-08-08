@@ -5,7 +5,7 @@ import { Prisma } from '@prisma/client';
 export const zEditUserContactMethodTrpcInput = z.object({
   id: z.string().uuid(),
   contactMethodId: z.string().uuid().optional(),
-  value: z.string().min(1).max(500).optional(),
+  contactValue: z.string().min(1).max(500).optional(),
   url: z.string().url().optional(),
 });
 
@@ -66,7 +66,7 @@ export const editUserContactMethodTrpcRoute = userUpdateProcedure
         connect: { id: input.contactMethodId },
       };
     }
-    if (input.value) updateData.value = input.value;
+    if (input.contactValue) updateData.value = input.contactValue;
     if (input.url !== undefined) updateData.url = input.url;
 
     // Update user contact method

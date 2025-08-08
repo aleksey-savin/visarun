@@ -12,7 +12,6 @@ const CreateVisaCitizenshipSurchargePage = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
   const { data: countriesData } = trpc.country.getAll.useQuery();
 
   const createVisaCitizenshipSurchargeMutation = trpc.visaCitizenshipSurcharge.create.useMutation({
@@ -50,7 +49,7 @@ const CreateVisaCitizenshipSurchargePage = () => {
     },
   ];
 
-  if (!citizenshipsData || !countriesData) {
+  if (!countriesData) {
     return (
       <FormPageLayout breadcrumbs={breadcrumbs}>
         <div className="flex justify-center items-center p-8">
@@ -63,7 +62,6 @@ const CreateVisaCitizenshipSurchargePage = () => {
   return (
     <FormPageLayout breadcrumbs={breadcrumbs}>
       <VisaCitizenshipSurchargeForm
-        citizenships={citizenshipsData.citizenships}
         countries={countriesData.countries}
         onSubmit={handleSubmit}
         onCancel={handleCancel}

@@ -196,7 +196,7 @@ export default function EditUserPage() {
     if (!editingContactId) return;
     updateContactMutation.mutate({
       id: editingContactId,
-      value: data.value,
+      contactValue: data.value,
       url: data.url || undefined,
     });
   };

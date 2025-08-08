@@ -64,6 +64,9 @@ export const editClientTrpcRoute = userUpdateProcedure
           select: {
             id: true,
             name: true,
+            favourite: true,
+            emoji: true,
+            abbreviation: true,
           },
         },
         documents: {

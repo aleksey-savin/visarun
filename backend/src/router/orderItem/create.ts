@@ -6,7 +6,7 @@ export const zCreateOrderItemTrpcInput = z.object({
   orderId: z.string().uuid(),
   clientId: z.string().uuid(),
   serviceType: z.enum(['visa', 'visarun']),
-  serviceTypeId: z.string(),
+  countryId: z.string().uuid().optional(),
   discountAppliedType: z.enum(['manual', 'rule']).optional(),
   discountRuleId: z.string().uuid().optional(),
   discountAmount: z.number().min(0).default(0),
@@ -78,60 +78,6 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
       }
     }
 
-    // Calculate citizenship surcharge for visa services
-    let citizenshipSurcharge = 0;
-    let surchargeNote = null;
-
-    if (input.serviceType === 'visa' && client.citizenship) {
-      if (client?.citizenship) {
-        // Look for applicable citizenship surcharge
-        const surchargeQuery = {
-          citizenshipId: client.citizenship.id,
-          countryId: input.serviceTypeId,
-        };
-
-        let surcharge = null;
-
-        // If visa type is specified, look for specific surcharge first
-        if (input.visaTypeId) {
-          surcharge = await ctx.prisma.visaCitizenshipSurcharge.findFirst({
-            where: {
-              ...surchargeQuery,
-              isGlobal: false,
-              visaTypes: {
-                some: {
-                  visaTypeId: input.visaTypeId,
-                },
-              },
-            },
-            include: {
-              citizenship: true,
-              country: true,
-            },
-          });
-        }
-
-        // If no specific surcharge found, look for global surcharge
-        if (!surcharge) {
-          surcharge = await ctx.prisma.visaCitizenshipSurcharge.findFirst({
-            where: {
-              ...surchargeQuery,
-              isGlobal: true,
-            },
-            include: {
-              citizenship: true,
-              country: true,
-            },
-          });
-        }
-
-        if (surcharge) {
-          citizenshipSurcharge = surcharge.surchargeAmount;
-          surchargeNote = surcharge.note;
-        }
-      }
-    }
-
     // Validate discount applied type consistency
     if (input.discountAppliedType === 'rule' && !input.discountRuleId) {
       throw new Error('Discount rule ID is required when discount applied type is "rule"');
@@ -145,33 +91,19 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
 
     // Validate visa-specific fields
     if (input.serviceType === 'visa') {
+      if (!input.countryId) {
+        throw new Error('Country ID is required for visa service type');
+      }
+
       // Check if country exists
       const country = await ctx.prisma.country.findUnique({
-        where: { id: input.serviceTypeId },
+        where: { id: input.countryId },
       });
 
       if (!country) {
         throw new Error('Country not found');
       }
-
-      // If visaTypeId is provided, validate it belongs to the country
-      if (input.visaTypeId) {
-        const visaType = await ctx.prisma.visaType.findUnique({
-          where: { id: input.visaTypeId },
-        });
-
-        if (!visaType) {
-          throw new Error('Visa type not found');
-        }
-
-        if (visaType.countryId !== input.serviceTypeId) {
-          throw new Error('Visa type does not belong to the specified country');
-        }
-      }
     }
-
-    // Recalculate final price including citizenship surcharge
-    const adjustedFinalPrice = input.finalPrice + citizenshipSurcharge;
 
     // Create order item
     const orderItem = await ctx.prisma.orderItem.create({
@@ -179,18 +111,14 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
         orderId: input.orderId,
         clientId: input.clientId,
         serviceType: input.serviceType,
-        serviceTypeId: input.serviceTypeId,
+        serviceTypeId: '',
         discountAppliedType: input.discountAppliedType,
         discountRuleId: input.discountRuleId,
         discountAmount: input.discountAmount,
         discountComment: input.discountComment,
-        note: surchargeNote
-          ? input.note
-            ? `${input.note} | Citizenship surcharge: ${surchargeNote}`
-            : `Citizenship surcharge: ${surchargeNote}`
-          : input.note,
+        note: input.note,
         basePrice: input.basePrice,
-        finalPrice: adjustedFinalPrice,
+        finalPrice: input.finalPrice,
       },
       include: {
         order: {
@@ -253,7 +181,7 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
         } = {
           orderItemId: orderItem.id,
           submittedByAgent: false,
-          countryId: input.serviceTypeId,
+          countryId: input.countryId!, // Safe to use ! because we validated above
           plannedCountryEntryDate: input.plannedCountryEntryDate,
           status: VisaApplicationStatus.pending,
         };
@@ -299,13 +227,5 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
     return {
       orderItem,
       visaApplication,
-      surchargeApplied:
-        citizenshipSurcharge > 0
-          ? {
-              amount: citizenshipSurcharge,
-              note: surchargeNote,
-              message: `Дополнительный сбор для граждан ${client.citizenship?.name} составляет ${citizenshipSurcharge} VND`,
-            }
-          : null,
     };
   });

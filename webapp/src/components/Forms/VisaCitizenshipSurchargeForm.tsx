@@ -33,9 +33,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { VisaTypeSelector } from '@/components/Requirements/VisaTypeSelector';
+import CitizenshipSelect from '@/components/Citizenship/CitizenshipSelect';
 import { Save, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useState } from 'react';
+
+import { Citizenship } from '@/types/Citizenship';
 
 // Form schema
 const visaCitizenshipSurchargeSchema = z.object({
@@ -49,11 +52,6 @@ const visaCitizenshipSurchargeSchema = z.object({
 
 export type VisaCitizenshipSurchargeFormData = z.infer<typeof visaCitizenshipSurchargeSchema>;
 
-interface Citizenship {
-  id: string;
-  name: string;
-}
-
 interface Country {
   id: string;
   name: string;
@@ -61,7 +59,7 @@ interface Country {
 
 interface VisaCitizenshipSurchargeFormProps {
   initialData?: Partial<VisaCitizenshipSurchargeFormData>;
-  citizenships: Citizenship[];
+  currentCitizenship?: Citizenship;
   countries: Country[];
   onSubmit: (data: VisaCitizenshipSurchargeFormData) => void;
   onCancel: () => void;
@@ -72,7 +70,6 @@ interface VisaCitizenshipSurchargeFormProps {
 
 const VisaCitizenshipSurchargeForm = ({
   initialData,
-  citizenships,
   countries,
   onSubmit,
   onCancel,
@@ -174,28 +171,12 @@ const VisaCitizenshipSurchargeForm = ({
                   control={form.control}
                   name="citizenshipId"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Citizenship *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={isSubmitting}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select citizenship" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {citizenships.map(citizenship => (
-                            <SelectItem key={citizenship.id} value={citizenship.id}>
-                              {citizenship.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+                    <CitizenshipSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      currentCitizenship={initialData?.citizenshipId}
+                      label="Citizenship *"
+                    />
                   )}
                 />
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 export const zEditOrderTrpcInput = z.object({
   id: z.string().uuid(),
+  updatedAt: z.string().datetime().optional(),
   status: z.enum(['draft', 'submitted', 'paid', 'cancelled']).optional(),
 });
 

@@ -22,7 +22,6 @@ const EditVisaCitizenshipSurchargePage = () => {
     isError,
   } = trpc.visaCitizenshipSurcharge.getOne.useQuery({ id: id! }, { enabled: !!id });
 
-  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
   const { data: countriesData } = trpc.country.getAll.useQuery();
 
   const editVisaCitizenshipSurchargeMutation = trpc.visaCitizenshipSurcharge.edit.useMutation({
@@ -63,7 +62,7 @@ const EditVisaCitizenshipSurchargePage = () => {
     navigate(getAllVisaCitizenshipSurchargesRoute());
   };
 
-  if (isLoading || !citizenshipsData || !countriesData) {
+  if (isLoading || !countriesData) {
     const breadcrumbs = [
       {
         label: 'Visa Citizenship Surcharges',
@@ -139,6 +138,8 @@ const EditVisaCitizenshipSurchargePage = () => {
     },
   ];
 
+  console.log(surcharge.citizenshipId);
+
   return (
     <FormPageLayout breadcrumbs={breadcrumbs} saveStatus={saveStatus} lastSavedTime={lastSavedTime}>
       <VisaCitizenshipSurchargeForm
@@ -150,7 +151,6 @@ const EditVisaCitizenshipSurchargePage = () => {
           note: surcharge.note || '',
           isGlobal: surcharge.isGlobal || false,
         }}
-        citizenships={citizenshipsData.citizenships}
         countries={countriesData.countries}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
