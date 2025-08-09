@@ -4,7 +4,7 @@ export interface OrderItem {
   id?: string;
   orderId?: string;
   serviceType: string;
-  serviceTypeId?: string;
+  serviceTypeId?: string | undefined;
   client: {
     id: string;
     firstName: string | null;
