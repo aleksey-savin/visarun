@@ -120,47 +120,6 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
         basePrice: input.basePrice,
         finalPrice: input.finalPrice,
       },
-      include: {
-        order: {
-          select: {
-            id: true,
-            status: true,
-            createdAt: true,
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                middleName: true,
-                lastName: true,
-                email: true,
-              },
-            },
-          },
-        },
-        client: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            citizenship: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        discountRule: {
-          select: {
-            id: true,
-            name: true,
-            discountType: true,
-            discountValue: true,
-            appliesToService: true,
-          },
-        },
-        VisaApplication: true,
-      },
     });
 
     // If service type is visa, create a visa application
@@ -224,8 +183,56 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
       }
     }
 
+    // Update order item
+    const updatedOrderItem = await ctx.prisma.orderItem.update({
+      where: { id: orderItem.id },
+      data: {
+        serviceTypeId: visaApplication?.id,
+      },
+      include: {
+        order: {
+          select: {
+            id: true,
+            status: true,
+            createdAt: true,
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                middleName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            citizenship: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        discountRule: {
+          select: {
+            id: true,
+            name: true,
+            discountType: true,
+            discountValue: true,
+            appliesToService: true,
+          },
+        },
+        VisaApplication: true,
+      },
+    });
     return {
-      orderItem,
+      orderItem: updatedOrderItem,
       visaApplication,
     };
   });

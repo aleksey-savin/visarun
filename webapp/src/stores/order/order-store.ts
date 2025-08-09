@@ -4,8 +4,8 @@ import { createTRPCReact } from '@trpc/react-query';
 import { httpBatchLink } from '@trpc/client';
 import type { AppRouter } from '@visarun/backend/src/router';
 
-import { Client } from '@/types/Client.tsx';
-import { OrderItem } from '@/types/OrderItem.tsx';
+import { Client } from '@/types/Client.js';
+import { OrderItem } from '@/types/OrderItem.js';
 
 const trpc = createTRPCReact<AppRouter>();
 

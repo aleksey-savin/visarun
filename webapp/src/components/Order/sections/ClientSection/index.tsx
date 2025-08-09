@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import ContactData from '@/components/Order/sections/ClientSection/ContactData';
 import ClientData from '@/components/Order/sections/ClientSection/ClientData';
 
-import { Client } from '@/types/Client.tsx';
+import { Client } from '@/types/Client.js';
 
 import ClientBadge from '@/components/Order/ClientBadge';
 import ClientCard from '@/components/Order/ClientCard';

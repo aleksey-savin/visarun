@@ -1,4 +1,4 @@
-import { Client } from '@/types/Client.tsx';
+import { Client } from '@/types/Client.js';
 
 import { Badge } from '../ui/badge';
 

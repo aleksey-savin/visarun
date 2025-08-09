@@ -1,4 +1,4 @@
-import { Citizenship } from './Citizenship.tsx';
+import { Citizenship } from './Citizenship.js';
 
 export interface Client {
   id: string;
