@@ -129,12 +129,12 @@ const ClientData = ({ client }: { client: Client }) => {
                     <Button
                       variant="secondary"
                       className={cn(
-                        'min-w-52 w-full justify-start text-left font-normal bg-[#171717] border-[#3F3F46] hover:bg-[#171717] hover:border-ring focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+                        'min-w-52 justify-between',
                         !field.value && 'text-muted-foreground'
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                      {field.value ? format(field.value, 'PPP') : <span>Select date</span>}
+                      <CalendarIcon />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -146,7 +146,11 @@ const ClientData = ({ client }: { client: Client }) => {
                           handlePassportDateUpdate(date);
                         }
                       }}
-                      disabled={date => date < new Date() || date < new Date('1900-01-01')}
+                      disabled={date => {
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        return date < yesterday;
+                      }}
                       captionLayout="dropdown"
                       startMonth={new Date()}
                       endMonth={new Date(2100, 11)}

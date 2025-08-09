@@ -11,6 +11,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 import { OrderItem } from '@/types/OrderItem';
 
@@ -18,7 +24,17 @@ import { Trash2, AlertCircle } from 'lucide-react';
 
 import useOrderStore from '@/stores/order/order-store';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
 import { trpc } from '@/lib/trpc';
+import { cn } from '@/lib/utils';
+
+const formSchema = z.object({
+  entryDate: z.date(),
+  entryTime: z.string().optional(),
+});
 
 const VisaCard = ({ item }: { item: OrderItem }) => {
   const { orderItems, setOrderItems, setSaveStatus } = useOrderStore();
@@ -34,8 +50,110 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
     setSaveStatus('saved');
   };
 
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      entryDate: item.visaApplication?.plannedCountryEntryDate
+        ? new Date(item.visaApplication.plannedCountryEntryDate)
+        : undefined,
+      entryTime: item.visaApplication?.plannedCountryEntryDate
+        ? new Date(item.visaApplication.plannedCountryEntryDate).toTimeString().slice(0, 5)
+        : '00:00',
+    },
+  });
+
+  const [entryDateOpen, setEntryDateOpen] = useState(false);
+  const [entryDate, setEntryDate] = useState<Date | undefined>(
+    item.visaApplication?.plannedCountryEntryDate
+      ? new Date(item.visaApplication.plannedCountryEntryDate)
+      : undefined
+  );
+  const [entryTime, setEntryTime] = useState<string>(
+    item.visaApplication?.plannedCountryEntryDate
+      ? new Date(item.visaApplication.plannedCountryEntryDate).toTimeString().slice(0, 5)
+      : '00:00'
+  );
+
+  const editVisaApplicationMutation = trpc.visaApplication.edit.useMutation();
+
+  const handleEntryDateUpdate = async (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
+
+    setEntryDate(selectedDate);
+    setSaveStatus('saving');
+
+    const [hours, minutes] = entryTime.split(':').map(Number);
+    const combinedDate = new Date(selectedDate);
+    combinedDate.setHours(hours, minutes, 0, 0);
+    const dateString = combinedDate.toISOString();
+
+    setOrderItems(
+      orderItems.map(c =>
+        c.id === item.id
+          ? {
+              ...c,
+              visaApplication: c.visaApplication
+                ? { ...c.visaApplication, plannedCountryEntryDate: dateString }
+                : c.visaApplication,
+            }
+          : c
+      )
+    );
+
+    form.setValue('entryDate', selectedDate);
+    setEntryDateOpen(false);
+
+    try {
+      await editVisaApplicationMutation.mutateAsync({
+        id: item.visaApplication?.id || '',
+        plannedCountryEntryDate: dateString,
+      });
+      setSaveStatus('saved');
+    } catch {
+      setSaveStatus('error');
+    }
+  };
+
+  const handleEntryTimeUpdate = async (newTime: string) => {
+    setEntryTime(newTime);
+
+    if (!entryDate) return;
+
+    setSaveStatus('saving');
+
+    const [hours, minutes] = newTime.split(':').map(Number);
+    const combinedDate = new Date(entryDate);
+    combinedDate.setHours(hours, minutes, 0, 0);
+    const dateString = combinedDate.toISOString();
+
+    setOrderItems(
+      orderItems.map(c =>
+        c.id === item.id
+          ? {
+              ...c,
+              visaApplication: c.visaApplication
+                ? { ...c.visaApplication, plannedCountryEntryDate: dateString }
+                : c.visaApplication,
+            }
+          : c
+      )
+    );
+
+    form.setValue('entryTime', newTime);
+
+    try {
+      await editVisaApplicationMutation.mutateAsync({
+        id: item.visaApplication?.id || '',
+        plannedCountryEntryDate: dateString,
+      });
+      setSaveStatus('saved');
+    } catch {
+      setSaveStatus('error');
+    }
+  };
+
   return (
-    <Card className="p-3 bg-secondary">
+    <Card className="p-3 bg-secondary gap-5">
       <div className="flex justify-between">
         <div className="flex items-start">
           <Badge variant="accent">Visa - {item.visaApplication?.country?.name}</Badge>
@@ -50,6 +168,69 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
         >
           <Trash2 className="h-4 w-4" />
         </Button>
+      </div>
+      <div className="flex justify-start items-center">
+        <div>
+          <Label htmlFor="date-picker" className="mb-2">
+            Entry date
+          </Label>
+          <div className="flex gap-1.5">
+            <Form {...form}>
+              <div className="flex flex-col gap-3">
+                <FormField
+                  control={form.control}
+                  name="entryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Popover open={entryDateOpen} onOpenChange={setEntryDateOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="secondary"
+                              id="date-picker"
+                              className={cn(
+                                'min-w-52 justify-between',
+                                !field.value && 'text-muted-foreground'
+                              )}
+                            >
+                              {entryDate ? entryDate.toLocaleDateString() : 'Select date'}
+                              <CalendarIcon />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={entryDate}
+                              captionLayout="dropdown"
+                              onSelect={handleEntryDateUpdate}
+                              disabled={date => {
+                                const yesterday = new Date();
+                                yesterday.setDate(yesterday.getDate() - 1);
+                                return date < yesterday;
+                              }}
+                              startMonth={new Date()}
+                              endMonth={new Date(2100, 11)}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Input
+                  type="time"
+                  value={entryTime}
+                  onChange={e => {
+                    handleEntryTimeUpdate(e.target.value);
+                  }}
+                  className="bg-secondary appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                />
+              </div>
+            </Form>
+          </div>
+        </div>
       </div>
       <Dialog
         open={showDeleteModal}
