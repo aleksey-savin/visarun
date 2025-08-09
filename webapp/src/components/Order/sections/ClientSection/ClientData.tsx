@@ -60,6 +60,7 @@ const ClientData = ({ client }: { client: Client }) => {
     const { client: updatedClient } = await editClientMutation.mutateAsync({
       id: client.id,
       citizenshipId,
+      passportExpirationDate: client.passportExpirationDate,
     });
 
     setClients(

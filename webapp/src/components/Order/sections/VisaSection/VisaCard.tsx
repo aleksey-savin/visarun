@@ -30,6 +30,7 @@ import { z } from 'zod';
 
 import { trpc } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
+import VisaTypeSelector from '@/components/Order/sections/VisaSection/VisaTypeSelector';
 
 const formSchema = z.object({
   entryDate: z.date(),
@@ -169,13 +170,13 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-      <div className="flex justify-start items-center">
-        <div>
-          <Label htmlFor="date-picker" className="mb-2">
-            Entry date
-          </Label>
-          <div className="flex gap-1.5">
-            <Form {...form}>
+      <Form {...form}>
+        <div className="flex justify-start items-center">
+          <div>
+            <Label htmlFor="date-picker" className="mb-2">
+              Entry date
+            </Label>
+            <div className="flex gap-1.5">
               <div className="flex flex-col gap-3">
                 <FormField
                   control={form.control}
@@ -228,10 +229,13 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                   className="bg-secondary appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                 />
               </div>
-            </Form>
+            </div>
           </div>
         </div>
-      </div>
+        <div>
+          <VisaTypeSelector item={item} />
+        </div>
+      </Form>
       <Dialog
         open={showDeleteModal}
         onOpenChange={open => {

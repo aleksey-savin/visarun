@@ -14,7 +14,9 @@ import ClientCard from '@/components/Order/ClientCard';
 import { formatCurrency } from '@/utils/currency';
 
 const ClientSection = ({ client, totalAmount }: { client: Client; totalAmount: number }) => {
-  const [clientEditMode, setClientEditMode] = useState(false);
+  const [clientEditMode, setClientEditMode] = useState(
+    !client?.citizenshipId || !client?.passportExpirationDate
+  );
 
   const handleClientEditMode = () => {
     setClientEditMode(prev => !prev);

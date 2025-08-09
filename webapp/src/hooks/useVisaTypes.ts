@@ -58,7 +58,7 @@ export const useVisaType = (id: string) => {
 export const useVisaTypesByCountry = (countryId: string) => {
   return useQuery({
     queryKey: ['visaTypes', 'country', countryId],
-    queryFn: () => trpcClient.visaType.getByCountry.query({ countryId }),
+    queryFn: () => trpcClient.visaType.getAll.query({ countryId }),
     enabled: !!countryId,
   });
 };

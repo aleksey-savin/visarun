@@ -14,7 +14,7 @@ export interface VisaApplication {
     name: string | null;
   };
   visaType?: {
-    id: string;
+    id: string | undefined;
     name: string;
     serviceCost: number;
     isMultientry: boolean;
