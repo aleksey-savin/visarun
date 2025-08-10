@@ -31,7 +31,7 @@ export interface CreateUserResult {
   };
   contactMethods: Array<{
     id: string;
-    value: string;
+    value: string | null;
     url: string | null;
     method: {
       id: string;
@@ -124,7 +124,7 @@ export async function createUserWithValidation(
     // Create contact methods if provided
     let userContactMethods: Array<{
       id: string;
-      value: string;
+      value: string | null;
       url: string | null;
       method: {
         id: string;
@@ -143,8 +143,11 @@ export async function createUserWithValidation(
       });
 
       // Fetch created contact methods with their details
-      userContactMethods = await tx.userContactMethod.findMany({
-        where: { userId: newUser.id },
+      const rawContactMethods = await tx.userContactMethod.findMany({
+        where: {
+          userId: newUser.id,
+          method: { isNot: null },
+        },
         include: {
           method: {
             select: {
@@ -158,6 +161,13 @@ export async function createUserWithValidation(
           createdAt: 'desc',
         },
       });
+
+      userContactMethods = rawContactMethods.map(cm => ({
+        id: cm.id,
+        value: cm.value,
+        url: cm.url,
+        method: cm.method!,
+      }));
     }
 
     // Create role assignments if provided
@@ -214,13 +224,11 @@ export async function createUserWithValidation(
 /**
  * Validates user creation requirements based on business rules
  */
-export function validateUserCreationRequirements(options: CreateUserOptions): void {
-  const { email, contactMethods = [] } = options;
-
-  // Must have either email or contact methods
-  if (!email && contactMethods.length === 0) {
-    throw new Error('User must have either an email address or at least one contact method');
-  }
+export function validateUserCreationRequirements(options: {
+  email?: string;
+  isActive?: boolean;
+}): void {
+  const { email } = options;
 
   // If no email, isActive must be false (this is handled automatically in createUserWithValidation)
   if (!email && options.isActive === true) {
@@ -240,8 +248,8 @@ export async function createUserForClient(
     lastName: string;
     password?: string;
     contactMethods?: Array<{
-      contactMethodId: string;
-      value: string;
+      contactMethodId?: string;
+      value?: string;
       url?: string;
     }>;
   }
@@ -258,11 +266,26 @@ export async function createUserForClient(
     throw new Error('Client role not found in database');
   }
 
+  // Filter and validate contact methods
+  const validContactMethods =
+    userData.contactMethods
+      ?.filter(cm => cm.contactMethodId && cm.value)
+      .map(cm => ({
+        contactMethodId: cm.contactMethodId!,
+        value: cm.value!,
+        url: cm.url,
+      })) || [];
+
   // Create user with client-specific defaults
   return createUserWithValidation(prisma, {
-    ...userData,
+    email: userData.email,
+    firstName: userData.firstName,
+    middleName: userData.middleName,
+    lastName: userData.lastName,
+    password: userData.password,
     mustChangePassword: true, // Always true for client-created users
     isActive: false, // Always false for client-created users
     roleIds: [clientRole.id], // Assign client role by default
+    contactMethods: validContactMethods,
   });
 }

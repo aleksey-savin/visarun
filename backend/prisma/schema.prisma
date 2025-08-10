@@ -225,15 +225,15 @@ model ContactMethod {
 }
 
 model UserContactMethod {
-  id              String        @id @default(uuid())
+  id              String         @id @default(uuid())
   userId          String
-  contactMethodId String
-  value           String
+  contactMethodId String?
+  value           String?
   url             String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  method          ContactMethod @relation(fields: [contactMethodId], references: [id])
-  user            User          @relation(fields: [userId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  method          ContactMethod? @relation(fields: [contactMethodId], references: [id])
+  user            User           @relation(fields: [userId], references: [id])
 
   @@unique([userId, contactMethodId])
   @@index([userId])

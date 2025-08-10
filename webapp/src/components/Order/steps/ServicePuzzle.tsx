@@ -1,13 +1,41 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { getAllOrdersRoute } from '@/lib/routes';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 import AddVisarun from '@/components/Order/sections/VisarunSection/AddVisarun';
 import AddVisa from '@/components/Order/sections/VisaSection/AddVisa';
 
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
+
 import { Client } from '@/types/Client.js';
 
-const ServicePuzzle = ({ client }: { client: Client }) => {
+import { trpc } from '@/lib/trpc';
+
+import useOrderStore from '@/stores/order/order-store.js';
+
+const ServicePuzzle = ({
+  client,
+  servicePuzzleIsActive,
+}: {
+  client: Client;
+  servicePuzzleIsActive: boolean;
+}) => {
+  const navigate = useNavigate();
+  const { contactMethods, user, order } = useOrderStore();
+
   const [activeService, setActiveService] = useState('visa');
 
   const isDisabled = !client.citizenshipId || !client.passportExpirationDate;
@@ -16,12 +44,54 @@ const ServicePuzzle = ({ client }: { client: Client }) => {
     setActiveService(service);
   };
 
+  const deleteOrderMutation = trpc.order.delete.useMutation();
+  const deleteUserMutation = trpc.user.delete.useMutation();
+
+  const handleDeleteOrder = async () => {
+    await deleteOrderMutation.mutateAsync({
+      id: order?.id || '',
+    });
+
+    await deleteUserMutation.mutateAsync({
+      id: user?.id || '',
+    });
+
+    navigate(getAllOrdersRoute());
+  };
+
   return (
     <>
-      {activeService === 'visa' && <AddVisa client={client} />}
-      {activeService === 'visarun' && <AddVisarun />}
-      <div className="flex justify-end mt-6">
-        <Button type="button">Confirm</Button>
+      {servicePuzzleIsActive && (
+        <>
+          {activeService === 'visa' && <AddVisa client={client} />}
+          {activeService === 'visarun' && <AddVisarun />}
+        </>
+      )}
+      <div className="flex justify-end mt-6 gap-2">
+        {(!contactMethods || !contactMethods[0]?.method?.id || !contactMethods[0]?.value) && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="secondary">Delete</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Order</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this order? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <Button variant="destructive" onClick={handleDeleteOrder}>
+                  Delete
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+        <Button type="button" disabled={!servicePuzzleIsActive}>
+          Confirm
+        </Button>
       </div>
       <Card className="mt-6 p-0 bg-muted border-none">
         <CardContent className="p-3">

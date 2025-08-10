@@ -49,11 +49,19 @@ type User = {
       description: string | null;
     };
   }[];
-  contactMethods?: {
+  contactMethods: {
     id: string;
+    createdAt: string;
+    updatedAt: string;
+    value: string | null;
+    userId: string;
+    url: string | null;
     method: {
+      id: string;
       name: string;
-    };
+      description: string | null;
+    } | null;
+    contactMethodId: string | null;
   }[];
   createdAt: string;
   updatedAt: string;

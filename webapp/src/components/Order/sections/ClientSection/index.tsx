@@ -21,6 +21,13 @@ const ClientSection = ({ client, totalAmount }: { client: Client; totalAmount: n
   const handleClientEditMode = () => {
     setClientEditMode(prev => !prev);
   };
+
+  const clientCanBeSaved: boolean = !!(
+    client &&
+    client?.citizenshipId &&
+    client?.passportExpirationDate
+  );
+
   return (
     <>
       {!clientEditMode && (
@@ -39,7 +46,9 @@ const ClientSection = ({ client, totalAmount }: { client: Client; totalAmount: n
           {client.isPrimary && <ContactData />}
           <div className="flex justify-between items-end">
             <ClientData client={client} />
-            <Button onClick={handleClientEditMode}>Save</Button>
+            <Button disabled={!clientCanBeSaved} onClick={handleClientEditMode}>
+              Save
+            </Button>
           </div>
         </Card>
       )}

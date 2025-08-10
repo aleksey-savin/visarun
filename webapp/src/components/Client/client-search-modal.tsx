@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 
 import { Search, UserPlus } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
-import { getCreateOrderRoute } from '@/lib/routes';
+import { getEditOrderRoute } from '@/lib/routes';
 import ClientCard from './client-card';
 
 interface ClientSearchModalProps {
@@ -132,9 +132,27 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
     return clients;
   }, [searchResults]);
 
-  const handleAddNewClient = () => {
+  const createClientMutation = trpc.client.create.useMutation();
+  const createOrderMutation = trpc.order.create.useMutation();
+
+  const handleAddNewClient = async () => {
     onOpenChange(false);
-    navigate(getCreateOrderRoute());
+
+    const clientResult = await createClientMutation.mutateAsync({
+      firstName: '',
+      lastName: '',
+      userData: {
+        firstName: '',
+        lastName: '',
+      },
+    });
+
+    const newOrderData = await createOrderMutation.mutateAsync({
+      userId: clientResult.createdUser!.id,
+      status: 'draft',
+    });
+
+    navigate(getEditOrderRoute({ id: newOrderData?.order?.id }));
   };
 
   return (

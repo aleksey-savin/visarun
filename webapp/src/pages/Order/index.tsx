@@ -180,8 +180,7 @@ export default function AllOrdersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>User</TableHead>
+                  <TableHead>Client</TableHead>
                   <TableHead>Total Amount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
@@ -192,13 +191,14 @@ export default function AllOrdersPage() {
               <TableBody>
                 {orders.map((order: any) => (
                   <TableRow key={order.id}>
-                    <TableCell className="font-mono text-sm">{order.id.slice(0, 8)}...</TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">
-                          {order.user.firstName} {order.user.lastName}
+                          {order.user?.firstName} {order.user?.lastName || ''}
                         </div>
-                        <div className="text-sm text-muted-foreground">{order.user.email}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {order.user?.email || ''}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

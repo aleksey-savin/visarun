@@ -4,7 +4,6 @@ import { z } from 'zod';
 export const deleteUserTrpcRoute = userDeleteProcedure
   .input(z.object({ id: z.string() }))
   .mutation(async ({ input, ctx }) => {
-    console.log(input.id);
     const existingUser = await ctx.prisma.user.findUnique({
       where: { id: input.id },
       include: {
@@ -50,6 +49,16 @@ export const deleteUserTrpcRoute = userDeleteProcedure
     await ctx.prisma.$transaction(async prisma => {
       // Delete role assignments
       await prisma.userRoleAssignment.deleteMany({
+        where: { userId: input.id },
+      });
+
+      // Delete contact methods assignments
+      await prisma.userContactMethod.deleteMany({
+        where: { userId: input.id },
+      });
+
+      // Delete clients
+      await prisma.client.deleteMany({
         where: { userId: input.id },
       });
 

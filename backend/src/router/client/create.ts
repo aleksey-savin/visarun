@@ -4,8 +4,8 @@ import { createUserForClient } from '../../utils/userCreation.js';
 
 // Contact method input schema
 const zContactMethodInput = z.object({
-  contactMethodId: z.string().uuid(),
-  value: z.string().min(1).max(500),
+  contactMethodId: z.string().uuid().optional(),
+  value: z.string().max(500).optional(),
   url: z.string().url().optional(),
 });
 
@@ -19,41 +19,19 @@ const zUserDataInput = z.object({
   contactMethods: z.array(zContactMethodInput).optional(),
 });
 
-export const zCreateClientTrpcInput = z
-  .object({
-    userId: z.string().uuid().optional(),
-    // Client data
-    firstName: z.string().max(100),
-    lastName: z.string().max(100),
-    citizenshipId: z.string().uuid().optional(),
-    prevViolations: z.boolean().default(false),
-    prevViolationsDesc: z.string().optional(),
-    isOutsideTheCountry: z.boolean().default(false),
-    isOutsideTheCountryAt: z.date().optional(),
-    // User data (only when userId is not provided)
-    userData: zUserDataInput.optional(),
-  })
-  .refine(
-    data => {
-      // If no userId is provided, userData must be provided
-      if (!data.userId) {
-        if (!data.userData) {
-          return false;
-        }
-        // Must have either email or at least one contact method
-        const hasEmail = data.userData.email && data.userData.email.length > 0;
-        const hasContactMethods =
-          data.userData.contactMethods && data.userData.contactMethods.length > 0;
-        return hasEmail || hasContactMethods;
-      }
-      return true;
-    },
-    {
-      message:
-        'When creating a client without userId, userData must be provided with either email or contact methods',
-      path: ['userData'],
-    }
-  );
+export const zCreateClientTrpcInput = z.object({
+  userId: z.string().uuid().optional(),
+  // Client data
+  firstName: z.string().max(100),
+  lastName: z.string().max(100),
+  citizenshipId: z.string().uuid().optional(),
+  prevViolations: z.boolean().default(false),
+  prevViolationsDesc: z.string().optional(),
+  isOutsideTheCountry: z.boolean().default(false),
+  isOutsideTheCountryAt: z.date().optional(),
+  // User data (only when userId is not provided)
+  userData: zUserDataInput.optional(),
+});
 
 export const createClientTrpcRoute = userCreateProcedure
   .input(zCreateClientTrpcInput)
@@ -69,7 +47,7 @@ export const createClientTrpcRoute = userCreateProcedure
         middleName: input.userData.middleName,
         lastName: input.userData.lastName,
         password: input.userData.password,
-        contactMethods: input.userData.contactMethods,
+        contactMethods: input.userData.contactMethods || [],
       });
 
       userId = createdUserResult.user.id;

@@ -2,6 +2,32 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { type TokenPayload } from '../utils/jwt.js';
 import { AuditAction, type AuditContext } from '../types/audit.js';
 
+// Type definitions for Prisma operations
+interface PrismaModelDelegate {
+  findUnique?: (args: {
+    where: Record<string, unknown>;
+  }) => Promise<Record<string, unknown> | null>;
+}
+
+interface PrismaClientWithModels {
+  [key: string]: PrismaModelDelegate;
+}
+
+interface PrismaClientWithAuditLog {
+  AuditLog: {
+    create: (args: {
+      data: {
+        action: string;
+        entityType: string;
+        entityId: string;
+        userId: string;
+        performedAt: Date;
+        diff: unknown;
+      };
+    }) => Promise<unknown>;
+  };
+}
+
 // Extract entity type from Prisma model name
 function getEntityType(model: string): string {
   return model;
@@ -126,9 +152,8 @@ async function createAuditLog(prisma: PrismaClient, context: AuditContext): Prom
     // For login events, store minimal context data
     const diff = context.action === AuditAction.LOGIN ? context.newData : changes;
 
-    await (
-      prisma as unknown as { auditLog: { create: (args: unknown) => Promise<unknown> } }
-    ).auditLog.create({
+    // Use correct model name casing for AuditLog
+    await (prisma as unknown as PrismaClientWithAuditLog).AuditLog.create({
       data: {
         action: context.action.toLowerCase(),
         entityType: context.entityType,
@@ -192,18 +217,20 @@ export function createAuditMiddleware(): Prisma.Middleware {
         if (params.args?.where) {
           // Create a new Prisma client instance to avoid middleware recursion
           const tempPrisma = new PrismaClient();
-          const modelName = model.toLowerCase();
-          const currentData = await (
-            tempPrisma as unknown as Record<
-              string,
-              { findUnique: (args: unknown) => Promise<unknown> }
-            >
-          )[modelName].findUnique({
-            where: params.args.where,
-          });
-          if (currentData) {
-            oldData = currentData as Record<string, unknown>;
-            entityId = extractEntityId(currentData as Record<string, unknown>);
+
+          // Use the model name with correct casing (as it appears in the schema)
+          const prismaDelegate = (tempPrisma as unknown as PrismaClientWithModels)[model];
+
+          if (prismaDelegate && typeof prismaDelegate.findUnique === 'function') {
+            const currentData = await prismaDelegate.findUnique({
+              where: params.args.where,
+            });
+            if (currentData) {
+              oldData = currentData as Record<string, unknown>;
+              entityId = extractEntityId(currentData as Record<string, unknown>);
+            }
+          } else {
+            console.warn(`No findUnique method found for model: ${model}`);
           }
           await tempPrisma.$disconnect();
         }

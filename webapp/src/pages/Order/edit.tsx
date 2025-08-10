@@ -18,6 +18,7 @@ const EditOrderPage = () => {
   const { data: orderData } = trpc.order.getOne.useQuery({ id: id! }, { enabled: !!id });
 
   const {
+    contactMethods,
     saveStatus,
     order,
     orderItems = [],
@@ -33,7 +34,7 @@ const EditOrderPage = () => {
   useEffect(() => {
     setOrder({
       id: orderData?.id,
-      userId: orderData?.userId,
+      userId: orderData?.userId || '',
       status: orderData?.status,
       updatedAt: orderData?.updatedAt,
     });
@@ -46,7 +47,7 @@ const EditOrderPage = () => {
     setContactMethods(
       orderData?.user?.contactMethods.map(m => ({
         id: m.id,
-        method: { id: m.method.id, name: m.method.name },
+        method: { id: m.method?.id || '', name: m.method?.name || '' },
         url: m.url,
         value: m.value,
       })) || []
@@ -99,6 +100,14 @@ const EditOrderPage = () => {
   };
 
   const lastUpdated = new Date(order?.updatedAt || '');
+
+  const servicePuzzleIsActive: boolean = !!(
+    contactMethods?.length > 0 &&
+    contactMethods[0]?.value &&
+    clients.length > 0 &&
+    clients?.find(c => c.isPrimary)?.citizenshipId &&
+    clients?.find(c => c.isPrimary)?.passportExpirationDate
+  );
 
   return (
     <>
@@ -156,7 +165,10 @@ const EditOrderPage = () => {
                   <Card className="bg-secondary mb-2.5 mr-2.5 p-0" key={client.id}>
                     <ClientSection totalAmount={totalAmount} client={client} />
                     <div className="p-6">
-                      <ServicePuzzle client={client} />
+                      <ServicePuzzle
+                        client={client}
+                        servicePuzzleIsActive={servicePuzzleIsActive}
+                      />
                     </div>
                   </Card>
                 );

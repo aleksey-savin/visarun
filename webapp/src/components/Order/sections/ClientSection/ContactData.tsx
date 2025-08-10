@@ -29,6 +29,7 @@ const formSchema = z.object({
 
 const ContactData = () => {
   const {
+    user,
     setSaveStatus,
     contactMethods: userContactMethods,
     setContactMethods: setUserContactMethods,
@@ -43,49 +44,89 @@ const ContactData = () => {
       contactValue: '',
     },
   });
+
   useEffect(() => {
     if (defaultContact?.value) {
       form.setValue('contactValue', defaultContact?.value);
+    }
+    if (defaultContact?.method?.id) {
       form.setValue('contactMethodId', defaultContact?.method?.id);
     }
   }, [defaultContact?.value, defaultContact?.method?.id, form]);
 
   const editContactMutation = trpc.userContactMethod.edit.useMutation();
+  const createContactMutation = trpc.userContactMethod.create.useMutation();
 
   const handleContactValueUpdate = async (e: React.FocusEvent<HTMLInputElement>) => {
-    if (!userContactMethods[0]?.id) return;
     setSaveStatus('saving');
+    if (!userContactMethods[0]?.id) {
+      {
+        const newContactMethodData = await createContactMutation.mutateAsync({
+          userId: user.id || '',
+          value: e.target.value,
+        });
 
-    setUserContactMethods([{ ...userContactMethods[0], value: e.target.value }]);
-    await editContactMutation.mutateAsync({
-      id: userContactMethods[0].id,
-      contactValue: e.target.value,
-    });
+        setUserContactMethods([
+          {
+            id: newContactMethodData?.userContactMethod?.id,
+            method: { id: '', name: '' },
+            value: newContactMethodData?.userContactMethod?.value || '',
+          },
+        ]);
+      }
+    }
+
+    if (userContactMethods[0]?.id) {
+      setUserContactMethods([{ ...userContactMethods[0], value: e.target.value }]);
+      await editContactMutation.mutateAsync({
+        id: userContactMethods[0]?.id || '',
+        contactValue: e.target.value,
+      });
+    }
 
     setSaveStatus('saved');
   };
 
   const handleContactMethodUpdate = async (contactMethodId: string) => {
-    if (!userContactMethods[0]?.id) return;
-
     setSaveStatus('saving');
+    if (!userContactMethods[0]?.id) {
+      const newContactMethodData = await createContactMutation.mutateAsync({
+        userId: user.id || '',
+        contactMethodId: contactMethodId,
+        value: '',
+      });
 
-    setUserContactMethods([
-      {
-        ...userContactMethods[0],
-        method: {
-          ...userContactMethods[0].method,
-          id: contactMethodId,
+      setUserContactMethods([
+        {
+          id: newContactMethodData?.userContactMethod?.id,
+          method: {
+            id: contactMethodId,
+            name: newContactMethodData?.userContactMethod?.method?.name || '',
+          },
+          value: '',
         },
-      },
-    ]);
+      ]);
+    }
+
+    if (userContactMethods[0]?.id) {
+      setUserContactMethods([
+        {
+          ...userContactMethods[0],
+          method: {
+            ...userContactMethods[0].method,
+            id: contactMethodId,
+          },
+        },
+      ]);
+
+      await editContactMutation.mutateAsync({
+        id: userContactMethods[0].id,
+        contactMethodId: contactMethodId,
+      });
+    }
 
     form.setValue('contactMethodId', contactMethodId);
 
-    await editContactMutation.mutateAsync({
-      id: userContactMethods[0].id,
-      contactMethodId: contactMethodId,
-    });
     setSaveStatus('saved');
   };
 

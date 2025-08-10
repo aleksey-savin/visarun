@@ -233,11 +233,17 @@ const ViewUserPage = () => {
                           className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex-shrink-0">
-                            <ContactMethodIcon method={contactMethod.method} />
+                            <ContactMethodIcon
+                              method={
+                                contactMethod.method
+                                  ? { name: contactMethod.method.name, icon: null }
+                                  : { name: 'Unknown', icon: null }
+                              }
+                            />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium capitalize">
-                              {contactMethod.method.name}
+                              {contactMethod.method?.name || 'Unknown'}
                             </p>
                             <p className="text-sm text-muted-foreground truncate">
                               {contactMethod.url ? (

@@ -382,10 +382,16 @@ export default function EditUserPage() {
                 className="flex items-center justify-between p-3 border rounded-lg bg-gray-50 mb-3"
               >
                 <div className="flex items-center gap-3">
-                  <ContactMethodIcon method={contactMethod.method} />
+                  <ContactMethodIcon
+                    method={
+                      contactMethod.method
+                        ? { name: contactMethod.method.name, icon: null }
+                        : { name: 'Unknown', icon: null }
+                    }
+                  />
                   <div>
                     <Badge variant="outline" className="capitalize mb-1">
-                      {contactMethod.method.name}
+                      {contactMethod.method?.name || 'Unknown'}
                     </Badge>
                     <div className="text-sm text-gray-600">
                       {contactMethod.url ? (
@@ -409,7 +415,14 @@ export default function EditUserPage() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => startEditingContact(contactMethod)}
+                    onClick={() =>
+                      startEditingContact({
+                        id: contactMethod.id,
+                        contactMethodId: contactMethod.contactMethodId || '',
+                        value: contactMethod.value || '',
+                        url: contactMethod.url,
+                      })
+                    }
                     disabled={editingContactId === contactMethod.id}
                   >
                     <Edit className="h-4 w-4" />
