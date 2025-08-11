@@ -43,7 +43,7 @@ const ClientCard = ({
   }, [copiedContact]);
   return (
     <>
-      <Card className="p-6">
+      <Card className="p-6 border-t-0 border-x-0">
         <div className="grid gap-6">
           <div className="flex items-center justify-between gap-2 text-lg">
             <ClientBadge client={client} showLinkedClients={false} />

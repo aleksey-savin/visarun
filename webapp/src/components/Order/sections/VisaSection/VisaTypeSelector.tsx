@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
 import { Label } from '@/components/ui/label';
@@ -14,12 +14,20 @@ import { trpc } from '@/lib/trpc';
 import type { OrderItem, VisaType } from '@visarun/backend/node_modules/@prisma/client';
 
 const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
-  const { orderItems, visaApplications, setOrderItems, setVisaApplications, setSaveStatus } =
-    useOrderStore();
+  const {
+    clients,
+    orderItems,
+    visaApplications,
+    setOrderItems,
+    setVisaApplications,
+    setSaveStatus,
+  } = useOrderStore();
 
   const visaApplication = visaApplications.find(
     (application: StoreVisaApplication) => application.orderItemId === item.id
   );
+
+  const client = clients.find(c => c.id === item.clientId);
 
   const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
   const [selected, setSelected] = useState(visaApplication?.visaType?.id);
@@ -40,6 +48,83 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
 
   const selectedVisaTypeObject = visaTypes.find((type: VisaType) => type.id === selected);
 
+  // Calculate surcharge amount based on client citizenship and visa application country
+  const surchargeAmount = useMemo(() => {
+    if (!client?.citizenship?.surcharges || !visaApplication?.country?.id || !selected) {
+      return 0;
+    }
+
+    // First, try to find a specific surcharge for this visa type
+    const specificSurcharge = client.citizenship.surcharges.find(
+      surcharge => surcharge.countryId === visaApplication.country.id && !surcharge.isGlobal
+      // Note: We'd need visaTypeId in the surcharge object to match specific visa types
+      // For now, we'll check isGlobal: false for specific surcharges
+    );
+
+    if (specificSurcharge) {
+      return specificSurcharge.surchargeAmount;
+    }
+
+    // Fall back to global surcharge for this country
+    const globalSurcharge = client.citizenship.surcharges.find(
+      surcharge => surcharge.countryId === visaApplication.country.id && surcharge.isGlobal
+    );
+
+    return globalSurcharge?.surchargeAmount || 0;
+  }, [client?.citizenship?.surcharges, visaApplication?.country?.id, selected]);
+
+  // Recalculate prices when citizenship or surcharge amount changes
+  useEffect(() => {
+    const recalculatePrices = async () => {
+      if (!visaApplication?.visaType || !visaApplication?.id) {
+        return;
+      }
+
+      const basePrice = visaApplication.visaType.serviceCost || 0;
+      const extraCost = visaApplication.isMultientry
+        ? visaApplication.visaType.multientryExtraCost || 0
+        : 0;
+      const itemPrice = basePrice + extraCost + surchargeAmount;
+
+      // Only update if the price has actually changed
+      if (item.finalPrice !== itemPrice) {
+        setSaveStatus('saving');
+
+        const updatedOrderItems = orderItems.map(i =>
+          i.id === item.id
+            ? {
+                ...item,
+                basePrice: itemPrice,
+                finalPrice: itemPrice,
+              }
+            : i
+        );
+
+        setOrderItems(updatedOrderItems);
+
+        try {
+          await editOrderItemMutation.mutateAsync({
+            id: item.id || '',
+            basePrice: itemPrice,
+            finalPrice: itemPrice,
+          });
+
+          setSaveStatus('saved');
+        } catch {
+          setSaveStatus('error');
+        }
+      }
+    };
+
+    recalculatePrices();
+  }, [
+    client?.citizenship?.id,
+    surchargeAmount,
+    visaApplication?.visaType?.serviceCost,
+    visaApplication?.visaType?.multientryExtraCost,
+    visaApplication?.isMultientry,
+  ]);
+
   const handleVisaTypeSelect = async (id: string) => {
     setSaveStatus('saving');
 
@@ -59,7 +144,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
 
     const basePrice = visaTypeObject.serviceCost || 0;
     const extraCost = visaApplication?.isMultientry ? visaTypeObject.multientryExtraCost || 0 : 0;
-    const itemPrice = basePrice + extraCost;
+    const itemPrice = basePrice + extraCost + surchargeAmount;
 
     const updatedOrderItems = orderItems.map(i =>
       i.id === item.id
@@ -116,7 +201,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
 
     const basePrice = selectedVisaTypeObject.serviceCost || 0;
     const extraCost = isMultientry ? selectedVisaTypeObject.multientryExtraCost || 0 : 0;
-    const itemPrice = basePrice + extraCost;
+    const itemPrice = basePrice + extraCost + surchargeAmount;
 
     const updatedOrderItems = orderItems.map(i =>
       i.id === item.id
@@ -165,7 +250,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
     <>
       <Label className={cn('text-sm mb-2')}>Visa type</Label>
       <div className="flex flex-wrap gap-2 items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {(() => {
             const sortedVisaTypes =
               visaTypes?.sort((a: VisaType, b: VisaType) => {
@@ -236,51 +321,18 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
 
             return result;
           })()}
-
-          <Switch
-            checked={isMulti}
-            onCheckedChange={() => handleMulti(!isMulti)}
-            disabled={!selectedVisaTypeObject?.isMultientry}
-            className="ml-2"
-          />
-          <Label>Multi</Label>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={isMulti}
+              onCheckedChange={() => handleMulti(!isMulti)}
+              disabled={!selectedVisaTypeObject?.isMultientry}
+              className="ml-2"
+            />
+            <Label>Multi</Label>
+          </div>
         </div>
-        <span>{formatCurrency(item?.finalPrice || 0, 'VND')}</span>
+        <div>{formatCurrency(item?.finalPrice || 0, 'VND')}</div>
       </div>
-      {/**
-
-      {/** <div className="flex justify-end items-center">
-        <span className="font-semibold">
-          {(() => {
-            // If client is blacklisted, price is 0
-            if (disabled) {
-              return formatCurrency(0, 'VND');
-            }
-
-            // Check if we have an actual order item with finalPrice (includes surcharges)
-            const orderItemId = createdOrderItems[countryId];
-            const currentOrder = optimisticOrder || orderData?.order;
-
-            if (orderItemId && currentOrder?.items) {
-              const orderItem = currentOrder.items.find((item: any) => item.id === orderItemId);
-              if (orderItem) {
-                // Use finalPrice if > 0, otherwise fall back to basePrice
-                const displayPrice =
-                  orderItem.finalPrice > 0 ? orderItem.finalPrice : orderItem.basePrice;
-                return formatCurrency(displayPrice, 'VND');
-              }
-            }
-
-            // Fallback to calculated price if no order item exists yet
-            const basePrice = selectedVisaTypeData?.serviceCost || 0;
-            const isMultientry = currentMultientryState;
-            const extraCost = isMultientry ? selectedVisaTypeData?.multientryExtraCost || 0 : 0;
-            const totalPrice = basePrice + extraCost;
-
-            return formatCurrency(totalPrice, 'VND');
-          })()}
-        </span>
-      </div> **/}
     </>
   );
 };

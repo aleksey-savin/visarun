@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +31,7 @@ import { z } from 'zod';
 import { trpc } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 import VisaTypeSelector from '@/components/Order/sections/VisaSection/VisaTypeSelector';
+import { formatCurrency } from '@/utils/currency';
 
 const formSchema = z.object({
   entryDate: z.date(),
@@ -61,6 +62,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
   };
 
   const visaApplication = visaApplications.find(va => va.orderItemId === item.id);
+  const client = clients.find(c => c.id === item.clientId);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -151,26 +153,72 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
   };
 
   const [isBlacklisted, setIsBlacklisted] = useState(false);
+  const [isVisaFree, setIsVisaFree] = useState(false);
+  const [visaFreeStampDuration, setVisaFreeStampDuration] = useState<number | null>(null);
+
+  // Calculate surcharge amount based on client citizenship and visa application country
+  const surchargeAmount = useMemo(() => {
+    if (
+      !client?.citizenship?.surcharges ||
+      !visaApplication?.country?.id ||
+      !visaApplication?.visaType?.id
+    ) {
+      return 0;
+    }
+
+    // First, try to find a specific surcharge for this visa type
+    const specificSurcharge = client.citizenship.surcharges.find(
+      surcharge => surcharge.countryId === visaApplication.country.id && !surcharge.isGlobal
+      // Note: We'd need visaTypeId in the surcharge object to match specific visa types
+      // For now, we'll check isGlobal: false for specific surcharges
+    );
+
+    if (specificSurcharge) {
+      return specificSurcharge.surchargeAmount;
+    }
+
+    // Fall back to global surcharge for this country
+    const globalSurcharge = client.citizenship.surcharges.find(
+      surcharge => surcharge.countryId === visaApplication.country.id && surcharge.isGlobal
+    );
+
+    return globalSurcharge?.surchargeAmount || 0;
+  }, [
+    client?.citizenship?.surcharges,
+    visaApplication?.country?.id,
+    visaApplication?.visaType?.id,
+  ]);
 
   useEffect(() => {
-    const client = clients.find(c => c.id === item.clientId);
-
     if (visaApplication?.country?.id && client) {
+      // Check if blacklisted
       setIsBlacklisted(
         client?.citizenship?.blacklisted?.some(
           blacklistedEntry => blacklistedEntry.countryId === visaApplication?.country?.id
         ) || false
       );
+
+      // Check if visa-free
+      const visaFreeEntry = client?.citizenship?.visaFree?.find(
+        entry => entry.countryId === visaApplication?.country?.id
+      );
+      setIsVisaFree(!!visaFreeEntry);
+      setVisaFreeStampDuration(visaFreeEntry?.stampDuration || null);
     }
-  }, [visaApplication?.country?.id, item.clientId, clients]);
+  }, [visaApplication?.country?.id, client?.citizenship]);
 
   return (
     <Card className="p-3 bg-secondary gap-5">
       <div className="flex justify-between">
-        <div className="flex items-start">
+        <div className="flex flex-wrap items-start gap-2">
           <Badge variant={isBlacklisted ? 'destructive' : 'accent'}>
             Visa - {visaApplication?.country?.name}
           </Badge>
+          {surchargeAmount > 0 && (
+            <Badge variant="destructive" className="text-xs">
+              Surcharge {formatCurrency(surchargeAmount, 'VND')} is applied
+            </Badge>
+          )}
         </div>
 
         <Button
@@ -186,12 +234,12 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
       {!isBlacklisted && (
         <>
           <Form {...form}>
-            <div className="flex justify-start items-center">
+            <div className="flex flex-wrap justify-start items-center">
               <div>
                 <Label htmlFor="date-picker" className="mb-2">
                   Entry date
                 </Label>
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   <div className="flex flex-col gap-3">
                     <FormField
                       control={form.control}
@@ -244,6 +292,23 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                       className="bg-secondary appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                     />
                   </div>
+                  {isVisaFree && (
+                    <div className="flex items-center ms-2 gap-2">
+                      <Badge variant="info" className="text-xs text-secondary">
+                        {visaFreeStampDuration
+                          ? `${visaFreeStampDuration} days visa free allowed`
+                          : ''}
+                      </Badge>
+                      {entryDate && visaFreeStampDuration && (
+                        <Badge variant="destructive" className="text-xs text-secondary">
+                          exit by{' '}
+                          {new Date(
+                            entryDate.getTime() + visaFreeStampDuration * 24 * 60 * 60 * 1000
+                          ).toLocaleDateString()}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

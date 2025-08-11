@@ -31,9 +31,21 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
     return a.name.localeCompare(b.name);
   });
 
+  const isCountryBlacklisted = (countryId: string): boolean => {
+    return (
+      client?.citizenship?.blacklisted?.some(
+        blacklistedEntry => blacklistedEntry.countryId === countryId
+      ) || false
+    );
+  };
+
   const createOrderItemMutation = trpc.orderItem.create.useMutation();
 
   const handleAddOrderItem = async (countryId: string) => {
+    if (isCountryBlacklisted(countryId)) {
+      return;
+    }
+
     setSaveStatus('saving');
 
     const newData = await createOrderItemMutation.mutateAsync({
@@ -97,16 +109,20 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
               .filter(
                 country => !clientVisaApplications.some(item => item.country?.id === country.id)
               )
-              .map(country => (
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={() => handleAddOrderItem(country.id)}
-                  key={country.id}
-                >
-                  <Plus /> {country.name}
-                </Button>
-              ))}
+              .map(country => {
+                const isBlacklisted = isCountryBlacklisted(country.id);
+                return (
+                  <Button
+                    size="sm"
+                    variant={isBlacklisted ? 'destructive' : 'primary'}
+                    disabled={isBlacklisted}
+                    onClick={() => handleAddOrderItem(country.id)}
+                    key={country.id}
+                  >
+                    <Plus /> {country.name} {isBlacklisted ? '(Blacklisted)' : ''}
+                  </Button>
+                );
+              })}
           </div>
         </Card>
       )}

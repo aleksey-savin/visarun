@@ -252,7 +252,7 @@ const EditOrderPage = () => {
                   return acc;
                 }, 0);
                 return (
-                  <Card className="bg-secondary mr-2.5 p-2.5" key={client.id}>
+                  <Card className="bg-secondary mr-2.5 p-0" key={client.id}>
                     <ClientSection totalAmount={totalAmount} client={client} />
                     <div className="px-6 pb-5">
                       <ServicePuzzle

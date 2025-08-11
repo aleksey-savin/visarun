@@ -75,9 +75,6 @@ const ClientData = ({ client }: { client: StoreClient }) => {
               citizenship: updatedClient.citizenship
                 ? {
                     ...updatedClient.citizenship,
-                    blacklisted: [],
-                    visaFree: [],
-                    surcharges: [],
                   }
                 : undefined,
             }

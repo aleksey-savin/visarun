@@ -67,6 +67,10 @@ export const editClientTrpcRoute = userUpdateProcedure
             favourite: true,
             emoji: true,
             abbreviation: true,
+            blacklisted: true,
+            surcharges: true,
+            visaFree: true,
+            RequirementCitizenship: true,
           },
         },
         documents: {
