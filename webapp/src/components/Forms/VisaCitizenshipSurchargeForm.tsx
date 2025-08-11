@@ -38,7 +38,7 @@ import { Save, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useState } from 'react';
 
-import { Citizenship } from '@/types/Citizenship';
+import type { Citizenship } from '@visarun/backend/node_modules/@prisma/client';
 
 // Form schema
 const visaCitizenshipSurchargeSchema = z.object({

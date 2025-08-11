@@ -60,20 +60,30 @@ const ContactData = () => {
   const handleContactValueUpdate = async (e: React.FocusEvent<HTMLInputElement>) => {
     setSaveStatus('saving');
     if (!userContactMethods[0]?.id) {
-      {
-        const newContactMethodData = await createContactMutation.mutateAsync({
-          userId: user.id || '',
-          value: e.target.value,
-        });
+      const newContactMethodData = await createContactMutation.mutateAsync({
+        userId: user.id || '',
+        value: e.target.value,
+      });
 
-        setUserContactMethods([
-          {
-            id: newContactMethodData?.userContactMethod?.id,
-            method: { id: '', name: '' },
-            value: newContactMethodData?.userContactMethod?.value || '',
+      setUserContactMethods([
+        {
+          id: newContactMethodData?.userContactMethod?.id || '',
+          userId: newContactMethodData?.userContactMethod?.userId || user.id || '',
+          value: newContactMethodData?.userContactMethod?.value || '',
+          createdAt: newContactMethodData?.userContactMethod?.createdAt
+            ? new Date(newContactMethodData?.userContactMethod?.createdAt)
+            : new Date(),
+          updatedAt: newContactMethodData?.userContactMethod?.updatedAt
+            ? new Date(newContactMethodData?.userContactMethod?.updatedAt)
+            : new Date(),
+          method: {
+            id: newContactMethodData?.userContactMethod?.method?.id || '',
+            name: newContactMethodData?.userContactMethod?.method?.name || '',
+            icon: null,
+            description: newContactMethodData?.userContactMethod?.method?.description || null,
           },
-        ]);
-      }
+        },
+      ]);
     }
 
     if (userContactMethods[0]?.id) {
@@ -89,7 +99,9 @@ const ContactData = () => {
 
   const handleContactMethodUpdate = async (contactMethodId: string) => {
     setSaveStatus('saving');
+
     if (!userContactMethods[0]?.id) {
+      const selectedContactMethod = contactMethods.find(m => m.id === contactMethodId);
       const newContactMethodData = await createContactMutation.mutateAsync({
         userId: user.id || '',
         contactMethodId: contactMethodId,
@@ -98,23 +110,46 @@ const ContactData = () => {
 
       setUserContactMethods([
         {
-          id: newContactMethodData?.userContactMethod?.id,
+          id: newContactMethodData?.userContactMethod?.id || '',
+          userId: newContactMethodData?.userContactMethod?.userId || user.id || '',
+          value: '',
+          createdAt: newContactMethodData?.userContactMethod?.createdAt
+            ? new Date(newContactMethodData?.userContactMethod?.createdAt)
+            : new Date(),
+          updatedAt: newContactMethodData?.userContactMethod?.updatedAt
+            ? new Date(newContactMethodData?.userContactMethod?.updatedAt)
+            : new Date(),
           method: {
             id: contactMethodId,
-            name: newContactMethodData?.userContactMethod?.method?.name || '',
+            name:
+              selectedContactMethod?.name ||
+              newContactMethodData?.userContactMethod?.method?.name ||
+              '',
+            icon: selectedContactMethod?.icon || null,
+            description:
+              selectedContactMethod?.description ||
+              newContactMethodData?.userContactMethod?.method?.description ||
+              null,
           },
-          value: '',
         },
       ]);
     }
 
     if (userContactMethods[0]?.id) {
+      const selectedContactMethod = contactMethods.find(m => m.id === contactMethodId);
+
       setUserContactMethods([
         {
           ...userContactMethods[0],
+          updatedAt: new Date(),
           method: {
-            ...userContactMethods[0].method,
             id: contactMethodId,
+            name: selectedContactMethod?.name || userContactMethods[0].method?.name || '',
+            icon: selectedContactMethod?.icon || null,
+            description:
+              selectedContactMethod?.description ||
+              userContactMethods[0].method?.description ||
+              null,
           },
         },
       ]);

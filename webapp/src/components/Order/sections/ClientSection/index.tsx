@@ -6,14 +6,14 @@ import { Card } from '@/components/ui/card';
 import ContactData from '@/components/Order/sections/ClientSection/ContactData';
 import ClientData from '@/components/Order/sections/ClientSection/ClientData';
 
-import { Client } from '@/types/Client.js';
+import { StoreClient } from '@/stores/order/order-store';
 
 import ClientBadge from '@/components/Order/ClientBadge';
 import ClientCard from '@/components/Order/ClientCard';
 
 import { formatCurrency } from '@/utils/currency';
 
-const ClientSection = ({ client, totalAmount }: { client: Client; totalAmount: number }) => {
+const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmount: number }) => {
   const [clientEditMode, setClientEditMode] = useState(
     !client?.citizenshipId || !client?.passportExpirationDate
   );

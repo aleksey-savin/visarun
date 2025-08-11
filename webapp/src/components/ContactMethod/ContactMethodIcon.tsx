@@ -15,7 +15,7 @@ export const ContactMethodIcon = ({
   fallbackClassName,
 }: ContactMethodIconProps) => {
   // If we have a custom SVG icon from the database, use it
-  if (method.icon) {
+  if (method?.icon) {
     return (
       <div
         className={`flex items-center justify-center ${className}`}
@@ -27,7 +27,7 @@ export const ContactMethodIcon = ({
   // Fallback to hardcoded icons for backward compatibility
   const iconClass = fallbackClassName || className;
 
-  switch (method.name.toLowerCase()) {
+  switch (method?.name?.toLowerCase()) {
     case 'email':
       return <Mail className={`${iconClass} text-blue-600`} />;
     case 'phone':

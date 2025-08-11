@@ -18,6 +18,7 @@ export const getOrderTrpcRoute = orderReadProcedure
             middleName: true,
             lastName: true,
             email: true,
+            updatedAt: true,
             contactMethods: {
               select: {
                 id: true,
@@ -27,6 +28,7 @@ export const getOrderTrpcRoute = orderReadProcedure
                   select: {
                     id: true,
                     name: true,
+                    icon: true,
                     description: true,
                   },
                 },
@@ -38,35 +40,6 @@ export const getOrderTrpcRoute = orderReadProcedure
           },
         },
         items: {
-          include: {
-            client: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                citizenshipId: true,
-                citizenship: {
-                  select: {
-                    id: true,
-                    name: true,
-                    abbreviation: true,
-                    blacklisted: true,
-                    surcharges: true,
-                    visaFree: true,
-                    RequirementCitizenship: true,
-                  },
-                },
-              },
-            },
-            discountRule: {
-              select: {
-                id: true,
-                name: true,
-                discountType: true,
-                discountValue: true,
-              },
-            },
-          },
           orderBy: {
             id: 'asc',
           },
@@ -84,7 +57,17 @@ export const getOrderTrpcRoute = orderReadProcedure
           userId: order.userId,
         },
         include: {
-          citizenship: true,
+          citizenship: {
+            select: {
+              id: true,
+              name: true,
+              abbreviation: true,
+              blacklisted: true,
+              surcharges: true,
+              visaFree: true,
+              RequirementCitizenship: true,
+            },
+          },
         },
       });
 
@@ -142,20 +125,20 @@ export const getOrderTrpcRoute = orderReadProcedure
           : [];
 
       // Create a map for O(1) lookup since it's one-to-one relationship
-      const visaApplicationMap = new Map(visaApplications.map(va => [va.orderItemId, va]));
+      // const visaApplicationMap = new Map(visaApplications.map(va => [va.orderItemId, va]));
 
       // Add visa applications to corresponding items
-      const itemsWithVisaApplications = order.items.map(item => {
-        if (item.serviceType === 'visa') {
-          const visaApplication = visaApplicationMap.get(item.id);
-          return { ...item, visaApplication: visaApplication || null };
-        }
-        return { ...item, visaApplication: null };
-      });
+      // const itemsWithVisaApplications = order.items.map(item => {
+      //    if (item.serviceType === 'visa') {
+      //   const visaApplication = visaApplicationMap.get(item.id);
+      //   return { ...item, visaApplication: visaApplication || null };
+      // }
+      // return { ...item, visaApplication: null };
+      // });
 
       return {
         ...order,
-        items: itemsWithVisaApplications,
+        visaApplications,
         clients,
       };
     }

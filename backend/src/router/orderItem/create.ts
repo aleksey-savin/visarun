@@ -168,6 +168,7 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
                 name: true,
                 serviceCost: true,
                 isMultientry: true,
+                multientryExtraCost: true,
                 processingMode: true,
                 processingUnit: true,
                 processingValueFixed: true,
@@ -215,6 +216,9 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
               select: {
                 id: true,
                 name: true,
+                emoji: true,
+                abbreviation: true,
+                blacklisted: true,
               },
             },
           },

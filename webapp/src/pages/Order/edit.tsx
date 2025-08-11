@@ -28,54 +28,143 @@ const EditOrderPage = () => {
     setClients,
     setContactMethods,
     setOrderItems,
+    setVisaApplications,
     setActiveServicePuzzleSection,
   } = useOrderStore();
 
   useEffect(() => {
+    if (!orderData) return;
     setOrder({
-      id: orderData?.id,
-      userId: orderData?.userId || '',
-      status: orderData?.status,
-      updatedAt: orderData?.updatedAt,
+      id: orderData.id,
+      userId: orderData.userId,
+      status: orderData.status,
+      createdAt: new Date(orderData.createdAt),
+      updatedAt: new Date(orderData.updatedAt),
+      comment: orderData.comment || '',
     });
-    setUser({
-      id: orderData?.user?.id,
-      firstName: orderData?.user?.firstName,
-      lastName: orderData?.user?.lastName,
-    });
-    setClients(orderData?.clients || []);
-    setContactMethods(
-      orderData?.user?.contactMethods.map(m => ({
-        id: m.id,
-        method: { id: m.method?.id || '', name: m.method?.name || '' },
-        url: m.url,
-        value: m.value,
-      })) || []
-    );
-    setOrderItems(
-      orderData?.items?.map(i => ({
-        id: i.id,
-        orderId: i.orderId,
-        serviceType: i.serviceType,
-        serviceTypeId: i.serviceTypeId,
-        client: {
-          id: i.client?.id,
-          firstName: i.client?.firstName,
-          lastName: i.client?.lastName,
-          citizenship: {
-            id: i.client?.citizenship?.id,
-            name: i.client?.citizenship?.name,
-            abbreviation: i.client?.citizenship?.abbreviation,
-            blacklisted: i.client?.citizenship?.blacklisted,
-            visaFree: i.client?.citizenship?.visaFree,
-            surcharges: i.client?.citizenship?.surcharges,
+
+    if (orderData.user) {
+      const { user } = orderData;
+      setUser({
+        id: user.id,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        updatedAt: new Date(user.updatedAt),
+      });
+    }
+
+    if (orderData.clients) {
+      setClients(
+        orderData.clients.map(client => ({
+          ...client,
+          firstName: client.firstName ?? undefined,
+          lastName: client.lastName ?? undefined,
+          passportExpirationDate: client.passportExpirationDate
+            ? new Date(client.passportExpirationDate)
+            : undefined,
+          isOutsideTheCountryAt: client.isOutsideTheCountryAt
+            ? new Date(client.isOutsideTheCountryAt)
+            : undefined,
+          citizenship: client.citizenship
+            ? {
+                id: client.citizenship.id,
+                name: client.citizenship.name,
+                abbreviation: client.citizenship.abbreviation,
+                favourite: false,
+                emoji: '',
+                blacklisted: client.citizenship.blacklisted || [],
+                visaFree: client.citizenship.visaFree || [],
+                surcharges: client.citizenship.surcharges || [],
+              }
+            : undefined,
+        }))
+      );
+    }
+
+    if (orderData.user?.contactMethods) {
+      setContactMethods(
+        orderData.user.contactMethods.map(m => ({
+          id: m.id,
+          userId: orderData.user!.id,
+          value: m.value,
+          url: m.url,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          method: m.method
+            ? {
+                id: m.method.id,
+                name: m.method.name,
+                icon: m.method.icon,
+                description: m.method.description,
+              }
+            : null,
+        }))
+      );
+    }
+
+    if (orderData.items) {
+      setOrderItems(
+        orderData.items.map(i => ({
+          id: i.id,
+          orderId: i.orderId,
+          clientId: i.clientId,
+          serviceType: i.serviceType,
+          serviceTypeId: i.serviceTypeId,
+          discountAppliedType: i.discountAppliedType || null,
+          discountRuleId: i.discountRuleId || null,
+          discountAmount: i.discountAmount || 0,
+          discountComment: i.discountComment || null,
+          note: i.note || null,
+          basePrice: i.basePrice,
+          finalPrice: i.finalPrice,
+        }))
+      );
+    }
+
+    if (orderData.visaApplications) {
+      const { visaApplications } = orderData;
+      setVisaApplications(
+        visaApplications.map(i => ({
+          id: i.id,
+          orderItemId: i.orderItemId,
+          applicationCode: i.applicationCode,
+          submittedByAgent: i.submittedByAgent,
+          country: {
+            id: i.country?.id,
+            name: i.country?.name,
           },
-        },
-        basePrice: i.basePrice,
-        finalPrice: i.finalPrice,
-        visaApplication: i.visaApplication,
-      })) || []
-    );
+          visaType: {
+            id: i.visaType?.id,
+            name: i.visaType?.name,
+            serviceCost: i.visaType?.serviceCost ?? undefined,
+            isMultientry: i.visaType?.isMultientry,
+            multientryExtraCost: i.visaType?.multientryExtraCost ?? undefined,
+            processingMode: i.visaType?.processingMode,
+            processingUnit: i.visaType?.processingUnit,
+            processingValueFixed: i.visaType?.processingValueFixed ?? undefined,
+            processingValueMin: i.visaType?.processingValueMin ?? undefined,
+            processingValueMax: i.visaType?.processingValueMax ?? undefined,
+          },
+          plannedCountryEntryDate: i.plannedCountryEntryDate
+            ? new Date(i.plannedCountryEntryDate)
+            : null,
+          isMultientry: i.isMultientry,
+          note: i.note,
+          revisedActivationDate: i.revisedActivationDate ? new Date(i.revisedActivationDate) : null,
+          statusNote: i.statusNote,
+          status: i.status,
+          clientVisas:
+            i.clientVisas?.map(cv => ({
+              id: cv.id,
+              validFrom: new Date(cv.validFrom),
+              validTo: new Date(cv.validTo),
+              notifiedExpiry: cv.notifiedExpiry,
+            })) || [],
+        }))
+      );
+    }
+
     setActiveServicePuzzleSection('visa');
   }, [
     orderData,
@@ -85,6 +174,7 @@ const EditOrderPage = () => {
     setUser,
     setClients,
     setActiveServicePuzzleSection,
+    setVisaApplications,
   ]);
 
   const steps = [
@@ -151,20 +241,20 @@ const EditOrderPage = () => {
       </CardTitle>
       <CardContent>
         <div className="grid grid-cols-1 lg:grid-cols-10">
-          <div className="lg:col-span-7 gap-2.5">
+          <div className="lg:col-span-7">
             {clients
               ?.sort((a, b) => b.id.localeCompare(a.id))
               .map(client => {
                 const totalAmount = orderItems?.reduce((acc, item) => {
-                  if (item.client.id === client.id && item.finalPrice) {
+                  if (item.clientId === client.id && item.finalPrice) {
                     return acc + item.finalPrice;
                   }
                   return acc;
                 }, 0);
                 return (
-                  <Card className="bg-secondary mb-2.5 mr-2.5 p-0" key={client.id}>
+                  <Card className="bg-secondary mr-2.5 p-2.5" key={client.id}>
                     <ClientSection totalAmount={totalAmount} client={client} />
-                    <div className="p-6">
+                    <div className="px-6 pb-5">
                       <ServicePuzzle
                         client={client}
                         servicePuzzleIsActive={servicePuzzleIsActive}

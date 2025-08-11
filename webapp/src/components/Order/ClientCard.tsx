@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-import { Client } from '@/types/Client.js';
+import { StoreClient } from '@/stores/order/order-store';
 
 import ClientBadge from './ClientBadge';
 import ContactMethodIcon from '@/components/ContactMethod/ContactMethodIcon.js';
@@ -20,7 +20,7 @@ const ClientCard = ({
   totalAmount,
   handleClientEditMode,
 }: {
-  client: Client;
+  client: StoreClient;
   totalAmount: number;
   handleClientEditMode: () => void;
 }) => {
@@ -72,7 +72,14 @@ const ClientCard = ({
                     handleCopyToClipboard(contact.value, e, contact.id)
                   }
                 >
-                  <ContactMethodIcon method={contact.method} className="w-3 h-3" />
+                  <ContactMethodIcon
+                    method={
+                      contact.method
+                        ? { name: contact.method.name, icon: contact.method.icon }
+                        : { name: 'unknown', icon: null }
+                    }
+                    className="w-3 h-3"
+                  />
                   {` ${contact.value}`}
                   {copiedContact === contact.id ? (
                     <Check className="w-3 h-3 ml-1 animate-pulse" />

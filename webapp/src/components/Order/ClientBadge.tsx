@@ -1,4 +1,4 @@
-import { Client } from '@/types/Client.js';
+import { StoreClient } from '@/stores/order/order-store';
 
 import { Badge } from '../ui/badge';
 
@@ -8,7 +8,7 @@ const ClientBadge = ({
   client,
   showLinkedClients,
 }: {
-  client: Client;
+  client: StoreClient;
   showLinkedClients: boolean;
 }) => {
   return (

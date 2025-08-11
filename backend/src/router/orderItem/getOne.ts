@@ -36,6 +36,9 @@ export const getOrderItemTrpcRoute = orderItemReadProcedure
               select: {
                 id: true,
                 name: true,
+                visaFree: true,
+                blacklisted: true,
+                surcharges: true,
               },
             },
           },

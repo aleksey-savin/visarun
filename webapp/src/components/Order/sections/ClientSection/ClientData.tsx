@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
+import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
+
 import {
   Form,
   FormControl,
@@ -23,8 +25,9 @@ import { z } from 'zod';
 
 import useOrderStore from '@/stores/order/order-store.js';
 
-import { Client } from '@/types/Client.js';
+import { StoreClient } from '@/stores/order/order-store';
 import CitizenshipSelect from '../../../Citizenship/CitizenshipSelect';
+import { Badge } from '@/components/ui/badge';
 
 const formSchema = z.object({
   lastName: z.string(),
@@ -35,7 +38,7 @@ const formSchema = z.object({
   }),
 });
 
-const ClientData = ({ client }: { client: Client }) => {
+const ClientData = ({ client }: { client: StoreClient }) => {
   const { setSaveStatus, clients, setClients } = useOrderStore();
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -60,7 +63,7 @@ const ClientData = ({ client }: { client: Client }) => {
     const { client: updatedClient } = await editClientMutation.mutateAsync({
       id: client.id,
       citizenshipId,
-      passportExpirationDate: client.passportExpirationDate,
+      passportExpirationDate: client.passportExpirationDate?.toISOString() || null,
     });
 
     setClients(
@@ -69,7 +72,14 @@ const ClientData = ({ client }: { client: Client }) => {
           ? {
               ...c,
               citizenshipId,
-              citizenship: updatedClient.citizenship,
+              citizenship: updatedClient.citizenship
+                ? {
+                    ...updatedClient.citizenship,
+                    blacklisted: [],
+                    visaFree: [],
+                    surcharges: [],
+                  }
+                : undefined,
             }
           : c
       )
@@ -83,11 +93,7 @@ const ClientData = ({ client }: { client: Client }) => {
   const handlePassportDateUpdate = async (date: Date) => {
     setSaveStatus('saving');
 
-    const dateString = date.toISOString();
-
-    setClients(
-      clients.map(c => (c.id === client.id ? { ...c, passportExpirationDate: dateString } : c))
-    );
+    setClients(clients.map(c => (c.id === client.id ? { ...c, passportExpirationDate: date } : c)));
 
     form.setValue('passportExpirationDate', date);
 
@@ -96,7 +102,7 @@ const ClientData = ({ client }: { client: Client }) => {
     try {
       await editClientMutation.mutateAsync({
         id: client.id,
-        passportExpirationDate: dateString,
+        passportExpirationDate: date.toISOString(),
       });
       setSaveStatus('saved');
     } catch {
@@ -104,8 +110,16 @@ const ClientData = ({ client }: { client: Client }) => {
     }
   };
 
+  const passportExpires = client.passportExpirationDate
+    ? isPassportExpiringWithin6Months(
+        client.passportExpirationDate instanceof Date
+          ? client.passportExpirationDate.toISOString()
+          : client.passportExpirationDate
+      )
+    : false;
+
   return (
-    <div className="flex gap-4">
+    <div className="flex flex-wrap items-center gap-4">
       <Form {...form}>
         <FormField
           control={form.control}
@@ -127,16 +141,23 @@ const ClientData = ({ client }: { client: Client }) => {
               <FormControl>
                 <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="secondary"
-                      className={cn(
-                        'min-w-52 justify-between',
-                        !field.value && 'text-muted-foreground'
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="secondary"
+                        className={cn(
+                          'min-w-52 justify-between',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        {field.value ? format(field.value, 'PPP') : <span>Select date</span>}
+                        <CalendarIcon />
+                      </Button>
+                      {passportExpires && (
+                        <Badge variant="destructive" className="max-h-[20px]">
+                          Passport expires in less than 6 months
+                        </Badge>
                       )}
-                    >
-                      {field.value ? format(field.value, 'PPP') : <span>Select date</span>}
-                      <CalendarIcon />
-                    </Button>
+                    </div>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar

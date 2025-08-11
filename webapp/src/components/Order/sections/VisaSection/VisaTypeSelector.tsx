@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 import { Label } from '@/components/ui/label';
@@ -6,23 +7,23 @@ import { Switch } from '@/components/ui/switch';
 
 import { formatCurrency } from '@/utils/currency';
 
-import useOrderStore from '@/stores/order/order-store';
+import useOrderStore, { StoreVisaApplication } from '@/stores/order/order-store';
 
 import { trpc } from '@/lib/trpc';
 
-import { OrderItem } from '@/types/OrderItem';
-import { useState, useEffect } from 'react';
-
-import { VisaApplication } from '@/types/VisaApplication';
+import type { OrderItem, VisaType } from '@visarun/backend/node_modules/@prisma/client';
 
 const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
-  const { visaApplication } = item;
-  const { orderItems, setOrderItems, setSaveStatus } = useOrderStore();
+  const { orderItems, visaApplications, setOrderItems, setVisaApplications, setSaveStatus } =
+    useOrderStore();
 
-  const [visaTypes, setVisaTypes] = useState<any[]>([]);
+  const visaApplication = visaApplications.find(
+    (application: StoreVisaApplication) => application.orderItemId === item.id
+  );
 
-  const [selected, setSelected] = useState(item.visaApplication?.visaType?.id);
-  const [isMulti, setIsMulti] = useState(item.visaApplication?.isMultientry);
+  const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
+  const [selected, setSelected] = useState(visaApplication?.visaType?.id);
+  const [isMulti, setIsMulti] = useState(visaApplication?.isMultientry);
 
   const { data } = trpc.visaType.getAll.useQuery({
     countryId: visaApplication?.country?.id || '',
@@ -37,24 +38,27 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
   const editVisaApplicationMutation = trpc.visaApplication.edit.useMutation();
   const editOrderItemMutation = trpc.orderItem.edit.useMutation();
 
-  const selectedVisaTypeObject = visaTypes.find(type => type.id === selected);
+  const selectedVisaTypeObject = visaTypes.find((type: VisaType) => type.id === selected);
 
   const handleVisaTypeSelect = async (id: string) => {
     setSaveStatus('saving');
 
     setSelected(id);
 
-    if (!item.visaApplication?.id) {
+    if (!visaApplication?.id) {
       setSaveStatus('error');
       return;
     }
 
-    const visaTypeObject = visaTypes.find(type => type.id === id);
+    const visaTypeObject = visaTypes.find((type: VisaType) => type.id === id);
+
+    if (!visaTypeObject) {
+      setSaveStatus('error');
+      return;
+    }
 
     const basePrice = visaTypeObject.serviceCost || 0;
-    const extraCost = item?.visaApplication?.isMultientry
-      ? visaTypeObject.multientryExtraCost || 0
-      : 0;
+    const extraCost = visaApplication?.isMultientry ? visaTypeObject.multientryExtraCost || 0 : 0;
     const itemPrice = basePrice + extraCost;
 
     const updatedOrderItems = orderItems.map(i =>
@@ -63,19 +67,26 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
             ...item,
             basePrice: itemPrice,
             finalPrice: itemPrice,
-            visaApplication: {
-              ...item.visaApplication,
-              visaType: visaTypeObject,
-            } as VisaApplication,
           }
         : i
     );
 
     setOrderItems(updatedOrderItems);
 
+    const updatedVisaApplications = visaApplications.map(application =>
+      application.orderItemId === item.id
+        ? {
+            ...application,
+            visaType: visaTypeObject,
+          }
+        : application
+    );
+
+    setVisaApplications(updatedVisaApplications);
+
     try {
       await editVisaApplicationMutation.mutateAsync({
-        id: item.visaApplication?.id || '',
+        id: visaApplication?.id || '',
         visaTypeId: id,
       });
 
@@ -98,7 +109,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
 
     setIsMulti(isMultientry);
 
-    if (!item.visaApplication?.id) {
+    if (!visaApplication?.id || !selectedVisaTypeObject) {
       setSaveStatus('error');
       return;
     }
@@ -113,19 +124,26 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
             ...item,
             basePrice: itemPrice,
             finalPrice: itemPrice,
-            visaApplication: {
-              ...item.visaApplication,
-              isMultientry: isMultientry,
-            } as VisaApplication,
           }
         : i
     );
 
     setOrderItems(updatedOrderItems);
 
+    const updatedVisaApplications = visaApplications.map(v =>
+      v.id === visaApplication.id
+        ? {
+            ...v,
+            isMultientry: isMultientry,
+          }
+        : v
+    );
+
+    setVisaApplications(updatedVisaApplications);
+
     try {
       await editVisaApplicationMutation.mutateAsync({
-        id: item.visaApplication?.id || '',
+        id: visaApplication?.id || '',
         isMultientry: isMultientry,
       });
 
@@ -150,7 +168,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
         <div className="flex items-center gap-2">
           {(() => {
             const sortedVisaTypes =
-              visaTypes?.sort((a: any, b: any) => {
+              visaTypes?.sort((a: VisaType, b: VisaType) => {
                 // Sort favorites first
                 if (a.favourite && !b.favourite) return -1;
                 if (!a.favourite && b.favourite) return 1;
@@ -164,14 +182,16 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
               }) || [];
 
             // Group visa types
-            const favorites = sortedVisaTypes.filter((vt: any) => vt.favourite);
-            const nonFavorites = sortedVisaTypes.filter((vt: any) => !vt.favourite);
-            const nonFavoritesDays = nonFavorites.filter((vt: any) => vt.processingUnit === 'days');
+            const favorites = sortedVisaTypes.filter((vt: VisaType) => vt.favourite);
+            const nonFavorites = sortedVisaTypes.filter((vt: VisaType) => !vt.favourite);
+            const nonFavoritesDays = nonFavorites.filter(
+              (vt: VisaType) => vt.processingUnit === 'days'
+            );
             const nonFavoritesHours = nonFavorites.filter(
-              (vt: any) => vt.processingUnit === 'hours'
+              (vt: VisaType) => vt.processingUnit === 'hours'
             );
 
-            const renderVisaTypeButton = (visaType: any, isLastInGroup: boolean = false) => {
+            const renderVisaTypeButton = (visaType: VisaType, isLastInGroup: boolean = false) => {
               const isSelected = visaType.id === selected;
 
               return (
@@ -187,7 +207,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
                   }}
                   className={`transition-all duration-200 ${isLastInGroup ? 'mr-2' : ''}`}
                 >
-                  {(visaType as any).name}
+                  {visaType.name}
                 </Button>
               );
             };

@@ -20,17 +20,19 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 
-import { Client } from '@/types/Client.js';
+import { StoreClient } from '@/stores/order/order-store';
 
 import { trpc } from '@/lib/trpc';
 
 import useOrderStore from '@/stores/order/order-store.js';
 
+import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
+
 const ServicePuzzle = ({
   client,
   servicePuzzleIsActive,
 }: {
-  client: Client;
+  client: StoreClient;
   servicePuzzleIsActive: boolean;
 }) => {
   const navigate = useNavigate();
@@ -89,7 +91,15 @@ const ServicePuzzle = ({
             </AlertDialogContent>
           </AlertDialog>
         )}
-        <Button type="button" disabled={!servicePuzzleIsActive}>
+        <Button
+          type="button"
+          disabled={
+            !servicePuzzleIsActive ||
+            !!isPassportExpiringWithin6Months(
+              client.passportExpirationDate ? client.passportExpirationDate.toISOString() : ''
+            )
+          }
+        >
           Confirm
         </Button>
       </div>
