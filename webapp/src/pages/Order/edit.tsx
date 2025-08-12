@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useParams } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ import useOrderStore from '@/stores/order/order-store';
 
 import ServicePuzzle from '@/components/Order/steps/ServicePuzzle';
 import SummarySection from '@/components/Order/sections/SummarySection';
+import AddClientCard from '@/components/Order/AddClientCard';
 
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,7 @@ const EditOrderPage = () => {
     order,
     orderItems = [],
     clients,
+    visaApplications = [],
     setOrder,
     setUser,
     setClients,
@@ -181,10 +183,54 @@ const EditOrderPage = () => {
     setVisaApplications,
   ]);
 
+  const servicePuzzleIsActive: boolean = useMemo(
+    () =>
+      !!(
+        contactMethods?.length > 0 &&
+        contactMethods[0]?.value &&
+        clients.length > 0 &&
+        clients?.find(c => c.isPrimary)?.citizenshipId &&
+        clients?.find(c => c.isPrimary)?.passportExpirationDate
+      ),
+    [contactMethods, clients]
+  );
+
+  // Check if ServicePuzzle step can proceed
+  const canProceedServicePuzzle = useMemo(() => {
+    // Basic checks
+    if (!servicePuzzleIsActive) return false;
+    if (visaApplications.length === 0) return false;
+
+    // Check if all visa applications have entry date and visa type
+    const allHaveRequiredFields = visaApplications.every(
+      va => va.plannedCountryEntryDate && va.visaType?.id
+    );
+    if (!allHaveRequiredFields) return false;
+
+    // Check if any client is blacklisted for countries they're applying visas for
+    const hasBlacklistedApplications = visaApplications.some(va => {
+      // Find the client for this visa application through order items
+      const orderItem = orderItems.find(item => item.id === va.orderItemId);
+      if (!orderItem) return false;
+
+      const client = clients.find(c => c.id === orderItem.clientId);
+      if (!client?.citizenship?.blacklisted) return false;
+
+      // Check if client's citizenship is blacklisted for this country
+      return client.citizenship.blacklisted.some(bl => bl.countryId === va.country.id);
+    });
+
+    return !hasBlacklistedApplications;
+  }, [servicePuzzleIsActive, visaApplications, orderItems, clients]);
+
   const steps = [
-    { name: 'ServicePuzzle', isCompleted: false },
-    { name: 'PersonalData', isCompleted: false },
-    { name: 'Payment', isCompleted: false },
+    {
+      name: 'ServicePuzzle',
+      canProceed: canProceedServicePuzzle,
+      isCompleted: canProceedServicePuzzle,
+    },
+    { name: 'PersonalData', canProceed: false, isCompleted: false },
+    { name: 'Payment', canProceed: false, isCompleted: false },
   ];
 
   const [activeStep, setActiveStep] = useState('ServicePuzzle');
@@ -194,14 +240,6 @@ const EditOrderPage = () => {
   };
 
   const lastUpdated = new Date(order?.updatedAt || '');
-
-  const servicePuzzleIsActive: boolean = !!(
-    contactMethods?.length > 0 &&
-    contactMethods[0]?.value &&
-    clients.length > 0 &&
-    clients?.find(c => c.isPrimary)?.citizenshipId &&
-    clients?.find(c => c.isPrimary)?.passportExpirationDate
-  );
 
   return (
     <>
@@ -247,7 +285,16 @@ const EditOrderPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12">
           <div className="lg:col-span-9">
             {clients
-              ?.sort((a, b) => b.id.localeCompare(a.id))
+              ?.sort((a, b) => {
+                // Primary client first
+                if (a.isPrimary && !b.isPrimary) return -1;
+                if (!a.isPrimary && b.isPrimary) return 1;
+
+                // Then sort alphabetically by first name, then last name
+                const aName = `${a.firstName || ''} ${a.lastName || ''}`.trim();
+                const bName = `${b.firstName || ''} ${b.lastName || ''}`.trim();
+                return aName.localeCompare(bName);
+              })
               .map(client => {
                 const totalAmount = orderItems?.reduce((acc, item) => {
                   if (item.clientId === client.id && item.finalPrice) {
@@ -269,13 +316,14 @@ const EditOrderPage = () => {
                   </Card>
                 );
               })}
+            {activeClientId === '' && <AddClientCard />}
           </div>
 
           <div className="grid space-y-4 sticky top-[45px] self-start lg:col-span-3 pt-6 text-sm">
             <SummarySection />
             <Button
               variant="secondary"
-              disabled={true}
+              disabled={!canProceedServicePuzzle}
               onClick={handleNext}
               className="flex border-none w-full items-center justify-between text-sm"
             >
