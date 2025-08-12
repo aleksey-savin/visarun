@@ -38,7 +38,7 @@ const ServicePuzzle = ({
   servicePuzzleIsActive: boolean;
 }) => {
   const navigate = useNavigate();
-  const { contactMethods, user, order } = useOrderStore();
+  const { setActiveClientId, contactMethods, user, order } = useOrderStore();
 
   const [activeService, setActiveService] = useState('visa');
 
@@ -61,6 +61,10 @@ const ServicePuzzle = ({
     });
 
     navigate(getAllOrdersRoute());
+  };
+
+  const handleConfirm = () => {
+    setActiveClientId('');
   };
 
   return (
@@ -106,11 +110,12 @@ const ServicePuzzle = ({
               client.passportExpirationDate ? client.passportExpirationDate.toISOString() : ''
             )
           }
+          onClick={handleConfirm}
         >
           Confirm
         </Button>
       </div>
-      <Card className="p-0 bg-muted border-none">
+      <Card className="p-0 bg-muted border-none rounded-md">
         <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div className="font-medium">Service puzzle</div>

@@ -289,7 +289,10 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                       onChange={e => {
                         handleEntryTimeUpdate(e.target.value);
                       }}
-                      className="bg-secondary appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                      className={cn(
+                        entryTime ? '' : 'text-secondary',
+                        'bg-secondary appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none'
+                      )}
                     />
                   </div>
                   {isVisaFree && (

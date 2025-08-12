@@ -192,7 +192,7 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
   };
 
   return (
-    <CardTitle className="sticky top-0 z-10 bg-background border-b flex py-1.5 px-6 justify-between gap-2 min-h-[45px]">
+    <CardTitle className="sticky top-0 z-10 bg-background border-b flex py-1.5 md:px-6 justify-between gap-2 min-h-[45px]">
       <div className="flex gap-2 items-center">
         {config.icon}
         <span className="font-semibold">{config.title}</span>

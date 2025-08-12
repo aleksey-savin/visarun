@@ -20,6 +20,7 @@ const EditOrderPage = () => {
 
   const {
     contactMethods,
+    activeClientId,
     saveStatus,
     order,
     orderItems = [],
@@ -255,34 +256,32 @@ const EditOrderPage = () => {
                   return acc;
                 }, 0);
                 return (
-                  <Card className="bg-secondary mr-2.5 p-0" key={client.id}>
+                  <Card className="bg-secondary mr-2.5 p-0 mt-6" key={client.id}>
                     <ClientSection totalAmount={totalAmount} client={client} />
-                    <div className="grid grid-col-1 gap-6 px-6 pb-5">
-                      <ServicePuzzle
-                        client={client}
-                        servicePuzzleIsActive={servicePuzzleIsActive}
-                      />
-                    </div>
+                    {activeClientId === client.id && (
+                      <div className="grid grid-col-1 gap-6 px-6 pb-5">
+                        <ServicePuzzle
+                          client={client}
+                          servicePuzzleIsActive={servicePuzzleIsActive}
+                        />
+                      </div>
+                    )}
                   </Card>
                 );
               })}
           </div>
 
-          <div className="grid space-y-4 sticky top-[69px] self-start lg:col-span-3">
-            {clients.map(client => (
-              <SummarySection client={client} key={client.id} />
-            ))}
-            <div className="grid space-y-4 sticky top-[69px] self-start lg:col-span-3">
-              <Button
-                variant="secondary"
-                disabled={true}
-                onClick={handleNext}
-                className="flex border-none w-full items-center justify-between text-sm"
-              >
-                <span>Next step</span>
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
+          <div className="grid space-y-4 sticky top-[45px] self-start lg:col-span-3 pt-6 text-sm">
+            <SummarySection />
+            <Button
+              variant="secondary"
+              disabled={true}
+              onClick={handleNext}
+              className="flex border-none w-full items-center justify-between text-sm"
+            >
+              <span>Next step</span>
+              <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </CardContent>

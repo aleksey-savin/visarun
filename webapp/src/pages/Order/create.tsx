@@ -376,7 +376,7 @@ const CreateOrderPage = () => {
                   </form>
                 </Form>
                 {/* Service Puzzle Section */}
-                <Card className="mt-6 p-0 bg-muted border-none">
+                <Card className="mt-6 p-0 bg-muted border-none rounded-md">
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between">
                       <div className="font-medium">Service puzzle</div>

@@ -141,7 +141,7 @@ export function AppSidebar() {
     canReadCountries || canReadCitizenships || canReadVisaTypes || canReadVisaCitizenshipSurcharges;
 
   return (
-    <Sidebar collapsible="none" className="bg-secondary border rounded-l-xl h-full">
+    <Sidebar collapsible="none" className="bg-secondary border rounded-l-xl h-full hidden md:block">
       <SidebarHeader className="border-b flex py-2.5 px-6 justify-between gap-2">
         <div className="flex gap-2 items-center justify-center">
           <span className="font-semibold">Visarun Vietnam</span>

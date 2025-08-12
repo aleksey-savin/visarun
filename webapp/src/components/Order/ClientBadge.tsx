@@ -22,7 +22,7 @@ const ClientBadge = ({
             </span>
           </Badge>
           {showLinkedClients && (
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="bg-emerald-900">
               <User />
             </Badge>
           )}
@@ -33,7 +33,7 @@ const ClientBadge = ({
           <Badge variant="primary">
             <Crown />
           </Badge>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="bg-emerald-900">
             <User />
             {client.firstName || ''} {client.lastName || ''}
           </Badge>

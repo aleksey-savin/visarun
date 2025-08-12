@@ -125,6 +125,7 @@ type ActiveServicePuzzleSection = 'visa' | 'visarun';
 
 interface OrderStore {
   saveStatus: SaveStatus;
+  activeClientId: string;
   activeServicePuzzleSection: ActiveServicePuzzleSection;
   order: Order;
   user: StoreUser;
@@ -134,6 +135,7 @@ interface OrderStore {
   visaApplications: StoreVisaApplication[];
 
   setSaveStatus: (saveStatus: SaveStatus) => void;
+  setActiveClientId: (activeClientId: string) => void;
   setOrder: (orderData: Order) => void;
   setUser: (userData: StoreUser) => void;
   setClients: (clients: StoreClient[]) => void;
@@ -145,6 +147,7 @@ interface OrderStore {
 
 const useOrderStore = create<OrderStore>((set, get) => ({
   saveStatus: 'saved',
+  activeClientId: '',
   activeServicePuzzleSection: 'visa',
   order: {
     id: '',
@@ -191,6 +194,7 @@ const useOrderStore = create<OrderStore>((set, get) => ({
       }
     }
   },
+  setActiveClientId: (activeClientId: string) => set({ activeClientId }),
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) =>
     set({ activeServicePuzzleSection }),
   setOrder: (orderData: Order) => set(() => ({ order: orderData })),
