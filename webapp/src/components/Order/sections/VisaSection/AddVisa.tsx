@@ -59,7 +59,20 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
       finalPrice: 0,
     });
 
-    setOrderItems([...orderItems, { ...newData.orderItem }]);
+    if (!newData.orderItem) {
+      console.error('Order item was not created');
+      setSaveStatus('error');
+      return;
+    }
+
+    setOrderItems([
+      ...orderItems,
+      {
+        ...newData.orderItem,
+        createdAt: new Date(newData.orderItem.createdAt),
+        updatedAt: new Date(newData.orderItem.updatedAt),
+      },
+    ]);
 
     // Add proper null check
     if (!newData.visaApplication) {
