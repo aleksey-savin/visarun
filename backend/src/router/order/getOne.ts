@@ -41,7 +41,7 @@ export const getOrderTrpcRoute = orderReadProcedure
         },
         items: {
           orderBy: {
-            id: 'asc',
+            id: 'desc',
           },
         },
       },
@@ -123,18 +123,6 @@ export const getOrderTrpcRoute = orderReadProcedure
               },
             })
           : [];
-
-      // Create a map for O(1) lookup since it's one-to-one relationship
-      // const visaApplicationMap = new Map(visaApplications.map(va => [va.orderItemId, va]));
-
-      // Add visa applications to corresponding items
-      // const itemsWithVisaApplications = order.items.map(item => {
-      //    if (item.serviceType === 'visa') {
-      //   const visaApplication = visaApplicationMap.get(item.id);
-      //   return { ...item, visaApplication: visaApplication || null };
-      // }
-      // return { ...item, visaApplication: null };
-      // });
 
       return {
         ...order,

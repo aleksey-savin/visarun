@@ -383,6 +383,8 @@ model OrderItem {
   note                String?
   basePrice           Float
   finalPrice          Float
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @default(now()) @updatedAt
   client              Client               @relation(fields: [clientId], references: [id])
   discountRule        ClientDiscountRule?  @relation(fields: [discountRuleId], references: [id])
   order               Order                @relation(fields: [orderId], references: [id])

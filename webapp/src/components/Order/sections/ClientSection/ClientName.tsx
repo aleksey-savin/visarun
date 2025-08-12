@@ -107,7 +107,7 @@ const ClientName = ({ client }: { client: StoreClient | undefined }) => {
   }
 
   return (
-    <div className="pt-6">
+    <div>
       <Label className="text-sm mb-2">Full name</Label>
       <div className="flex gap-4">
         <Form {...form}>

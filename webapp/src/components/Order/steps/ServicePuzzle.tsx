@@ -76,7 +76,7 @@ const ServicePuzzle = ({
       )}
       <Comments />
       <hr />
-      <div className="flex justify-end mt-6 gap-2">
+      <div className="flex justify-end gap-2">
         {(!contactMethods || !contactMethods[0]?.method?.id || !contactMethods[0]?.value) && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -110,7 +110,7 @@ const ServicePuzzle = ({
           Confirm
         </Button>
       </div>
-      <Card className="mt-6 p-0 bg-muted border-none">
+      <Card className="p-0 bg-muted border-none">
         <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div className="font-medium">Service puzzle</div>

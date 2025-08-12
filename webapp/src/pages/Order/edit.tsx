@@ -11,6 +11,7 @@ import ClientSection from '@/components/Order/sections/ClientSection';
 import useOrderStore from '@/stores/order/order-store';
 
 import ServicePuzzle from '@/components/Order/steps/ServicePuzzle';
+import SummarySection from '@/components/Order/sections/SummarySection';
 
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -118,6 +119,8 @@ const EditOrderPage = () => {
           note: i.note || null,
           basePrice: i.basePrice,
           finalPrice: i.finalPrice,
+          createdAt: new Date(orderData.createdAt),
+          updatedAt: new Date(orderData.updatedAt),
         }))
       );
     }
@@ -240,8 +243,8 @@ const EditOrderPage = () => {
         </div>
       </CardTitle>
       <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-10">
-          <div className="lg:col-span-7">
+        <div className="grid grid-cols-1 lg:grid-cols-12">
+          <div className="lg:col-span-9">
             {clients
               ?.sort((a, b) => b.id.localeCompare(a.id))
               .map(client => {
@@ -254,7 +257,7 @@ const EditOrderPage = () => {
                 return (
                   <Card className="bg-secondary mr-2.5 p-0" key={client.id}>
                     <ClientSection totalAmount={totalAmount} client={client} />
-                    <div className="px-6 pb-5">
+                    <div className="grid grid-col-1 gap-6 px-6 pb-5">
                       <ServicePuzzle
                         client={client}
                         servicePuzzleIsActive={servicePuzzleIsActive}
@@ -264,16 +267,22 @@ const EditOrderPage = () => {
                 );
               })}
           </div>
+
           <div className="grid space-y-4 sticky top-[69px] self-start lg:col-span-3">
-            <Button
-              variant="secondary"
-              disabled={true}
-              onClick={handleNext}
-              className="flex border-none items-center justify-between text-sm"
-            >
-              <span>Next step</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            {clients.map(client => (
+              <SummarySection client={client} key={client.id} />
+            ))}
+            <div className="grid space-y-4 sticky top-[69px] self-start lg:col-span-3">
+              <Button
+                variant="secondary"
+                disabled={true}
+                onClick={handleNext}
+                className="flex border-none w-full items-center justify-between text-sm"
+              >
+                <span>Next step</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>

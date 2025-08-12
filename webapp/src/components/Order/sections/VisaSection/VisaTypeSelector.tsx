@@ -48,6 +48,16 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
 
   const selectedVisaTypeObject = visaTypes.find((type: VisaType) => type.id === selected);
 
+  // Check if country is blacklisted for this citizenship
+  const isCountryBlacklisted = useMemo(() => {
+    if (!client?.citizenship?.blacklisted || !visaApplication?.country?.id) {
+      return false;
+    }
+    return client.citizenship.blacklisted.some(
+      blacklistedEntry => blacklistedEntry.countryId === visaApplication.country.id
+    );
+  }, [client?.citizenship?.blacklisted, visaApplication?.country?.id]);
+
   // Calculate surcharge amount based on client citizenship and visa application country
   const surchargeAmount = useMemo(() => {
     if (!client?.citizenship?.surcharges || !visaApplication?.country?.id || !selected) {
@@ -80,11 +90,15 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
         return;
       }
 
-      const basePrice = visaApplication.visaType.serviceCost || 0;
-      const extraCost = visaApplication.isMultientry
-        ? visaApplication.visaType.multientryExtraCost || 0
-        : 0;
-      const itemPrice = basePrice + extraCost + surchargeAmount;
+      // If country is blacklisted, set prices to 0
+      let itemPrice = 0;
+      if (!isCountryBlacklisted) {
+        const basePrice = visaApplication.visaType.serviceCost || 0;
+        const extraCost = visaApplication.isMultientry
+          ? visaApplication.visaType.multientryExtraCost || 0
+          : 0;
+        itemPrice = basePrice + extraCost + surchargeAmount;
+      }
 
       // Only update if the price has actually changed
       if (item.finalPrice !== itemPrice) {
@@ -119,10 +133,18 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
     recalculatePrices();
   }, [
     client?.citizenship?.id,
+    isCountryBlacklisted,
     surchargeAmount,
     visaApplication?.visaType?.serviceCost,
     visaApplication?.visaType?.multientryExtraCost,
     visaApplication?.isMultientry,
+    visaApplication?.id,
+    visaApplication?.visaType,
+    item,
+    editOrderItemMutation,
+    orderItems,
+    setOrderItems,
+    setSaveStatus,
   ]);
 
   const handleVisaTypeSelect = async (id: string) => {
@@ -142,9 +164,13 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
       return;
     }
 
-    const basePrice = visaTypeObject.serviceCost || 0;
-    const extraCost = visaApplication?.isMultientry ? visaTypeObject.multientryExtraCost || 0 : 0;
-    const itemPrice = basePrice + extraCost + surchargeAmount;
+    // If country is blacklisted, set prices to 0
+    let itemPrice = 0;
+    if (!isCountryBlacklisted) {
+      const basePrice = visaTypeObject.serviceCost || 0;
+      const extraCost = visaApplication?.isMultientry ? visaTypeObject.multientryExtraCost || 0 : 0;
+      itemPrice = basePrice + extraCost + surchargeAmount;
+    }
 
     const updatedOrderItems = orderItems.map(i =>
       i.id === item.id
@@ -199,9 +225,13 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
       return;
     }
 
-    const basePrice = selectedVisaTypeObject.serviceCost || 0;
-    const extraCost = isMultientry ? selectedVisaTypeObject.multientryExtraCost || 0 : 0;
-    const itemPrice = basePrice + extraCost + surchargeAmount;
+    // If country is blacklisted, set prices to 0
+    let itemPrice = 0;
+    if (!isCountryBlacklisted) {
+      const basePrice = selectedVisaTypeObject.serviceCost || 0;
+      const extraCost = isMultientry ? selectedVisaTypeObject.multientryExtraCost || 0 : 0;
+      itemPrice = basePrice + extraCost + surchargeAmount;
+    }
 
     const updatedOrderItems = orderItems.map(i =>
       i.id === item.id
