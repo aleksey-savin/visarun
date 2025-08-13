@@ -276,6 +276,12 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
     setSaveStatus('saved');
   };
 
+  useEffect(() => {
+    // Sync local state with visaApplication data whenever it changes
+    setSelected(visaApplication?.visaType?.id);
+    setIsMulti(visaApplication?.isMultientry);
+  }, [visaApplication?.visaType?.id, visaApplication?.isMultientry]);
+
   return (
     <>
       <Label className={cn('text-sm mb-2')}>Visa type</Label>

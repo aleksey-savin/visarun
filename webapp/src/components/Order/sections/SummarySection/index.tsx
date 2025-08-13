@@ -1,5 +1,4 @@
 import ClientSummary from './ClientSummary';
-import OrderSummary from './OrderSummary';
 
 import useOrderStore from '@/stores/order/order-store';
 
@@ -11,7 +10,6 @@ const SummarySection = () => {
       {clients.map(client => (
         <ClientSummary client={client} key={client.id} />
       ))}
-      <OrderSummary />
     </div>
   );
 };

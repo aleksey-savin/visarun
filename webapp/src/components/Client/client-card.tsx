@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import { User, Crown, Mail, Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -58,9 +59,18 @@ interface Client {
 interface ClientCardProps {
   client: Client;
   isFirstResult?: boolean;
+  isSelected?: boolean;
+  onSelectionChange?: (clientId: string, isSelected: boolean) => void;
+  isSelectable?: boolean;
 }
 
-const ClientCard = ({ client, isFirstResult = false }: ClientCardProps) => {
+const ClientCard = ({
+  client,
+  isFirstResult = false,
+  isSelected = false,
+  onSelectionChange,
+  isSelectable = true,
+}: ClientCardProps) => {
   const navigate = useNavigate();
   const [copiedContact, setCopiedContact] = useState<string | null>(null);
 
@@ -75,6 +85,12 @@ const ClientCard = ({ client, isFirstResult = false }: ClientCardProps) => {
     setCopiedContact(contactId);
   };
 
+  const handleCheckboxChange = (checked: boolean) => {
+    if (isSelectable) {
+      onSelectionChange?.(client.id, checked);
+    }
+  };
+
   useEffect(() => {
     if (copiedContact) {
       const timer = setTimeout(() => {
@@ -86,7 +102,7 @@ const ClientCard = ({ client, isFirstResult = false }: ClientCardProps) => {
   return (
     <Card
       key={client.id}
-      className={`p-6 bg-secondary ${isFirstResult ? 'shadow-[inset_0px_0px_20px_3px_#FAFAFA59] transition-colors' : ''}`}
+      className={`p-6 bg-secondary ${isFirstResult ? 'shadow-[inset_0px_0px_20px_3px_#FAFAFA59] transition-colors' : ''} ${!isSelectable ? 'opacity-50' : ''}`}
       tabIndex={0}
     >
       <div className="flex items-start justify-between">
@@ -177,6 +193,18 @@ const ClientCard = ({ client, isFirstResult = false }: ClientCardProps) => {
             )}
           </div>
         </div>
+
+        {/* Checkbox in top right corner */}
+        {onSelectionChange && (
+          <div className="ml-4">
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={handleCheckboxChange}
+              disabled={!isSelectable}
+              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            />
+          </div>
+        )}
       </div>
     </Card>
   );

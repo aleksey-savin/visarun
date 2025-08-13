@@ -69,6 +69,7 @@ export interface StoreClient extends Partial<Client> {
       isGlobal: boolean;
     }[];
   };
+  errors?: Set<string>;
 }
 
 export interface StoreVisaApplication extends Partial<VisaApplication> {
@@ -106,6 +107,10 @@ export interface StoreVisaApplication extends Partial<VisaApplication> {
   }[];
 }
 
+export interface StoreOrderItem extends OrderItem {
+  errors?: string[];
+}
+
 const trpc = createTRPCReact<AppRouter>();
 
 const trpcClient = trpc.createClient({
@@ -131,16 +136,15 @@ interface OrderStore {
   user: StoreUser;
   clients: StoreClient[];
   contactMethods: StoreUserContactMethod[];
-  orderItems: OrderItem[];
+  orderItems: StoreOrderItem[];
   visaApplications: StoreVisaApplication[];
-
   setSaveStatus: (saveStatus: SaveStatus) => void;
   setActiveClientId: (activeClientId: string) => void;
   setOrder: (orderData: Order) => void;
   setUser: (userData: StoreUser) => void;
   setClients: (clients: StoreClient[]) => void;
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => void;
-  setOrderItems: (orderItems: OrderItem[]) => void;
+  setOrderItems: (orderItems: StoreOrderItem[]) => void;
   setVisaApplications: (visaApplications: StoreVisaApplication[]) => void;
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) => void;
 }
@@ -201,7 +205,7 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   setUser: (userData: StoreUser) => set(() => ({ user: userData })),
   setClients: (clients: StoreClient[]) => set(() => ({ clients })),
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => set(() => ({ contactMethods })),
-  setOrderItems: (orderItems: OrderItem[]) => set(() => ({ orderItems })),
+  setOrderItems: (orderItems: StoreOrderItem[]) => set(() => ({ orderItems })),
   setVisaApplications: (visaApplications: StoreVisaApplication[]) =>
     set(() => ({ visaApplications })),
 }));

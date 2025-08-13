@@ -3,7 +3,6 @@ import { AppSidebar } from '@/components/AppSidebar';
 
 import { Outlet } from 'react-router-dom';
 
-import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
 import { useState, useEffect } from 'react';
 import { ForcedPasswordChange } from '@/components/ChangePassword/forced-password-change';
@@ -27,7 +26,7 @@ export default function Layout() {
 
   return (
     <SidebarProvider>
-      <div className="md:h-screen md:p-14 p-3 flex justify-center md:justify-start  w-screen bg-background">
+      <div className="md:h-screen flex justify-center md:justify-start w-screen bg-background">
         <AppSidebar />
         {/** <div className="fixed top-4 right-4 z-10 flex items-center gap-2">
             {userEmail && <span className="text-sm text-muted-foreground mr-2">{userEmail}</span>}
@@ -36,10 +35,10 @@ export default function Layout() {
             </Button>
             <ModeToggle />
             </div> **/}
-        <Card className="hidden md:block h-full w-full rounded-l-none border-l-0 overflow-auto scrollbar-hide p-0 m-0 pb-6">
+        <div className="hidden md:block h-full w-full rounded-none border-none overflow-auto scrollbar-hide p-0 m-0">
           <PageHeader />
           <Outlet />
-        </Card>
+        </div>
         <div className="grid grid-cols-1 gap-4 md:hidden">
           <PageHeader />
           <Outlet />

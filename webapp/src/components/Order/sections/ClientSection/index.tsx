@@ -17,8 +17,13 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
   const { activeClientId, setActiveClientId } = useOrderStore();
 
   const [clientEditMode, setClientEditMode] = useState(
-    !client?.citizenshipId || !client?.passportExpirationDate
+    !client?.citizenship?.id || !client?.passportExpirationDate
   );
+
+  const handleSave = () => {
+    setClientEditMode(false);
+    setActiveClientId(client.id);
+  };
 
   const handleClientEditMode = () => {
     if (activeClientId === client.id) {
@@ -30,7 +35,7 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
 
   const clientCanBeSaved: boolean = !!(
     client &&
-    client?.citizenshipId &&
+    client?.citizenship?.id &&
     client?.passportExpirationDate
   );
 
@@ -52,7 +57,7 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
           {client.isPrimary && <ContactData />}
           <div className="flex justify-between items-end">
             <ClientData client={client} />
-            <Button disabled={!clientCanBeSaved} onClick={handleClientEditMode}>
+            <Button disabled={!clientCanBeSaved} onClick={handleSave}>
               Save
             </Button>
           </div>

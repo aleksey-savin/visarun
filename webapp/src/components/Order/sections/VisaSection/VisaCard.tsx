@@ -34,7 +34,7 @@ import VisaTypeSelector from '@/components/Order/sections/VisaSection/VisaTypeSe
 import { formatCurrency } from '@/utils/currency';
 
 const formSchema = z.object({
-  entryDate: z.date(),
+  entryDate: z.date().optional(),
   entryTime: z.string().optional(),
 });
 
@@ -54,9 +54,13 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
 
   const handleDeleteOrderItem = async () => {
     setSaveStatus('saving');
+
+    setVisaApplications(visaApplications?.filter(va => va.orderItemId !== item.id));
     setOrderItems(orderItems?.filter(i => i.id !== item.id));
-    setShowDeleteModal(false);
+
     await deleteOrderItemMutation.mutateAsync({ id: item.id || '' });
+
+    setShowDeleteModal(false);
 
     setSaveStatus('saved');
   };
@@ -206,6 +210,21 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
       setVisaFreeStampDuration(visaFreeEntry?.stampDuration || null);
     }
   }, [visaApplication?.country?.id, client?.citizenship]);
+
+  useEffect(() => {
+    if (visaApplication?.plannedCountryEntryDate) {
+      const date = new Date(visaApplication.plannedCountryEntryDate);
+      setEntryDate(date);
+      setEntryTime(date.toTimeString().slice(0, 5));
+      form.setValue('entryDate', date);
+      form.setValue('entryTime', date.toTimeString().slice(0, 5));
+    } else {
+      setEntryDate(undefined);
+      setEntryTime('00:00');
+      form.setValue('entryDate', undefined);
+      form.setValue('entryTime', '00:00');
+    }
+  }, [visaApplication?.plannedCountryEntryDate, form]);
 
   return (
     <Card className="p-3 bg-secondary gap-5">

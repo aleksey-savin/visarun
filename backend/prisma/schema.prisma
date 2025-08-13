@@ -207,10 +207,10 @@ model Client {
   citizenship              Citizenship?               @relation(fields: [citizenshipId], references: [id])
   user                     User?                      @relation(fields: [userId], references: [id])
   ClientDiscountAssignment ClientDiscountAssignment[]
-
-  ClientVisa ClientVisa[]
-  OrderItem  OrderItem[]
-  documents  ClientDocument[]
+  ClientVisa               ClientVisa[]
+  OrderItem                OrderItem[]
+  documents                ClientDocument[]
+  clients                  OrderClient[]
 
   @@index([userId])
   @@index([citizenshipId])
@@ -360,14 +360,28 @@ model MessageTemplate {
 }
 
 model Order {
-  id        String      @id @default(uuid())
+  id        String        @id @default(uuid())
   userId    String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @default(now()) @updatedAt
-  status    OrderStatus @default(draft)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @default(now()) @updatedAt
+  status    OrderStatus   @default(draft)
   comment   String?
-  user      User        @relation(fields: [userId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
   items     OrderItem[]
+  clients   OrderClient[]
+}
+
+model OrderClient {
+  id       String @id @default(uuid())
+  orderId  String
+  clientId String
+
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, clientId]) // Prevent duplicate client-order pairs
+  @@index([orderId])
+  @@index([clientId])
 }
 
 model OrderItem {

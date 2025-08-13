@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { Plus } from 'lucide-react';
 
@@ -9,7 +10,7 @@ import useOrderStore, { type StoreClient } from '@/stores/order/order-store';
 
 import VisaCard from './VisaCard';
 
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CircleAlert } from 'lucide-react';
 
 import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
 
@@ -106,7 +107,7 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
           <div className="flex gap-3 items-center">
             <AlertTriangle className="text-destructive" />
             <span>
-              {!client.citizenshipId
+              {!client.citizenship?.id
                 ? 'Please select a citizenship to add services.'
                 : client.passportExpirationDate && passportExpires
                   ? 'Passport expires within 6 months. Client should renew their passport before applying for services.'
@@ -118,7 +119,9 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
       {!passportExpires && (
         <Card className="border-none p-4">
           <div>Add Visa</div>
-          {clientOrderItems?.map((item, index) => <VisaCard item={item} key={index} />)}
+          {clientOrderItems
+            ?.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+            .map((item, index) => <VisaCard item={item} key={index} />)}
           <div className="flex justify-start gap-3">
             {countries
               .filter(
@@ -127,15 +130,31 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
               .map(country => {
                 const isBlacklisted = isCountryBlacklisted(country.id);
                 return (
-                  <Button
-                    size="sm"
-                    variant={isBlacklisted ? 'destructive' : 'primary'}
-                    disabled={isBlacklisted}
-                    onClick={() => handleAddOrderItem(country.id)}
-                    key={country.id}
-                  >
-                    <Plus /> {country.name} {isBlacklisted ? '(Blacklisted)' : ''}
-                  </Button>
+                  <div key={country.id}>
+                    {!isBlacklisted && (
+                      <Button
+                        size="sm"
+                        variant={'primary'}
+                        onClick={() => handleAddOrderItem(country.id)}
+                      >
+                        <Plus /> {country.name}
+                      </Button>
+                    )}
+                    {isBlacklisted && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="bg-secondary border-transparent hover:bg-secondary text-muted-foreground hover:text-muted-foreground"
+                          >
+                            <Plus /> {country.name} <CircleAlert />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Citizenship is blacklisted for this country</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
                 );
               })}
           </div>

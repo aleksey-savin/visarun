@@ -7,7 +7,7 @@ import useOrderStore from '@/stores/order/order-store';
 import { trpc } from '@/lib/trpc';
 
 const AddClientCard = () => {
-  const { user, clients, setClients, setSaveStatus } = useOrderStore();
+  const { user, clients, setClients, setSaveStatus, setActiveClientId } = useOrderStore();
 
   const createClientMutation = trpc.client.create.useMutation();
 
@@ -26,11 +26,12 @@ const AddClientCard = () => {
         isPrimary: false,
       },
     ]);
+    setActiveClientId(newClientData.client.id);
     setSaveStatus('saved');
   };
 
   return (
-    <Card className=" bg-secondary mr-2.5 p-6 mt-6">
+    <Card className=" bg-secondary mr-2.5 p-6 mt-2.5">
       <div className="flex justify-between items-center ">
         <span>Linked Client</span>
         <Button variant="secondary" onClick={handleAddClient}>

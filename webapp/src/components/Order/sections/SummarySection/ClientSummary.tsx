@@ -135,9 +135,7 @@ const ClientSummary = ({ client }: { client: StoreClient }) => {
               </>
             )}
             {clientOrderItemsWithPrice.length === 0 && (
-              <div className="text-sm text-muted-foreground text-center py-4">
-                No services added yet
-              </div>
+              <div className="text-sm text-muted-foreground text-center">No services added yet</div>
             )}
           </div>
           <hr />

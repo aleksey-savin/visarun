@@ -48,7 +48,7 @@ const ClientData = ({ client }: { client: StoreClient }) => {
     defaultValues: {
       lastName: client?.lastName || '',
       firstName: client?.firstName || '',
-      citizenshipId: client?.citizenshipId || '',
+      citizenshipId: client?.citizenship?.id || '',
       passportExpirationDate: client?.passportExpirationDate
         ? new Date(client.passportExpirationDate)
         : undefined,

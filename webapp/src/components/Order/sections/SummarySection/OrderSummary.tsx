@@ -79,42 +79,36 @@ const OrderSummary = () => {
   const orderItemsWithPrice = orderItems.filter(item => item.finalPrice > 0);
 
   return (
-    <div className="grid space-y-4 sticky  self-start lg:col-span-3">
-      <Card className="p-3 bg-primary/5 border-primary/20 rounded-md">
-        <CardContent className="space-y-4 p-0">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-primary">Order Summary</span>
-            <Badge
-              variant="outline"
-              className={`p-1 h-auto transition-all duration-300 ${
-                isCopied ? 'text-green-500' : 'text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={copyToClipboard}
-            >
-              {isCopied ? (
-                <Check className="w-4 h-4 animate-pulse" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
-            </Badge>
+    <Card className="p-3 bg-primary/5 border-primary/20 rounded-md">
+      <CardContent className="space-y-4 p-0">
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-primary">Order Summary</span>
+          <Badge
+            variant="outline"
+            className={`p-1 h-auto transition-all duration-300 ${
+              isCopied ? 'text-green-500' : 'text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={copyToClipboard}
+          >
+            {isCopied ? <Check className="w-4 h-4 animate-pulse" /> : <Copy className="w-4 h-4" />}
+          </Badge>
+        </div>
+        <hr />
+        <div className="text-sm">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold">Total:</span>
+            <span className="font-bold text-sm text-primary">
+              {(() => {
+                const total = orderItemsWithPrice.reduce((sum: number, item: OrderItem) => {
+                  return sum + item.finalPrice;
+                }, 0);
+                return formatCurrency(total, 'VND');
+              })()}
+            </span>
           </div>
-          <hr />
-          <div className="text-sm">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">Total:</span>
-              <span className="font-bold text-sm text-primary">
-                {(() => {
-                  const total = orderItemsWithPrice.reduce((sum: number, item: OrderItem) => {
-                    return sum + item.finalPrice;
-                  }, 0);
-                  return formatCurrency(total, 'VND');
-                })()}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

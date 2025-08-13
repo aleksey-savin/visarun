@@ -102,17 +102,8 @@ const ServicePuzzle = ({
             </AlertDialogContent>
           </AlertDialog>
         )}
-        <Button
-          type="button"
-          disabled={
-            !servicePuzzleIsActive ||
-            !!isPassportExpiringWithin6Months(
-              client.passportExpirationDate ? client.passportExpirationDate.toISOString() : ''
-            )
-          }
-          onClick={handleConfirm}
-        >
-          Confirm
+        <Button type="button" disabled={false} onClick={handleConfirm}>
+          Save & close
         </Button>
       </div>
       <Card className="p-0 bg-muted border-none rounded-md">

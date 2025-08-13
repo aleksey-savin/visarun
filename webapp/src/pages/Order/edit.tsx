@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useParams } from 'react-router-dom';
 
-import { Card, CardTitle, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Puzzle, ArrowRight } from 'lucide-react';
 
@@ -13,6 +13,9 @@ import useOrderStore from '@/stores/order/order-store';
 import ServicePuzzle from '@/components/Order/steps/ServicePuzzle';
 import SummarySection from '@/components/Order/sections/SummarySection';
 import AddClientCard from '@/components/Order/AddClientCard';
+import OrderSummary from '@/components/Order/sections/SummarySection/OrderSummary';
+
+import { clientHasErrors } from '@/utils/clientHasErrors';
 
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -122,8 +125,8 @@ const EditOrderPage = () => {
           note: i.note || null,
           basePrice: i.basePrice,
           finalPrice: i.finalPrice,
-          createdAt: new Date(orderData.createdAt),
-          updatedAt: new Date(orderData.updatedAt),
+          createdAt: new Date(i.createdAt),
+          updatedAt: new Date(i.updatedAt),
         }))
       );
     }
@@ -183,51 +186,36 @@ const EditOrderPage = () => {
     setVisaApplications,
   ]);
 
-  const servicePuzzleIsActive: boolean = useMemo(
-    () =>
-      !!(
-        contactMethods?.length > 0 &&
-        contactMethods[0]?.value &&
-        clients.length > 0 &&
-        clients?.find(c => c.isPrimary)?.citizenshipId &&
-        clients?.find(c => c.isPrimary)?.passportExpirationDate
-      ),
-    [contactMethods, clients]
-  );
+  const clientsHaveErrors =
+    clients.filter(
+      client => Array.from(clientHasErrors(client, orderItems, visaApplications) || []).length > 0
+    ).length > 0;
 
-  // Check if ServicePuzzle step can proceed
-  const canProceedServicePuzzle = useMemo(() => {
-    // Basic checks
-    if (!servicePuzzleIsActive) return false;
-    if (visaApplications.length === 0) return false;
+  const servicePuzzleIsActive: boolean = useMemo(() => {
+    // Basic requirements
+    const hasContactMethod = !!(contactMethods?.length > 0 && contactMethods[0]?.value);
+    const hasClients = clients.length > 0;
 
-    // Check if all visa applications have entry date and visa type
-    const allHaveRequiredFields = visaApplications.every(
-      va => va.plannedCountryEntryDate && va.visaType?.id
+    if (!hasContactMethod || !hasClients) return false;
+
+    // If there's an active client, check if that specific client has required data
+    if (activeClientId) {
+      const activeClient = clients.find(c => c.id === activeClientId);
+      return !!(activeClient?.citizenship?.id && activeClient?.passportExpirationDate);
+    }
+
+    // Otherwise, check for any primary client with required data
+    return !!(
+      clients?.find(c => c.isPrimary)?.citizenship?.id &&
+      clients?.find(c => c.isPrimary)?.passportExpirationDate
     );
-    if (!allHaveRequiredFields) return false;
-
-    // Check if any client is blacklisted for countries they're applying visas for
-    const hasBlacklistedApplications = visaApplications.some(va => {
-      // Find the client for this visa application through order items
-      const orderItem = orderItems.find(item => item.id === va.orderItemId);
-      if (!orderItem) return false;
-
-      const client = clients.find(c => c.id === orderItem.clientId);
-      if (!client?.citizenship?.blacklisted) return false;
-
-      // Check if client's citizenship is blacklisted for this country
-      return client.citizenship.blacklisted.some(bl => bl.countryId === va.country.id);
-    });
-
-    return !hasBlacklistedApplications;
-  }, [servicePuzzleIsActive, visaApplications, orderItems, clients]);
+  }, [contactMethods, clients, activeClientId]);
 
   const steps = [
     {
       name: 'ServicePuzzle',
-      canProceed: canProceedServicePuzzle,
-      isCompleted: canProceedServicePuzzle,
+      canProceed: !clientsHaveErrors,
+      isCompleted: !clientsHaveErrors,
     },
     { name: 'PersonalData', canProceed: false, isCompleted: false },
     { name: 'Payment', canProceed: false, isCompleted: false },
@@ -243,7 +231,7 @@ const EditOrderPage = () => {
 
   return (
     <>
-      <CardTitle className="sticky top-0 z-10 bg-background border-b flex py-1.5 px-6 justify-between gap-2 items-center h-[45px]">
+      <div className="sticky top-0 z-10 bg-background border-b flex  px-6 justify-between gap-2 items-center h-[45px]">
         <div className="flex gap-3 items-center text-sm min-h-[45px]">
           <Puzzle />
           {steps.map(step => (
@@ -280,8 +268,8 @@ const EditOrderPage = () => {
                   : 'Saved ✓'}
           </span>
         </div>
-      </CardTitle>
-      <CardContent>
+      </div>
+      <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-12">
           <div className="lg:col-span-9">
             {clients
@@ -303,7 +291,7 @@ const EditOrderPage = () => {
                   return acc;
                 }, 0);
                 return (
-                  <Card className="bg-secondary mr-2.5 p-0 mt-6" key={client.id}>
+                  <Card className="bg-secondary mr-2.5 p-0 mb-2.5" key={client.id}>
                     <ClientSection totalAmount={totalAmount} client={client} />
                     {activeClientId === client.id && (
                       <div className="grid grid-col-1 gap-6 px-6 pb-5">
@@ -319,11 +307,12 @@ const EditOrderPage = () => {
             {activeClientId === '' && <AddClientCard />}
           </div>
 
-          <div className="grid space-y-4 sticky top-[45px] self-start lg:col-span-3 pt-6 text-sm">
+          <div className="grid space-y-2 sticky top-[45px] self-start lg:col-span-3 text-sm">
             <SummarySection />
+            <OrderSummary />
             <Button
-              variant="secondary"
-              disabled={!canProceedServicePuzzle}
+              variant={!clientsHaveErrors && activeClientId === '' ? 'default' : 'secondary'}
+              disabled={!clientsHaveErrors && activeClientId === '' ? false : true}
               onClick={handleNext}
               className="flex border-none w-full items-center justify-between text-sm"
             >
@@ -332,7 +321,7 @@ const EditOrderPage = () => {
             </Button>
           </div>
         </div>
-      </CardContent>
+      </div>
     </>
   );
 };

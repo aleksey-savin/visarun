@@ -10,7 +10,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus, CheckSquare, Square } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { getEditOrderRoute } from '@/lib/routes';
 import ClientCard from './client-card';
@@ -25,6 +25,8 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [addClientIsActive, setAddClientIsActive] = useState(false);
+  const [clientIds, setClientIds] = useState<string[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -40,6 +42,8 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
     if (!isOpen) {
       setSearchQuery('');
       setDebouncedQuery('');
+      setClientIds([]);
+      setSelectedUserId(null);
     }
   }, [isOpen]);
 
@@ -132,23 +136,116 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
     return clients;
   }, [searchResults]);
 
+  // Get clients that can be selected (same userId as currently selected, or all if none selected)
+  const selectableClients = useMemo(() => {
+    if (!selectedUserId) return processedClients;
+
+    return processedClients.filter(client => {
+      const clientUserId = client.user?.id || client.userId;
+      return clientUserId === selectedUserId;
+    });
+  }, [processedClients, selectedUserId]);
+
+  // Check if all selectable clients are selected
+  const allSelectableSelected = useMemo(() => {
+    if (selectableClients.length === 0) return false;
+    return selectableClients.every(client => clientIds.includes(client.id));
+  }, [selectableClients, clientIds]);
+
   const createClientMutation = trpc.client.create.useMutation();
   const createOrderMutation = trpc.order.create.useMutation();
 
-  const handleAddNewClient = async () => {
+  // Handle client selection change
+  const handleClientSelectionChange = (clientId: string, isSelected: boolean) => {
+    const client = processedClients.find(c => c.id === clientId);
+    if (!client) return;
+
+    const clientUserId = client.user?.id || client.userId;
+
+    if (isSelected) {
+      // If this is the first selection or same userId, allow selection
+      if (!selectedUserId || clientUserId === selectedUserId) {
+        setClientIds(prev => (prev.includes(clientId) ? prev : [...prev, clientId]));
+        if (!selectedUserId && clientUserId) {
+          setSelectedUserId(clientUserId);
+        }
+      } else {
+        // Different userId - clear previous selections and start fresh
+        setClientIds([clientId]);
+        setSelectedUserId(clientUserId);
+      }
+    } else {
+      // Remove client ID
+      setClientIds(prev => {
+        const newIds = prev.filter(id => id !== clientId);
+        // If no clients left, clear selected userId
+        if (newIds.length === 0) {
+          setSelectedUserId(null);
+        }
+        return newIds;
+      });
+    }
+  };
+
+  // Handle select all
+  const handleSelectAll = () => {
+    if (allSelectableSelected) {
+      // Deselect all
+      setClientIds([]);
+      setSelectedUserId(null);
+    } else {
+      // Select all selectable clients
+      if (selectableClients.length > 0) {
+        const allIds = selectableClients.map(client => client.id);
+        setClientIds(allIds);
+
+        // Set userId if not already set
+        if (!selectedUserId) {
+          const firstClient = selectableClients[0];
+          const firstClientUserId = firstClient.user?.id || firstClient.userId;
+          if (firstClientUserId) {
+            setSelectedUserId(firstClientUserId);
+          }
+        }
+      }
+    }
+  };
+
+  // Check if a client can be selected
+  const isClientSelectable = (client: (typeof processedClients)[0]) => {
+    if (!selectedUserId) return true;
+    const clientUserId = client.user?.id || client.userId;
+    return clientUserId === selectedUserId;
+  };
+
+  const handleAddNewOrder = async () => {
     onOpenChange(false);
 
-    const clientResult = await createClientMutation.mutateAsync({
-      firstName: '',
-      lastName: '',
-      userData: {
+    const clients: string[] = [...clientIds];
+    let userId: string | undefined;
+
+    if (clientIds.length === 0) {
+      const clientResult = await createClientMutation.mutateAsync({
         firstName: '',
         lastName: '',
-      },
-    });
+        userData: {
+          firstName: '',
+          lastName: '',
+        },
+      });
+
+      if (clientResult?.client?.id) {
+        clients.push(clientResult.client.id);
+        userId = clientResult.client.userId || undefined;
+      }
+    } else {
+      // Get userId from the selected clients (they all have the same userId)
+      userId = selectedUserId || undefined;
+    }
 
     const newOrderData = await createOrderMutation.mutateAsync({
-      userId: clientResult.createdUser!.id,
+      userId: userId || '',
+      clients: clients,
       status: 'draft',
     });
 
@@ -162,14 +259,17 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
           <DialogTitle className="flex items-center justify-between gap-2 text-foreground text-lg">
             <div className="flex gap-2 items-center">
               <span className="font-semibold">Client</span> <UserPlus />
+              {clientIds.length > 0 && (
+                <span className="text-sm text-muted-foreground">({clientIds.length} selected)</span>
+              )}
             </div>
             <Button
-              variant={addClientIsActive ? 'default' : 'secondary'}
-              disabled={!addClientIsActive}
+              variant={addClientIsActive || clientIds.length > 0 ? 'default' : 'secondary'}
+              disabled={!addClientIsActive && clientIds.length === 0}
               className="border"
-              onClick={handleAddNewClient}
+              onClick={handleAddNewOrder}
             >
-              Add new
+              {clientIds.length > 0 ? 'Create Order' : 'Add new'}
             </Button>
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -177,21 +277,51 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-6 flex-1 min-h-0">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              type="text"
-              placeholder="Telegram / E-mail / WhatsApp / Zalo / Facebook"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10 border-border"
-              autoFocus
-              onKeyDown={e => {
-                if (e.key === 'Escape') {
-                  onOpenChange(false);
-                }
-              }}
-            />
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Telegram / E-mail / WhatsApp / Zalo / Facebook"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-10 border-border"
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Escape') {
+                    onOpenChange(false);
+                  }
+                }}
+              />
+            </div>
+
+            {processedClients.length > 0 && selectableClients.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="flex items-center gap-2"
+                >
+                  {allSelectableSelected ? (
+                    <CheckSquare className="w-4 h-4" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                  {allSelectableSelected ? 'Deselect All' : 'Select All'}
+                  {selectableClients.length < processedClients.length && selectedUserId && (
+                    <span className="text-xs text-muted-foreground">
+                      ({selectableClients.length} available)
+                    </span>
+                  )}
+                </Button>
+                {selectedUserId && selectableClients.length < processedClients.length && (
+                  <span className="text-xs text-muted-foreground">
+                    Only clients from the same user can be selected together
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {!debouncedQuery || debouncedQuery.length < 2 ? (
@@ -222,7 +352,14 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
           ) : (
             <div className="space-y-6 flex-1 overflow-y-auto scrollbar-hide min-h-0">
               {processedClients.map((client, index) => (
-                <ClientCard key={client.id} client={client} isFirstResult={index === 0} />
+                <ClientCard
+                  key={client.id}
+                  client={client}
+                  isFirstResult={index === 0}
+                  isSelected={clientIds.includes(client.id)}
+                  onSelectionChange={handleClientSelectionChange}
+                  isSelectable={isClientSelectable(client)}
+                />
               ))}
             </div>
           )}

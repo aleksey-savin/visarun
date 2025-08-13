@@ -87,7 +87,7 @@ const ClientCard = ({
 
   return (
     <>
-      <Card className="p-6 border-t-0 border-x-0">
+      <Card className="bg-secondary p-6 border-t-0 border-x-0">
         <div className="grid gap-6">
           <div className="flex items-center justify-between gap-2 text-lg">
             <ClientBadge client={client} showLinkedClients={false} />

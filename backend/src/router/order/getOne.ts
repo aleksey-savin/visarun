@@ -39,9 +39,41 @@ export const getOrderTrpcRoute = orderReadProcedure
             },
           },
         },
+        clients: {
+          select: {
+            id: true,
+            client: {
+              select: {
+                id: true,
+                userId: true,
+                isPrimary: true,
+                passportExpirationDate: true,
+                prevViolations: true,
+                prevViolationsDesc: true,
+                isOutsideTheCountry: true,
+                isOutsideTheCountryAt: true,
+                firstName: true,
+                lastName: true,
+                citizenship: {
+                  select: {
+                    id: true,
+                    name: true,
+                    abbreviation: true,
+                    favourite: true,
+                    emoji: true,
+                    blacklisted: true,
+                    surcharges: true,
+                    visaFree: true,
+                    RequirementCitizenship: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         items: {
           orderBy: {
-            id: 'desc',
+            id: 'asc',
           },
         },
       },
@@ -52,7 +84,7 @@ export const getOrderTrpcRoute = orderReadProcedure
     }
 
     if (order) {
-      const clients = await ctx.prisma.client.findMany({
+      /** const clients = await ctx.prisma.client.findMany({
         where: {
           userId: order.userId,
         },
@@ -69,7 +101,7 @@ export const getOrderTrpcRoute = orderReadProcedure
             },
           },
         },
-      });
+        }); **/
 
       // Fetch visa applications for items with serviceType = 'visa'
       const visaItems = order.items.filter(item => item.serviceType === 'visa');
@@ -126,8 +158,10 @@ export const getOrderTrpcRoute = orderReadProcedure
 
       return {
         ...order,
+        clients: order.clients.map(orderClient => ({
+          ...orderClient.client,
+        })),
         visaApplications,
-        clients,
       };
     }
   });
