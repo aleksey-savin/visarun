@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+
+import { trpc } from '@/lib/trpc';
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +16,7 @@ import { formatCurrency } from '@/utils/currency';
 
 import useOrderStore from '@/stores/order/order-store';
 
-import { Copy, Check, Mail, Pencil } from 'lucide-react';
+import { Copy, Check, Mail, Pencil, Plus } from 'lucide-react';
 
 const ClientCard = ({
   client,
@@ -24,7 +27,18 @@ const ClientCard = ({
   totalAmount: number;
   handleClientEditMode: () => void;
 }) => {
-  const { contactMethods, user, activeClientId, orderItems, visaApplications } = useOrderStore();
+  const {
+    order,
+    contactMethods,
+    user,
+    clients,
+    setClients,
+    activeClientId,
+    setActiveClientId,
+    setSaveStatus,
+    orderItems,
+    visaApplications,
+  } = useOrderStore();
 
   const clientOrderItemsWithPrice = orderItems.filter(
     item => item.clientId === client.id && item.finalPrice !== 0
@@ -85,9 +99,28 @@ const ClientCard = ({
     );
     }); **/
 
+  const clientIsIncluded = clients.filter(c => c.id === client.id).length > 0;
+
+  const editOrderMutation = trpc.order.edit.useMutation();
+
+  const handleAddToOrder = async () => {
+    if (!clientIsIncluded) {
+      setSaveStatus('saving');
+
+      await editOrderMutation.mutateAsync({
+        id: order.id,
+        clients: [...clients.map(c => c.id), client.id],
+      });
+
+      setClients([...clients, client]);
+      setActiveClientId(client.id);
+      setSaveStatus('saved');
+    }
+  };
+
   return (
     <>
-      <Card className="bg-secondary p-6 border-t-0 border-x-0">
+      <Card className={cn(' p-6 border-t-0 border-x-0', clientIsIncluded ? 'bg-secondary' : '')}>
         <div className="grid gap-6">
           <div className="flex items-center justify-between gap-2 text-lg">
             <ClientBadge client={client} showLinkedClients={false} />
@@ -171,10 +204,17 @@ const ClientCard = ({
             )}
           </div>
           <hr />
-          <div className="flex justify-end">
-            <Button variant="secondary" onClick={handleClientEditMode}>
-              {activeClientId === client.id ? 'Edit Client' : 'Edit Order'} <Pencil />
-            </Button>
+          <div className="flex justify-end gap-2">
+            {clientIsIncluded && (
+              <Button variant="secondary" onClick={handleClientEditMode}>
+                {activeClientId === client.id ? 'Edit Client' : 'Edit'} <Pencil />
+              </Button>
+            )}
+            {!clientIsIncluded && (
+              <Button variant="primary" onClick={handleAddToOrder}>
+                Add to order <Plus />
+              </Button>
+            )}
           </div>
         </div>
       </Card>

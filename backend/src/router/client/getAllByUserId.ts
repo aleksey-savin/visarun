@@ -2,7 +2,7 @@ import { userReadProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 import {
   addRelatedClientsToClientList,
-  clientSelectFieldsWithDocuments,
+  // clientSelectFieldsWithDocuments,
 } from '../../utils/clientHelpers.js';
 
 export const zGetAllClientsByUserIdTrpcInput = z.object({
@@ -14,7 +14,21 @@ export const getAllClientsByUserIdTrpcRoute = userReadProcedure
   .query(async ({ input, ctx }) => {
     const clients = await ctx.prisma.client.findMany({
       where: { userId: input.userId },
-      select: clientSelectFieldsWithDocuments,
+      include: {
+        citizenship: {
+          select: {
+            id: true,
+            name: true,
+            abbreviation: true,
+            favourite: true,
+            emoji: true,
+            blacklisted: true,
+            surcharges: true,
+            visaFree: true,
+            RequirementCitizenship: true,
+          },
+        },
+      },
       orderBy: {
         firstName: 'asc',
       },

@@ -17,14 +17,46 @@ import OrderSummary from '@/components/Order/sections/SummarySection/OrderSummar
 
 import { clientHasErrors } from '@/utils/clientHasErrors';
 
+import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
+
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
 
   const { data: orderData } = trpc.order.getOne.useQuery({ id: id! }, { enabled: !!id });
+  const { data: allClientsData } = trpc.client.getAllByUserId.useQuery({
+    userId: orderData?.userId || '',
+  });
+
+  const notIncludedClients = allClientsData?.clients
+    ?.filter(client => !orderData?.clients?.map(c => c.id).includes(client.id))
+    .map(client => ({
+      ...client,
+      firstName: client.firstName ?? undefined,
+      lastName: client.lastName ?? undefined,
+      passportExpirationDate: client.passportExpirationDate
+        ? new Date(client.passportExpirationDate)
+        : undefined,
+      isOutsideTheCountryAt: client.isOutsideTheCountryAt
+        ? new Date(client.isOutsideTheCountryAt)
+        : undefined,
+      citizenship: client.citizenship
+        ? {
+            id: client.citizenship.id,
+            name: client.citizenship.name,
+            abbreviation: client.citizenship.abbreviation,
+            favourite: false,
+            emoji: '',
+            blacklisted: client.citizenship.blacklisted || [],
+            visaFree: client.citizenship.visaFree || [],
+            surcharges: client.citizenship.surcharges || [],
+          }
+        : undefined,
+    }));
 
   const {
     contactMethods,
     activeClientId,
+    setActiveClientId,
     saveStatus,
     order,
     orderItems = [],
@@ -62,6 +94,10 @@ const EditOrderPage = () => {
     }
 
     if (orderData.clients) {
+      if (orderData.user?.contactMethods.length === 0) {
+        setActiveClientId(orderData?.clients[0]?.id);
+      }
+
       setClients(
         orderData.clients.map(client => ({
           ...client,
@@ -198,9 +234,17 @@ const EditOrderPage = () => {
 
     if (!hasContactMethod || !hasClients) return false;
 
-    // If there's an active client, check if that specific client has required data
     if (activeClientId) {
+      // If there's an active client, check if that specific client has required data
       const activeClient = clients.find(c => c.id === activeClientId);
+      if (
+        isPassportExpiringWithin6Months(
+          activeClient?.passportExpirationDate
+            ? activeClient?.passportExpirationDate.toISOString()
+            : ''
+        )
+      )
+        return false;
       return !!(activeClient?.citizenship?.id && activeClient?.passportExpirationDate);
     }
 
@@ -277,11 +321,7 @@ const EditOrderPage = () => {
                 // Primary client first
                 if (a.isPrimary && !b.isPrimary) return -1;
                 if (!a.isPrimary && b.isPrimary) return 1;
-
-                // Then sort alphabetically by first name, then last name
-                const aName = `${a.firstName || ''} ${a.lastName || ''}`.trim();
-                const bName = `${b.firstName || ''} ${b.lastName || ''}`.trim();
-                return aName.localeCompare(bName);
+                return 1;
               })
               .map(client => {
                 const totalAmount = orderItems?.reduce((acc, item) => {
@@ -305,6 +345,35 @@ const EditOrderPage = () => {
                 );
               })}
             {activeClientId === '' && <AddClientCard />}
+            {activeClientId === '' && (
+              <>
+                {notIncludedClients
+                  ?.filter(
+                    notIncludedClient => !clients.map(c => c.id).includes(notIncludedClient.id)
+                  )
+                  .map(client => {
+                    const totalAmount = orderItems?.reduce((acc, item) => {
+                      if (item.clientId === client.id && item.finalPrice) {
+                        return acc + item.finalPrice;
+                      }
+                      return acc;
+                    }, 0);
+                    return (
+                      <Card className="bg-secondary mr-2.5 p-0 mb-2.5" key={client.id}>
+                        <ClientSection totalAmount={totalAmount} client={client} />
+                        {activeClientId === client.id && (
+                          <div className="grid grid-col-1 gap-6 px-6 pb-5">
+                            <ServicePuzzle
+                              client={client}
+                              servicePuzzleIsActive={servicePuzzleIsActive}
+                            />
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })}
+              </>
+            )}
           </div>
 
           <div className="grid space-y-2 sticky top-[45px] self-start lg:col-span-3 text-sm">

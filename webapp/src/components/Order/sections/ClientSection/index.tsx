@@ -1,6 +1,4 @@
-import { useState } from 'react';
-
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 import ContactData from '@/components/Order/sections/ClientSection/ContactData';
@@ -16,39 +14,39 @@ import { formatCurrency } from '@/utils/currency';
 const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmount: number }) => {
   const { activeClientId, setActiveClientId } = useOrderStore();
 
-  const [clientEditMode, setClientEditMode] = useState(
+  /*const [clientEditMode, setClientEditMode] = useState(
     !client?.citizenship?.id || !client?.passportExpirationDate
-  );
+  ); */
 
-  const handleSave = () => {
+  /*const handleSave = () => {
     setClientEditMode(false);
     setActiveClientId(client.id);
-  };
+  }; */
 
   const handleClientEditMode = () => {
     if (activeClientId === client.id) {
-      setClientEditMode(prev => !prev);
+      // setClientEditMode(prev => !prev);
     } else if (activeClientId !== client.id) {
       setActiveClientId(client.id);
     }
   };
 
-  const clientCanBeSaved: boolean = !!(
+  /*const clientCanBeSaved: boolean = !!(
     client &&
     client?.citizenship?.id &&
     client?.passportExpirationDate
-  );
+  );*/
 
   return (
     <>
-      {!clientEditMode && (
+      {activeClientId !== client.id && (
         <ClientCard
           client={client}
           totalAmount={totalAmount}
           handleClientEditMode={handleClientEditMode}
         />
       )}
-      {clientEditMode && (
+      {activeClientId === client.id && (
         <Card className="bg-secondary m-0 p-6 border-x-0 border-t-0">
           <div className="flex items-center justify-between gap-2 text-lg">
             <ClientBadge client={client} showLinkedClients={false} />
@@ -57,9 +55,10 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
           {client.isPrimary && <ContactData />}
           <div className="flex justify-between items-end">
             <ClientData client={client} />
-            <Button disabled={!clientCanBeSaved} onClick={handleSave}>
+
+            {/* <Button disabled={!clientCanBeSaved} onClick={handleSave}>
               Save
-            </Button>
+            </Button> */}
           </div>
         </Card>
       )}

@@ -78,6 +78,14 @@ const OrderSummary = () => {
 
   const orderItemsWithPrice = orderItems.filter(item => item.finalPrice > 0);
 
+  const calcTotal = () => {
+    const total = orderItemsWithPrice.reduce((sum: number, item: OrderItem) => {
+      return sum + item.finalPrice;
+    }, 0);
+
+    return formatCurrency(total, 'VND');
+  };
+
   return (
     <Card className="p-3 bg-primary/5 border-primary/20 rounded-md">
       <CardContent className="space-y-4 p-0">
@@ -97,14 +105,7 @@ const OrderSummary = () => {
         <div className="text-sm">
           <div className="flex justify-between items-center">
             <span className="font-semibold">Total:</span>
-            <span className="font-bold text-sm text-primary">
-              {(() => {
-                const total = orderItemsWithPrice.reduce((sum: number, item: OrderItem) => {
-                  return sum + item.finalPrice;
-                }, 0);
-                return formatCurrency(total, 'VND');
-              })()}
-            </span>
+            <span className="font-bold text-sm text-primary">{calcTotal()}</span>
           </div>
         </div>
       </CardContent>

@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const zEditOrderTrpcInput = z.object({
   id: z.string().uuid(),
   updatedAt: z.string().datetime().optional(),
+  clients: z.array(z.string().uuid()).optional().default([]),
   status: z.enum(['draft', 'submitted', 'paid', 'cancelled']).optional(),
 });
 
@@ -21,10 +22,37 @@ export const editOrderTrpcRoute = orderUpdateProcedure
       throw new Error('Order not found');
     }
 
+    const { clients, ...restUpdateData } = updateData;
+
+    if (clients.length > 0) {
+      await ctx.prisma.$transaction(async prisma => {
+        // 1. Remove clients that are no longer in the input
+        await prisma.orderClient.deleteMany({
+          where: {
+            orderId: id,
+            clientId: { notIn: clients },
+          },
+        });
+
+        // 2. Add new ones (skip existing)
+        for (const clientId of clients) {
+          await prisma.orderClient.upsert({
+            where: {
+              orderId_clientId: { orderId: id, clientId },
+            },
+            update: {}, // do nothing if exists
+            create: { orderId: id, clientId },
+          });
+        }
+      });
+    }
+
     // Update order
     const order = await ctx.prisma.order.update({
       where: { id },
-      data: updateData,
+      data: {
+        ...restUpdateData,
+      },
       include: {
         user: {
           select: {
@@ -46,16 +74,15 @@ export const editOrderTrpcRoute = orderUpdateProcedure
                   select: {
                     id: true,
                     name: true,
+                    abbreviation: true,
+                    favourite: true,
+                    emoji: true,
+                    blacklisted: true,
+                    surcharges: true,
+                    visaFree: true,
+                    RequirementCitizenship: true,
                   },
                 },
-              },
-            },
-            discountRule: {
-              select: {
-                id: true,
-                name: true,
-                discountType: true,
-                discountValue: true,
               },
             },
           },

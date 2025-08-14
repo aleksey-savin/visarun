@@ -38,7 +38,17 @@ const ServicePuzzle = ({
   servicePuzzleIsActive: boolean;
 }) => {
   const navigate = useNavigate();
-  const { setActiveClientId, contactMethods, user, order } = useOrderStore();
+  const {
+    orderItems,
+    setOrderItems,
+    setActiveClientId,
+    setSaveStatus,
+    contactMethods,
+    user,
+    order,
+    clients,
+    setClients,
+  } = useOrderStore();
 
   const [activeService, setActiveService] = useState('visa');
 
@@ -48,19 +58,62 @@ const ServicePuzzle = ({
     setActiveService(service);
   };
 
+  const canDeleteOrder =
+    !contactMethods || !contactMethods[0]?.method?.id || !contactMethods[0]?.value;
+
   const deleteOrderMutation = trpc.order.delete.useMutation();
   const deleteUserMutation = trpc.user.delete.useMutation();
+  const deleteOrderItemMutation = trpc.orderItem.delete.useMutation();
+  const deleteVisaApplicationMutation = trpc.visaApplication.delete.useMutation();
+  const editOrderMutation = trpc.order.edit.useMutation();
 
-  const handleDeleteOrder = async () => {
-    await deleteOrderMutation.mutateAsync({
-      id: order?.id || '',
-    });
+  const handleDelete = async (client: StoreClient) => {
+    setSaveStatus('saving');
+    if (client.isPrimary && canDeleteOrder) {
+      const deletedOrderItems = orderItems.filter(item => item.clientId === client.id);
+      for (const item of deletedOrderItems) {
+        if (item.serviceType === 'visa') {
+          await deleteVisaApplicationMutation.mutateAsync({
+            id: item.serviceTypeId || '',
+          });
+        }
+        await deleteOrderItemMutation.mutateAsync({
+          id: item.id || '',
+        });
+      }
 
-    await deleteUserMutation.mutateAsync({
-      id: user?.id || '',
-    });
+      await deleteOrderMutation.mutateAsync({
+        id: order?.id || '',
+      });
 
-    navigate(getAllOrdersRoute());
+      await deleteUserMutation.mutateAsync({
+        id: user?.id || '',
+      });
+      navigate(getAllOrdersRoute());
+    } else {
+      setClients(clients.filter(c => c.id !== client.id));
+      setOrderItems(orderItems.filter(i => i.clientId !== client.id));
+      const deletedOrderItems = orderItems.filter(item => item.clientId === client.id);
+      for (const item of deletedOrderItems) {
+        if (item.serviceType === 'visa') {
+          await deleteVisaApplicationMutation.mutateAsync({
+            id: item.serviceTypeId || '',
+          });
+        }
+        await deleteOrderItemMutation.mutateAsync({
+          id: item.id || '',
+        });
+      }
+
+      await editOrderMutation.mutateAsync({
+        id: order?.id || '',
+        clients: clients ? clients.filter(c => c.id !== client.id).map(c => c.id) : undefined,
+      });
+
+      setActiveClientId('');
+    }
+
+    setSaveStatus('saved');
   };
 
   const handleConfirm = () => {
@@ -76,26 +129,33 @@ const ServicePuzzle = ({
           {!isPassportExpiringWithin6Months(
             client.passportExpirationDate ? client.passportExpirationDate.toISOString() : ''
           ) && <ClientName client={client} />}
+          <Comments />
+          <hr />
         </>
       )}
-      <Comments />
-      <hr />
+
       <div className="flex justify-end gap-2">
-        {(!contactMethods || !contactMethods[0]?.method?.id || !contactMethods[0]?.value) && (
+        {((client.isPrimary && canDeleteOrder) || !client.isPrimary) && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="secondary">Delete</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete Order</AlertDialogTitle>
+                <AlertDialogTitle>Delete Client from order</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete this order? This action cannot be undone.
+                  Are you sure you want to delete this client from order? This action cannot be
+                  undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <Button variant="destructive" onClick={handleDeleteOrder}>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    handleDelete(client);
+                  }}
+                >
                   Delete
                 </Button>
               </AlertDialogFooter>

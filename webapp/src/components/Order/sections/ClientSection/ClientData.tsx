@@ -125,7 +125,7 @@ const ClientData = ({ client }: { client: StoreClient }) => {
             <CitizenshipSelect
               value={field.value}
               onValueChange={handleCitizenshipUpdate}
-              currentCitizenship={client.citizenshipId || undefined}
+              currentCitizenship={client.citizenship?.id || undefined}
             />
           )}
         />

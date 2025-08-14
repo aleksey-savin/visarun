@@ -19,7 +19,7 @@ export const clientHasErrors = (
   }
 
   // 2. No order items
-  if (clientOrderItems.length === 0) {
+  if (clientOrderItems.length === 0 && !client.isPrimary) {
     errors.add('No order items added');
   }
 
@@ -34,7 +34,9 @@ export const clientHasErrors = (
 
   // 4. Blacklisted
   const hasBlacklistedApplications = visaApplications.some(va => {
-    const orderItem = orderItems.find(item => item.id === va.orderItemId);
+    const orderItem = orderItems
+      .filter(item => item.clientId === client.id)
+      .find(item => item.id === va.orderItemId);
     if (!orderItem) return false;
     if (!client?.citizenship?.blacklisted) return false;
     return client.citizenship.blacklisted.some(bl => bl.countryId === va.country.id);
