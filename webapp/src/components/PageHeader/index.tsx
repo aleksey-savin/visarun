@@ -118,7 +118,13 @@ const pageConfigs: Record<string, PageConfig> = {
 };
 
 // Routes that should not show the PageHeader (they have their own custom headers like breadcrumbs)
-const skipHeaderRoutes = ['/order/create', '/order/edit/:id', '/dashboard', '/currency-exchange'];
+const skipHeaderRoutes = [
+  '/order/create',
+  '/order/edit/:id',
+  '/dashboard',
+  '/currency-exchange',
+  '/orders',
+];
 
 interface PageHeaderProps {
   onButtonClick?: () => void;
