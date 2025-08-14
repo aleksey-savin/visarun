@@ -82,7 +82,9 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
     }
   }, [searchResults]);
 
-  // Process search results to add primary clients if only non-primary clients found
+  // Process search results to ensure both primary and related clients are shown:
+  // - If only non-primary clients found: add their primary clients
+  // - If only primary clients found: add their related non-primary clients
   const processedClients = useMemo(() => {
     if (!searchResults?.clients) return [];
 
@@ -91,6 +93,9 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
     // Check if all clients are non-primary
     const hasOnlyNonPrimaryClients =
       clients.length > 0 && clients.every(client => !client.isPrimary);
+
+    // Check if all clients are primary
+    const hasOnlyPrimaryClients = clients.length > 0 && clients.every(client => client.isPrimary);
 
     if (hasOnlyNonPrimaryClients) {
       // Get unique user IDs from non-primary clients
@@ -131,6 +136,50 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
           }
         }
       });
+    } else if (hasOnlyPrimaryClients) {
+      // When only primary clients are found, also show their related non-primary clients
+      // This ensures users can see all available clients for the same user
+      const relatedClientsToAdd: (typeof clients)[0][] = [];
+
+      clients.forEach(primaryClient => {
+        if (primaryClient.relatedClients && primaryClient.relatedClients.length > 0) {
+          primaryClient.relatedClients.forEach(relatedClient => {
+            // Create a full client object for each related non-primary client
+            const fullRelatedClient = {
+              id: relatedClient.id,
+              firstName: relatedClient.firstName,
+              lastName: relatedClient.lastName,
+              isPrimary: relatedClient.isPrimary,
+              userId: primaryClient.userId,
+              citizenshipId: null,
+              passportExpirationDate: null,
+              prevViolations: false,
+              prevViolationsDesc: null,
+              isOutsideTheCountry: false,
+              isOutsideTheCountryAt: null,
+              user: primaryClient.user,
+              citizenship: primaryClient.citizenship,
+              documents: [],
+              relatedClients: [
+                {
+                  id: primaryClient.id,
+                  firstName: primaryClient.firstName,
+                  lastName: primaryClient.lastName,
+                  isPrimary: primaryClient.isPrimary,
+                },
+              ],
+            };
+
+            // Only add if this related client isn't already in the results
+            const alreadyExists = clients.some(client => client.id === relatedClient.id);
+            if (!alreadyExists) {
+              relatedClientsToAdd.push(fullRelatedClient);
+            }
+          });
+        }
+      });
+
+      clients.push(...relatedClientsToAdd);
     }
 
     return clients;
