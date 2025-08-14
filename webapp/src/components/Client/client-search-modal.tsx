@@ -296,9 +296,9 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
             </div>
 
             {processedClients.length > 0 && selectableClients.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex justify-end items-center">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={handleSelectAll}
                   className="flex items-center gap-2"
@@ -351,16 +351,23 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
             </div>
           ) : (
             <div className="space-y-6 flex-1 overflow-y-auto scrollbar-hide min-h-0">
-              {processedClients.map((client, index) => (
-                <ClientCard
-                  key={client.id}
-                  client={client}
-                  isFirstResult={index === 0}
-                  isSelected={clientIds.includes(client.id)}
-                  onSelectionChange={handleClientSelectionChange}
-                  isSelectable={isClientSelectable(client)}
-                />
-              ))}
+              {processedClients
+                .sort((a, b) => {
+                  // Primary client first
+                  if (a.isPrimary && !b.isPrimary) return -1;
+                  if (!a.isPrimary && b.isPrimary) return 1;
+                  return 1;
+                })
+                .map((client, index) => (
+                  <ClientCard
+                    key={client.id}
+                    client={client}
+                    isFirstResult={index === 0}
+                    isSelected={clientIds.includes(client.id)}
+                    onSelectionChange={handleClientSelectionChange}
+                    isSelectable={isClientSelectable(client)}
+                  />
+                ))}
             </div>
           )}
         </div>
