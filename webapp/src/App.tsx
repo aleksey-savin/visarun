@@ -44,7 +44,6 @@ import EditVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/
 
 // Client pages
 import ViewClientPage from './pages/Clients/view';
-import EditClientPage from './pages/Clients/edit';
 
 // Message templates pages
 import AllMessageTemplatesPage from './pages/MessageTemplates/getAll.js';
@@ -118,9 +117,7 @@ import {
   viewVisaCitizenshipSurchargeRouteParams,
   editVisaCitizenshipSurchargeRouteParams,
   getViewClientRoute,
-  getEditClientRoute,
   viewClientRouteParams,
-  editClientRouteParams,
   getAllRequirementsRoute,
   getCreateRequirementRoute,
   getViewRequirementRoute,
@@ -496,14 +493,6 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="users.read">
                       <ViewClientPage />
-                    </PermissionRoute>
-                  }
-                />
-                <Route
-                  path={getEditClientRoute(editClientRouteParams)}
-                  element={
-                    <PermissionRoute requiredPermission="users.update">
-                      <EditClientPage />
                     </PermissionRoute>
                   }
                 />

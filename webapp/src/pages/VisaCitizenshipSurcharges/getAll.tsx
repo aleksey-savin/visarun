@@ -35,7 +35,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Eye, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { Eye, Edit, Trash2, Search } from 'lucide-react';
+import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 
@@ -103,80 +104,83 @@ const AllVisaCitizenshipSurchargesPage = () => {
       surcharge.visaTypes.some(vt =>
         vt.visaType.name.toLowerCase().includes(searchTerm.toLowerCase())
       ) ||
-      surcharge.note?.toLowerCase().includes(searchTerm.toLowerCase());
+      (surcharge.note && surcharge.note.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesCitizenship =
-      selectedCitizenship === 'all' || surcharge.citizenshipId === selectedCitizenship;
+      selectedCitizenship === 'all' || surcharge.citizenship.id === selectedCitizenship;
 
-    const matchesCountry = selectedCountry === 'all' || surcharge.countryId === selectedCountry;
+    const matchesCountry = selectedCountry === 'all' || surcharge.country.id === selectedCountry;
 
     return matchesSearch && matchesCitizenship && matchesCountry;
   });
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSelectedCitizenship('all');
+    setSelectedCountry('all');
+  };
+
   return (
     <div className="grid gap-6 p-6 pb-0">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by citizenship, country, visa type, or note..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      <FilterContainer onClearFilters={resetFilters}>
+        <FilterFields>
+          <FilterField label="Search">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by citizenship, country, visa type, or note..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Citizenship</label>
-              <Select value={selectedCitizenship} onValueChange={setSelectedCitizenship}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All citizenships" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All citizenships</SelectItem>
-                  {citizenshipsData?.citizenships.map(citizenship => (
-                    <SelectItem key={citizenship.id} value={citizenship.id}>
-                      {citizenship.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Country</label>
-              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All countries" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All countries</SelectItem>
-                  {countriesData?.countries.map(country => (
-                    <SelectItem key={country.id} value={country.id}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </FilterField>
+
+          <FilterField label="Citizenship">
+            <Select value={selectedCitizenship} onValueChange={setSelectedCitizenship}>
+              <SelectTrigger>
+                <SelectValue placeholder="All citizenships" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All citizenships</SelectItem>
+                {(citizenshipsData?.citizenships || []).map(citizenship => (
+                  <SelectItem key={citizenship.id} value={citizenship.id}>
+                    {citizenship.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="Country">
+            <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+              <SelectTrigger>
+                <SelectValue placeholder="All countries" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All countries</SelectItem>
+                {(countriesData?.countries || []).map(country => (
+                  <SelectItem key={country.id} value={country.id}>
+                    {country.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+        </FilterFields>
+      </FilterContainer>
 
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>
-              Surcharges ({filteredSurcharges.length} of {surcharges.length})
+              Visa Citizenship Surcharges ({filteredSurcharges.length})
+              {filteredSurcharges.length !== surcharges.length && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  {' '}
+                  of {surcharges.length} total
+                </span>
+              )}
             </CardTitle>
           </div>
         </CardHeader>
@@ -203,7 +207,7 @@ const AllVisaCitizenshipSurchargesPage = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredSurcharges.map(surcharge => (
-                    <TableRow key={surcharge.id}>
+                    <TableRow key={surcharge.id} className="hover:bg-muted/50">
                       <TableCell>
                         <Link
                           to={getViewVisaCitizenshipSurchargeRoute({ id: surcharge.id })}

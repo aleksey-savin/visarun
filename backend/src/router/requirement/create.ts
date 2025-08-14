@@ -17,6 +17,9 @@ export const zCreateRequirementTrpcInput = z.object({
   citizenshipIds: z.array(z.string().uuid()).optional(),
   visaTypeIds: z.array(z.string().uuid()).optional(),
   routeIds: z.array(z.string().uuid()).optional(),
+  // New fields for application scope
+  applicationScope: z.enum(['specific', 'country_all', 'global']).default('specific'),
+  countryId: z.string().uuid().optional(),
 });
 
 export const createRequirementTrpcRoute = requirementCreateProcedure
@@ -38,6 +41,8 @@ export const createRequirementTrpcRoute = requirementCreateProcedure
       citizenshipIds,
       visaTypeIds,
       routeIds,
+      applicationScope,
+      countryId,
     } = input;
 
     // Validate threshold values based on input type
@@ -59,9 +64,36 @@ export const createRequirementTrpcRoute = requirementCreateProcedure
       throw new Error(`Operator is required for ${inputType} input type`);
     }
 
+    // Validate application scope requirements
+    if (applicationScope === 'country_all' && !countryId) {
+      throw new Error('Country ID is required when application scope is country_all');
+    }
+
+    if (
+      applicationScope === 'specific' &&
+      (!visaTypeIds || visaTypeIds.length === 0) &&
+      serviceType === 'visa'
+    ) {
+      throw new Error(
+        'Visa type IDs are required when application scope is specific for visa service'
+      );
+    }
+
     // Validate citizenship requirements
     if (!appliesToAllCitizenships && (!citizenshipIds || citizenshipIds.length === 0)) {
       throw new Error('Citizenship IDs are required when not applying to all citizenships');
+    }
+
+    // Validate country ID exists if provided
+    if (countryId) {
+      const existingCountry = await ctx.prisma.country.findUnique({
+        where: { id: countryId },
+        select: { id: true },
+      });
+
+      if (!existingCountry) {
+        throw new Error('Country ID does not exist');
+      }
     }
 
     // Validate visa type IDs exist if provided
@@ -115,6 +147,8 @@ export const createRequirementTrpcRoute = requirementCreateProcedure
         description,
         appliesToAllCitizenships,
         sampleUrl,
+        applicationScope: applicationScope,
+        countryId,
         // Create citizenship relations if not applying to all
         citizenships:
           !appliesToAllCitizenships && citizenshipIds
@@ -124,14 +158,15 @@ export const createRequirementTrpcRoute = requirementCreateProcedure
                 })),
               }
             : undefined,
-        // Create visa type relations if provided
-        visaTypeLinks: visaTypeIds
-          ? {
-              create: visaTypeIds.map(visaTypeId => ({
-                visaTypeId,
-              })),
-            }
-          : undefined,
+        // Create visa type relations only for specific scope
+        visaTypeLinks:
+          applicationScope === 'specific' && visaTypeIds
+            ? {
+                create: visaTypeIds.map(visaTypeId => ({
+                  visaTypeId,
+                })),
+              }
+            : undefined,
         // Create route relations if provided
         routeLinks: routeIds
           ? {
@@ -155,6 +190,14 @@ export const createRequirementTrpcRoute = requirementCreateProcedure
         description: true,
         appliesToAllCitizenships: true,
         sampleUrl: true,
+        applicationScope: true,
+        countryId: true,
+        country: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         citizenships: {
           select: {
             citizenship: {

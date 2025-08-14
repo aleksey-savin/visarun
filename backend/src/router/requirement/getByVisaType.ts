@@ -1,5 +1,6 @@
 import { requirementReadProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
+import { RequirementApplicationScope } from '@prisma/client';
 
 export const zGetRequirementsByVisaTypeTrpcInput = z.object({
   visaTypeId: z.string().uuid(),
@@ -31,51 +32,48 @@ export const getRequirementsByVisaTypeTrpcRoute = requirementReadProcedure
       throw new Error('Visa type not found');
     }
 
-    // Build where clause for requirements
-    const whereClause: {
-      serviceType: 'visa';
-      visaTypeLinks: {
-        some: {
-          visaTypeId: string;
-        };
-      };
-      appliesToAllCitizenships?: boolean;
-      OR?: Array<{
-        appliesToAllCitizenships: boolean;
-        citizenships?: {
-          some: {
-            citizenshipId: string;
-          };
-        };
-      }>;
-    } = {
-      serviceType: 'visa',
-      visaTypeLinks: {
-        some: {
-          visaTypeId,
-        },
-      },
-    };
+    // Build where clause with new application scope logic
+    const citizenshipFilter = citizenshipId
+      ? [
+          // Requirements that apply to all citizenships
+          ...(includeGeneral ? [{ appliesToAllCitizenships: true }] : []),
+          // Requirements that apply to specific citizenship
+          {
+            appliesToAllCitizenships: false,
+            citizenships: {
+              some: {
+                citizenshipId,
+              },
+            },
+          },
+        ]
+      : includeGeneral
+        ? [{ appliesToAllCitizenships: true }]
+        : [];
 
-    // Add citizenship filter if provided
-    if (citizenshipId) {
-      whereClause.OR = [
-        // Requirements that apply to all citizenships
-        ...(includeGeneral ? [{ appliesToAllCitizenships: true }] : []),
-        // Requirements that apply to specific citizenship
+    const whereClause = {
+      serviceType: 'visa' as const,
+      OR: [
+        // Global requirements
+        { applicationScope: RequirementApplicationScope.global },
+        // Country-specific requirements
         {
-          appliesToAllCitizenships: false,
-          citizenships: {
+          applicationScope: RequirementApplicationScope.country_all,
+          countryId: visaType.country.id,
+        },
+        // Specific visa type requirements
+        {
+          applicationScope: RequirementApplicationScope.specific,
+          visaTypeLinks: {
             some: {
-              citizenshipId,
+              visaTypeId,
             },
           },
         },
-      ];
-    } else if (includeGeneral) {
-      // If no citizenship specified, only return general requirements
-      whereClause.appliesToAllCitizenships = true;
-    }
+      ],
+      // Apply citizenship filter to all scopes
+      ...(citizenshipFilter.length > 0 ? { AND: { OR: citizenshipFilter } } : {}),
+    };
 
     // Get requirements
     const requirements = await ctx.prisma.requirement.findMany({
@@ -94,6 +92,14 @@ export const getRequirementsByVisaTypeTrpcRoute = requirementReadProcedure
         description: true,
         appliesToAllCitizenships: true,
         sampleUrl: true,
+        applicationScope: true,
+        countryId: true,
+        country: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         citizenships: {
           select: {
             citizenship: {

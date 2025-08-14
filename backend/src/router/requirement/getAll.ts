@@ -131,6 +131,14 @@ export const getAllRequirementsTrpcRoute = requirementReadProcedure
         description: true,
         appliesToAllCitizenships: true,
         sampleUrl: true,
+        applicationScope: true,
+        countryId: true,
+        country: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         _count: {
           select: {
             citizenships: true,

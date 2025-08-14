@@ -20,6 +20,7 @@ export const getUserContactMethodsTrpcRoute = userReadProcedure
           select: {
             id: true,
             name: true,
+            icon: true,
             description: true,
           },
         },

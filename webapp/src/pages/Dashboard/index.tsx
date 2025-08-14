@@ -4,7 +4,7 @@ import { ClientSearchModal } from '@/components/Client/client-search-modal.js';
 import { useState } from 'react';
 import { CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Gauge, UserPlus } from 'lucide-react';
+import { Gauge, Plus } from 'lucide-react';
 
 export default function DashboardPage() {
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
@@ -21,8 +21,8 @@ export default function DashboardPage() {
           <span className="font-semibold">Dashboard</span>
         </div>
         <Button size="sm" onClick={handleClientClick} className="relative">
-          Client
-          <UserPlus className="ml-1 h-4 w-4" />
+          Create Order
+          <Plus />
         </Button>
       </CardTitle>
       <CardContent className="p-6">

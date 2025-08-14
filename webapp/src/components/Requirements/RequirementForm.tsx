@@ -1,38 +1,94 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Switch } from '../ui/switch';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
 
-import { Separator } from '../ui/separator';
-import { Calendar } from '../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   FileText,
   Calendar as CalendarIcon,
   Type,
   CheckCircle,
   ToggleLeft,
-  Users,
+  Save,
+  Settings,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '../../lib/utils';
-import { VisaTypeSelector } from './VisaTypeSelector';
-import { CitizenshipSelector } from './CitizenshipSelector';
-import { FileUpload } from '../ui/file-upload';
+import { cn } from '@/lib/utils';
+import { getAllRequirementsRoute } from '@/lib/routes';
+
+import { CitizenshipScopeSelector } from './CitizenshipScopeSelector';
+import { ApplicationScopeSelector } from './ApplicationScopeSelector';
+import { FileUpload } from '@/components/ui/file-upload';
+
+// Schema for form validation
+const formSchema = z
+  .object({
+    serviceType: z.enum(['visa', 'visarun']),
+    inputType: z.enum(['document', 'checkpoint', 'date', 'text', 'boolean']),
+    title: z.string().min(1, 'Title is required').max(200),
+    description: z.string().optional(),
+    operator: z.string().optional(),
+    thresholdDate: z.date().optional(),
+    thresholdText: z.string().optional(),
+    thresholdBool: z.boolean().optional(),
+    checkpointValue: z.string().optional(),
+    appliesToAllCitizenships: z.boolean(),
+    sampleUrl: z.string().optional(),
+    citizenshipIds: z.array(z.string().uuid()),
+    visaTypeIds: z.array(z.string().uuid()),
+    // New fields for application scope
+    applicationScope: z.enum(['specific', 'country_all', 'global']),
+    countryId: z.string().uuid().optional(),
+  })
+  .refine(
+    data => {
+      // Country ID is required when scope is country_all
+      if (data.applicationScope === 'country_all' && !data.countryId) {
+        return false;
+      }
+      // Visa type IDs are required when scope is specific for visa service
+      if (
+        data.serviceType === 'visa' &&
+        data.applicationScope === 'specific' &&
+        data.visaTypeIds.length === 0
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Invalid application scope configuration',
+      path: ['applicationScope'],
+    }
+  );
+
+type FormData = z.infer<typeof formSchema>;
 
 interface RequirementFormProps {
+  mode: 'create' | 'edit';
   requirement?: {
     id: string;
     serviceType: string;
@@ -47,6 +103,12 @@ interface RequirementFormProps {
     description?: string;
     appliesToAllCitizenships: boolean;
     sampleUrl?: string;
+    applicationScope?: 'specific' | 'country_all' | 'global';
+    countryId?: string;
+    country?: {
+      id: string;
+      name: string;
+    };
     citizenships?: Array<{
       citizenship: {
         id: string;
@@ -64,10 +126,8 @@ interface RequirementFormProps {
       };
     }>;
   };
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (data: any) => void;
-  isLoading?: boolean;
+  onSubmit: (data: Record<string, any>) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 const inputTypeOptions = [
@@ -76,434 +136,521 @@ const inputTypeOptions = [
   { value: 'text', label: 'Text', icon: Type },
   { value: 'boolean', label: 'Boolean', icon: ToggleLeft },
   { value: 'checkpoint', label: 'Checkpoint', icon: CheckCircle },
-];
+] as Array<{
+  value: 'document' | 'date' | 'text' | 'boolean' | 'checkpoint';
+  label: string;
+  icon: React.FC<{ className?: string }>;
+}>;
 
 const operatorOptions = [
-  { value: 'eq', label: 'Equals (=)' },
-  { value: 'neq', label: 'Not equals (≠)' },
-  { value: 'lt', label: 'Less than (<)' },
-  { value: 'lte', label: 'Less than or equal (≤)' },
-  { value: 'gt', label: 'Greater than (>)' },
-  { value: 'gte', label: 'Greater than or equal (≥)' },
+  { value: 'eq', label: 'Equal to' },
+  { value: 'neq', label: 'Not equal to' },
+  { value: 'lt', label: 'Less than' },
+  { value: 'lte', label: 'Less than or equal to' },
+  { value: 'gt', label: 'Greater than' },
+  { value: 'gte', label: 'Greater than or equal to' },
   { value: 'contains', label: 'Contains' },
 ];
 
 const getOperatorsByInputType = (inputType: string) => {
   switch (inputType) {
     case 'date':
-      return ['eq', 'neq', 'lt', 'lte', 'gt', 'gte'];
+      return ['lt', 'lte', 'gt', 'gte', 'eq'];
     case 'text':
-      return ['eq', 'neq', 'contains', 'lt', 'lte', 'gt', 'gte'];
+      return ['eq', 'neq', 'contains'];
     case 'boolean':
-      return ['eq', 'neq'];
-    case 'number':
-      return ['eq', 'neq', 'lt', 'lte', 'gt', 'gte'];
+      return ['eq'];
     default:
       return [];
   }
 };
 
 export const RequirementForm: React.FC<RequirementFormProps> = ({
+  mode,
   requirement,
-  open,
-  onOpenChange,
   onSubmit,
-  isLoading = false,
+  isSubmitting = false,
 }) => {
-  const [formData, setFormData] = useState({
-    serviceType: 'visa' as 'visa' | 'visarun',
-    inputType: 'document' as 'document' | 'checkpoint' | 'date' | 'text' | 'boolean',
-    operator: '' as string,
-    thresholdNumber: undefined as number | undefined,
-    thresholdDate: undefined as Date | undefined,
-    thresholdText: '' as string,
-    thresholdBool: undefined as boolean | undefined,
-    checkpointValue: '' as string,
-    title: '',
-    description: '',
-    appliesToAllCitizenships: true,
-    sampleUrl: '',
-    citizenshipIds: [] as string[],
-    visaTypeIds: [] as string[],
-    routeIds: [] as string[],
-  });
-
+  const navigate = useNavigate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
-  // Initialize form data when requirement changes
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      serviceType: 'visa',
+      inputType: 'document',
+      title: '',
+      description: '',
+      operator: '',
+      thresholdDate: undefined,
+      thresholdText: '',
+      thresholdBool: undefined,
+      checkpointValue: '',
+      appliesToAllCitizenships: true,
+      sampleUrl: '',
+      citizenshipIds: [],
+      visaTypeIds: [],
+      applicationScope: 'specific',
+      countryId: undefined,
+    },
+  });
+
   useEffect(() => {
-    if (requirement) {
-      setFormData({
-        serviceType: requirement.serviceType as 'visa' | 'visarun',
-        inputType: requirement.inputType as 'document' | 'checkpoint' | 'date' | 'text' | 'boolean',
-        operator: requirement.operator || '',
-        thresholdNumber: requirement.thresholdNumber,
-        thresholdDate: requirement.thresholdDate ? new Date(requirement.thresholdDate) : undefined,
-        thresholdText: requirement.thresholdText || '',
-        thresholdBool: requirement.thresholdBool,
-        checkpointValue: requirement.checkpointValue || '',
-        title: requirement.title,
-        description: requirement.description || '',
-        appliesToAllCitizenships: requirement.appliesToAllCitizenships,
-        sampleUrl: requirement.sampleUrl || '',
-        citizenshipIds: requirement.citizenships?.map(c => c.citizenship.id) || [],
-        visaTypeIds: requirement.visaTypeLinks?.map(v => v.visaType.id) || [],
-        routeIds: [],
-      });
-    } else {
-      // Reset form for new requirement
-      setFormData({
-        serviceType: 'visa',
-        inputType: 'document',
-        operator: '',
-        thresholdNumber: undefined,
-        thresholdDate: undefined,
-        thresholdText: '',
-        thresholdBool: undefined,
-        checkpointValue: '',
-        title: '',
-        description: '',
-        appliesToAllCitizenships: true,
-        sampleUrl: '',
-        citizenshipIds: [],
-        visaTypeIds: [],
-        routeIds: [],
-      });
+    if (!requirement) return;
+
+    const roleIds = requirement.citizenships?.map(assignment => assignment.citizenship.id) || [];
+    const visaTypeIds = requirement.visaTypeLinks?.map(v => v.visaType.id) || [];
+
+    form.reset({
+      serviceType: requirement.serviceType as 'visa' | 'visarun',
+      inputType: requirement.inputType as 'document' | 'checkpoint' | 'date' | 'text' | 'boolean',
+      title: requirement.title,
+      description: requirement.description || '',
+      operator: requirement.operator || '',
+      thresholdDate: requirement.thresholdDate ? new Date(requirement.thresholdDate) : undefined,
+      thresholdText: requirement.thresholdText || '',
+      thresholdBool: requirement.thresholdBool || undefined,
+      checkpointValue: requirement.checkpointValue || '',
+      appliesToAllCitizenships: requirement.appliesToAllCitizenships,
+      sampleUrl: requirement.sampleUrl || '',
+      citizenshipIds: roleIds,
+      visaTypeIds: visaTypeIds,
+      applicationScope:
+        (requirement.applicationScope as 'specific' | 'country_all' | 'global') || 'specific',
+      countryId: requirement.countryId || undefined,
+    });
+
+    setTimeout(() => {
+      form.setValue('citizenshipIds', roleIds);
+      form.setValue('visaTypeIds', visaTypeIds);
+      form.setValue(
+        'applicationScope',
+        (requirement.applicationScope as 'specific' | 'country_all' | 'global') || 'specific'
+      );
+      form.setValue('countryId', requirement.countryId || undefined);
+    }, 0);
+  }, [requirement, form]);
+
+  async function handleSubmit(values: FormData) {
+    try {
+      const submitData: Record<string, any> = {
+        serviceType: values.serviceType,
+        inputType: values.inputType,
+        title: values.title,
+        description: values.description || undefined,
+        appliesToAllCitizenships: values.appliesToAllCitizenships,
+        sampleUrl: values.sampleUrl || undefined,
+      };
+
+      // Add ID for edit mode
+      if (mode === 'edit' && requirement?.id) {
+        submitData.id = requirement.id;
+      }
+
+      // Add threshold values based on input type
+      if (values.inputType === 'date') {
+        submitData.operator = values.operator;
+        submitData.thresholdDate = values.thresholdDate;
+      } else if (values.inputType === 'text') {
+        submitData.operator = values.operator;
+        submitData.thresholdText = values.thresholdText;
+      } else if (values.inputType === 'boolean') {
+        submitData.operator = values.operator || 'eq';
+        submitData.thresholdBool = values.thresholdBool;
+      } else if (values.inputType === 'checkpoint') {
+        submitData.checkpointValue = values.checkpointValue;
+      }
+
+      // Add application scope
+      submitData.applicationScope = values.applicationScope;
+      if (values.applicationScope === 'country_all' && values.countryId) {
+        submitData.countryId = values.countryId;
+      }
+
+      // Add IDs arrays
+      if (!values.appliesToAllCitizenships && values.citizenshipIds.length > 0) {
+        submitData.citizenshipIds = values.citizenshipIds;
+      }
+      if (values.applicationScope === 'specific' && values.visaTypeIds.length > 0) {
+        submitData.visaTypeIds = values.visaTypeIds;
+      }
+
+      await onSubmit(submitData as any);
+    } catch {
+      // Error handling is done in the parent component
     }
-  }, [requirement, open]);
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const submitData: any = {
-      serviceType: formData.serviceType,
-      inputType: formData.inputType,
-      title: formData.title,
-      description: formData.description || undefined,
-      appliesToAllCitizenships: formData.appliesToAllCitizenships,
-      sampleUrl: formData.sampleUrl || undefined,
-    };
-
-    // Add threshold values based on input type
-    if (formData.inputType === 'date') {
-      submitData.operator = formData.operator;
-      submitData.thresholdDate = formData.thresholdDate;
-    } else if (formData.inputType === 'text') {
-      submitData.operator = formData.operator;
-      submitData.thresholdText = formData.thresholdText;
-    } else if (formData.inputType === 'boolean') {
-      submitData.operator = formData.operator || 'eq';
-      submitData.thresholdBool = formData.thresholdBool;
-    } else if (formData.inputType === 'checkpoint') {
-      submitData.checkpointValue = formData.checkpointValue;
-    }
-
-    // Add IDs arrays
-    if (!formData.appliesToAllCitizenships && formData.citizenshipIds.length > 0) {
-      submitData.citizenshipIds = formData.citizenshipIds;
-    }
-    if (formData.visaTypeIds.length > 0) {
-      submitData.visaTypeIds = formData.visaTypeIds;
-    }
-    if (formData.routeIds.length > 0) {
-      submitData.routeIds = formData.routeIds;
-    }
-
-    // Add ID for edit mode
-    if (requirement) {
-      submitData.id = requirement.id;
-    }
-
-    onSubmit(submitData);
-  };
-
-  const availableOperators = getOperatorsByInputType(formData.inputType);
+  const availableOperators = getOperatorsByInputType(form.watch('inputType'));
+  const inputType = form.watch('inputType');
+  const serviceType = form.watch('serviceType');
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{requirement ? 'Edit Requirement' : 'Create New Requirement'}</DialogTitle>
-          <DialogDescription>
-            {requirement
-              ? 'Update the requirement details and validation rules.'
-              : 'Create a new requirement for visa applications or visa runs.'}
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Basic Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g., Passport Copy"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="serviceType">Service Type *</Label>
-                  <Select
-                    value={formData.serviceType}
-                    onValueChange={value =>
-                      setFormData({ ...formData, serviceType: value as 'visa' | 'visarun' })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="visa">Visa Application</SelectItem>
-                      <SelectItem value="visarun">Visa Run</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Detailed description of the requirement..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <FileUpload
-                  label="Sample Document"
-                  description="Upload a sample document to help users understand the requirement"
-                  value={formData.sampleUrl}
-                  onChange={filePath => setFormData({ ...formData, sampleUrl: filePath || '' })}
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  maxSize={10 * 1024 * 1024} // 10MB
-                  uploadEndpoint="/upload/requirement-document"
-                  fileFieldName="document"
-                  disabled={isLoading}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Input Type & Validation */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Input Type & Validation</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Input Type *</Label>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                  {inputTypeOptions.map(option => {
-                    const Icon = option.icon;
-                    return (
-                      <Button
-                        key={option.value}
-                        type="button"
-                        variant={formData.inputType === option.value ? 'default' : 'outline'}
-                        className="flex flex-col h-auto p-3"
-                        onClick={() =>
-                          setFormData({ ...formData, inputType: option.value as any, operator: '' })
-                        }
-                      >
-                        <Icon className="w-4 h-4 mb-1" />
-                        <span className="text-xs">{option.label}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Validation Rules */}
-              {availableOperators.length > 0 && (
+    <>
+      <div className="p-6 max-w-4xl mx-auto">
+        <Card className="bg-secondary p-6 mb-2.5">
+          <CardContent className="px-0 pt-0">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                {/* Basic Information */}
                 <div className="space-y-4">
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label>Validation Rule</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="operator">Operator</Label>
-                        <Select
-                          value={formData.operator}
-                          onValueChange={value => setFormData({ ...formData, operator: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select operator" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {operatorOptions
-                              .filter(op => availableOperators.includes(op.value))
-                              .map(option => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold">Basic Information</h3>
+                  </div>
 
-                      {/* Threshold Value Input */}
-                      <div className="space-y-2">
-                        <Label>Threshold Value</Label>
-                        {formData.inputType === 'date' && (
-                          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  'w-full justify-start text-left font-normal',
-                                  !formData.thresholdDate && 'text-muted-foreground'
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {formData.thresholdDate ? (
-                                  format(formData.thresholdDate, 'PPP')
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={formData.thresholdDate}
-                                onSelect={date => {
-                                  setFormData({ ...formData, thresholdDate: date });
-                                  setDatePickerOpen(false);
-                                }}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        )}
+                  <div className="flex flex-wrap gap-4">
+                    {/* Title */}
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem className="flex-1 min-w-[300px]">
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter requirement title" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                        {formData.inputType === 'text' && (
-                          <Input
-                            value={formData.thresholdText}
-                            onChange={e =>
-                              setFormData({ ...formData, thresholdText: e.target.value })
-                            }
-                            placeholder="Enter text value"
-                          />
-                        )}
-
-                        {formData.inputType === 'boolean' && (
-                          <Select
-                            value={formData.thresholdBool?.toString() || ''}
-                            onValueChange={value =>
-                              setFormData({ ...formData, thresholdBool: value === 'true' })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select value" />
-                            </SelectTrigger>
+                    {/* Service Type */}
+                    <FormField
+                      control={form.control}
+                      name="serviceType"
+                      render={({ field }) => (
+                        <FormItem className="flex-1 min-w-[200px]">
+                          <FormLabel>Service Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select service type" />
+                              </SelectTrigger>
+                            </FormControl>
                             <SelectContent>
-                              <SelectItem value="true">True</SelectItem>
-                              <SelectItem value="false">False</SelectItem>
+                              <SelectItem value="visa">Visa Application</SelectItem>
+                              <SelectItem value="visarun">Visa Run</SelectItem>
                             </SelectContent>
                           </Select>
-                        )}
-                      </div>
-                    </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </div>
-              )}
 
-              {/* Checkpoint Value */}
-              {formData.inputType === 'checkpoint' && (
-                <div className="space-y-2">
-                  <Label htmlFor="checkpointValue">Checkpoint Value *</Label>
-                  <Input
-                    id="checkpointValue"
-                    value={formData.checkpointValue}
-                    onChange={e => setFormData({ ...formData, checkpointValue: e.target.value })}
-                    placeholder="e.g., embassy_visited"
-                    required
+                  {/* Description */}
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Detailed description of the requirement..."
+                            rows={3}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Sample Document Upload */}
+                  <FormField
+                    control={form.control}
+                    name="sampleUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sample Document (Optional)</FormLabel>
+                        <FormControl>
+                          <FileUpload
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            maxSize={10 * 1024 * 1024} // 10MB
+                            uploadEndpoint="/upload/requirement-document"
+                            fileFieldName="document"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Citizenship Scope */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Citizenship Scope</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="appliesToAll"
-                  checked={formData.appliesToAllCitizenships}
-                  onCheckedChange={checked =>
-                    setFormData({
-                      ...formData,
-                      appliesToAllCitizenships: checked,
-                      citizenshipIds: checked ? [] : formData.citizenshipIds,
-                    })
-                  }
-                />
-                <Label htmlFor="appliesToAll" className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Apply to all citizenships
-                </Label>
-              </div>
+                <Separator />
 
-              {!formData.appliesToAllCitizenships && (
-                <CitizenshipSelector
-                  selectedIds={formData.citizenshipIds}
-                  onSelectionChange={ids => setFormData({ ...formData, citizenshipIds: ids })}
-                  disabled={isLoading}
-                />
-              )}
-            </CardContent>
-          </Card>
+                {/* Input Type & Validation */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Settings className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold">Input Type & Validation</h3>
+                  </div>
 
-          {/* Visa Type Links */}
-          {formData.serviceType === 'visa' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Visa Type Links</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-sm text-gray-600 mb-4">
-                  Link this requirement to specific visa types (optional)
+                  {/* Input Type Selection */}
+                  <FormField
+                    control={form.control}
+                    name="inputType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Input Type</FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                          {inputTypeOptions.map(option => {
+                            const Icon = option.icon;
+                            const isSelected = field.value === option.value;
+                            return (
+                              <Button
+                                key={option.value}
+                                type="button"
+                                variant={isSelected ? 'default' : 'outline'}
+                                className="flex flex-col h-auto p-3"
+                                onClick={() => {
+                                  field.onChange(option.value);
+                                  form.setValue('operator', '');
+                                }}
+                              >
+                                <Icon className="w-4 h-4 mb-1" />
+                                <span className="text-xs">{option.label}</span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Validation Rules for specific input types */}
+                  {availableOperators.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Operator */}
+                      <FormField
+                        control={form.control}
+                        name="operator"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Operator</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select operator" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {operatorOptions
+                                  .filter(op => availableOperators.includes(op.value))
+                                  .map(option => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Threshold Value */}
+                      {inputType === 'date' && (
+                        <FormField
+                          control={form.control}
+                          name="thresholdDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Threshold Date</FormLabel>
+                              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      className={cn(
+                                        'w-full justify-start text-left font-normal',
+                                        !field.value && 'text-muted-foreground'
+                                      )}
+                                    >
+                                      <CalendarIcon className="mr-2 h-4 w-4" />
+                                      {field.value ? (
+                                        format(field.value, 'PPP')
+                                      ) : (
+                                        <span>Pick a date</span>
+                                      )}
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={date => {
+                                      field.onChange(date);
+                                      setDatePickerOpen(false);
+                                    }}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {inputType === 'text' && (
+                        <FormField
+                          control={form.control}
+                          name="thresholdText"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Threshold Text</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter text value" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {inputType === 'boolean' && (
+                        <FormField
+                          control={form.control}
+                          name="thresholdBool"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Threshold Value</FormLabel>
+                              <Select
+                                onValueChange={value => field.onChange(value === 'true')}
+                                value={field.value?.toString()}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select value" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="true">True</SelectItem>
+                                  <SelectItem value="false">False</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Checkpoint Value */}
+                  {inputType === 'checkpoint' && (
+                    <FormField
+                      control={form.control}
+                      name="checkpointValue"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Checkpoint Value</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., embassy_visited" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
-                <VisaTypeSelector
-                  selectedIds={formData.visaTypeIds}
-                  onSelectionChange={ids => setFormData({ ...formData, visaTypeIds: ids })}
-                  disabled={isLoading}
-                />
-              </CardContent>
-            </Card>
-          )}
-        </form>
 
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" onClick={handleSubmit} disabled={isLoading || !formData.title}>
-            {isLoading ? 'Saving...' : requirement ? 'Update Requirement' : 'Create Requirement'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+                <Separator />
+
+                {/* Application Scope - Only for visa service type */}
+                {serviceType === 'visa' && (
+                  <div className="space-y-4">
+                    <Form {...form}>
+                      <FormField
+                        control={form.control}
+                        name="applicationScope"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <ApplicationScopeSelector
+                                scope={field.value}
+                                onScopeChange={field.onChange}
+                                countryId={form.watch('countryId')}
+                                onCountryChange={(countryId: string | undefined) =>
+                                  form.setValue('countryId', countryId)
+                                }
+                                visaTypeIds={form.watch('visaTypeIds')}
+                                onVisaTypeIdsChange={(ids: string[]) =>
+                                  form.setValue('visaTypeIds', ids)
+                                }
+                                disabled={isSubmitting}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </Form>
+                  </div>
+                )}
+
+                <Separator />
+
+                {/* Citizenship Scope */}
+                <div className="space-y-4">
+                  <Form {...form}>
+                    <FormField
+                      control={form.control}
+                      name="appliesToAllCitizenships"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <CitizenshipScopeSelector
+                              appliesToAllCitizenships={field.value}
+                              onAppliesToAllChange={checked => {
+                                field.onChange(checked);
+                                if (checked) {
+                                  form.setValue('citizenshipIds', []);
+                                }
+                              }}
+                              selectedCitizenshipIds={form.watch('citizenshipIds')}
+                              onCitizenshipIdsChange={ids => form.setValue('citizenshipIds', ids)}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </Form>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-2">
+                  <Button type="submit" disabled={isSubmitting}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSubmitting
+                      ? 'Saving...'
+                      : mode === 'create'
+                        ? 'Create Requirement'
+                        : 'Save Changes'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => navigate(getAllRequirementsRoute())}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 };

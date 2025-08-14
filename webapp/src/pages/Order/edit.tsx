@@ -27,31 +27,29 @@ const EditOrderPage = () => {
     userId: orderData?.userId || '',
   });
 
-  const notIncludedClients = allClientsData?.clients
-    ?.filter(client => !orderData?.clients?.map(c => c.id).includes(client.id))
-    .map(client => ({
-      ...client,
-      firstName: client.firstName ?? undefined,
-      lastName: client.lastName ?? undefined,
-      passportExpirationDate: client.passportExpirationDate
-        ? new Date(client.passportExpirationDate)
-        : undefined,
-      isOutsideTheCountryAt: client.isOutsideTheCountryAt
-        ? new Date(client.isOutsideTheCountryAt)
-        : undefined,
-      citizenship: client.citizenship
-        ? {
-            id: client.citizenship.id,
-            name: client.citizenship.name,
-            abbreviation: client.citizenship.abbreviation,
-            favourite: false,
-            emoji: '',
-            blacklisted: client.citizenship.blacklisted || [],
-            visaFree: client.citizenship.visaFree || [],
-            surcharges: client.citizenship.surcharges || [],
-          }
-        : undefined,
-    }));
+  const notIncludedClients = allClientsData?.clients?.map(client => ({
+    ...client,
+    firstName: client.firstName ?? undefined,
+    lastName: client.lastName ?? undefined,
+    passportExpirationDate: client.passportExpirationDate
+      ? new Date(client.passportExpirationDate)
+      : undefined,
+    isOutsideTheCountryAt: client.isOutsideTheCountryAt
+      ? new Date(client.isOutsideTheCountryAt)
+      : undefined,
+    citizenship: client.citizenship
+      ? {
+          id: client.citizenship.id,
+          name: client.citizenship.name,
+          abbreviation: client.citizenship.abbreviation,
+          favourite: false,
+          emoji: '',
+          blacklisted: client.citizenship.blacklisted || [],
+          visaFree: client.citizenship.visaFree || [],
+          surcharges: client.citizenship.surcharges || [],
+        }
+      : undefined,
+  }));
 
   const {
     contactMethods,

@@ -15,12 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { FilterContainer, FilterFields, FilterField } from '../Filters';
 
 import { useRequirements, useDeleteRequirement } from '../../hooks/useRequirements';
-import { useVisaTypes } from '../../hooks/useVisaTypes';
+import { useCountries } from '../../hooks/useCountries';
 import {
   Search,
-  Filter,
   FileText,
   Calendar,
   Type,
@@ -31,10 +31,18 @@ import {
   Trash2,
   Loader2,
   Users,
+  Globe,
+  Flag,
+  Target,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { getViewRequirementRoute, getEditRequirementRoute } from '../../lib/routes';
+import { useNavigate, Link } from 'react-router-dom';
+import {
+  getViewRequirementRoute,
+  getEditRequirementRoute,
+  getCreateRequirementRoute,
+} from '../../lib/routes';
 
 export const RequirementsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -57,14 +65,21 @@ export const RequirementsPage: React.FC = () => {
     limit,
   });
 
-  // Get visa types for country-based filtering
-  const { data: visaTypesData } = useVisaTypes({ limit: 1000 });
-  const visaTypes = visaTypesData?.visaTypes || [];
+  // Get countries for filtering
+  const { data: countriesData } = useCountries();
+  const countries = countriesData?.countries || [];
 
   // Mutations
   const deleteMutation = useDeleteRequirement();
 
   const requirements = data?.requirements || [];
+
+  const resetFilters = () => {
+    setSearch('');
+    setServiceType('all');
+    setInputType('all');
+    setCountryFilter('all');
+  };
 
   const handleDeleteRequirement = async (id: string) => {
     try {
@@ -120,51 +135,84 @@ export const RequirementsPage: React.FC = () => {
     );
   };
 
-  // No need for client-side filtering anymore, backend handles country filtering
-  const filteredRequirements = requirements;
+  const getApplicationScopeBadge = (requirement: any) => {
+    if (requirement.serviceType !== 'visa') {
+      return null;
+    }
 
-  // Get unique countries from visa types for the filter
-  const availableCountries = Array.from(
-    new Map(visaTypes.map(vt => [vt.country.id, vt.country])).values()
-  ).sort((a, b) => a.name.localeCompare(b.name));
+    switch (requirement.applicationScope) {
+      case 'global':
+        return (
+          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+            <Globe className="w-3 h-3 mr-1" />
+            Global
+          </Badge>
+        );
+      case 'country_all':
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Flag className="w-3 h-3 mr-1" />
+            {requirement.country?.name || 'Country'}
+          </Badge>
+        );
+      case 'specific':
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            <Target className="w-3 h-3 mr-1" />
+            {requirement.visaTypeLinks?.length || 0} Types
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+            <Target className="w-3 h-3 mr-1" />
+            Specific
+          </Badge>
+        );
+    }
+  };
+
+  const getCitizenshipScopeBadge = (requirement: any) => {
+    if (requirement.appliesToAllCitizenships) {
+      return (
+        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+          <Users className="w-3 h-3 mr-1" />
+          All
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          <Target className="w-3 h-3 mr-1" />
+          {requirement.citizenships?.length || 0}
+        </Badge>
+      );
+    }
+  };
 
   if (error) {
     return (
-      <div className="grid gap-6 p-6 pb-0">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Requirements Management</h1>
-            <p className="text-muted-foreground">
-              Manage requirements for visa applications and services
-            </p>
-          </div>
+      <>
+        <div className="p-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center text-red-600">
+                Error loading requirements: {error.message}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-red-600">
-              Error loading requirements: {error.message}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="grid gap-6 p-6 pb-0">
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
+    <>
+      <div className="grid gap-6 p-6 pb-0">
+        {/* Filters */}
+        <FilterContainer onClearFilters={resetFilters}>
+          <FilterFields>
+            <FilterField label="Search">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -174,14 +222,12 @@ export const RequirementsPage: React.FC = () => {
                   className="pl-10"
                 />
               </div>
-            </div>
+            </FilterField>
 
-            {/* Service Type */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Service Type</label>
+            <FilterField label="Service Type">
               <Select value={serviceType} onValueChange={setServiceType}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Service Type" />
+                  <SelectValue placeholder="All Services" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Services</SelectItem>
@@ -189,14 +235,12 @@ export const RequirementsPage: React.FC = () => {
                   <SelectItem value="visarun">Visa Run</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </FilterField>
 
-            {/* Input Type */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Input Type</label>
+            <FilterField label="Input Type">
               <Select value={inputType} onValueChange={setInputType}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Input Type" />
+                  <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
@@ -207,142 +251,89 @@ export const RequirementsPage: React.FC = () => {
                   <SelectItem value="checkpoint">Checkpoint</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </FilterField>
 
-            {/* Country Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Country</label>
+            <FilterField label="Country">
               <Select value={countryFilter} onValueChange={setCountryFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Countries" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Countries</SelectItem>
-                  {availableCountries.map(country => (
+                  {countries.map(country => (
                     <SelectItem key={country.id} value={country.id}>
                       {country.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </FilterField>
+          </FilterFields>
+        </FilterContainer>
 
-      {/* Requirements Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>
-              Requirements ({filteredRequirements.length})
-              {filteredRequirements.length !== requirements.length && (
-                <span className="text-sm font-normal text-muted-foreground">
-                  {' '}
-                  of {requirements.length} total
-                </span>
-              )}
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="w-8 h-8 animate-spin" />
-              <span className="ml-2">Loading requirements...</span>
+        {/* Requirements Table */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Requirements ({requirements.length})</CardTitle>
             </div>
-          ) : filteredRequirements.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {requirements.length === 0
-                ? 'No requirements found. Create one to get started.'
-                : 'No requirements match your current filters.'}
-            </div>
-          ) : (
-            <>
-              {/* Table view (hidden on mobile) */}
-              <div className="hidden md:block">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[250px]">Title</TableHead>
-                        <TableHead>Service</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Scope</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredRequirements.map(requirement => (
-                        <TableRow key={requirement.id} className="hover:bg-muted/50">
-                          <TableCell className="font-medium">{requirement.title}</TableCell>
-                          <TableCell>{getServiceTypeBadge(requirement.serviceType)}</TableCell>
-                          <TableCell>{getInputTypeBadge(requirement.inputType)}</TableCell>
-                          <TableCell className="max-w-[300px] truncate">
-                            {requirement.description || '-'}
-                          </TableCell>
-                          <TableCell>
-                            {requirement.appliesToAllCitizenships ? (
-                              <Badge variant="outline" className="border-blue-300 text-blue-700">
-                                <Users className="w-3 h-3 mr-1" />
-                                All Citizenships
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline">
-                                {requirement._count?.citizenships || 0} specific
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  navigate(getViewRequirementRoute({ id: requirement.id }))
-                                }
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  navigate(getEditRequirementRoute({ id: requirement.id }))
-                                }
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteRequirementId(requirement.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="ml-2">Loading requirements...</span>
               </div>
-
-              {/* Card view (visible only on mobile) */}
-              <div className="grid grid-cols-1 gap-4 md:hidden">
-                {filteredRequirements.map(requirement => (
-                  <Card key={requirement.id} className="hover:border-primary/50 transition-colors">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-medium">{requirement.title}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {requirement.description || 'No description'}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1">
+            ) : requirements.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No requirements found</h3>
+                <p className="text-gray-600 mb-4">
+                  {search || serviceType !== 'all' || inputType !== 'all' || countryFilter !== 'all'
+                    ? 'Try adjusting your filters'
+                    : 'Get started by creating your first requirement'}
+                </p>
+                <Button onClick={() => navigate(getCreateRequirementRoute())}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Requirement
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Input Type</TableHead>
+                    <TableHead>Application Scope</TableHead>
+                    <TableHead>Citizenship Scope</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {requirements.map(requirement => (
+                    <TableRow key={requirement.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <Link
+                          to={getViewRequirementRoute({ id: requirement.id })}
+                          className="hover:underline"
+                        >
+                          <div className="space-y-1">
+                            <div className="font-medium">{requirement.title}</div>
+                            {requirement.description && (
+                              <div className="text-sm text-gray-600 truncate max-w-[200px]">
+                                {requirement.description}
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                      </TableCell>
+                      <TableCell>{getServiceTypeBadge(requirement.serviceType)}</TableCell>
+                      <TableCell>{getInputTypeBadge(requirement.inputType)}</TableCell>
+                      <TableCell>{getApplicationScopeBadge(requirement)}</TableCell>
+                      <TableCell>{getCitizenshipScopeBadge(requirement)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -369,50 +360,42 @@ export const RequirementsPage: React.FC = () => {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {getServiceTypeBadge(requirement.serviceType)}
-                        {getInputTypeBadge(requirement.inputType)}
-                        {requirement.appliesToAllCitizenships ? (
-                          <Badge variant="outline" className="border-blue-300 text-blue-700">
-                            <Users className="w-3 h-3 mr-1" />
-                            All Citizenships
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">
-                            {requirement._count?.citizenships || 0} specific
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteRequirementId} onOpenChange={() => setDeleteRequirementId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Requirement</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this requirement? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteRequirementId && handleDeleteRequirement(deleteRequirementId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deleteRequirementId} onOpenChange={() => setDeleteRequirementId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Requirement</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this requirement? This action cannot be undone and
+                will affect all linked visa types and citizenship assignments.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (deleteRequirementId) {
+                    handleDeleteRequirement(deleteRequirementId);
+                    setDeleteRequirementId(null);
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </>
   );
 };

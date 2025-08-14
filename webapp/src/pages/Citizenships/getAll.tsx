@@ -3,7 +3,8 @@ import { getViewCitizenshipRoute } from '../../lib/routes';
 import { trpc } from '../../lib/trpcProvider';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Users, Star, StarOff, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
+import { Users, Star, StarOff, Search, Eye, Edit, Trash2 } from 'lucide-react';
+import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -102,45 +103,42 @@ const AllCitizenshipsPage = () => {
     setCurrentPage(1);
   };
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSelectedFavouriteFilter('all');
+    setCurrentPage(1);
+  };
+
   return (
     <div className="grid gap-6 p-6 pb-0">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by name..."
-                  value={searchTerm}
-                  onChange={e => handleSearchChange(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      <FilterContainer onClearFilters={resetFilters}>
+        <FilterFields>
+          <FilterField label="Search">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by name..."
+                value={searchTerm}
+                onChange={e => handleSearchChange(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Favourite</label>
-              <Select value={selectedFavouriteFilter} onValueChange={handleFavouriteFilterChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="true">Favourites</SelectItem>
-                  <SelectItem value="false">Non-favourites</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </FilterField>
+
+          <FilterField label="Favourite">
+            <Select value={selectedFavouriteFilter} onValueChange={handleFavouriteFilterChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="true">Favourites</SelectItem>
+                <SelectItem value="false">Non-favourites</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterField>
+        </FilterFields>
+      </FilterContainer>
 
       <Card>
         <CardHeader>

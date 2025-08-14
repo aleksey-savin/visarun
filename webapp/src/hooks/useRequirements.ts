@@ -17,6 +17,9 @@ export interface CreateRequirementData {
   citizenshipIds?: string[];
   visaTypeIds?: string[];
   routeIds?: string[];
+  // New fields for application scope
+  applicationScope?: 'specific' | 'country_all' | 'global';
+  countryId?: string;
 }
 
 export interface UpdateRequirementData {
@@ -36,6 +39,9 @@ export interface UpdateRequirementData {
   citizenshipIds?: string[];
   visaTypeIds?: string[];
   routeIds?: string[];
+  // New fields for application scope
+  applicationScope?: 'specific' | 'country_all' | 'global';
+  countryId?: string;
 }
 
 export interface GetRequirementsFilters {

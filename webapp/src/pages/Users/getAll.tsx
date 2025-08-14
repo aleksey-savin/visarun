@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { trpc } from '../../lib/trpcProvider';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { User, Mail, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
+import { User, Mail, Search, Eye, Edit, Trash2 } from 'lucide-react';
+import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -129,49 +130,45 @@ const AllUsersPage = () => {
   );
   const uniqueRoles = [...new Set(allRoles)];
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSelectedRoleFilter('all');
+  };
+
   return (
     <div className="grid gap-6 p-6 pb-0">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by name or email..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      <FilterContainer onClearFilters={resetFilters}>
+        <FilterFields>
+          <FilterField label="Search">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by name or email..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
-              <Select value={selectedRoleFilter} onValueChange={setSelectedRoleFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All roles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All roles</SelectItem>
-                  <SelectItem value="no-roles">No roles</SelectItem>
-                  {uniqueRoles.map(role => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </FilterField>
+
+          <FilterField label="Role">
+            <Select value={selectedRoleFilter} onValueChange={setSelectedRoleFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="no-roles">No roles</SelectItem>
+                {uniqueRoles.map(role => (
+                  <SelectItem key={role} value={role}>
+                    {role}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+        </FilterFields>
+      </FilterContainer>
 
       <Card>
         <CardHeader>
@@ -225,7 +222,7 @@ const AllUsersPage = () => {
                       {filteredUsers.map((user: User) => (
                         <TableRow key={user.id} className="hover:bg-muted/50">
                           <TableCell>
-                            <Link to={`/users/${user.id}`} className="hover:underline">
+                            <Link to={`/users/${user.id}`} className="hover:underline font-medium">
                               {formatName(user)}
                             </Link>
                           </TableCell>

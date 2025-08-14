@@ -88,6 +88,12 @@ enum RequirementOperator {
   contains
 }
 
+enum RequirementApplicationScope {
+  specific
+  country_all
+  global
+}
+
 enum RequirementUnit {
   days
   months
@@ -268,6 +274,7 @@ model Country {
   surcharges               VisaCitizenshipSurcharge[]
   visaFree                 VisaFree[]
   VisaType                 VisaType[]
+  Requirement              Requirement[]
 }
 
 model City {
@@ -518,6 +525,10 @@ model Requirement {
   sampleUrl                String?
   applicableServices       ServiceEntityType[]
 
+  // New fields for flexible scope
+  applicationScope RequirementApplicationScope @default(specific)
+  countryId        String?
+
   citizenships        RequirementCitizenship[]
   documents           RequirementDocument[]
   serviceRequirements ServiceRequirement[]
@@ -528,7 +539,12 @@ model Requirement {
   VisaType      VisaType?                 @relation(fields: [visaTypeId], references: [id])
   visaTypeId    String?
 
+  // Relation to country for country_all scope
+  country Country? @relation(fields: [countryId], references: [id])
+
   @@index([serviceType])
+  @@index([applicationScope])
+  @@index([countryId])
 }
 
 model RequirementCitizenship {

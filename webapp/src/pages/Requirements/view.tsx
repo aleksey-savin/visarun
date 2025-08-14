@@ -18,6 +18,8 @@ import {
   Flag,
   DollarSign,
   Loader2,
+  Globe,
+  Target,
 } from 'lucide-react';
 
 import { useRequirement } from '@/hooks/useRequirements';
@@ -172,203 +174,275 @@ const ViewRequirementPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-8 max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate(getAllRequirementsRoute())}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Requirements
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{requirement.title}</h1>
-            <p className="text-muted-foreground">View requirement details and validation rules</p>
+    <>
+      <div className="sticky top-0 z-10 bg-background border-b flex px-6 justify-between gap-2 items-center h-[45px]">
+        <div className="flex gap-3 items-center text-sm min-h-[45px]">
+          <FileText />
+          <div className="flex gap-2 items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(getAllRequirementsRoute())}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              All Requirements
+            </Button>
+            <span className="text-muted-foreground">/</span>
+            <span className="font-medium">{requirement.title}</span>
           </div>
         </div>
         <Button onClick={() => navigate(getEditRequirementRoute({ id: requirement.id }))}>
           <Edit className="w-4 h-4 mr-2" />
-          Edit Requirement
+          Edit
         </Button>
       </div>
 
-      <div className="space-y-6">
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Basic Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Title</label>
-                <div className="text-lg font-semibold">{requirement.title}</div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Service Type</label>
-                <div>{getServiceTypeBadge(requirement.serviceType)}</div>
-              </div>
-            </div>
-
-            {requirement.description && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Description</label>
-                <div className="text-gray-900 whitespace-pre-wrap">{requirement.description}</div>
-              </div>
-            )}
-
-            {requirement.sampleUrl && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Sample URL</label>
-                <div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (requirement.sampleUrl) {
-                        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                        const fullUrl = requirement.sampleUrl.startsWith('/')
-                          ? `${baseUrl}${requirement.sampleUrl}`
-                          : requirement.sampleUrl;
-                        window.open(fullUrl, '_blank');
-                      }
-                    }}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    View Sample
-                  </Button>
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="space-y-6">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Title</label>
+                  <div className="text-lg font-semibold">{requirement.title}</div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Service Type</label>
+                  <div>{getServiceTypeBadge(requirement.serviceType)}</div>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Input Type & Validation */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Input Type & Validation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Input Type</label>
-              <div>{getInputTypeBadge(requirement.inputType)}</div>
-            </div>
+              {requirement.description && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Description</label>
+                  <div className="text-gray-900 whitespace-pre-wrap">{requirement.description}</div>
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Validation Rule</label>
-              <div className="text-gray-900 bg-gray-50 p-3 rounded-md">
-                {formatThresholdValue(requirement)}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Citizenship Scope */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Citizenship Scope</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Applies to {requirement.citizenships?.length || 0} specific citizenships
-              </label>
-              <div>
-                {requirement.appliesToAllCitizenships ? (
-                  <Badge variant="outline" className="border-blue-300 text-blue-700">
-                    <Users className="w-3 h-3 mr-1" />
-                    All Citizenships
-                  </Badge>
-                ) : (
-                  <div className="space-y-2">
-                    {requirement.citizenships && requirement.citizenships.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {requirement.citizenships.map((link: any) => (
-                          <Badge key={link.citizenship.id} variant="outline">
-                            {link.citizenship.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
+              {requirement.sampleUrl && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Sample URL</label>
+                  <div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (requirement.sampleUrl) {
+                          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                          const fullUrl = requirement.sampleUrl.startsWith('/')
+                            ? `${baseUrl}${requirement.sampleUrl}`
+                            : requirement.sampleUrl;
+                          window.open(fullUrl, '_blank');
+                        }
+                      }}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      View Sample
+                    </Button>
                   </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* Visa Type Links */}
-        {requirement.serviceType === 'visa' &&
-          requirement.visaTypeLinks &&
-          requirement.visaTypeLinks.length > 0 && (
+          {/* Input Type & Validation */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Input Type & Validation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Input Type</label>
+                <div>{getInputTypeBadge(requirement.inputType)}</div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Validation Rule</label>
+                <div className="text-gray-900 bg-gray-50 p-3 rounded-md">
+                  {formatThresholdValue(requirement)}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Application Scope - Only for visa service type */}
+          {requirement.serviceType === 'visa' && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Linked Visa Types</CardTitle>
+                <CardTitle className="text-lg">Application Scope</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-sm text-gray-600 mb-4">
-                  This requirement applies to the following visa types:
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {requirement.visaTypeLinks.map((link: any) => (
-                    <div
-                      key={link.visaType.id}
-                      className="p-4 border rounded-lg hover:border-gray-300 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Flag className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium">
-                          {link.visaType.country.name} - {link.visaType.name}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {link.visaType.isMultientry ? 'Multi-entry' : 'Single-entry'}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {formatProcessingTime(link.visaType)}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          <DollarSign className="w-3 h-3 mr-1" />
-                          {formatCurrency(link.visaType.serviceCost, 'VND')}
-                        </Badge>
+                <div className="space-y-3">
+                  {(requirement as any).applicationScope === 'global' && (
+                    <div className="flex items-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                      <Globe className="w-5 h-5 text-purple-600" />
+                      <div>
+                        <p className="font-medium text-purple-800 text-sm">Global Scope</p>
+                        <p className="text-purple-700 text-xs">
+                          Applies to all visa types across all countries
+                        </p>
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {(requirement as any).applicationScope === 'country_all' &&
+                    (requirement as any).country && (
+                      <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <Flag className="w-5 h-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-green-800 text-sm">
+                            Country Scope: {(requirement as any).country.name}
+                          </p>
+                          <p className="text-green-700 text-xs">
+                            Applies to all visa types in {(requirement as any).country.name}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                  {(requirement as any).applicationScope === 'specific' && (
+                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <Target className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium text-blue-800 text-sm">Specific Scope</p>
+                        <p className="text-blue-700 text-xs">
+                          Applies to {(requirement as any).visaTypeLinks?.length || 0} manually
+                          selected visa types
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           )}
 
-        {/* Statistics */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {requirement.documents?.length || 0}
-                </div>
-                <div className="text-sm text-gray-600">Documents</div>
+          {/* Citizenship Scope */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Citizenship Scope</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                {requirement.appliesToAllCitizenships ? (
+                  <div className="flex items-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                    <Users className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="font-medium text-purple-800 text-sm">All Citizenships</p>
+                      <p className="text-purple-700 text-xs">
+                        Applies to users of all citizenships worldwide
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <Target className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium text-blue-800 text-sm">Specific Citizenships</p>
+                        <p className="text-blue-700 text-xs">
+                          Applies to {(requirement as any).citizenships?.length || 0} selected
+                          citizenships
+                        </p>
+                      </div>
+                    </div>
+                    {(requirement as any).citizenships &&
+                      (requirement as any).citizenships.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {(requirement as any).citizenships.map((link: any) => (
+                            <Badge key={link.citizenship.id} variant="outline">
+                              {link.citizenship.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {requirement.visaTypeLinks?.length || 0}
+            </CardContent>
+          </Card>
+
+          {/* Visa Type Links - Only show for specific scope */}
+          {requirement.serviceType === 'visa' &&
+            (requirement as any).applicationScope === 'specific' &&
+            (requirement as any).visaTypeLinks &&
+            (requirement as any).visaTypeLinks.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Linked Visa Types</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-sm text-gray-600 mb-4">
+                    This requirement applies to the following visa types:
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(requirement as any).visaTypeLinks.map((link: any) => (
+                      <div
+                        key={link.visaType.id}
+                        className="p-4 border rounded-lg hover:border-gray-300 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <Flag className="w-4 h-4 text-blue-600" />
+                          <span className="font-medium">
+                            {link.visaType.country.name} - {link.visaType.name}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {link.visaType.isMultientry ? 'Multi-entry' : 'Single-entry'}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            {formatProcessingTime(link.visaType)}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            <DollarSign className="w-3 h-3 mr-1" />
+                            {formatCurrency(link.visaType.serviceCost, 'VND')}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+          {/* Statistics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Statistics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {(requirement as any).documents?.length || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Documents</div>
                 </div>
-                <div className="text-sm text-gray-600">Linked Visa Types</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
-                  {requirement.citizenships?.length || 0}
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {(requirement as any).visaTypeLinks?.length || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Linked Visa Types</div>
                 </div>
-                <div className="text-sm text-gray-600">Linked Citizenships</div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {(requirement as any).citizenships?.length || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Linked Citizenships</div>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

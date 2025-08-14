@@ -13,16 +13,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import CitizenshipSelect from '@/components/Citizenship/CitizenshipSelect';
 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -35,6 +29,7 @@ const clientProfileSchema = z.object({
   prevViolationsDesc: z.string().optional(),
   isOutsideTheCountry: z.boolean().optional().default(false),
   isOutsideTheCountryAt: z.string().optional(),
+  passportExpirationDate: z.string().optional(),
 });
 
 type ClientProfileFormData = {
@@ -45,32 +40,41 @@ type ClientProfileFormData = {
   prevViolationsDesc?: string;
   isOutsideTheCountry?: boolean;
   isOutsideTheCountryAt?: string;
+  passportExpirationDate?: string;
 };
 
 interface ClientProfileFormProps {
-  userId: string;
+  userId?: string;
+  clientId?: string;
+  initialData?: Partial<ClientProfileFormData>;
+  mode?: 'create' | 'edit';
   onSuccess?: (clientId: string) => void;
   onCancel?: () => void;
 }
 
-export const ClientProfileForm = ({ userId, onSuccess, onCancel }: ClientProfileFormProps) => {
+export const ClientProfileForm = ({
+  userId,
+  clientId,
+  initialData,
+  mode = 'create',
+  onSuccess,
+  onCancel,
+}: ClientProfileFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ClientProfileFormData>({
     resolver: zodResolver(clientProfileSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      citizenshipId: undefined,
-      prevViolations: false,
-      prevViolationsDesc: undefined,
-      isOutsideTheCountry: false,
-      isOutsideTheCountryAt: '',
+      firstName: initialData?.firstName || '',
+      lastName: initialData?.lastName || '',
+      citizenshipId: initialData?.citizenshipId || undefined,
+      prevViolations: initialData?.prevViolations || false,
+      prevViolationsDesc: initialData?.prevViolationsDesc || undefined,
+      isOutsideTheCountry: initialData?.isOutsideTheCountry || false,
+      isOutsideTheCountryAt: initialData?.isOutsideTheCountryAt || '',
+      passportExpirationDate: initialData?.passportExpirationDate || '',
     },
   });
-
-  // Get citizenships for dropdown
-  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
 
   // Create client mutation
   const createClientMutation = trpc.client.create.useMutation({
@@ -90,6 +94,24 @@ export const ClientProfileForm = ({ userId, onSuccess, onCancel }: ClientProfile
     },
   });
 
+  // Edit client mutation
+  const editClientMutation = trpc.client.edit.useMutation({
+    onSuccess: data => {
+      toast.success('Client profile updated successfully');
+      if (onSuccess) {
+        onSuccess(data.client.id);
+      }
+    },
+    onError: error => {
+      toast.error('Failed to update client profile', {
+        description: error.message,
+      });
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
+    },
+  });
+
   const onSubmit = (data: ClientProfileFormData) => {
     setIsSubmitting(true);
 
@@ -97,16 +119,30 @@ export const ClientProfileForm = ({ userId, onSuccess, onCancel }: ClientProfile
       ? new Date(data.isOutsideTheCountryAt + 'T00:00:00')
       : undefined;
 
-    createClientMutation.mutate({
-      userId,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      citizenshipId: data.citizenshipId,
-      prevViolations: data.prevViolations ?? false,
-      prevViolationsDesc: data.prevViolationsDesc,
-      isOutsideTheCountry: data.isOutsideTheCountry ?? false,
-      isOutsideTheCountryAt,
-    });
+    if (mode === 'edit' && clientId) {
+      editClientMutation.mutate({
+        id: clientId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        citizenshipId: data.citizenshipId,
+        prevViolations: data.prevViolations ?? false,
+        prevViolationsDesc: data.prevViolationsDesc,
+        isOutsideTheCountry: data.isOutsideTheCountry ?? false,
+        isOutsideTheCountryAt: data.isOutsideTheCountryAt || null,
+        passportExpirationDate: data.passportExpirationDate || null,
+      });
+    } else {
+      createClientMutation.mutate({
+        userId: userId!,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        citizenshipId: data.citizenshipId,
+        prevViolations: data.prevViolations ?? false,
+        prevViolationsDesc: data.prevViolationsDesc,
+        isOutsideTheCountry: data.isOutsideTheCountry ?? false,
+        isOutsideTheCountryAt,
+      });
+    }
   };
 
   const watchPrevViolations = form.watch('prevViolations');
@@ -144,26 +180,31 @@ export const ClientProfileForm = ({ userId, onSuccess, onCancel }: ClientProfile
           />
         </div>
 
+        <CitizenshipSelect
+          value={form.watch('citizenshipId')}
+          onValueChange={value => form.setValue('citizenshipId', value)}
+          currentCitizenship={form.watch('citizenshipId')}
+          label="Citizenship"
+          placeholder="Select citizenship"
+        />
+
         <FormField
           control={form.control}
-          name="citizenshipId"
+          name="passportExpirationDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Citizenship</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select citizenship" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {citizenshipsData?.citizenships.map(citizenship => (
-                    <SelectItem key={citizenship.id} value={citizenship.id}>
-                      {citizenship.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel>Passport Expiration Date</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  value={field.value || ''}
+                  onChange={e => {
+                    field.onChange(e.target.value);
+                  }}
+                  min={format(new Date(), 'yyyy-MM-dd')}
+                />
+              </FormControl>
+              <FormDescription>When does the passport expire?</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -248,12 +289,18 @@ export const ClientProfileForm = ({ userId, onSuccess, onCancel }: ClientProfile
           />
         )}
 
-        <div className="flex gap-4 pt-4">
+        <div className="flex justify-end gap-4 pt-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : 'Create Client Profile'}
+            {isSubmitting
+              ? mode === 'edit'
+                ? 'Updating...'
+                : 'Creating...'
+              : mode === 'edit'
+                ? 'Update'
+                : 'Create'}
           </Button>
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="secondary" onClick={onCancel}>
               Cancel
             </Button>
           )}

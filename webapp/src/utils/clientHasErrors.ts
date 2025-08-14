@@ -19,7 +19,7 @@ export const clientHasErrors = (
   }
 
   // 2. No order items
-  if (clientOrderItems.length === 0 && !client.isPrimary) {
+  if (clientOrderItems.length === 0) {
     errors.add('No order items added');
   }
 

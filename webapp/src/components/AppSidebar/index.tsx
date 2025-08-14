@@ -181,6 +181,22 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              {canReadOrders && (
+                <SidebarMenuItem key="Orders">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={
+                      location.pathname === getAllOrdersRoute() ||
+                      location.pathname.startsWith(`${getAllOrdersRoute()}/`)
+                    }
+                  >
+                    <Link to={getAllOrdersRoute()}>
+                      <ShoppingCart className="w-4 h-4" />
+                      <span>Orders</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -434,22 +450,7 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
-                {canReadOrders && (
-                  <SidebarMenuItem key="Orders">
-                    <SidebarMenuButton
-                      asChild
-                      isActive={
-                        location.pathname === getAllOrdersRoute() ||
-                        location.pathname.startsWith(`${getAllOrdersRoute()}/`)
-                      }
-                    >
-                      <Link to={getAllOrdersRoute()}>
-                        <ShoppingCart className="w-4 h-4" />
-                        <span>Orders</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
+
                 {canManageAudit && (
                   <SidebarMenuItem key="AuditLogs">
                     <SidebarMenuButton

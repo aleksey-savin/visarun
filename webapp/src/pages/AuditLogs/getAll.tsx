@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { trpc } from '../../lib/trpcProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Filter, Eye, RotateCcw, Clock, User, Database } from 'lucide-react';
+import { Eye, RotateCcw, Clock, User, Database } from 'lucide-react';
+import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -174,123 +175,99 @@ const AllAuditLogsPage = () => {
 
   return (
     <div className="grid gap-6 p-6 pb-0">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Start Date</label>
-              <Input
-                type="datetime-local"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-              />
-            </div>
+      <FilterContainer onClearFilters={resetFilters}>
+        <FilterFields>
+          <FilterField label="Start Date">
+            <Input
+              type="datetime-local"
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+            />
+          </FilterField>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">End Date</label>
-              <Input
-                type="datetime-local"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-              />
-            </div>
+          <FilterField label="End Date">
+            <Input
+              type="datetime-local"
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+            />
+          </FilterField>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Entity Type</label>
-              <Select
-                value={selectedEntityType}
-                onValueChange={setSelectedEntityType}
-                disabled={filtersLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={filtersLoading ? 'Loading...' : 'All entity types'} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All entity types</SelectItem>
-                  {(filterOptions?.entityTypes || []).map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <FilterField label="Entity Type">
+            <Select
+              value={selectedEntityType}
+              onValueChange={setSelectedEntityType}
+              disabled={filtersLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={filtersLoading ? 'Loading...' : 'All entity types'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All entity types</SelectItem>
+                {(filterOptions?.entityTypes || []).map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Action</label>
-              <Select
-                value={selectedAction}
-                onValueChange={setSelectedAction}
-                disabled={filtersLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={filtersLoading ? 'Loading...' : 'All actions'} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All actions</SelectItem>
-                  {(filterOptions?.actions || []).map(action => (
-                    <SelectItem key={action.value} value={action.value}>
-                      {action.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <FilterField label="Action">
+            <Select
+              value={selectedAction}
+              onValueChange={setSelectedAction}
+              disabled={filtersLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={filtersLoading ? 'Loading...' : 'All actions'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All actions</SelectItem>
+                {(filterOptions?.actions || []).map(action => (
+                  <SelectItem key={action.value} value={action.value}>
+                    {action.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">User</label>
-              <Select
-                value={selectedUser}
-                onValueChange={setSelectedUser}
-                disabled={filtersLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={filtersLoading ? 'Loading...' : 'All users'} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All users</SelectItem>
-                  {(filterOptions?.users || []).map(user => (
-                    <SelectItem key={user.value} value={user.value}>
-                      {user.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <FilterField label="User">
+            <Select value={selectedUser} onValueChange={setSelectedUser} disabled={filtersLoading}>
+              <SelectTrigger>
+                <SelectValue placeholder={filtersLoading ? 'Loading...' : 'All users'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All users</SelectItem>
+                {(filterOptions?.users || []).map(user => (
+                  <SelectItem key={user.value} value={user.value}>
+                    {user.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+        </FilterFields>
 
-          <div className="flex justify-between items-center mt-4">
-            <div className="text-sm text-muted-foreground">
-              {filtersLoading && 'Loading filters...'}
-              {filtersError && (
-                <div className="text-red-600">
-                  Filter error: {filtersError.message}
-                  <br />
-                  <details className="text-xs mt-1">
-                    <summary>Error details</summary>
-                    <pre className="whitespace-pre-wrap">
-                      {JSON.stringify(filtersError, null, 2)}
-                    </pre>
-                  </details>
-                </div>
-              )}
-              {filterOptions &&
-                !filtersLoading &&
-                !filtersError &&
-                `${filterOptions.entityTypes?.length || 0} entity types, ${filterOptions.users?.length || 0} users`}
+        <div className="text-sm text-muted-foreground mt-4">
+          {filtersLoading && 'Loading filters...'}
+          {filtersError && (
+            <div className="text-red-600">
+              Filter error: {filtersError.message}
+              <br />
+              <details className="text-xs mt-1">
+                <summary>Error details</summary>
+                <pre className="whitespace-pre-wrap">{JSON.stringify(filtersError, null, 2)}</pre>
+              </details>
             </div>
-            <Button variant="outline" onClick={resetFilters}>
-              Clear Filters
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          )}
+          {filterOptions &&
+            !filtersLoading &&
+            !filtersError &&
+            `${filterOptions.entityTypes?.length || 0} entity types, ${filterOptions.users?.length || 0} users`}
+        </div>
+      </FilterContainer>
 
       <Card>
         <CardHeader>

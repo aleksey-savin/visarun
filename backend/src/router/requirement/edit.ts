@@ -18,6 +18,9 @@ export const zEditRequirementTrpcInput = z.object({
   citizenshipIds: z.array(z.string().uuid()).optional(),
   visaTypeIds: z.array(z.string().uuid()).optional(),
   routeIds: z.array(z.string().uuid()).optional(),
+  // New fields for application scope
+  applicationScope: z.enum(['specific', 'country_all', 'global']).optional(),
+  countryId: z.string().uuid().optional(),
 });
 
 export const editRequirementTrpcRoute = requirementUpdateProcedure
@@ -40,6 +43,8 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
       citizenshipIds,
       visaTypeIds,
       routeIds,
+      applicationScope,
+      countryId,
     } = input;
 
     // Check if requirement exists
@@ -49,6 +54,8 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
         id: true,
         inputType: true,
         appliesToAllCitizenships: true,
+        applicationScope: true,
+        countryId: true,
       },
     });
 
@@ -76,6 +83,23 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
     // Validate operator presence for certain input types
     if (['date', 'text'].includes(finalInputType) && operator === undefined && inputType) {
       throw new Error(`Operator is required for ${finalInputType} input type`);
+    }
+
+    // Validate application scope requirements
+    if (applicationScope === 'country_all' && !countryId) {
+      throw new Error('Country ID is required when application scope is country_all');
+    }
+
+    // Validate country ID exists if provided
+    if (countryId) {
+      const existingCountry = await ctx.prisma.country.findUnique({
+        where: { id: countryId },
+        select: { id: true },
+      });
+
+      if (!existingCountry) {
+        throw new Error('Country ID does not exist');
+      }
     }
 
     // Determine final appliesToAllCitizenships value
@@ -143,6 +167,8 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
       description?: string;
       appliesToAllCitizenships?: boolean;
       sampleUrl?: string;
+      applicationScope?: 'specific' | 'country_all' | 'global';
+      countryId?: string;
     } = {};
 
     if (serviceType !== undefined) updateData.serviceType = serviceType;
@@ -158,6 +184,8 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
     if (appliesToAllCitizenships !== undefined)
       updateData.appliesToAllCitizenships = appliesToAllCitizenships;
     if (sampleUrl !== undefined) updateData.sampleUrl = sampleUrl;
+    if (applicationScope !== undefined) updateData.applicationScope = applicationScope;
+    if (countryId !== undefined) updateData.countryId = countryId;
 
     // Update the requirement
     const updatedRequirement = await ctx.prisma.$transaction(async tx => {
@@ -187,8 +215,9 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
           },
         });
 
-        // Create new visa type relations if provided
-        if (visaTypeIds.length > 0) {
+        // Create new visa type relations only for specific scope
+        const finalScope = applicationScope || existingRequirement.applicationScope;
+        if (finalScope === 'specific' && visaTypeIds.length > 0) {
           await tx.requirementVisaType.createMany({
             data: visaTypeIds.map(visaTypeId => ({
               requirementId: id,
@@ -234,6 +263,14 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
           description: true,
           appliesToAllCitizenships: true,
           sampleUrl: true,
+          applicationScope: true,
+          countryId: true,
+          country: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
           citizenships: {
             select: {
               citizenship: {

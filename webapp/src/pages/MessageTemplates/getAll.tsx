@@ -1,12 +1,14 @@
 import { trpc } from '../../lib/trpcProvider';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
-import { Filter, Search } from 'lucide-react';
+import { Search, Eye } from 'lucide-react';
+import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { Input } from '@/components/ui/input';
 
 import { getViewMessageTemplateRoute } from '@/lib/routes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 import {
   Table,
@@ -47,36 +49,27 @@ const AllMessageTemplatesPage = () => {
     return matchesSearch;
   });
 
-  const handleTemplateClick = (id: string) => {
-    navigate(getViewMessageTemplateRoute({ id: id }));
+  const resetFilters = () => {
+    setSearchTerm('');
   };
 
   return (
     <div className="grid gap-6 p-6 pb-0">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by name or email..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      <FilterContainer onClearFilters={resetFilters}>
+        <FilterFields>
+          <FilterField label="Search">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by title..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </FilterField>
+        </FilterFields>
+      </FilterContainer>
 
       <Card>
         <CardHeader>
@@ -119,31 +112,40 @@ const AllMessageTemplatesPage = () => {
                   <TableHead className="w-[100px]">Title</TableHead>
                   <TableHead>Body</TableHead>
                   <TableHead>Telegram Channels</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredMessageTemplates.map((messageTemplate: MessageTemplate) => (
-                  <TableRow
-                    key={messageTemplate.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    //   onClick={() => navigate(`/telegram-channels/${channel.id}`)}
-                  >
-                    <TableCell onClick={() => handleTemplateClick(messageTemplate.id)}>
-                      {messageTemplate.title}
+                  <TableRow key={messageTemplate.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <Link
+                        to={getViewMessageTemplateRoute({ id: messageTemplate.id })}
+                        className="hover:underline font-medium"
+                      >
+                        {messageTemplate.title}
+                      </Link>
                     </TableCell>
-                    <TableCell
-                      className="whitespace-pre-wrap max-w-lg"
-                      onClick={() => handleTemplateClick(messageTemplate.id)}
-                    >
+                    <TableCell className="whitespace-pre-wrap max-w-lg">
                       {messageTemplate.body}
                     </TableCell>
-                    <TableCell
-                      className="whitespace-pre-wrap max-w-lg"
-                      onClick={() => handleTemplateClick(messageTemplate.id)}
-                    >
+                    <TableCell className="whitespace-pre-wrap max-w-lg">
                       {messageTemplate.telegramChannels
                         .map((channel: { id: string; chatTitle: string }) => channel.chatTitle)
                         .join(' ')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            navigate(getViewMessageTemplateRoute({ id: messageTemplate.id }))
+                          }
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

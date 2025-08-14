@@ -49,7 +49,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, MessageCircle, Search, Filter } from 'lucide-react';
+import { Plus, Edit, Trash2, MessageCircle, Search } from 'lucide-react';
+import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { ContactMethodIcon } from '@/components/ContactMethod';
 import { toast } from 'sonner';
 
@@ -225,46 +226,42 @@ export default function ContactMethodsManagementPage() {
     });
   };
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setUsageFilter('all');
+  };
+
   return (
     <div className="grid gap-6 p-6 pb-0">
       {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by name or description..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      <FilterContainer onClearFilters={resetFilters}>
+        <FilterFields>
+          <FilterField label="Search">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by name or description..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Usage</label>
-              <Select value={usageFilter} onValueChange={setUsageFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All contact methods" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All contact methods</SelectItem>
-                  <SelectItem value="used">Used by users</SelectItem>
-                  <SelectItem value="unused">Not used</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </FilterField>
+
+          <FilterField label="Usage">
+            <Select value={usageFilter} onValueChange={setUsageFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All contact methods" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All contact methods</SelectItem>
+                <SelectItem value="used">Used by users</SelectItem>
+                <SelectItem value="unused">Not used</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterField>
+        </FilterFields>
+      </FilterContainer>
 
       {/* Contact Methods */}
       <Card>

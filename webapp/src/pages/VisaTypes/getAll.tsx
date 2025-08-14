@@ -32,7 +32,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Eye, Edit, Trash2, Search, Filter, Globe, Clock, DollarSign } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, Globe, Clock, DollarSign } from 'lucide-react';
+import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 
@@ -127,74 +128,72 @@ const AllVisaTypesPage = () => {
     return matchesSearch && matchesCountry && matchesProcessingMode && matchesMultientry;
   });
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSelectedCountry('all');
+    setSelectedProcessingMode('all');
+    setSelectedMultientry('all');
+  };
+
   return (
     <div className="grid gap-6 p-6 pb-0">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by name or country..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      <FilterContainer onClearFilters={resetFilters}>
+        <FilterFields>
+          <FilterField label="Search">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by name or country..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Country</label>
-              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All countries" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All countries</SelectItem>
-                  {countriesData?.countries.map(country => (
-                    <SelectItem key={country.id} value={country.id}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Processing Mode</label>
-              <Select value={selectedProcessingMode} onValueChange={setSelectedProcessingMode}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All modes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All modes</SelectItem>
-                  <SelectItem value="fixed">Fixed</SelectItem>
-                  <SelectItem value="approximate">Approximate</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Multi-entry</label>
-              <Select value={selectedMultientry} onValueChange={setSelectedMultientry}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All types</SelectItem>
-                  <SelectItem value="true">Multi-entry</SelectItem>
-                  <SelectItem value="false">Single-entry</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </FilterField>
+
+          <FilterField label="Country">
+            <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+              <SelectTrigger>
+                <SelectValue placeholder="All countries" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All countries</SelectItem>
+                {(countriesData?.countries || []).map(country => (
+                  <SelectItem key={country.id} value={country.id}>
+                    {country.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="Processing Mode">
+            <Select value={selectedProcessingMode} onValueChange={setSelectedProcessingMode}>
+              <SelectTrigger>
+                <SelectValue placeholder="All modes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All processing modes</SelectItem>
+                <SelectItem value="embassy">Embassy</SelectItem>
+                <SelectItem value="online">Online</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="Multi-entry">
+            <Select value={selectedMultientry} onValueChange={setSelectedMultientry}>
+              <SelectTrigger>
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="true">Multi-entry</SelectItem>
+                <SelectItem value="false">Single-entry</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterField>
+        </FilterFields>
+      </FilterContainer>
 
       <Card>
         <CardHeader>
@@ -236,7 +235,7 @@ const AllVisaTypesPage = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredVisaTypes.map(visaType => (
-                        <TableRow key={visaType.id}>
+                        <TableRow key={visaType.id} className="hover:bg-muted/50">
                           <TableCell>
                             <Link
                               to={getViewVisaTypeRoute({ id: visaType.id })}
