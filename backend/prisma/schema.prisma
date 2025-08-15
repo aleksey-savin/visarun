@@ -23,7 +23,8 @@ enum TelegramChannelStatus {
 
 enum OrderStatus {
   draft
-  checking_personal_data
+  personal_data_verification
+  payment_pending
   submitted
   paid
   completed

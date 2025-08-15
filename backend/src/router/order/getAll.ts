@@ -13,7 +13,16 @@ interface OrderWithItems {
 }
 
 export const zGetAllOrdersTrpcInput = z.object({
-  status: z.enum(['draft', 'submitted', 'paid', 'cancelled']).optional(),
+  status: z
+    .enum([
+      'draft',
+      'personal_data_verification',
+      'payment_pending',
+      'paid',
+      'completed',
+      'cancelled',
+    ])
+    .optional(),
   userId: z.string().uuid().optional(),
   search: z.string().optional(),
   dateFrom: z.date().optional(),
