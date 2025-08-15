@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-
 // Get user permissions from database
 export async function getUserPermissions(userId: string, prisma: PrismaClient): Promise<string[]> {
   const userWithRoles = await prisma.user.findUnique({

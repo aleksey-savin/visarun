@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-
 export interface ClientWithRelatedClients {
   id: string;
   firstName: string | null;

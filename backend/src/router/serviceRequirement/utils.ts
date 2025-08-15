@@ -1,4 +1,6 @@
-import { PrismaClient, ServiceEntityType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+
+import { ServiceEntityType } from '@prisma/client';
 
 export interface ServiceRequirementInput {
   serviceType: 'visa_application' | 'visarun_order' | 'document_service';
