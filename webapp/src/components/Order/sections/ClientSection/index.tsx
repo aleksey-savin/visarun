@@ -14,9 +14,11 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmount: number }) => {
-  const { order, activeClientId, setActiveClientId } = useOrderStore();
+  const { order, clients, activeClientId, setActiveClientId } = useOrderStore();
 
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(
+    clients.length === 1 && !client.citizenship?.id && !client.passportExpirationDate
+  );
 
   const handleClientEditMode = () => {
     if (activeClientId === client.id && order.status !== 'draft') {
