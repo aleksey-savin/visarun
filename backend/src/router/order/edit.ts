@@ -5,7 +5,16 @@ export const zEditOrderTrpcInput = z.object({
   id: z.string().uuid(),
   updatedAt: z.string().datetime().optional(),
   clients: z.array(z.string().uuid()).optional().default([]),
-  status: z.enum(['draft', 'submitted', 'paid', 'cancelled']).optional(),
+  status: z
+    .enum([
+      'draft',
+      'personal_data_verification',
+      'payment_pending',
+      'paid',
+      'completed',
+      'cancelled',
+    ])
+    .optional(),
 });
 
 export const editOrderTrpcRoute = orderUpdateProcedure
