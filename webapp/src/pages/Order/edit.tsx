@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Puzzle, ArrowRight } from 'lucide-react';
+import { Puzzle, ArrowRight, CheckCircleIcon } from 'lucide-react';
 
 import ClientSection from '@/components/Order/sections/ClientSection';
 
@@ -18,6 +18,10 @@ import OrderSummary from '@/components/Order/sections/SummarySection/OrderSummar
 import { clientHasErrors } from '@/utils/clientHasErrors';
 
 import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
+import PersonalData from '@/components/Order/steps/PersonalData';
+
+// Define the restricted status types that can be used in step navigation
+type StepStatus = 'draft' | 'personal_data_verification' | 'payment_pending';
 
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,6 +65,7 @@ const EditOrderPage = () => {
     clients,
     visaApplications = [],
     setOrder,
+    updateOrderStatus,
     setUser,
     setClients,
     setContactMethods,
@@ -218,6 +223,7 @@ const EditOrderPage = () => {
     setClients,
     setActiveServicePuzzleSection,
     setVisaApplications,
+    setActiveClientId,
   ]);
 
   const clientsHaveErrors =
@@ -253,20 +259,67 @@ const EditOrderPage = () => {
     );
   }, [contactMethods, clients, activeClientId]);
 
-  const steps = [
-    {
-      name: 'ServicePuzzle',
-      canProceed: !clientsHaveErrors,
-      isCompleted: !clientsHaveErrors,
-    },
-    { name: 'PersonalData', canProceed: false, isCompleted: false },
-    { name: 'Payment', canProceed: false, isCompleted: false },
-  ];
+  const steps = useMemo(
+    () => [
+      {
+        name: 'Service Puzzle',
+        status: 'draft',
+        canProceed: !clientsHaveErrors,
+        isCompleted: !clientsHaveErrors,
+      },
+      {
+        name: 'Personal Data',
+        status: 'personal_data_verification',
+        canProceed: false,
+        isCompleted: false,
+      },
+      { name: 'Payment', status: 'payment_pending', canProceed: false, isCompleted: false },
+    ],
+    [clientsHaveErrors]
+  );
 
-  const [activeStep, setActiveStep] = useState('ServicePuzzle');
+  const [activeStep, setActiveStep] = useState(order.status === 'draft' ? steps[0] : steps[1]);
 
-  const handleNext = () => {
-    setActiveStep(prev => steps.find(step => step.name === prev)?.name || 'ServicePuzzle');
+  useEffect(() => {
+    setActiveStep(order.status === 'draft' ? steps[0] : steps[1]);
+  }, [order, steps]);
+
+  const editOrderMutation = trpc.order.edit.useMutation();
+
+  const handleStepClick = async (clickedStep: (typeof steps)[0]) => {
+    // Only allow navigation to completed steps or the next step
+    const currentStepIndex = steps.findIndex(step => step.status === activeStep.status);
+    const clickedStepIndex = steps.findIndex(step => step.status === clickedStep.status);
+
+    // Allow clicking on current step, completed steps, or the immediate next step (if current can proceed)
+    const canNavigate =
+      clickedStepIndex <= currentStepIndex || // Current or previous steps
+      (clickedStepIndex === currentStepIndex + 1 && activeStep.canProceed); // Next step if can proceed
+
+    if (!canNavigate) return;
+
+    try {
+      setActiveStep(clickedStep);
+
+      // Update order status in backend
+      await editOrderMutation.mutateAsync({
+        id: order.id,
+        status: clickedStep.status as StepStatus,
+      });
+
+      // Update order status in store
+      updateOrderStatus(clickedStep.status as StepStatus);
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      // Revert on error
+      setActiveStep(activeStep);
+    }
+  };
+
+  const handleNext = async () => {
+    if (activeStep.status === 'draft') {
+      await handleStepClick(steps[1]);
+    }
   };
 
   const lastUpdated = new Date(order?.updatedAt || '');
@@ -276,22 +329,38 @@ const EditOrderPage = () => {
       <div className="sticky top-0 z-10 bg-background border-b flex  px-6 justify-between gap-2 items-center h-[45px]">
         <div className="flex gap-3 items-center text-sm min-h-[45px]">
           <Puzzle />
-          {steps.map(step => (
-            <div key={step.name} className="flex items-center gap-3">
-              <span
-                className={`${
-                  step.name === activeStep
-                    ? 'text-primary underline'
-                    : step.isCompleted
-                      ? 'text-green-600'
-                      : 'text-muted-foreground'
-                }`}
-              >
-                {step.name}
-              </span>
-              {step.name !== 'Payment' && <span className="text-muted-foreground">▶</span>}
-            </div>
-          ))}
+          {steps.map(step => {
+            const currentStepIndex = steps.findIndex(s => s.status === activeStep.status);
+            const stepIndex = steps.findIndex(s => s.status === step.status);
+            const canNavigate =
+              stepIndex <= currentStepIndex || // Current or previous steps
+              (stepIndex === currentStepIndex + 1 && activeStep.canProceed); // Next step if can proceed
+
+            return (
+              <div key={step.status} className="flex items-center gap-2">
+                <div
+                  className={`flex items-center gap-0.5 ${
+                    step.status === activeStep.status
+                      ? 'text-primary underline'
+                      : step.isCompleted
+                        ? 'text-[#4ADE80]'
+                        : 'text-muted-foreground'
+                  } ${canNavigate ? 'cursor-pointer hover:text-primary' : 'cursor-not-allowed'}`}
+                  onClick={() => canNavigate && handleStepClick(step)}
+                >
+                  {step.name}{' '}
+                  {step.status !== activeStep.status && step.isCompleted && (
+                    <CheckCircleIcon className="w-4 h-4 text-[#4ADE80]" />
+                  )}
+                </div>
+                {step.name !== 'Payment' && (
+                  <span className="text-muted-foreground">
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>
@@ -333,17 +402,20 @@ const EditOrderPage = () => {
                     <ClientSection totalAmount={totalAmount} client={client} />
                     {activeClientId === client.id && (
                       <div className="grid grid-col-1 gap-6 px-6 pb-5">
-                        <ServicePuzzle
-                          client={client}
-                          servicePuzzleIsActive={servicePuzzleIsActive}
-                        />
+                        {activeStep.status === 'personal_data_verification' && <PersonalData />}
+                        {activeStep.status === 'draft' && (
+                          <ServicePuzzle
+                            client={client}
+                            servicePuzzleIsActive={servicePuzzleIsActive}
+                          />
+                        )}
                       </div>
                     )}
                   </Card>
                 );
               })}
-            {activeClientId === '' && <AddClientCard />}
-            {activeClientId === '' && (
+            {activeClientId === '' && activeStep.status === 'draft' && <AddClientCard />}
+            {activeClientId === '' && activeStep.status === 'draft' && (
               <>
                 {notIncludedClients
                   ?.filter(

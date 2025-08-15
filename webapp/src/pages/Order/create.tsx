@@ -94,7 +94,7 @@ const CreateOrderPage = () => {
       case 'draft':
         steps[0].isActive = true;
         break;
-      case 'checking_personal_data':
+      case 'personal_data_verification':
         steps[0].isCompleted = true;
         steps[1].isActive = true;
         break;

@@ -611,7 +611,7 @@ const ViewCitizenshipPage = () => {
                   {citizenship.visaFree?.length ? (
                     citizenship.visaFree.map(visaFree => (
                       <div
-                        key={visaFree.id}
+                        key={`${visaFree.countryId}-${visaFree.stampDuration}`}
                         className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800"
                       >
                         <div>
@@ -626,7 +626,12 @@ const ViewCitizenshipPage = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => deleteVisaFreeMutation.mutate({ id: visaFree.id })}
+                          onClick={() =>
+                            deleteVisaFreeMutation.mutate({
+                              citizenshipId: id!,
+                              countryId: visaFree.countryId,
+                            })
+                          }
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -708,7 +713,12 @@ const ViewCitizenshipPage = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => deleteBlacklistMutation.mutate({ id: blacklisted.id })}
+                          onClick={() =>
+                            deleteBlacklistMutation.mutate({
+                              citizenshipId: id!,
+                              countryId: blacklisted.countryId,
+                            })
+                          }
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

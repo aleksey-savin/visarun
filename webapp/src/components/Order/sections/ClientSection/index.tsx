@@ -10,43 +10,42 @@ import ClientBadge from '@/components/Order/ClientBadge';
 import ClientCard from '@/components/Order/ClientCard';
 
 import { formatCurrency } from '@/utils/currency';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmount: number }) => {
-  const { activeClientId, setActiveClientId } = useOrderStore();
+  const { order, activeClientId, setActiveClientId } = useOrderStore();
 
-  /*const [clientEditMode, setClientEditMode] = useState(
-    !client?.citizenship?.id || !client?.passportExpirationDate
-  ); */
-
-  /*const handleSave = () => {
-    setClientEditMode(false);
-    setActiveClientId(client.id);
-  }; */
+  const [editMode, setEditMode] = useState(false);
 
   const handleClientEditMode = () => {
-    if (activeClientId === client.id) {
-      // setClientEditMode(prev => !prev);
-    } else if (activeClientId !== client.id) {
+    if (activeClientId === client.id && order.status !== 'draft') {
+      setEditMode(true);
+    }
+    if (activeClientId !== client.id && order.status !== 'draft') {
+      setActiveClientId(client.id);
+    } else if (activeClientId !== client.id && order.status === 'draft') {
+      setEditMode(true);
       setActiveClientId(client.id);
     }
   };
 
-  /*const clientCanBeSaved: boolean = !!(
-    client &&
-    client?.citizenship?.id &&
-    client?.passportExpirationDate
-  );*/
+  useEffect(() => {
+    if (activeClientId !== client.id) {
+      setEditMode(false);
+    }
+  }, [activeClientId]);
 
   return (
     <>
-      {activeClientId !== client.id && (
+      {!editMode && (
         <ClientCard
           client={client}
           totalAmount={totalAmount}
           handleClientEditMode={handleClientEditMode}
         />
       )}
-      {activeClientId === client.id && (
+      {editMode && (
         <Card className="bg-secondary m-0 p-6 border-x-0 border-t-0">
           <div className="flex items-center justify-between gap-2 text-lg">
             <ClientBadge client={client} showLinkedClients={false} />
@@ -55,10 +54,7 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
           {client.isPrimary && <ContactData />}
           <div className="flex justify-between items-end">
             <ClientData client={client} />
-
-            {/* <Button disabled={!clientCanBeSaved} onClick={handleSave}>
-              Save
-            </Button> */}
+            {order.status !== 'draft' && <Button onClick={() => setEditMode(false)}>Save</Button>}
           </div>
         </Card>
       )}

@@ -238,6 +238,7 @@ const ViewCountryPage = () => {
       id: editingCity.id,
       name: editingCity.name,
       isActive: editingCity.isActive,
+      countryId: id!,
     });
   };
 
@@ -426,13 +427,13 @@ const ViewCountryPage = () => {
                         Abbreviation
                       </label>
                       <Badge variant="outline" className="w-fit font-mono text-lg">
-                        {country.abbreviation}
+                        {country.name?.substring(0, 3).toUpperCase() || 'N/A'}
                       </Badge>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-muted-foreground">Status</label>
                       <div className="flex items-center gap-2">
-                        {country.featured ? (
+                        {country.favourite ? (
                           <>
                             <Star className="h-4 w-4 text-yellow-600 fill-current" />
                             <span className="text-yellow-600 font-medium">Featured</span>

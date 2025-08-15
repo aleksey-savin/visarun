@@ -38,7 +38,13 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-type OrderStatus = 'draft' | 'submitted' | 'paid' | 'cancelled';
+type OrderStatus =
+  | 'draft'
+  | 'personal_data_verification'
+  | 'payment_pending'
+  | 'paid'
+  | 'completed'
+  | 'cancelled';
 
 const statusColors = {
   draft: 'bg-gray-100 text-gray-800',

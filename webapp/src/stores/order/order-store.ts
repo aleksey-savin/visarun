@@ -13,6 +13,7 @@ import type {
   VisaApplication,
   Citizenship,
   VisaApplicationStatus,
+  OrderStatus,
 } from '@visarun/backend/node_modules/@prisma/client';
 
 export interface StoreUser extends Partial<User> {
@@ -141,6 +142,7 @@ interface OrderStore {
   setSaveStatus: (saveStatus: SaveStatus) => void;
   setActiveClientId: (activeClientId: string) => void;
   setOrder: (orderData: Order) => void;
+  updateOrderStatus: (status: OrderStatus) => void;
   setUser: (userData: StoreUser) => void;
   setClients: (clients: StoreClient[]) => void;
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => void;
@@ -202,6 +204,14 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) =>
     set({ activeServicePuzzleSection }),
   setOrder: (orderData: Order) => set(() => ({ order: orderData })),
+  updateOrderStatus: (status: OrderStatus) =>
+    set(state => ({
+      order: {
+        ...state.order,
+        status,
+        updatedAt: new Date(),
+      },
+    })),
   setUser: (userData: StoreUser) => set(() => ({ user: userData })),
   setClients: (clients: StoreClient[]) => set(() => ({ clients })),
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => set(() => ({ contactMethods })),
