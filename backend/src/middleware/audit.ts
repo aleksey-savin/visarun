@@ -34,7 +34,7 @@ function getEntityType(model: string): string {
 }
 
 // Extract entity ID from data
-function extractEntityId(data: Record<string, unknown> | null): string | undefined {
+function extractEntityId(data: Record<string, unknown> | null | undefined): string | undefined {
   if (!data) return undefined;
   return (data.id as string) || (data.cuid as string) || undefined;
 }
@@ -262,7 +262,7 @@ export function createAuditMiddleware(): Prisma.Middleware {
         auditContext.newData = result as Record<string, unknown>;
         auditContext.entityId = extractEntityId(result);
       } else if (action === 'createMany') {
-        auditContext.newData = { count: result.count };
+        auditContext.newData = { count: (result as { count: number }).count };
         auditContext.entityId = 'batch-create';
       } else if (action === 'update' || action === 'upsert') {
         auditContext.newData = result as Record<string, unknown>;
@@ -270,7 +270,7 @@ export function createAuditMiddleware(): Prisma.Middleware {
           auditContext.entityId = extractEntityId(result);
         }
       } else if (action === 'updateMany') {
-        auditContext.newData = { count: result.count };
+        auditContext.newData = { count: (result as { count: number }).count };
         auditContext.entityId = 'batch-update';
       } else if (action === 'delete') {
         auditContext.newData = null;
@@ -278,7 +278,7 @@ export function createAuditMiddleware(): Prisma.Middleware {
           auditContext.entityId = extractEntityId(result);
         }
       } else if (action === 'deleteMany') {
-        auditContext.newData = { count: result.count };
+        auditContext.newData = { count: (result as { count: number }).count };
         auditContext.entityId = 'batch-delete';
       }
 
