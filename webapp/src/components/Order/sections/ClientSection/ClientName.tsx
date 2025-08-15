@@ -60,10 +60,13 @@ const ClientName = ({ client }: { client: StoreClient | undefined }) => {
       });
       setSaveStatus('saved');
 
-      await editUserMutation.mutateAsync({
-        id: user.id,
-        [fieldName]: value,
-      });
+      if (client.isPrimary) {
+        await editUserMutation.mutateAsync({
+          id: user.id,
+          [fieldName]: value,
+        });
+      }
+
       setSaveStatus('saved');
     } catch {
       setSaveStatus('error');

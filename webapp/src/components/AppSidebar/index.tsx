@@ -142,8 +142,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="none" className="bg-secondary h-full hidden md:block">
-      <SidebarHeader className="border-b flex py-2.5 px-6 justify-between gap-2">
-        <div className="flex gap-2 items-center justify-center">
+      <SidebarHeader className="border-b flex py-2.5 px-3 justify-between gap-2">
+        <div className="flex gap-2 items-center justify-start">
           <span className="font-semibold">Visarun Vietnam</span>
         </div>
       </SidebarHeader>

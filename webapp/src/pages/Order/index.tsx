@@ -24,7 +24,7 @@ import {
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { AlertTriangle, Edit, Search, Trash2, X, ShoppingCart, Plus } from 'lucide-react';
-import { getEditOrderRoute, getViewOrderRoute } from '@/lib/routes';
+import { getEditOrderRoute } from '@/lib/routes';
 import { ClientSearchModal } from '@/components/Client/client-search-modal.js';
 import {
   AlertDialog,
@@ -208,7 +208,7 @@ export default function AllOrdersPage() {
                       <TableRow key={order.id} className="hover:bg-muted/50">
                         <TableCell>
                           <Link
-                            to={getViewOrderRoute({ id: order.id })}
+                            to={getEditOrderRoute({ id: order.id })}
                             className="hover:underline font-medium"
                           >
                             {order.user ? (
