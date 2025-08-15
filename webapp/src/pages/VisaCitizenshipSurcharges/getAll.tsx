@@ -39,6 +39,7 @@ import { Eye, Edit, Trash2, Search } from 'lucide-react';
 import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
+import { formatCurrency } from '@/utils/currency';
 
 const AllVisaCitizenshipSurchargesPage = () => {
   const navigate = useNavigate();
@@ -244,7 +245,7 @@ const AllVisaCitizenshipSurchargesPage = () => {
                       </TableCell>
                       <TableCell>
                         <span className="font-mono">
-                          {surcharge.surchargeAmount.toLocaleString()} VND
+                          {formatCurrency(surcharge.surchargeAmount, 'VND')}
                         </span>
                       </TableCell>
                       <TableCell>

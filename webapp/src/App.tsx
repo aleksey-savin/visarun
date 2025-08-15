@@ -153,7 +153,7 @@ import AccessDeniedPage from '@/pages/AccessDenied';
 
 const App = () => {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <AuthProvider>
         <TrpcProvider>
           <BrowserRouter>

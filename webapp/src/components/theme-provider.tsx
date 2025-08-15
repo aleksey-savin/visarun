@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
 
@@ -15,58 +15,28 @@ type ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
-// Helper function to get the current system theme
-const getSystemTheme = (): 'dark' | 'light' => {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-};
-
-export function ThemeProvider({
-  children,
-  defaultTheme = 'system',
-  storageKey = 'ui-theme',
-  ...props
-}: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  );
-
-  // Apply the correct theme class immediately during initial render
+export function ThemeProvider({ children, storageKey = 'ui-theme', ...props }: ThemeProviderProps) {
+  // Применяем только тёмную тему
   useEffect(() => {
     const root = window.document.documentElement;
 
-    // Remove both classes first
+    // Удаляем все классы тем
     root.classList.remove('light', 'dark');
+    // Всегда добавляем только тёмную тему
+    root.classList.add('dark');
+  }, []);
 
-    if (theme === 'system') {
-      const systemTheme = getSystemTheme();
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
-    }
-  }, [theme]);
-
+  // Сохраняем в localStorage только тёмную тему
   useEffect(() => {
-    localStorage.setItem(storageKey, theme);
-  }, [theme, storageKey]);
-
-  useEffect(() => {
-    if (theme !== 'system') return;
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const handleSystemThemeChange = () => {
-      const root = window.document.documentElement;
-      root.classList.remove('light', 'dark');
-      root.classList.add(getSystemTheme());
-    };
-
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
-  }, [theme]);
+    localStorage.setItem(storageKey, 'dark');
+  }, [storageKey]);
 
   const value = {
-    theme,
-    setTheme: (newTheme: Theme) => setTheme(newTheme),
+    theme: 'dark' as Theme, // Всегда возвращаем dark
+    setTheme: () => {
+      // Игнорируем попытки изменить тему - всегда остаёмся на тёмной
+      console.log('Theme switching is disabled. Only dark theme is available.');
+    },
   };
 
   return (

@@ -262,7 +262,7 @@ const AllVisaTypesPage = () => {
                               {visaType.isMultientry ? 'Multi-entry' : 'Single-entry'}
                               {visaType.isMultientry && visaType.multientryExtraCost && (
                                 <span className="ml-1">
-                                  (+${visaType.multientryExtraCost.toFixed(2)})
+                                  (+{formatCurrency(visaType.multientryExtraCost, 'VND')})
                                 </span>
                               )}
                             </Badge>
