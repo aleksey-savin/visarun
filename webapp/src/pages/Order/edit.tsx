@@ -402,7 +402,9 @@ const EditOrderPage = () => {
                     <ClientSection totalAmount={totalAmount} client={client} />
                     {activeClientId === client.id && (
                       <div className="grid grid-col-1 gap-6 px-6 pb-5">
-                        {activeStep.status === 'personal_data_verification' && <PersonalData />}
+                        {activeStep.status === 'personal_data_verification' && (
+                          <PersonalData client={client} />
+                        )}
                         {activeStep.status === 'draft' && (
                           <ServicePuzzle
                             client={client}

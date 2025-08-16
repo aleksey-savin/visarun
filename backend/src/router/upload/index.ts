@@ -148,7 +148,10 @@ export const createUploadRoutes = () => {
   router.post(
     '/client-document',
     clientDocumentUpload.single('document'),
-    (req: Request & { file?: Express.Multer.File }, res: Response) => {
+    async (
+      req: Request & { file?: Express.Multer.File; body?: { customFileName?: string } },
+      res: Response
+    ) => {
       try {
         if (!req.file) {
           res.status(400).json({
@@ -158,12 +161,30 @@ export const createUploadRoutes = () => {
           return;
         }
 
+        let finalFileName = req.file.filename;
+
+        // If customFileName is provided, rename the file
+        if (req.body?.customFileName) {
+          const ext = path.extname(req.file.originalname);
+          const customName = req.body.customFileName;
+          const finalCustomName = customName.endsWith(ext) ? customName : `${customName}${ext}`;
+
+          const newFilePath = path.join(path.dirname(req.file.path), finalCustomName);
+
+          try {
+            await fs.rename(req.file.path, newFilePath);
+            finalFileName = finalCustomName;
+          } catch (renameError) {
+            console.warn('Failed to rename file, using original name:', renameError);
+          }
+        }
+
         // Return the file path
-        const filePath = `/uploads/client-documents/${req.file.filename}`;
+        const filePath = `/uploads/client-documents/${finalFileName}`;
         res.json({
           success: true,
           filePath,
-          fileName: req.file.filename,
+          fileName: finalFileName,
           originalName: req.file.originalname,
           size: req.file.size,
           mimetype: req.file.mimetype,

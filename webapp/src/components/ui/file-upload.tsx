@@ -19,6 +19,7 @@ interface FileUploadProps {
   placeholder?: string;
   uploadEndpoint: string; // e.g., '/api/upload/requirement-document'
   fileFieldName?: string; // e.g., 'document'
+  customFileName?: string; // custom filename to use on server
   onUploadSuccess?: (fileInfo: {
     fileName?: string;
     originalName: string;
@@ -50,6 +51,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   placeholder = 'Click to upload or drag and drop',
   uploadEndpoint,
   fileFieldName = 'document',
+  customFileName,
   onUploadSuccess,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -143,6 +145,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     try {
       const formData = new FormData();
       formData.append(fileFieldName, file);
+
+      // Add custom filename if provided
+      if (customFileName) {
+        formData.append('customFileName', customFileName);
+      }
 
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       const fullUrl = uploadEndpoint.startsWith('/')
@@ -243,7 +250,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
         {hasFile ? (
           <Card className="border-2 border-dashed border-green-300 bg-green-50">
-            <CardContent className="p-4">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">{getFileIcon(uploadedFile.type)}</div>
@@ -274,8 +281,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         ) : (
           <Card
             className={cn(
-              'border-2 border-dashed transition-colors cursor-pointer',
-              dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300',
+              'bg-secondary rounded-md transition-colors cursor-pointer',
+              dragActive ? 'bg-accent' : '',
               disabled && 'opacity-50 cursor-not-allowed'
             )}
             onDragEnter={handleDrag}
@@ -284,16 +291,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             onDrop={handleDrop}
             onClick={handleClick}
           >
-            <CardContent className="p-8">
-              <div className="flex flex-col items-center justify-center space-y-4">
+            <CardContent className="p-5">
+              <div className="flex flex-col items-center justify-center space-y-2">
                 {isUploading ? (
                   <>
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                     <p className="text-sm text-gray-600">Uploading...</p>
                   </>
                 ) : (
                   <>
-                    <Upload className="w-8 h-8 text-gray-400" />
+                    <Upload className="w-4 h-4 " />
                     <div className="text-center">
                       <p className="text-sm text-gray-600">{placeholder}</p>
                       <p className="text-xs text-gray-500 mt-1">
