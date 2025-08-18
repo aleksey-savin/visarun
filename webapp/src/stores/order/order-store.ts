@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 
-import { createTRPCReact } from '@trpc/react-query';
-import { httpBatchLink } from '@trpc/client';
-import type { AppRouter } from '@visarun/backend/src/router';
+import { trpcClient } from '@/lib/trpc';
 
 import type {
   User,
@@ -75,8 +73,16 @@ export interface StoreClient extends Partial<Client> {
       isGlobal: boolean;
     }[];
   };
-  documents?: ClientDocument[];
-  requirements?: ClientRequirement[];
+  documents?: (Omit<ClientDocument, 'reviewedAt' | 'uploadedAt' | 'expiresAt'> & {
+    reviewedAt: string | null;
+    uploadedAt: string;
+    expiresAt: string | null;
+  })[];
+  requirements?: (Omit<ClientRequirement, 'reviewedAt' | 'dateValue' | 'submittedAt'> & {
+    reviewedAt: string | null;
+    dateValue: string | null;
+    submittedAt: string | null;
+  })[];
   visaRequirements?: Requirement[];
   errors?: string[];
 }
@@ -119,20 +125,6 @@ export interface StoreVisaApplication extends Partial<VisaApplication> {
 export interface StoreOrderItem extends OrderItem {
   errors?: string[];
 }
-
-const trpc = createTRPCReact<AppRouter>();
-
-const trpcClient = trpc.createClient({
-  links: [
-    httpBatchLink({
-      url: `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/trpc`,
-      headers: () => {
-        const token = localStorage.getItem('visarun_access_token');
-        return token ? { authorization: `Bearer ${token}` } : {};
-      },
-    }),
-  ],
-});
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 type ActiveServicePuzzleSection = 'visa' | 'visarun';

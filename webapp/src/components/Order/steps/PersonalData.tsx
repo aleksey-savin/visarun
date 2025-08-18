@@ -32,7 +32,7 @@ const PersonalData = ({ client }: { client: StoreClient }) => {
       <UserContacts />
       {client.isPrimary && <ClientName client={client} />}
       <Separator />
-      <OtherRequirements requirements={otherVisaRequirements} />
+      <OtherRequirements client={client} requirements={otherVisaRequirements} />
       <Separator />
       <div className="flex flex-wrap justify-between align-center">
         <Comments />

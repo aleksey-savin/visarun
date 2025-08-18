@@ -14,7 +14,7 @@ const formSchema = z.object({
 });
 
 const ClientName = ({ client }: { client: StoreClient | undefined }) => {
-  const { setSaveStatus, clients, setClients, user, setUser } = useOrderStore();
+  const { order, setSaveStatus, clients, setClients, user, setUser } = useOrderStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -111,7 +111,9 @@ const ClientName = ({ client }: { client: StoreClient | undefined }) => {
 
   return (
     <div>
-      <Label className="text-sm mb-2">Full name</Label>
+      <Label className="text-sm mb-2">
+        Full name{order.status === 'draft' ? '' : <span className="text-red-500">*</span>}
+      </Label>
       <div className="flex gap-4">
         <Form {...form}>
           <FormField

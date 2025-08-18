@@ -59,13 +59,16 @@ export const createClientRequirementTrpcRoute = clientRequirementCreateProcedure
       throw new Error('Requirement not found');
     }
 
-    // Check if client requirement already exists for this requirement
-    const existingClientRequirement = await ctx.prisma.clientRequirement.findUnique({
-      where: { requirementId },
+    // Check if client requirement already exists for this client and requirement
+    const existingClientRequirement = await ctx.prisma.clientRequirement.findFirst({
+      where: {
+        clientId,
+        requirementId,
+      },
     });
 
     if (existingClientRequirement) {
-      throw new Error('Client requirement already exists for this requirement');
+      throw new Error('Client requirement already exists for this client and requirement');
     }
 
     // Create the client requirement

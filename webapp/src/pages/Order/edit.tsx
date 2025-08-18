@@ -134,6 +134,7 @@ const EditOrderPage = () => {
               : undefined,
             // Preserve existing visa requirements if they exist
             visaRequirements: existingClient?.visaRequirements || [],
+            requirements: client.requirements || [],
           };
         })
       );

@@ -36,7 +36,7 @@ const formSchema = z.object({
 });
 
 const PassportExpiry = ({ client }: { client: StoreClient }) => {
-  const { setSaveStatus, clients, setClients } = useOrderStore();
+  const { setSaveStatus, clients, setClients, order } = useOrderStore();
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -87,7 +87,10 @@ const PassportExpiry = ({ client }: { client: StoreClient }) => {
           name="passportExpirationDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Passport expiration date</FormLabel>
+              <FormLabel>
+                Passport expiration date
+                {order.status === 'draft' ? '' : <span className="text-red-500">*</span>}
+              </FormLabel>
               <FormControl>
                 <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                   <PopoverTrigger asChild>

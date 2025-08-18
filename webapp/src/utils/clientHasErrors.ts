@@ -103,8 +103,23 @@ export const clientHasPersonalDataErrors = (client: StoreClient, user?: StoreUse
     client.visaRequirements?.filter(req => req.inputType === 'boolean') || [];
 
   for (const req of booleanRequirements || []) {
-    if (req.thresholdBool === false) {
+    const existingClientRequirement = client.requirements?.find(
+      requirement => requirement.requirementId === req.id
+    );
+
+    if (
+      req.thresholdBool === false &&
+      existingClientRequirement &&
+      existingClientRequirement.booleanValue === true
+    ) {
       errors.add(`Switch ${req.title} must be unchecked to continue`);
+    }
+
+    if (
+      req.thresholdBool === true &&
+      (!existingClientRequirement || existingClientRequirement.booleanValue === false)
+    ) {
+      errors.add(`Switch ${req.title} must be checked to continue`);
     }
   }
 

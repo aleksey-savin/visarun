@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,17 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  FileText,
-  Calendar as CalendarIcon,
-  Type,
-  CheckCircle,
-  ToggleLeft,
-  Save,
-  Settings,
-} from 'lucide-react';
+import { FileText, Calendar as CalendarIcon, ToggleLeft, Save, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { getAllRequirementsRoute } from '@/lib/routes';
@@ -51,11 +45,13 @@ const formSchema = z
     title: z.string().min(1, 'Title is required').max(200),
     description: z.string().optional(),
     operator: z.string().optional(),
+    thresholdNumber: z.number().optional(),
     thresholdDate: z.date().optional(),
     thresholdText: z.string().optional(),
     thresholdBool: z.boolean().optional(),
     checkpointValue: z.string().optional(),
     appliesToAllCitizenships: z.boolean(),
+    isOptional: z.boolean(),
     sampleUrl: z.string().optional(),
     citizenshipIds: z.array(z.string().uuid()),
     visaTypeIds: z.array(z.string().uuid()),
@@ -102,6 +98,7 @@ interface RequirementFormProps {
     title: string;
     description?: string;
     appliesToAllCitizenships: boolean;
+    isOptional?: boolean;
     sampleUrl?: string;
     applicationScope?: 'specific' | 'country_all' | 'global';
     countryId?: string;
@@ -132,10 +129,10 @@ interface RequirementFormProps {
 
 const inputTypeOptions = [
   { value: 'document', label: 'Document', icon: FileText },
-  { value: 'date', label: 'Date', icon: CalendarIcon },
-  { value: 'text', label: 'Text', icon: Type },
+  // { value: 'date', label: 'Date', icon: CalendarIcon },
+  // { value: 'text', label: 'Text', icon: Type },
   { value: 'boolean', label: 'Boolean', icon: ToggleLeft },
-  { value: 'checkpoint', label: 'Checkpoint', icon: CheckCircle },
+  // { value: 'checkpoint', label: 'Checkpoint', icon: CheckCircle },
 ] as Array<{
   value: 'document' | 'date' | 'text' | 'boolean' | 'checkpoint';
   label: string;
@@ -182,11 +179,13 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
       title: '',
       description: '',
       operator: '',
+      thresholdNumber: undefined,
       thresholdDate: undefined,
       thresholdText: '',
       thresholdBool: undefined,
       checkpointValue: '',
       appliesToAllCitizenships: true,
+      isOptional: false,
       sampleUrl: '',
       citizenshipIds: [],
       visaTypeIds: [],
@@ -207,11 +206,14 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
       title: requirement.title,
       description: requirement.description || '',
       operator: requirement.operator || '',
+      thresholdNumber: requirement.thresholdNumber || undefined,
       thresholdDate: requirement.thresholdDate ? new Date(requirement.thresholdDate) : undefined,
       thresholdText: requirement.thresholdText || '',
-      thresholdBool: requirement.thresholdBool || undefined,
+      thresholdBool:
+        requirement.thresholdBool !== undefined ? requirement.thresholdBool : undefined,
       checkpointValue: requirement.checkpointValue || '',
       appliesToAllCitizenships: requirement.appliesToAllCitizenships,
+      isOptional: requirement.isOptional || false,
       sampleUrl: requirement.sampleUrl || '',
       citizenshipIds: roleIds,
       visaTypeIds: visaTypeIds,
@@ -239,6 +241,7 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
         title: values.title,
         description: values.description || undefined,
         appliesToAllCitizenships: values.appliesToAllCitizenships,
+        isOptional: values.isOptional,
         sampleUrl: values.sampleUrl || undefined,
       };
 
@@ -354,6 +357,25 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
                           />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Is Optional */}
+                  <FormField
+                    control={form.control}
+                    name="isOptional"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Optional Requirement</FormLabel>
+                          <FormDescription>
+                            Mark this requirement as optional for the application
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
                       </FormItem>
                     )}
                   />
@@ -525,7 +547,9 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
                               <FormLabel>Threshold Value</FormLabel>
                               <Select
                                 onValueChange={value => field.onChange(value === 'true')}
-                                value={field.value?.toString()}
+                                value={
+                                  field.value !== undefined ? field.value.toString() : undefined
+                                }
                               >
                                 <FormControl>
                                   <SelectTrigger>
