@@ -120,6 +120,7 @@ export const getAllRequirementsTrpcRoute = requirementReadProcedure
       select: {
         id: true,
         serviceType: true,
+        isOptional: true,
         inputType: true,
         operator: true,
         thresholdNumber: true,

@@ -10,9 +10,7 @@ import useOrderStore, { type StoreClient } from '@/stores/order/order-store';
 
 import VisaCard from './VisaCard';
 
-import { AlertTriangle, CircleAlert } from 'lucide-react';
-
-import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
+import { CircleAlert } from 'lucide-react';
 
 import { StoreVisaApplication } from '@/stores/order/order-store';
 
@@ -96,70 +94,50 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
     setSaveStatus('saved');
   };
 
-  const passportExpires = isPassportExpiringWithin6Months(
-    client.passportExpirationDate ? client.passportExpirationDate.toISOString() : ''
-  );
-
   return (
     <>
-      {passportExpires && (
-        <Card className="text-sm p-3 bg-secondary text-[#FAFAFA]">
-          <div className="flex gap-3 items-center">
-            <AlertTriangle className="text-destructive" />
-            <span>
-              {!client.citizenship?.id
-                ? 'Please select a citizenship to add services.'
-                : client.passportExpirationDate && passportExpires
-                  ? 'Passport expires within 6 months. Client should renew their passport before applying for services.'
-                  : 'Please set passport expiration date to add services.'}
-            </span>
-          </div>
-        </Card>
-      )}
-      {!passportExpires && (
-        <Card className="border-none p-4">
-          <div>Add Visa</div>
-          {clientOrderItems
-            ?.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-            .map((item, index) => <VisaCard item={item} key={index} />)}
-          <div className="flex justify-start gap-3">
-            {countries
-              .filter(
-                country => !clientVisaApplications.some(item => item.country?.id === country.id)
-              )
-              .map(country => {
-                const isBlacklisted = isCountryBlacklisted(country.id);
-                return (
-                  <div key={country.id}>
-                    {!isBlacklisted && (
-                      <Button
-                        size="sm"
-                        variant={'primary'}
-                        onClick={() => handleAddOrderItem(country.id)}
-                      >
-                        <Plus /> {country.name}
-                      </Button>
-                    )}
-                    {isBlacklisted && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="bg-secondary border-transparent hover:bg-secondary text-muted-foreground hover:text-muted-foreground"
-                          >
-                            <Plus /> {country.name} <CircleAlert />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Citizenship is blacklisted for this country</TooltipContent>
-                      </Tooltip>
-                    )}
-                  </div>
-                );
-              })}
-          </div>
-        </Card>
-      )}
+      <Card className="border-none p-4">
+        <div>Add Visa</div>
+        {clientOrderItems
+          ?.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+          .map((item, index) => <VisaCard item={item} key={index} />)}
+        <div className="flex justify-start gap-3">
+          {countries
+            .filter(
+              country => !clientVisaApplications.some(item => item.country?.id === country.id)
+            )
+            .map(country => {
+              const isBlacklisted = isCountryBlacklisted(country.id);
+              return (
+                <div key={country.id}>
+                  {!isBlacklisted && (
+                    <Button
+                      size="sm"
+                      variant={'primary'}
+                      onClick={() => handleAddOrderItem(country.id)}
+                    >
+                      <Plus /> {country.name}
+                    </Button>
+                  )}
+                  {isBlacklisted && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="bg-secondary border-transparent hover:bg-secondary text-muted-foreground hover:text-muted-foreground"
+                        >
+                          <Plus /> {country.name} <CircleAlert />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Citizenship is blacklisted for this country</TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              );
+            })}
+        </div>
+      </Card>
     </>
   );
 };

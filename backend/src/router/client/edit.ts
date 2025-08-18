@@ -6,6 +6,7 @@ export const zEditClientTrpcInput = z.object({
   firstName: z.string().max(100).optional(),
   lastName: z.string().max(100).optional(),
   citizenshipId: z.string().uuid().optional().nullable(),
+  preConfirmPassportIsValid: z.boolean().optional(),
   passportExpirationDate: z
     .string()
     .optional()

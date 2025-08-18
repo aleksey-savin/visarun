@@ -117,11 +117,6 @@ export const getAllClientDocumentsTrpcRoute = clientDocumentReadProcedure
             email: true,
           },
         },
-        _count: {
-          select: {
-            serviceRequirements: true,
-          },
-        },
       },
       take: limit,
       skip: offset,

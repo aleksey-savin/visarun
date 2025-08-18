@@ -1,46 +1,47 @@
-import { useState, useEffect } from 'react';
-
-import { trpc } from '@/lib/trpc';
-
 import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 
 import DocumentsUpload from '../DocumentsUpload';
+import ClientName from '../sections/ClientSection/ClientName';
+import UserContacts from '../sections/UserSection/UserContacts';
+import Comments from '../Comments';
+import OtherRequirements from '../OtherRequirements';
+import PassportExpiry from '../PassportExpiry';
+
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 
 const PersonalData = ({ client }: { client: StoreClient }) => {
-  const { visaApplications } = useOrderStore();
+  const { setActiveClientId } = useOrderStore();
 
-  const visaTypeIds = visaApplications.map(va => va.visaType?.id).filter(Boolean);
+  const visaRequirementsDocuments = client.visaRequirements
+    ? client.visaRequirements.filter((item: any) => item.inputType === 'document')
+    : [];
 
-  const [visaRequirements, setVisaRequirements] = useState<Set<any>>(new Set());
+  const otherVisaRequirements = client.visaRequirements
+    ? client.visaRequirements.filter((item: any) => item.inputType !== 'document')
+    : [];
 
-  const requirementQueries = visaTypeIds.map(visaTypeId =>
-    trpc.requirement.getByVisaType.useQuery({
-      visaTypeId: visaTypeId || '',
-      citizenshipId: client?.citizenship?.id,
-      includeGeneral: true,
-    })
+  const handleConfirm = () => {
+    setActiveClientId('');
+  };
+
+  return (
+    <>
+      <DocumentsUpload requirements={visaRequirementsDocuments} client={client} />
+      <PassportExpiry client={client} />
+      <UserContacts />
+      {client.isPrimary && <ClientName client={client} />}
+      <Separator />
+      <OtherRequirements requirements={otherVisaRequirements} />
+      <Separator />
+      <div className="flex flex-wrap justify-between align-center">
+        <Comments />
+        <Button type="button" onClick={handleConfirm}>
+          Save & close
+        </Button>
+      </div>
+    </>
   );
-
-  useEffect(() => {
-    // Check if all queries have data
-    const allData = requirementQueries.map(query => query.data?.requirements).filter(Boolean);
-
-    if (allData.length === visaTypeIds.length) {
-      // Flatten all requirements arrays and remove duplicates by ID
-      const allRequirements = allData.flat().filter((req): req is any => req !== undefined);
-      const uniqueRequirements = allRequirements.filter(
-        (requirement, index, array) => array.findIndex(r => r?.id === requirement?.id) === index
-      );
-
-      setVisaRequirements(new Set(uniqueRequirements));
-    }
-  }, [requirementQueries.map(q => q.data).join(',')]);
-
-  const visaRequirmentsDocuments = Array.from(visaRequirements).filter(
-    (item: any) => item.inputType === 'document'
-  );
-
-  return <DocumentsUpload requirements={visaRequirmentsDocuments} client={client} />;
 };
 
 export default PersonalData;

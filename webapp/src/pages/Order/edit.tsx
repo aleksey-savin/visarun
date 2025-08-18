@@ -15,9 +15,8 @@ import SummarySection from '@/components/Order/sections/SummarySection';
 import AddClientCard from '@/components/Order/AddClientCard';
 import OrderSummary from '@/components/Order/sections/SummarySection/OrderSummary';
 
-import { clientHasErrors } from '@/utils/clientHasErrors';
+import { clientHasServicePuzzleErrors, clientHasPersonalDataErrors } from '@/utils/clientHasErrors';
 
-import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
 import PersonalData from '@/components/Order/steps/PersonalData';
 
 // Define the restricted status types that can be used in step navigation
@@ -64,6 +63,7 @@ const EditOrderPage = () => {
     orderItems = [],
     clients,
     visaApplications = [],
+    user,
     setOrder,
     updateOrderStatus,
     setUser,
@@ -92,6 +92,8 @@ const EditOrderPage = () => {
         firstName: user.firstName,
         middleName: user.middleName,
         lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
         updatedAt: new Date(user.updatedAt),
       });
     }
@@ -101,30 +103,39 @@ const EditOrderPage = () => {
         setActiveClientId(orderData?.clients[0]?.id);
       }
 
+      const currentClients = useOrderStore.getState().clients;
       setClients(
-        orderData.clients.map(client => ({
-          ...client,
-          firstName: client.firstName ?? undefined,
-          lastName: client.lastName ?? undefined,
-          passportExpirationDate: client.passportExpirationDate
-            ? new Date(client.passportExpirationDate)
-            : undefined,
-          isOutsideTheCountryAt: client.isOutsideTheCountryAt
-            ? new Date(client.isOutsideTheCountryAt)
-            : undefined,
-          citizenship: client.citizenship
-            ? {
-                id: client.citizenship.id,
-                name: client.citizenship.name,
-                abbreviation: client.citizenship.abbreviation,
-                favourite: false,
-                emoji: '',
-                blacklisted: client.citizenship.blacklisted || [],
-                visaFree: client.citizenship.visaFree || [],
-                surcharges: client.citizenship.surcharges || [],
-              }
-            : undefined,
-        }))
+        orderData.clients.map(client => {
+          // Find existing client to preserve visa requirements
+          const existingClient = currentClients.find(c => c.id === client.id);
+
+          return {
+            ...client,
+            firstName: client.firstName ?? undefined,
+            lastName: client.lastName ?? undefined,
+            preConfirmPassportIsValid: client.preConfirmPassportIsValid ?? undefined,
+            passportExpirationDate: client.passportExpirationDate
+              ? new Date(client.passportExpirationDate)
+              : undefined,
+            isOutsideTheCountryAt: client.isOutsideTheCountryAt
+              ? new Date(client.isOutsideTheCountryAt)
+              : undefined,
+            citizenship: client.citizenship
+              ? {
+                  id: client.citizenship.id,
+                  name: client.citizenship.name,
+                  abbreviation: client.citizenship.abbreviation,
+                  favourite: false,
+                  emoji: '',
+                  blacklisted: client.citizenship.blacklisted || [],
+                  visaFree: client.citizenship.visaFree || [],
+                  surcharges: client.citizenship.surcharges || [],
+                }
+              : undefined,
+            // Preserve existing visa requirements if they exist
+            visaRequirements: existingClient?.visaRequirements || [],
+          };
+        })
       );
     }
 
@@ -226,10 +237,24 @@ const EditOrderPage = () => {
     setActiveClientId,
   ]);
 
-  const clientsHaveErrors =
-    clients.filter(
-      client => Array.from(clientHasErrors(client, orderItems, visaApplications) || []).length > 0
-    ).length > 0;
+  const clientsHaveServicePuzzleErrors = useMemo(
+    () =>
+      clients.filter(
+        client =>
+          Array.from(clientHasServicePuzzleErrors(client, orderItems, visaApplications, user) || [])
+            .length > 0
+      ).length > 0,
+    [clients, orderItems, visaApplications, user]
+  );
+
+  const clientsHavePersonalDataErrors = useMemo(() => {
+    return (
+      clients.filter(client => {
+        const errors = Array.from(clientHasPersonalDataErrors(client, user) || []);
+        return errors.length > 0;
+      }).length > 0
+    );
+  }, [clients, user]);
 
   const servicePuzzleIsActive: boolean = useMemo(() => {
     // Basic requirements
@@ -241,21 +266,14 @@ const EditOrderPage = () => {
     if (activeClientId) {
       // If there's an active client, check if that specific client has required data
       const activeClient = clients.find(c => c.id === activeClientId);
-      if (
-        isPassportExpiringWithin6Months(
-          activeClient?.passportExpirationDate
-            ? activeClient?.passportExpirationDate.toISOString()
-            : ''
-        )
-      )
-        return false;
-      return !!(activeClient?.citizenship?.id && activeClient?.passportExpirationDate);
+
+      return !!(activeClient?.citizenship?.id && activeClient?.preConfirmPassportIsValid);
     }
 
     // Otherwise, check for any primary client with required data
     return !!(
       clients?.find(c => c.isPrimary)?.citizenship?.id &&
-      clients?.find(c => c.isPrimary)?.passportExpirationDate
+      clients?.find(c => c.isPrimary)?.preConfirmPassportIsValid
     );
   }, [contactMethods, clients, activeClientId]);
 
@@ -264,18 +282,23 @@ const EditOrderPage = () => {
       {
         name: 'Service Puzzle',
         status: 'draft',
-        canProceed: !clientsHaveErrors,
-        isCompleted: !clientsHaveErrors,
+        canProceed: !clientsHaveServicePuzzleErrors,
+        isCompleted: order.status !== 'draft',
       },
       {
         name: 'Personal Data',
         status: 'personal_data_verification',
-        canProceed: false,
-        isCompleted: false,
+        canProceed: !clientsHavePersonalDataErrors,
+        isCompleted: !['draft', 'personal_data_verification'].includes(order.status),
       },
-      { name: 'Payment', status: 'payment_pending', canProceed: false, isCompleted: false },
+      {
+        name: 'Payment',
+        status: 'payment_pending',
+        canProceed: !clientsHaveServicePuzzleErrors && false,
+        isCompleted: !['draft', 'personal_data_verification', 'payment'].includes(order.status),
+      },
     ],
-    [clientsHaveErrors]
+    [clientsHaveServicePuzzleErrors, clientsHavePersonalDataErrors, order.status]
   );
 
   const [activeStep, setActiveStep] = useState(order.status === 'draft' ? steps[0] : steps[1]);
@@ -452,8 +475,8 @@ const EditOrderPage = () => {
             <SummarySection />
             <OrderSummary />
             <Button
-              variant={!clientsHaveErrors && activeClientId === '' ? 'default' : 'secondary'}
-              disabled={!clientsHaveErrors && activeClientId === '' ? false : true}
+              variant={activeStep.canProceed && activeClientId === '' ? 'default' : 'secondary'}
+              disabled={activeStep.canProceed && activeClientId === '' ? false : true}
               onClick={handleNext}
               className="flex border-none w-full items-center justify-between text-sm"
             >

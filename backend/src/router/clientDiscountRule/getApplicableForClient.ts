@@ -27,7 +27,7 @@ export const getApplicableClientDiscountRulesTrpcRoute = clientDiscountRuleReadP
       where: {
         clientId: input.clientId,
         order: {
-          status: 'paid',
+          status: 'completed',
         },
       },
     });

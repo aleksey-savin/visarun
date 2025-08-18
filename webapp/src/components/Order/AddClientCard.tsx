@@ -31,6 +31,7 @@ const AddClientCard = () => {
         id: newClientData.client.id,
         userId: newClientData.client.userId,
         isPrimary: false,
+        preConfirmPassportIsValid: false,
       },
     ]);
     setActiveClientId(newClientData.client.id);

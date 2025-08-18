@@ -63,7 +63,6 @@ import ViewAuditLogPage from './pages/AuditLogs/view.js';
 
 // Order pages
 import AllOrdersPage from './pages/Order/index.js';
-import CreateOrderPage from './pages/Order/create.js';
 import EditOrderPage from './pages/Order/edit.js';
 import ViewOrderPage from './pages/Order/view.js';
 
@@ -136,7 +135,6 @@ import {
   viewAuditLogRouteParams,
   // Order routes
   getAllOrdersRoute,
-  getCreateOrderRoute,
   getEditOrderRoute,
   getViewOrderRoute,
   editOrderRouteParams,
@@ -532,7 +530,6 @@ const App = () => {
                     </PermissionRoute>
                   }
                 />
-                <Route path={getCreateOrderRoute()} element={<CreateOrderPage />} />
                 <Route path={getEditOrderRoute(editOrderRouteParams)} element={<EditOrderPage />} />
               </Route>
 

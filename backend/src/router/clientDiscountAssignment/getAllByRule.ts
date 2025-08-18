@@ -110,7 +110,7 @@ export const getAllClientDiscountAssignmentsByRuleTrpcRoute = clientDiscountAssi
           where: {
             clientId: assignment.clientId,
             order: {
-              status: 'paid',
+              status: 'completed',
             },
           },
         });

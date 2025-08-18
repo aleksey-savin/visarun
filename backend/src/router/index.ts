@@ -32,7 +32,7 @@ import { messageTemplateRoute } from './messageTemplate/index.js';
 import { requirementRoutes } from './requirement/index.js';
 import { requirementDocumentRoutes } from './requirementDocument/index.js';
 import { clientDocumentRoutes } from './clientDocument/index.js';
-import { serviceRequirementRoutes } from './serviceRequirement/index.js';
+import { clientRequirementRoutes } from './clientRequirement/index.js';
 import { auditRoutes } from './audit/index.js';
 
 // Create the main router with all routes
@@ -61,7 +61,7 @@ export const appRouter = trpc.router({
   requirement: requirementRoutes,
   requirementDocument: requirementDocumentRoutes,
   clientDocument: clientDocumentRoutes,
-  serviceRequirement: serviceRequirementRoutes,
+  clientRequirement: clientRequirementRoutes,
   audit: auditRoutes,
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,

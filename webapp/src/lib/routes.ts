@@ -122,6 +122,18 @@ export const viewAuditLogRouteParams = getRouteParams({ id: true });
 export type ViewAuditLogRouteParams = typeof viewAuditLogRouteParams;
 export const getViewAuditLogRoute = ({ id }: ViewAuditLogRouteParams) => `/audit-logs/view/${id}`;
 
+// Client Requirements routes
+export const getAllClientRequirementsRoute = () => '/client-requirements';
+export const getCreateClientRequirementRoute = () => '/client-requirements/create';
+export const editClientRequirementRouteParams = getRouteParams({ id: true });
+export type EditClientRequirementRouteParams = typeof editClientRequirementRouteParams;
+export const getEditClientRequirementRoute = ({ id }: EditClientRequirementRouteParams) =>
+  `/client-requirements/edit/${id}`;
+export const viewClientRequirementRouteParams = getRouteParams({ id: true });
+export type ViewClientRequirementRouteParams = typeof viewClientRequirementRouteParams;
+export const getViewClientRequirementRoute = ({ id }: ViewClientRequirementRouteParams) =>
+  `/client-requirements/view/${id}`;
+
 // Order routes
 export const getAllOrdersRoute = () => '/orders';
 export const getCreateOrderRoute = () => '/order/create';

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const zUpdateVisaApplicationStatusTrpcInput = z.object({
   id: z.string().uuid(),
-  status: z.enum(['pending', 'submitted', 'approved', 'used', 'cancelled', 'denied']),
+  status: z.enum(['pending', 'approved', 'cancelled', 'denied']),
   statusNote: z.string().optional(),
   revisedActivationDate: z.date().optional(),
 });

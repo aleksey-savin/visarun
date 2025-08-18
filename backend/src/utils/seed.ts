@@ -133,28 +133,6 @@ async function main() {
       category: 'requirementDocuments',
     },
 
-    // Service requirements management
-    {
-      code: 'serviceRequirements.create',
-      description: 'Create service requirements',
-      category: 'serviceRequirements',
-    },
-    {
-      code: 'serviceRequirements.read',
-      description: 'View service requirements',
-      category: 'serviceRequirements',
-    },
-    {
-      code: 'serviceRequirements.update',
-      description: 'Edit service requirements',
-      category: 'serviceRequirements',
-    },
-    {
-      code: 'serviceRequirements.delete',
-      description: 'Delete service requirements',
-      category: 'serviceRequirements',
-    },
-
     // Audit management
     {
       code: 'audit.manage',
@@ -238,6 +216,28 @@ async function main() {
       code: 'clientDocuments.delete',
       description: 'Delete client documents',
       category: 'clientDocuments',
+    },
+
+    // Client requirements management
+    {
+      code: 'clientRequirements.create',
+      description: 'Create client requirements',
+      category: 'clientRequirements',
+    },
+    {
+      code: 'clientRequirements.read',
+      description: 'View client requirements',
+      category: 'clientRequirements',
+    },
+    {
+      code: 'clientRequirements.update',
+      description: 'Edit client requirements',
+      category: 'clientRequirements',
+    },
+    {
+      code: 'clientRequirements.delete',
+      description: 'Delete client requirements',
+      category: 'clientRequirements',
     },
 
     // Client visas management

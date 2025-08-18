@@ -7,7 +7,7 @@ import { Crown, User, AlertTriangle } from 'lucide-react';
 
 import useOrderStore from '@/stores/order/order-store';
 
-import { clientHasErrors } from '@/utils/clientHasErrors';
+import { clientHasServicePuzzleErrors } from '@/utils/clientHasErrors';
 
 const ClientBadge = ({
   client,
@@ -16,9 +16,9 @@ const ClientBadge = ({
   client: StoreClient;
   showLinkedClients: boolean;
 }) => {
-  const { activeClientId, orderItems, visaApplications, clients } = useOrderStore();
+  const { activeClientId, orderItems, visaApplications, clients, user } = useOrderStore();
 
-  const clientErrors = clientHasErrors(client, orderItems, visaApplications);
+  const clientErrors = clientHasServicePuzzleErrors(client, orderItems, visaApplications, user);
 
   const clientIsIncluded = clients.filter(c => c.id === client.id).length > 0;
 

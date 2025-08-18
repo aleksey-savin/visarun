@@ -19,11 +19,7 @@ export const deleteClientDocumentTrpcRoute = clientDocumentDeleteProcedure
     // Check if client document exists
     const existingDocument = await ctx.prisma.clientDocument.findUnique({
       where: { id },
-      select: {
-        id: true,
-        fileName: true,
-        originalName: true,
-        fileUrl: true,
+      include: {
         client: {
           select: {
             id: true,
@@ -37,21 +33,11 @@ export const deleteClientDocumentTrpcRoute = clientDocumentDeleteProcedure
             title: true,
           },
         },
-        _count: {
-          select: {
-            serviceRequirements: true,
-          },
-        },
       },
     });
 
     if (!existingDocument) {
       throw new Error('Client document not found');
-    }
-
-    // Check if document is being used in any service requirements
-    if (existingDocument._count.serviceRequirements > 0) {
-      throw new Error('Cannot delete document that is being used in service requirements');
     }
 
     // Delete the physical file from filesystem

@@ -18,6 +18,7 @@ export const getOrderTrpcRoute = orderReadProcedure
             middleName: true,
             lastName: true,
             email: true,
+            phoneNumber: true,
             updatedAt: true,
             contactMethods: {
               select: {
@@ -47,6 +48,7 @@ export const getOrderTrpcRoute = orderReadProcedure
                 id: true,
                 userId: true,
                 isPrimary: true,
+                preConfirmPassportIsValid: true,
                 passportExpirationDate: true,
                 prevViolations: true,
                 prevViolationsDesc: true,

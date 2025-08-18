@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { trpc } from '@/lib/trpc';
-import type { StoreClient } from '@/stores/order/order-store';
+import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 import { FileUpload } from '@/components/ui/file-upload';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,19 +30,55 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
   const [viewingDocument, setViewingDocument] = useState<any>(null);
   const replaceInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
+  const { setClients } = useOrderStore();
+
   // Get existing client documents
   const { data: existingDocuments, refetch: refetchDocuments } =
     trpc.clientDocument.getAll.useQuery({
       clientId: client.id,
     });
 
-  // Debug logging
-  console.log('Existing documents response:', existingDocuments);
+  // Helper function to transform document response to store format
+  const transformDocumentForStore = useCallback(
+    (docResponse: any) => ({
+      id: docResponse.id,
+      clientId: docResponse.clientId,
+      requirementId: docResponse.requirementId,
+      fileName: docResponse.fileName,
+      originalName: docResponse.originalName,
+      fileUrl: docResponse.fileUrl,
+      fileType: docResponse.fileType,
+      fileSize: docResponse.fileSize,
+      uploadedAt: docResponse.uploadedAt,
+      uploadedById: docResponse.uploadedById,
+      isValid: docResponse.isValid,
+      expiresAt: docResponse.expiresAt,
+      tags: docResponse.tags,
+      comment: docResponse.comment,
+      reviewedAt: docResponse.reviewedAt || null,
+      reviewedById: docResponse.reviewedById || null,
+    }),
+    []
+  );
 
   // Create client document mutation
   const createDocumentMutation = trpc.clientDocument.create.useMutation({
-    onSuccess: () => {
-      refetchDocuments();
+    onSuccess: async () => {
+      // Refetch documents data
+      const updatedData = await refetchDocuments();
+
+      // Update order store with new documents
+      if (updatedData.data?.clientDocuments) {
+        const transformedDocuments =
+          updatedData.data.clientDocuments.map(transformDocumentForStore);
+        const currentClients = useOrderStore.getState().clients;
+        setClients(
+          currentClients.map(c =>
+            c.id === client.id ? { ...c, documents: transformedDocuments } : c
+          )
+        );
+      }
+
       toast.success('Document uploaded successfully');
     },
     onError: error => {
@@ -55,8 +91,22 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
 
   // Delete document mutation
   const deleteDocumentMutation = trpc.clientDocument.delete.useMutation({
-    onSuccess: () => {
-      refetchDocuments();
+    onSuccess: async () => {
+      // Refetch documents data
+      const updatedData = await refetchDocuments();
+
+      // Update order store with updated documents
+      if (updatedData.data?.clientDocuments) {
+        const transformedDocuments =
+          updatedData.data.clientDocuments.map(transformDocumentForStore);
+        const currentClients = useOrderStore.getState().clients;
+        setClients(
+          currentClients.map(c =>
+            c.id === client.id ? { ...c, documents: transformedDocuments } : c
+          )
+        );
+      }
+
       toast.success('Document deleted successfully');
     },
     onError: error => {
@@ -119,7 +169,6 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
     const doc = existingDocuments?.clientDocuments?.find(
       doc => doc.requirementId === requirementId
     );
-    console.log(`Getting existing document for requirement ${requirementId}:`, doc);
     return doc;
   };
 
@@ -134,9 +183,6 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
   };
 
   const handleViewDocument = (document: any) => {
-    console.log('Opening document for view:', document);
-    console.log('Document fileUrl:', document.fileUrl);
-    console.log('Full URL will be:', getFullFileUrl(document.fileUrl));
     setViewingDocument(document);
     setViewModalOpen(true);
   };
@@ -234,8 +280,16 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
     }
   };
 
-  // Filter requirements that need file uploads (document type)
-  const fileUploadRequirements = requirements.filter(req => req.inputType === 'document');
+  // Filter and sort requirements that need file uploads (document type)
+  // Sort so required fields (isOptional = false) come first, then optional fields
+  const fileUploadRequirements = requirements
+    .filter(req => req.inputType === 'document')
+    .sort((a, b) => {
+      // Required fields (isOptional = false) come first
+      if (a.isOptional === false && b.isOptional === true) return -1;
+      if (a.isOptional === true && b.isOptional === false) return 1;
+      return 0;
+    });
 
   if (fileUploadRequirements.length === 0) {
     return (
@@ -268,7 +322,10 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
 
           return (
             <div key={requirement.id} className="grid gap-2 items-start">
-              <span>{requirement.title}</span>
+              <span>
+                {requirement.title}
+                {!requirement.isOptional && <span className="text-red-500 ml-1">*</span>}
+              </span>
               {hasDocument ? (
                 <Card className="bg-secondary p-3 rounded-md">
                   {/* Show existing document */}

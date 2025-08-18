@@ -8,7 +8,7 @@ export const zGetAllVisaApplicationsTrpcInput = z.object({
   orderItemId: z.string().uuid().optional(),
   countryId: z.string().uuid().optional(),
   visaTypeId: z.string().uuid().optional(),
-  status: z.enum(['pending', 'submitted', 'approved', 'used', 'cancelled', 'denied']).optional(),
+  status: z.enum(['pending', 'approved', 'cancelled', 'denied']).optional(),
   submittedByAgent: z.boolean().optional(),
   search: z.string().optional(),
 });

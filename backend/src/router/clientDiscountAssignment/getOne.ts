@@ -73,7 +73,7 @@ export const getClientDiscountAssignmentTrpcRoute = clientDiscountAssignmentRead
       where: {
         clientId: clientDiscountAssignment.clientId,
         order: {
-          status: 'paid',
+          status: 'completed',
         },
       },
     });

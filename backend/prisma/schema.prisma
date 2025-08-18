@@ -26,7 +26,6 @@ enum OrderStatus {
   personal_data_verification
   payment_pending
   submitted
-  paid
   completed
   cancelled
 }
@@ -54,9 +53,7 @@ enum AppliesToService {
 
 enum VisaApplicationStatus {
   pending
-  submitted
   approved
-  used
   cancelled
   denied
 }
@@ -175,6 +172,7 @@ model UserRoleAssignment {
 model User {
   id                       String                     @id @default(uuid())
   email                    String?                    @unique
+  phoneNumber              String?                    @unique
   firstName                String
   middleName               String?
   lastName                 String
@@ -195,29 +193,32 @@ model User {
   roleAssignments          UserRoleAssignment[]
   RequirementDocument      RequirementDocument[]
   ClientDocument           ClientDocument[]
-  ServiceRequirement       ServiceRequirement[]
+  reviewedDocuments        ClientDocument[]           @relation("ReviewedDocuments")
   AuditLog                 AuditLog[]
+  ClientRequirement        ClientRequirement[]
 }
 
 model Client {
-  id                       String                     @id @default(uuid())
-  userId                   String?
-  isPrimary                Boolean                    @default(false)
-  citizenshipId            String?
-  passportExpirationDate   DateTime?
-  prevViolations           Boolean                    @default(false)
-  prevViolationsDesc       String?
-  isOutsideTheCountry      Boolean                    @default(false)
-  isOutsideTheCountryAt    DateTime?
-  firstName                String?
-  lastName                 String?
-  citizenship              Citizenship?               @relation(fields: [citizenshipId], references: [id])
-  user                     User?                      @relation(fields: [userId], references: [id])
-  ClientDiscountAssignment ClientDiscountAssignment[]
-  ClientVisa               ClientVisa[]
-  OrderItem                OrderItem[]
-  documents                ClientDocument[]
-  clients                  OrderClient[]
+  id                        String                     @id @default(uuid())
+  userId                    String?
+  isPrimary                 Boolean                    @default(false)
+  citizenshipId             String?
+  preConfirmPassportIsValid Boolean                    @default(false)
+  passportExpirationDate    DateTime?
+  prevViolations            Boolean                    @default(false)
+  prevViolationsDesc        String?
+  isOutsideTheCountry       Boolean                    @default(false)
+  isOutsideTheCountryAt     DateTime?
+  firstName                 String?
+  lastName                  String?
+  citizenship               Citizenship?               @relation(fields: [citizenshipId], references: [id])
+  user                      User?                      @relation(fields: [userId], references: [id])
+  ClientDiscountAssignment  ClientDiscountAssignment[]
+  ClientVisa                ClientVisa[]
+  OrderItem                 OrderItem[]
+  documents                 ClientDocument[]
+  clients                   OrderClient[]
+  ClientRequirement         ClientRequirement[]
 
   @@index([userId])
   @@index([citizenshipId])
@@ -513,6 +514,7 @@ model ClientVisa {
 model Requirement {
   id                       String               @id @default(uuid())
   serviceType              ServiceType
+  isOptional               Boolean              @default(false)
   inputType                RequirementInputType
   operator                 RequirementOperator?
   thresholdNumber          Float?
@@ -530,10 +532,10 @@ model Requirement {
   applicationScope RequirementApplicationScope @default(specific)
   countryId        String?
 
-  citizenships        RequirementCitizenship[]
-  documents           RequirementDocument[]
-  serviceRequirements ServiceRequirement[]
-  clientDocuments     ClientDocument[]
+  citizenships       RequirementCitizenship[]
+  documents          RequirementDocument[]
+  clientRequirements ClientRequirement[]
+  clientDocuments    ClientDocument[]
 
   visaTypeLinks RequirementVisaType[]
   routeLinks    RequirementVisarunRoute[]
@@ -605,44 +607,42 @@ model ClientDocument {
   fileUrl       String
   fileType      String
   fileSize      Int
+  reviewedAt    DateTime?
   uploadedAt    DateTime  @default(now())
   uploadedById  String
+  reviewedById  String?
   isValid       Boolean   @default(true)
   expiresAt     DateTime?
   tags          String[]
   comment       String?
 
-  client              Client               @relation(fields: [clientId], references: [id])
-  requirement         Requirement?         @relation(fields: [requirementId], references: [id])
-  uploadedBy          User                 @relation(fields: [uploadedById], references: [id])
-  serviceRequirements ServiceRequirement[]
+  client      Client       @relation(fields: [clientId], references: [id])
+  requirement Requirement? @relation(fields: [requirementId], references: [id])
+  uploadedBy  User         @relation(fields: [uploadedById], references: [id])
+  reviewedBy  User?        @relation("ReviewedDocuments", fields: [reviewedById], references: [id])
 
   @@index([clientId])
   @@index([requirementId])
 }
 
-model ServiceRequirement {
-  id              String            @id @default(uuid())
+model ClientRequirement {
+  id              String    @id @default(uuid())
+  clientId        String
   requirementId   String
-  serviceType     ServiceEntityType
-  serviceId       String
-  status          RequirementStatus @default(pending)
   textValue       String?
   dateValue       DateTime?
   booleanValue    Boolean?
   checkpointValue String?
-  documentId      String?
   submittedAt     DateTime?
   reviewedAt      DateTime?
   reviewedById    String?
   comment         String?
 
-  requirement Requirement     @relation(fields: [requirementId], references: [id])
-  document    ClientDocument? @relation(fields: [documentId], references: [id])
-  reviewedBy  User?           @relation(fields: [reviewedById], references: [id])
+  client      Client      @relation(fields: [clientId], references: [id])
+  requirement Requirement @relation(fields: [requirementId], references: [id])
+  reviewedBy  User?       @relation(fields: [reviewedById], references: [id])
 
-  @@unique([serviceType, serviceId, requirementId])
-  @@index([serviceType, serviceId])
+  @@unique([requirementId])
   @@index([requirementId])
 }
 

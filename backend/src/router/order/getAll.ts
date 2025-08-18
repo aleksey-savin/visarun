@@ -18,7 +18,7 @@ export const zGetAllOrdersTrpcInput = z.object({
       'draft',
       'personal_data_verification',
       'payment_pending',
-      'paid',
+      'submitted',
       'completed',
       'cancelled',
     ])

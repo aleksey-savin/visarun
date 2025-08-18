@@ -32,7 +32,7 @@ export const deleteVisaApplicationTrpcRoute = visaApplicationDeleteProcedure
     }
 
     // Check if application is in a state that allows deletion
-    const nonDeletableStatuses = ['approved', 'used'];
+    const nonDeletableStatuses = ['approved'];
     if (nonDeletableStatuses.includes(existingApplication.status)) {
       throw new Error(`Cannot delete visa application with status: ${existingApplication.status}`);
     }

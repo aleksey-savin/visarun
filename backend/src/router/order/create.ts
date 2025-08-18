@@ -4,7 +4,17 @@ import { z } from 'zod';
 export const zCreateOrderTrpcInput = z.object({
   userId: z.string().uuid(),
   clients: z.array(z.string().uuid()).optional().default([]),
-  status: z.enum(['draft', 'submitted', 'paid', 'cancelled']).optional().default('draft'),
+  status: z
+    .enum([
+      'draft',
+      'personal_data_verification',
+      'payment_pending',
+      'submitted',
+      'completed',
+      'cancelled',
+    ])
+    .optional()
+    .default('draft'),
 });
 
 export const createOrderTrpcRoute = orderCreateProcedure

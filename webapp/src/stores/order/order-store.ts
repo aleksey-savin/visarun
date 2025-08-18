@@ -14,6 +14,9 @@ import type {
   Citizenship,
   VisaApplicationStatus,
   OrderStatus,
+  ClientDocument,
+  Requirement,
+  ClientRequirement,
 } from '@visarun/backend/node_modules/@prisma/client';
 
 export interface StoreUser extends Partial<User> {
@@ -22,6 +25,7 @@ export interface StoreUser extends Partial<User> {
   lastName?: string;
   middleName?: string | null;
   email?: string | null;
+  phoneNumber?: string | null;
   updatedAt: Date;
 }
 
@@ -44,6 +48,7 @@ export interface StoreClient extends Partial<Client> {
   id: string;
   userId: string | null;
   isPrimary: boolean;
+  preConfirmPassportIsValid: boolean;
   passportExpirationDate?: Date;
   prevViolations?: boolean;
   prevViolationsDesc?: string | null;
@@ -70,7 +75,10 @@ export interface StoreClient extends Partial<Client> {
       isGlobal: boolean;
     }[];
   };
-  errors?: Set<string>;
+  documents?: ClientDocument[];
+  requirements?: ClientRequirement[];
+  visaRequirements?: Requirement[];
+  errors?: string[];
 }
 
 export interface StoreVisaApplication extends Partial<VisaApplication> {

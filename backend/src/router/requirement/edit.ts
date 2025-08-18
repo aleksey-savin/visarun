@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const zEditRequirementTrpcInput = z.object({
   id: z.string().uuid(),
   serviceType: z.enum(['visa', 'visarun']).optional(),
+  isOptional: z.boolean().optional(),
   inputType: z.enum(['document', 'checkpoint', 'date', 'text', 'boolean']).optional(),
   operator: z.enum(['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'contains']).optional(),
   thresholdNumber: z.number().optional(),
@@ -29,6 +30,7 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
     const {
       id,
       serviceType,
+      isOptional,
       inputType,
       operator,
       thresholdNumber,
@@ -156,6 +158,7 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
     // Prepare update data
     const updateData: {
       serviceType?: 'visa' | 'visarun';
+      isOptional?: boolean;
       inputType?: 'document' | 'checkpoint' | 'date' | 'text' | 'boolean';
       operator?: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains';
       thresholdNumber?: number;
@@ -172,6 +175,7 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
     } = {};
 
     if (serviceType !== undefined) updateData.serviceType = serviceType;
+    if (isOptional !== undefined) updateData.isOptional = isOptional;
     if (inputType !== undefined) updateData.inputType = inputType;
     if (operator !== undefined) updateData.operator = operator;
     if (thresholdNumber !== undefined) updateData.thresholdNumber = thresholdNumber;
@@ -252,6 +256,7 @@ export const editRequirementTrpcRoute = requirementUpdateProcedure
         select: {
           id: true,
           serviceType: true,
+          isOptional: true,
           inputType: true,
           operator: true,
           thresholdNumber: true,

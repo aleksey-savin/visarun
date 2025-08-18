@@ -274,6 +274,20 @@ export const serviceRequirementDeleteProcedure = baseProcedure.use(
   requirePermission('serviceRequirements.delete')
 );
 
+// ClientRequirement management procedures
+export const clientRequirementCreateProcedure = baseProcedure.use(
+  requirePermission('clientRequirements.create')
+);
+export const clientRequirementReadProcedure = baseProcedure.use(
+  requirePermission('clientRequirements.read')
+);
+export const clientRequirementUpdateProcedure = baseProcedure.use(
+  requirePermission('clientRequirements.update')
+);
+export const clientRequirementDeleteProcedure = baseProcedure.use(
+  requirePermission('clientRequirements.delete')
+);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

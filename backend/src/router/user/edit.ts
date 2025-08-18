@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client';
 export const zEditUserTrpcInput = z.object({
   id: z.string().uuid(),
   email: z.string().email().optional(),
+  phoneNumber: z.string().max(20).optional(),
   firstName: z.string().max(100).optional(),
   lastName: z.string().max(100).optional(),
   middleName: z.string().max(100).optional(),
@@ -51,6 +52,7 @@ export const editUserTrpcRoute = userUpdateProcedure
     const updateData: Prisma.UserUpdateInput = {};
 
     if (input.email) updateData.email = input.email;
+    if (input.phoneNumber !== undefined) updateData.phoneNumber = input.phoneNumber;
     if (input.firstName !== undefined) updateData.firstName = input.firstName;
     if (input.lastName !== undefined) updateData.lastName = input.lastName;
     if (input.middleName !== undefined) updateData.middleName = input.middleName;

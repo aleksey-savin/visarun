@@ -42,7 +42,7 @@ type OrderStatus =
   | 'draft'
   | 'personal_data_verification'
   | 'payment_pending'
-  | 'paid'
+  | 'submitted'
   | 'completed'
   | 'cancelled';
 

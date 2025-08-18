@@ -1,14 +1,5 @@
-import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
-
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-
-import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
+import { Switch } from '@/components/ui/switch';
 
 import {
   Form,
@@ -27,21 +18,16 @@ import useOrderStore from '@/stores/order/order-store.js';
 
 import { StoreClient } from '@/stores/order/order-store';
 import CitizenshipSelect from '../../../Citizenship/CitizenshipSelect';
-import { Badge } from '@/components/ui/badge';
 
 const formSchema = z.object({
   lastName: z.string(),
   firstName: z.string(),
   citizenshipId: z.string(),
-  passportExpirationDate: z.date().min(new Date(), {
-    message: 'Passport expiration date must be not less than 6 months from now.',
-  }),
+  preConfirmPassportIsValid: z.boolean(),
 });
 
 const ClientData = ({ client }: { client: StoreClient }) => {
   const { setSaveStatus, clients, setClients } = useOrderStore();
-
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,9 +35,7 @@ const ClientData = ({ client }: { client: StoreClient }) => {
       lastName: client?.lastName || '',
       firstName: client?.firstName || '',
       citizenshipId: client?.citizenship?.id || '',
-      passportExpirationDate: client?.passportExpirationDate
-        ? new Date(client.passportExpirationDate)
-        : undefined,
+      preConfirmPassportIsValid: client?.preConfirmPassportIsValid || false,
     },
   });
 
@@ -63,7 +47,6 @@ const ClientData = ({ client }: { client: StoreClient }) => {
     const { client: updatedClient } = await editClientMutation.mutateAsync({
       id: client.id,
       citizenshipId,
-      passportExpirationDate: client.passportExpirationDate?.toISOString() || null,
     });
 
     setClients(
@@ -87,19 +70,19 @@ const ClientData = ({ client }: { client: StoreClient }) => {
     setSaveStatus('saved');
   };
 
-  const handlePassportDateUpdate = async (date: Date) => {
+  const handlePassportValidUpdate = async (isValid: boolean) => {
     setSaveStatus('saving');
 
-    setClients(clients.map(c => (c.id === client.id ? { ...c, passportExpirationDate: date } : c)));
+    setClients(
+      clients.map(c => (c.id === client.id ? { ...c, preConfirmPassportIsValid: isValid } : c))
+    );
 
-    form.setValue('passportExpirationDate', date);
-
-    setIsCalendarOpen(false);
+    form.setValue('preConfirmPassportIsValid', isValid);
 
     try {
       await editClientMutation.mutateAsync({
         id: client.id,
-        passportExpirationDate: date.toISOString(),
+        preConfirmPassportIsValid: isValid,
       });
       setSaveStatus('saved');
     } catch {
@@ -107,16 +90,8 @@ const ClientData = ({ client }: { client: StoreClient }) => {
     }
   };
 
-  const passportExpires = client.passportExpirationDate
-    ? isPassportExpiringWithin6Months(
-        client.passportExpirationDate instanceof Date
-          ? client.passportExpirationDate.toISOString()
-          : client.passportExpirationDate
-      )
-    : false;
-
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-col flex-wrap justify-start gap-6">
       <Form {...form}>
         <FormField
           control={form.control}
@@ -131,52 +106,15 @@ const ClientData = ({ client }: { client: StoreClient }) => {
         />
         <FormField
           control={form.control}
-          name="passportExpirationDate"
+          name="preConfirmPassportIsValid"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Passport expiration date</FormLabel>
-              <FormControl>
-                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="secondary"
-                        className={cn(
-                          'min-w-52 justify-between',
-                          !field.value && 'text-muted-foreground'
-                        )}
-                      >
-                        {field.value ? format(field.value, 'PPP') : <span>Select date</span>}
-                        <CalendarIcon />
-                      </Button>
-                      {passportExpires && (
-                        <Badge variant="destructive" className="max-h-[20px]">
-                          Passport expires in less than 6 months
-                        </Badge>
-                      )}
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={date => {
-                        if (date) {
-                          handlePassportDateUpdate(date);
-                        }
-                      }}
-                      disabled={date => {
-                        const yesterday = new Date();
-                        yesterday.setDate(yesterday.getDate() - 1);
-                        return date < yesterday;
-                      }}
-                      captionLayout="dropdown"
-                      startMonth={new Date()}
-                      endMonth={new Date(2100, 11)}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </FormControl>
+              <div className="flex gap-2">
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={handlePassportValidUpdate} />
+                </FormControl>
+                <FormLabel>Passport is valid</FormLabel>
+              </div>
               <FormMessage />
             </FormItem>
           )}

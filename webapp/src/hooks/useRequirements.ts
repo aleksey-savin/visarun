@@ -3,6 +3,7 @@ import { trpcClient } from '../lib/trpc';
 
 export interface CreateRequirementData {
   serviceType: 'visa' | 'visarun';
+  isOptional?: boolean;
   inputType: 'document' | 'checkpoint' | 'date' | 'text' | 'boolean';
   operator?: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains';
   thresholdNumber?: number;
@@ -25,6 +26,7 @@ export interface CreateRequirementData {
 export interface UpdateRequirementData {
   id: string;
   serviceType?: 'visa' | 'visarun';
+  isOptional?: boolean;
   inputType?: 'document' | 'checkpoint' | 'date' | 'text' | 'boolean';
   operator?: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'contains';
   thresholdNumber?: number;

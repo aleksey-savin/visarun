@@ -147,7 +147,7 @@ export const getAllClientDiscountAssignmentsByClientTrpcRoute =
             where: {
               clientId: assignment.clientId,
               order: {
-                status: 'paid',
+                status: 'completed',
               },
             },
           });

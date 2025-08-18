@@ -26,7 +26,6 @@ import { trpc } from '@/lib/trpc';
 
 import useOrderStore from '@/stores/order/order-store.js';
 
-import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
 import ClientName from '../sections/ClientSection/ClientName';
 import Comments from '../Comments';
 
@@ -126,9 +125,7 @@ const ServicePuzzle = ({
         <>
           {activeService === 'visa' && <AddVisa client={client} />}
           {activeService === 'visarun' && <AddVisarun />}
-          {!isPassportExpiringWithin6Months(
-            client.passportExpirationDate ? client.passportExpirationDate.toISOString() : ''
-          ) && <ClientName client={client} />}
+          <ClientName client={client} />
           <Comments />
           <hr />
         </>

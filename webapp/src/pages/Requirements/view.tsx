@@ -215,6 +215,21 @@ const ViewRequirementPage: React.FC = () => {
                   <label className="text-sm font-medium text-gray-700">Service Type</label>
                   <div>{getServiceTypeBadge(requirement.serviceType)}</div>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Requirement Type</label>
+                  <div>
+                    <Badge
+                      variant="outline"
+                      className={
+                        requirement.isOptional
+                          ? 'border-amber-300 text-amber-700'
+                          : 'border-red-300 text-red-700'
+                      }
+                    >
+                      {requirement.isOptional ? 'Optional' : 'Required'}
+                    </Badge>
+                  </div>
+                </div>
               </div>
 
               {requirement.description && (

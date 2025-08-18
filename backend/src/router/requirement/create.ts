@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 export const zCreateRequirementTrpcInput = z.object({
   serviceType: z.enum(['visa', 'visarun']),
+  isOptional: z.boolean().default(false),
   inputType: z.enum(['document', 'checkpoint', 'date', 'text', 'boolean']),
   operator: z.enum(['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'contains']).optional(),
   thresholdNumber: z.number().optional(),
@@ -27,6 +28,7 @@ export const createRequirementTrpcRoute = requirementCreateProcedure
   .mutation(async ({ input, ctx }) => {
     const {
       serviceType,
+      isOptional,
       inputType,
       operator,
       thresholdNumber,
@@ -136,6 +138,7 @@ export const createRequirementTrpcRoute = requirementCreateProcedure
     const newRequirement = await ctx.prisma.requirement.create({
       data: {
         serviceType,
+        isOptional,
         inputType,
         operator,
         thresholdNumber,
@@ -179,6 +182,7 @@ export const createRequirementTrpcRoute = requirementCreateProcedure
       select: {
         id: true,
         serviceType: true,
+        isOptional: true,
         inputType: true,
         operator: true,
         thresholdNumber: true,
