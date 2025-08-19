@@ -12,12 +12,13 @@ import useOrderStore from '@/stores/order/order-store';
 
 import ServicePuzzle from '@/components/Order/steps/ServicePuzzle';
 import SummarySection from '@/components/Order/sections/SummarySection';
-import AddClientCard from '@/components/Order/AddClientCard';
+import AddClientCard from '@/components/Order/sections/ClientSection/AddClientCard';
 import OrderSummary from '@/components/Order/sections/SummarySection/OrderSummary';
 
 import { clientHasServicePuzzleErrors, clientHasPersonalDataErrors } from '@/utils/clientHasErrors';
 
 import PersonalData from '@/components/Order/steps/PersonalData';
+import Payment from '@/components/Order/steps/Payment';
 
 // Define the restricted status types that can be used in step navigation
 type StepStatus = 'draft' | 'personal_data_verification' | 'payment_pending';
@@ -305,7 +306,13 @@ const EditOrderPage = () => {
   const [activeStep, setActiveStep] = useState(order.status === 'draft' ? steps[0] : steps[1]);
 
   useEffect(() => {
-    setActiveStep(order.status === 'draft' ? steps[0] : steps[1]);
+    setActiveStep(
+      order.status === 'draft'
+        ? steps[0]
+        : order.status === 'personal_data_verification'
+          ? steps[1]
+          : steps[2]
+    );
   }, [order, steps]);
 
   const editOrderMutation = trpc.order.edit.useMutation();
@@ -343,6 +350,9 @@ const EditOrderPage = () => {
   const handleNext = async () => {
     if (activeStep.status === 'draft') {
       await handleStepClick(steps[1]);
+    }
+    if (activeStep.status === 'personal_data_verification') {
+      await handleStepClick(steps[2]);
     }
   };
 
@@ -426,6 +436,7 @@ const EditOrderPage = () => {
                     <ClientSection totalAmount={totalAmount} client={client} />
                     {activeClientId === client.id && (
                       <div className="grid grid-col-1 gap-6 px-6 pb-5">
+                        {activeStep.status === 'payment_pending' && <Payment />}
                         {activeStep.status === 'personal_data_verification' && (
                           <PersonalData client={client} />
                         )}

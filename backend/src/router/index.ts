@@ -34,6 +34,8 @@ import { requirementDocumentRoutes } from './requirementDocument/index.js';
 import { clientDocumentRoutes } from './clientDocument/index.js';
 import { clientRequirementRoutes } from './clientRequirement/index.js';
 import { auditRoutes } from './audit/index.js';
+import { currencyRoutes } from './currency/index.js';
+import { orderPaymentRoutes } from './orderPayment/index.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
@@ -63,6 +65,8 @@ export const appRouter = trpc.router({
   clientDocument: clientDocumentRoutes,
   clientRequirement: clientRequirementRoutes,
   audit: auditRoutes,
+  currency: currencyRoutes,
+  orderPayment: orderPaymentRoutes,
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,
   exchangeRates: exchangeRatesRoute,

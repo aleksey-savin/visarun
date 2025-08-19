@@ -6,8 +6,8 @@ import ClientData from '@/components/Order/sections/ClientSection/ClientData';
 
 import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 
-import ClientBadge from '@/components/Order/ClientBadge';
-import ClientCard from '@/components/Order/ClientCard';
+import ClientBadge from '@/components/Order/sections/ClientSection/ClientBadge';
+import ClientCard from '@/components/Order/sections/ClientSection/ClientCard';
 
 import { formatCurrency } from '@/utils/currency';
 import { useEffect, useState, useCallback, useRef } from 'react';

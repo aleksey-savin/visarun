@@ -1,5 +1,5 @@
 import { Switch } from '@/components/ui/switch';
-import { Label } from '../ui/label';
+import { Label } from '../../../ui/label';
 import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 import { trpcClient } from '@/lib/trpc';
 import type { Requirement } from '@visarun/backend/node_modules/@prisma/client';

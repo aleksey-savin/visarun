@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import { formatCurrency } from '@/utils/currency.js';
 
-import ClientBadge from '../../ClientBadge';
+import ClientBadge from '@/components/Order/sections/ClientSection/ClientBadge';
 
 import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 import { Badge } from '@/components/ui/badge';

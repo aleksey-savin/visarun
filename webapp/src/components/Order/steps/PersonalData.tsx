@@ -1,11 +1,11 @@
 import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 
-import DocumentsUpload from '../DocumentsUpload';
+import DocumentsUpload from '../sections/PersonalDataSection/DocumentsUpload';
 import ClientName from '../sections/ClientSection/ClientName';
 import UserContacts from '../sections/UserSection/UserContacts';
 import Comments from '../Comments';
-import OtherRequirements from '../OtherRequirements';
-import PassportExpiry from '../PassportExpiry';
+import OtherRequirements from '../sections/PersonalDataSection/OtherRequirements';
+import PassportExpiry from '../sections/ClientSection/PassportExpiry';
 
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';

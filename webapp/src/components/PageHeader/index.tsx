@@ -13,6 +13,7 @@ import {
   Shield,
   History,
   Gauge,
+  Coins,
 } from 'lucide-react';
 
 interface PageConfig {
@@ -65,6 +66,13 @@ const pageConfigs: Record<string, PageConfig> = {
     icon: <Globe />,
     entity: 'country',
     createRoute: '/countries/create',
+    showButton: true,
+  },
+  '/currencies': {
+    title: 'Currencies',
+    icon: <Coins />,
+    entity: 'currency',
+    createRoute: '/currencies/create',
     showButton: true,
   },
   '/citizenships': {

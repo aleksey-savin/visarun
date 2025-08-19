@@ -134,6 +134,16 @@ export type ViewClientRequirementRouteParams = typeof viewClientRequirementRoute
 export const getViewClientRequirementRoute = ({ id }: ViewClientRequirementRouteParams) =>
   `/client-requirements/view/${id}`;
 
+// Currency routes
+export const getAllCurrenciesRoute = () => '/currencies';
+export const getCreateCurrencyRoute = () => '/currencies/create';
+export const editCurrencyRouteParams = getRouteParams({ id: true });
+export type EditCurrencyRouteParams = typeof editCurrencyRouteParams;
+export const getEditCurrencyRoute = ({ id }: EditCurrencyRouteParams) => `/currencies/edit/${id}`;
+export const viewCurrencyRouteParams = getRouteParams({ id: true });
+export type ViewCurrencyRouteParams = typeof viewCurrencyRouteParams;
+export const getViewCurrencyRoute = ({ id }: ViewCurrencyRouteParams) => `/currencies/view/${id}`;
+
 // Order routes
 export const getAllOrdersRoute = () => '/orders';
 export const getCreateOrderRoute = () => '/order/create';

@@ -18,6 +18,7 @@ import {
   FileSearch,
   Gauge,
   ShoppingCart,
+  Coins,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -46,6 +47,7 @@ import {
   getAllRequirementsRoute,
   // New entity routes
   getAllCountriesRoute,
+  getAllCurrenciesRoute,
   getAllCitizenshipsRoute,
   getAllVisaTypesRoute,
   getAllVisaCitizenshipSurchargesRoute,
@@ -76,6 +78,8 @@ export function AppSidebar() {
   const isOnVisaManagementSubpage =
     location.pathname === getAllCountriesRoute() ||
     location.pathname.startsWith(`${getAllCountriesRoute()}/`) ||
+    location.pathname === getAllCurrenciesRoute() ||
+    location.pathname.startsWith(`${getAllCurrenciesRoute()}/`) ||
     location.pathname === getAllCitizenshipsRoute() ||
     location.pathname.startsWith(`${getAllCitizenshipsRoute()}/`) ||
     location.pathname === getAllVisaTypesRoute() ||
@@ -103,6 +107,12 @@ export function AppSidebar() {
     hasPermission('countries.create') ||
     hasPermission('countries.update') ||
     hasPermission('countries.delete');
+  const canReadCurrencies =
+    hasPermission('currencies.read') ||
+    hasPermission('currencies.create') ||
+    hasPermission('currencies.update') ||
+    hasPermission('currencies.delete');
+  const canAcceptPayments = hasPermission('orderPayments.canAcceptPayments');
   const canReadCitizenships =
     hasPermission('citizenships.read') ||
     hasPermission('citizenships.create') ||
@@ -124,7 +134,8 @@ export function AppSidebar() {
     hasPermission('orders.read') ||
     hasPermission('orders.create') ||
     hasPermission('orders.update') ||
-    hasPermission('orders.delete');
+    hasPermission('orders.delete') ||
+    canAcceptPayments;
 
   // Check if user has any admin permissions
   const hasAnyAdminPermission =
@@ -138,7 +149,11 @@ export function AppSidebar() {
 
   // Check if user has any visa management permissions
   const hasAnyVisaPermission =
-    canReadCountries || canReadCitizenships || canReadVisaTypes || canReadVisaCitizenshipSurcharges;
+    canReadCountries ||
+    canReadCurrencies ||
+    canReadCitizenships ||
+    canReadVisaTypes ||
+    canReadVisaCitizenshipSurcharges;
 
   return (
     <Sidebar collapsible="none" className="bg-secondary h-full hidden md:block">
@@ -414,6 +429,22 @@ export function AppSidebar() {
                       <Link to={getAllCountriesRoute()}>
                         <Globe className="w-4 h-4" />
                         <span>Countries</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {canReadCurrencies && (
+                  <SidebarMenuItem key="Currencies">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        location.pathname === getAllCurrenciesRoute() ||
+                        location.pathname.startsWith(`${getAllCurrenciesRoute()}/`)
+                      }
+                    >
+                      <Link to={getAllCurrenciesRoute()}>
+                        <Coins className="w-4 h-4" />
+                        <span>Currencies</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

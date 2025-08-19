@@ -7,7 +7,567 @@ datasource db {
   url      = env("POSTGRES_URL")
 }
 
-//legacy, remove after migration
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Role {
+  id          String               @id @default(uuid())
+  name        String               @unique
+  description String?
+  isSystem    Boolean              @default(false)
+  isActive    Boolean              @default(true)
+  createdById String?              @default(uuid())
+  updatedById String?              @default(uuid())
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @default(now()) @updatedAt
+  createdBy   User?                @relation("RoleCreatedBy", fields: [createdById], references: [id])
+  updatedBy   User?                @relation("RoleUpdatedBy", fields: [updatedById], references: [id])
+  permissions RolePermission[]
+  assignments UserRoleAssignment[]
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  code        String           @unique
+  description String?
+  category    String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @default(now()) @updatedAt
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  assignedAt   DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  role         Role       @relation(fields: [roleId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+model UserRoleAssignment {
+  id         String   @id @default(uuid())
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedBy String?
+  role       Role     @relation(fields: [roleId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id                       String                     @id @default(uuid())
+  email                    String?                    @unique
+  firstName                String
+  middleName               String?
+  lastName                 String
+  role                     UserRole?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @default(now()) @updatedAt
+  password                 String
+  mustChangePassword       Boolean                    @default(false)
+  isActive                 Boolean                    @default(true)
+  phoneNumber              String?                    @unique
+  AuditLog                 AuditLog[]
+  Client                   Client[]
+  ClientDiscountAssignment ClientDiscountAssignment[]
+  reviewedDocuments        ClientDocument[]           @relation("ReviewedDocuments")
+  ClientDocument           ClientDocument[]
+  ClientRequirement        ClientRequirement[]
+  exchangeRates            ExchangeRate[]
+  Order                    Order[]
+  refreshTokens            RefreshToken[]
+  RequirementDocument      RequirementDocument[]
+  rolesCreated             Role[]                     @relation("RoleCreatedBy")
+  rolesUpdated             Role[]                     @relation("RoleUpdatedBy")
+  contactMethods           UserContactMethod[]
+  roleAssignments          UserRoleAssignment[]
+}
+
+model Client {
+  id                        String                     @id @default(uuid())
+  userId                    String?
+  citizenshipId             String?
+  prevViolations            Boolean                    @default(false)
+  prevViolationsDesc        String?
+  isOutsideTheCountry       Boolean                    @default(false)
+  isOutsideTheCountryAt     DateTime?
+  firstName                 String?
+  lastName                  String?
+  isPrimary                 Boolean                    @default(false)
+  passportExpirationDate    DateTime?
+  preConfirmPassportIsValid Boolean                    @default(false)
+  citizenship               Citizenship?               @relation(fields: [citizenshipId], references: [id])
+  user                      User?                      @relation(fields: [userId], references: [id])
+  ClientDiscountAssignment  ClientDiscountAssignment[]
+  documents                 ClientDocument[]
+  requirements              ClientRequirement[]
+  ClientVisa                ClientVisa[]
+  clients                   OrderClient[]
+  OrderItem                 OrderItem[]
+
+  @@index([userId])
+  @@index([citizenshipId])
+}
+
+model ContactMethod {
+  id          String              @id @default(uuid())
+  name        String              @unique
+  description String?
+  icon        String?
+  assignments UserContactMethod[]
+}
+
+model UserContactMethod {
+  id              String         @id @default(uuid())
+  userId          String
+  contactMethodId String?
+  value           String?
+  url             String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  method          ContactMethod? @relation(fields: [contactMethodId], references: [id])
+  user            User           @relation(fields: [userId], references: [id])
+
+  @@unique([userId, contactMethodId])
+  @@index([userId])
+  @@index([contactMethodId])
+}
+
+model Citizenship {
+  id                     String                     @id @default(uuid())
+  name                   String                     @unique
+  favourite              Boolean                    @default(false)
+  abbreviation           String                     @unique
+  emoji                  String
+  blacklisted            Blacklisted[]
+  Client                 Client[]
+  RequirementCitizenship RequirementCitizenship[]
+  surcharges             VisaCitizenshipSurcharge[]
+  visaFree               VisaFree[]
+}
+
+model Country {
+  id                       String                     @id @default(uuid())
+  name                     String                     @unique
+  eVisaAvailable           Boolean                    @default(false)
+  multivisaAvailable       Boolean                    @default(false)
+  favourite                Boolean                    @default(false)
+  multivisaIsGlobal        Boolean                    @default(false)
+  multivisaGlobalExtraCost Float?
+  blacklisted              Blacklisted[]
+  cities                   City[]
+  ClientVisa               ClientVisa[]
+  Requirement              Requirement[]
+  VisaApplication          VisaApplication[]
+  surcharges               VisaCitizenshipSurcharge[]
+  visaFree                 VisaFree[]
+  VisaType                 VisaType[]
+}
+
+model City {
+  id        String  @id @default(uuid())
+  name      String
+  countryId String
+  isActive  Boolean @default(true)
+  country   Country @relation(fields: [countryId], references: [id])
+}
+
+model VisaFree {
+  citizenshipId String
+  countryId     String
+  stampDuration Int
+  citizenship   Citizenship @relation(fields: [citizenshipId], references: [id])
+  country       Country     @relation(fields: [countryId], references: [id])
+
+  @@id([citizenshipId, countryId])
+}
+
+model Blacklisted {
+  citizenshipId String
+  countryId     String
+  citizenship   Citizenship @relation(fields: [citizenshipId], references: [id])
+  country       Country     @relation(fields: [countryId], references: [id])
+
+  @@id([citizenshipId, countryId])
+}
+
+model VisaCitizenshipSurcharge {
+  id              String                             @id @default(uuid())
+  citizenshipId   String
+  surchargeAmount Float
+  note            String?
+  countryId       String
+  isGlobal        Boolean                            @default(false)
+  citizenship     Citizenship                        @relation(fields: [citizenshipId], references: [id])
+  country         Country                            @relation(fields: [countryId], references: [id])
+  visaTypes       VisaCitizenshipSurchargeVisaType[]
+}
+
+model VisaCitizenshipSurchargeVisaType {
+  id          String                   @id @default(uuid())
+  surchargeId String
+  visaTypeId  String
+  surcharge   VisaCitizenshipSurcharge @relation(fields: [surchargeId], references: [id], onDelete: Cascade)
+  visaType    VisaType                 @relation(fields: [visaTypeId], references: [id])
+
+  @@unique([surchargeId, visaTypeId])
+}
+
+model ExchangeRate {
+  id         String    @id @default(uuid())
+  createdAt  DateTime  @default(now())
+  rubToVnd   Float
+  vndToRub   Float
+  usdtToVnd  Float
+  vndToUsdt  Float
+  usdtToRub  Float
+  rubToUsdt  Float
+  userId     String
+  currencyId String?
+  Currency   Currency? @relation(fields: [currencyId], references: [id])
+  createdBy  User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model TelegramChannel {
+  id                String                @id @default(uuid())
+  createdAt         DateTime              @default(now())
+  chatId            String                @unique
+  chatTitle         String
+  chatUsername      String
+  chatType          String
+  fromId            String
+  fromIsBot         Boolean
+  fromFirstName     String
+  fromLastName      String
+  fromUsername      String
+  status            TelegramChannelStatus @default(active)
+  updatedAt         DateTime              @updatedAt
+  messageTemplateId String?
+  messageTemplate   MessageTemplate?      @relation(fields: [messageTemplateId], references: [id])
+}
+
+model MessageTemplate {
+  id               String            @id @default(uuid())
+  title            String
+  body             String
+  telegramChannels TelegramChannel[]
+}
+
+model Order {
+  id           String         @id @default(uuid())
+  userId       String
+  createdAt    DateTime       @default(now())
+  status       OrderStatus    @default(draft)
+  comment      String?
+  updatedAt    DateTime       @default(now()) @updatedAt
+  user         User           @relation(fields: [userId], references: [id])
+  clients      OrderClient[]
+  items        OrderItem[]
+  OrderPayment OrderPayment[]
+}
+
+model OrderClient {
+  id       String @id @default(uuid())
+  orderId  String
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, clientId])
+  @@index([orderId])
+  @@index([clientId])
+}
+
+model OrderItem {
+  id                  String               @id @default(uuid())
+  orderId             String
+  clientId            String
+  serviceType         ServiceType
+  serviceTypeId       String?
+  discountAppliedType DiscountAppliedType?
+  discountRuleId      String?
+  discountAmount      Float
+  discountComment     String?
+  note                String?
+  basePrice           Float
+  finalPrice          Float
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @default(now()) @updatedAt
+  client              Client               @relation(fields: [clientId], references: [id])
+  discountRule        ClientDiscountRule?  @relation(fields: [discountRuleId], references: [id])
+  order               Order                @relation(fields: [orderId], references: [id])
+  VisaApplication     VisaApplication[]
+
+  @@index([orderId])
+  @@index([clientId])
+  @@index([discountRuleId])
+}
+
+model ClientDiscountRule {
+  id                   String                     @id @default(uuid())
+  name                 String
+  discountType         DiscountType
+  discountValue        Float
+  appliesToService     AppliesToService
+  appliesAutomatically Boolean
+  validFrom            DateTime
+  validTo              DateTime
+  minOrders            Int
+  isActive             Boolean
+  note                 String?
+  assignments          ClientDiscountAssignment[]
+  OrderItem            OrderItem[]
+}
+
+model ClientDiscountAssignment {
+  id               String             @id @default(uuid())
+  clientId         String
+  ruleId           String
+  assignedByUserId String
+  assignedAt       DateTime
+  note             String?
+  assignedBy       User               @relation(fields: [assignedByUserId], references: [id])
+  client           Client             @relation(fields: [clientId], references: [id])
+  rule             ClientDiscountRule @relation(fields: [ruleId], references: [id])
+
+  @@index([clientId])
+  @@index([ruleId])
+  @@index([assignedByUserId])
+}
+
+model VisaType {
+  id                    String                             @id @default(uuid())
+  name                  String
+  serviceCost           Float
+  countryId             String
+  isMultientry          Boolean
+  multientryExtraCost   Float?
+  processingMode        ProcessingMode
+  processingUnit        ProcessingUnit
+  processingValueFixed  Int?
+  processingValueMin    Int?
+  processingValueMax    Int?
+  submissionDayIncluded Boolean
+  favourite             Boolean                            @default(false)
+  clientVisas           ClientVisa[]
+  Requirement           Requirement[]
+  RequirementVisaType   RequirementVisaType[]
+  visaApplications      VisaApplication[]
+  surcharges            VisaCitizenshipSurchargeVisaType[]
+  country               Country                            @relation(fields: [countryId], references: [id])
+}
+
+model VisaApplication {
+  id                      String                @id @default(uuid())
+  orderItemId             String
+  applicationCode         String?
+  submittedByAgent        Boolean
+  countryId               String
+  visaTypeId              String?
+  note                    String?
+  revisedActivationDate   DateTime?
+  statusNote              String?
+  status                  VisaApplicationStatus
+  plannedCountryEntryDate DateTime?
+  isMultientry            Boolean               @default(false)
+  clientVisas             ClientVisa[]
+  country                 Country               @relation(fields: [countryId], references: [id])
+  orderItem               OrderItem             @relation(fields: [orderItemId], references: [id])
+  visaType                VisaType?             @relation(fields: [visaTypeId], references: [id])
+}
+
+model ClientVisa {
+  id                String          @id @default(uuid())
+  clientId          String
+  countryId         String
+  visaTypeId        String
+  visaApplicationId String
+  validFrom         DateTime
+  validTo           DateTime
+  notifiedExpiry    Boolean
+  client            Client          @relation(fields: [clientId], references: [id])
+  country           Country         @relation(fields: [countryId], references: [id])
+  visaApplication   VisaApplication @relation(fields: [visaApplicationId], references: [id])
+  visaType          VisaType        @relation(fields: [visaTypeId], references: [id])
+
+  @@index([clientId])
+  @@index([countryId])
+  @@index([visaTypeId])
+  @@index([visaApplicationId])
+}
+
+model Requirement {
+  id                       String                      @id @default(uuid())
+  serviceType              ServiceType
+  inputType                RequirementInputType
+  operator                 RequirementOperator?
+  thresholdNumber          Float?
+  thresholdDate            DateTime?
+  thresholdText            String?
+  thresholdBool            Boolean?
+  checkpointValue          String?
+  title                    String
+  description              String?
+  appliesToAllCitizenships Boolean                     @default(false)
+  sampleUrl                String?
+  applicableServices       ServiceEntityType[]
+  visaTypeId               String?
+  applicationScope         RequirementApplicationScope @default(specific)
+  countryId                String?
+  isOptional               Boolean                     @default(false)
+  clientDocuments          ClientDocument[]
+  clientRequirements       ClientRequirement?
+  country                  Country?                    @relation(fields: [countryId], references: [id])
+  VisaType                 VisaType?                   @relation(fields: [visaTypeId], references: [id])
+  citizenships             RequirementCitizenship[]
+  documents                RequirementDocument[]
+  visaTypeLinks            RequirementVisaType[]
+  routeLinks               RequirementVisarunRoute[]
+
+  @@index([serviceType])
+  @@index([applicationScope])
+  @@index([countryId])
+}
+
+model RequirementCitizenship {
+  id            String      @id @default(uuid())
+  requirementId String
+  citizenshipId String
+  citizenship   Citizenship @relation(fields: [citizenshipId], references: [id])
+  requirement   Requirement @relation(fields: [requirementId], references: [id])
+
+  @@index([requirementId])
+  @@index([citizenshipId])
+}
+
+model RequirementDocument {
+  id            String      @id @default(uuid())
+  requirementId String
+  fileUrl       String
+  uploadedAt    DateTime
+  uploadedById  String
+  comment       String?
+  requirement   Requirement @relation(fields: [requirementId], references: [id])
+  uploadedBy    User        @relation(fields: [uploadedById], references: [id])
+
+  @@index([requirementId])
+  @@index([uploadedById])
+}
+
+model RequirementVisaType {
+  requirementId String
+  visaTypeId    String
+  requirement   Requirement @relation(fields: [requirementId], references: [id])
+  visaType      VisaType    @relation(fields: [visaTypeId], references: [id])
+
+  @@id([requirementId, visaTypeId])
+  @@index([visaTypeId])
+}
+
+model RequirementVisarunRoute {
+  requirementId String
+  routeId       String
+  requirement   Requirement @relation(fields: [requirementId], references: [id])
+
+  @@id([requirementId, routeId])
+  @@index([routeId])
+}
+
+model ClientDocument {
+  id            String       @id @default(uuid())
+  clientId      String
+  requirementId String?
+  fileName      String
+  originalName  String
+  fileUrl       String
+  fileType      String
+  fileSize      Int
+  uploadedAt    DateTime     @default(now())
+  uploadedById  String
+  isValid       Boolean      @default(true)
+  expiresAt     DateTime?
+  tags          String[]
+  comment       String?
+  reviewedAt    DateTime?
+  reviewedById  String?
+  client        Client       @relation(fields: [clientId], references: [id])
+  requirement   Requirement? @relation(fields: [requirementId], references: [id])
+  reviewedBy    User?        @relation("ReviewedDocuments", fields: [reviewedById], references: [id])
+  uploadedBy    User         @relation(fields: [uploadedById], references: [id])
+
+  @@index([clientId])
+  @@index([requirementId])
+}
+
+model ClientRequirement {
+  id              String      @id @default(uuid())
+  clientId        String
+  requirementId   String      @unique
+  textValue       String?
+  dateValue       DateTime?
+  booleanValue    Boolean?
+  checkpointValue String?
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  reviewedById    String?
+  comment         String?
+  client          Client      @relation(fields: [clientId], references: [id])
+  requirement     Requirement @relation(fields: [requirementId], references: [id])
+  reviewedBy      User?       @relation(fields: [reviewedById], references: [id])
+
+  @@index([requirementId])
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  userId      String
+  entityType  String
+  entityId    String
+  action      AuditAction
+  performedAt DateTime
+  diff        Json
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Currency {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  exchangeRates ExchangeRate[]
+  orderPayments OrderPayment[]
+
+  @@map("currencies")
+}
+
+model OrderPayment {
+  id            String        @id @default(uuid())
+  orderId       String
+  amount        Decimal
+  currencyId    String
+  paidAt        DateTime
+  paymentMethod PaymentMethod
+  documentUrl   String?
+  currency      Currency      @relation(fields: [currencyId], references: [id])
+  order         Order         @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([currencyId])
+  @@map("order_payments")
+}
+
 enum UserRole {
   client
   manager
@@ -112,540 +672,6 @@ enum RequirementStatus {
   needs_revision
 }
 
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model Role {
-  id          String               @id @default(uuid())
-  name        String               @unique
-  description String?
-  isSystem    Boolean              @default(false)
-  isActive    Boolean              @default(true)
-  createdById String?              @default(uuid())
-  updatedById String?              @default(uuid())
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @default(now()) @updatedAt
-  createdBy   User?                @relation("RoleCreatedBy", fields: [createdById], references: [id])
-  updatedBy   User?                @relation("RoleUpdatedBy", fields: [updatedById], references: [id])
-  permissions RolePermission[]
-  assignments UserRoleAssignment[]
-}
-
-model Permission {
-  id          String           @id @default(uuid())
-  code        String           @unique
-  description String?
-  category    String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @default(now()) @updatedAt
-  roles       RolePermission[]
-}
-
-model RolePermission {
-  roleId       String
-  permissionId String
-  assignedAt   DateTime   @default(now())
-  permission   Permission @relation(fields: [permissionId], references: [id])
-  role         Role       @relation(fields: [roleId], references: [id])
-
-  @@id([roleId, permissionId])
-}
-
-model UserRoleAssignment {
-  id         String   @id @default(uuid())
-  userId     String
-  roleId     String
-  assignedAt DateTime @default(now())
-  assignedBy String?
-  role       Role     @relation(fields: [roleId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
-}
-
-model User {
-  id                       String                     @id @default(uuid())
-  email                    String?                    @unique
-  phoneNumber              String?                    @unique
-  firstName                String
-  middleName               String?
-  lastName                 String
-  role                     UserRole?
-  createdAt                DateTime                   @default(now())
-  updatedAt                DateTime                   @default(now()) @updatedAt
-  password                 String
-  mustChangePassword       Boolean                    @default(false)
-  isActive                 Boolean                    @default(true)
-  Client                   Client[]
-  ClientDiscountAssignment ClientDiscountAssignment[]
-  exchangeRates            ExchangeRate[]
-  Order                    Order[]
-  refreshTokens            RefreshToken[]
-  rolesCreated             Role[]                     @relation("RoleCreatedBy")
-  rolesUpdated             Role[]                     @relation("RoleUpdatedBy")
-  contactMethods           UserContactMethod[]
-  roleAssignments          UserRoleAssignment[]
-  RequirementDocument      RequirementDocument[]
-  ClientDocument           ClientDocument[]
-  reviewedDocuments        ClientDocument[]           @relation("ReviewedDocuments")
-  AuditLog                 AuditLog[]
-  ClientRequirement        ClientRequirement[]
-}
-
-model Client {
-  id                        String                     @id @default(uuid())
-  userId                    String?
-  isPrimary                 Boolean                    @default(false)
-  citizenshipId             String?
-  preConfirmPassportIsValid Boolean                    @default(false)
-  passportExpirationDate    DateTime?
-  prevViolations            Boolean                    @default(false)
-  prevViolationsDesc        String?
-  isOutsideTheCountry       Boolean                    @default(false)
-  isOutsideTheCountryAt     DateTime?
-  firstName                 String?
-  lastName                  String?
-  citizenship               Citizenship?               @relation(fields: [citizenshipId], references: [id])
-  user                      User?                      @relation(fields: [userId], references: [id])
-  ClientDiscountAssignment  ClientDiscountAssignment[]
-  ClientVisa                ClientVisa[]
-  OrderItem                 OrderItem[]
-  documents                 ClientDocument[]
-  clients                   OrderClient[]
-  requirements              ClientRequirement[]
-
-  @@index([userId])
-  @@index([citizenshipId])
-}
-
-model ContactMethod {
-  id          String              @id @default(uuid())
-  name        String              @unique
-  description String?
-  icon        String?
-  assignments UserContactMethod[]
-}
-
-model UserContactMethod {
-  id              String         @id @default(uuid())
-  userId          String
-  contactMethodId String?
-  value           String?
-  url             String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  method          ContactMethod? @relation(fields: [contactMethodId], references: [id])
-  user            User           @relation(fields: [userId], references: [id])
-
-  @@unique([userId, contactMethodId])
-  @@index([userId])
-  @@index([contactMethodId])
-}
-
-model Citizenship {
-  id                     String                     @id @default(uuid())
-  name                   String                     @unique
-  emoji                  String
-  abbreviation           String                     @unique
-  favourite              Boolean                    @default(false)
-  blacklisted            Blacklisted[]
-  Client                 Client[]
-  surcharges             VisaCitizenshipSurcharge[]
-  visaFree               VisaFree[]
-  RequirementCitizenship RequirementCitizenship[]
-}
-
-model Country {
-  id                       String                     @id @default(uuid())
-  name                     String                     @unique
-  favourite                Boolean                    @default(false)
-  eVisaAvailable           Boolean                    @default(false)
-  multivisaAvailable       Boolean                    @default(false)
-  multivisaIsGlobal        Boolean                    @default(false)
-  multivisaGlobalExtraCost Float?
-  blacklisted              Blacklisted[]
-  cities                   City[]
-  ClientVisa               ClientVisa[]
-  VisaApplication          VisaApplication[]
-  surcharges               VisaCitizenshipSurcharge[]
-  visaFree                 VisaFree[]
-  VisaType                 VisaType[]
-  Requirement              Requirement[]
-}
-
-model City {
-  id        String  @id @default(uuid())
-  name      String
-  countryId String
-  isActive  Boolean @default(true)
-  country   Country @relation(fields: [countryId], references: [id])
-}
-
-model VisaFree {
-  citizenshipId String
-  countryId     String
-  stampDuration Int
-  citizenship   Citizenship @relation(fields: [citizenshipId], references: [id])
-  country       Country     @relation(fields: [countryId], references: [id])
-
-  @@id([citizenshipId, countryId])
-}
-
-model Blacklisted {
-  citizenshipId String
-  countryId     String
-  citizenship   Citizenship @relation(fields: [citizenshipId], references: [id])
-  country       Country     @relation(fields: [countryId], references: [id])
-
-  @@id([citizenshipId, countryId])
-}
-
-model VisaCitizenshipSurcharge {
-  id              String                             @id @default(uuid())
-  citizenshipId   String
-  surchargeAmount Float
-  note            String?
-  countryId       String
-  isGlobal        Boolean                            @default(false)
-  citizenship     Citizenship                        @relation(fields: [citizenshipId], references: [id])
-  country         Country                            @relation(fields: [countryId], references: [id])
-  visaTypes       VisaCitizenshipSurchargeVisaType[]
-}
-
-model VisaCitizenshipSurchargeVisaType {
-  id          String                   @id @default(uuid())
-  surchargeId String
-  visaTypeId  String
-  surcharge   VisaCitizenshipSurcharge @relation(fields: [surchargeId], references: [id], onDelete: Cascade)
-  visaType    VisaType                 @relation(fields: [visaTypeId], references: [id])
-
-  @@unique([surchargeId, visaTypeId])
-}
-
-model ExchangeRate {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  rubToVnd  Float
-  vndToRub  Float
-  usdtToVnd Float
-  vndToUsdt Float
-  usdtToRub Float
-  rubToUsdt Float
-  userId    String
-  createdBy User     @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-}
-
-model TelegramChannel {
-  id                String                @id @default(uuid())
-  createdAt         DateTime              @default(now())
-  chatId            String                @unique
-  chatTitle         String
-  chatUsername      String
-  chatType          String
-  fromId            String
-  fromIsBot         Boolean
-  fromFirstName     String
-  fromLastName      String
-  fromUsername      String
-  status            TelegramChannelStatus @default(active)
-  updatedAt         DateTime              @updatedAt
-  messageTemplateId String?
-  messageTemplate   MessageTemplate?      @relation(fields: [messageTemplateId], references: [id])
-}
-
-model MessageTemplate {
-  id               String            @id @default(uuid())
-  title            String
-  body             String
-  telegramChannels TelegramChannel[]
-}
-
-model Order {
-  id        String        @id @default(uuid())
-  userId    String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @default(now()) @updatedAt
-  status    OrderStatus   @default(draft)
-  comment   String?
-  user      User          @relation(fields: [userId], references: [id])
-  items     OrderItem[]
-  clients   OrderClient[]
-}
-
-model OrderClient {
-  id       String @id @default(uuid())
-  orderId  String
-  clientId String
-
-  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@unique([orderId, clientId]) // Prevent duplicate client-order pairs
-  @@index([orderId])
-  @@index([clientId])
-}
-
-model OrderItem {
-  id                  String               @id @default(uuid())
-  orderId             String
-  clientId            String
-  serviceType         ServiceType
-  serviceTypeId       String?
-  discountAppliedType DiscountAppliedType?
-  discountRuleId      String?
-  discountAmount      Float
-  discountComment     String?
-  note                String?
-  basePrice           Float
-  finalPrice          Float
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @default(now()) @updatedAt
-  client              Client               @relation(fields: [clientId], references: [id])
-  discountRule        ClientDiscountRule?  @relation(fields: [discountRuleId], references: [id])
-  order               Order                @relation(fields: [orderId], references: [id])
-  VisaApplication     VisaApplication[]
-
-  @@index([orderId])
-  @@index([clientId])
-  @@index([discountRuleId])
-}
-
-model ClientDiscountRule {
-  id                   String                     @id @default(uuid())
-  name                 String
-  discountType         DiscountType
-  discountValue        Float
-  appliesToService     AppliesToService
-  appliesAutomatically Boolean
-  validFrom            DateTime
-  validTo              DateTime
-  minOrders            Int
-  isActive             Boolean
-  note                 String?
-  assignments          ClientDiscountAssignment[]
-  OrderItem            OrderItem[]
-}
-
-model ClientDiscountAssignment {
-  id               String             @id @default(uuid())
-  clientId         String
-  ruleId           String
-  assignedByUserId String
-  assignedAt       DateTime
-  note             String?
-  assignedBy       User               @relation(fields: [assignedByUserId], references: [id])
-  client           Client             @relation(fields: [clientId], references: [id])
-  rule             ClientDiscountRule @relation(fields: [ruleId], references: [id])
-
-  @@index([clientId])
-  @@index([ruleId])
-  @@index([assignedByUserId])
-}
-
-model VisaType {
-  id                    String                             @id @default(uuid())
-  name                  String
-  favourite             Boolean                            @default(false)
-  serviceCost           Float
-  countryId             String
-  isMultientry          Boolean
-  multientryExtraCost   Float?
-  processingMode        ProcessingMode
-  processingUnit        ProcessingUnit
-  processingValueFixed  Int?
-  processingValueMin    Int?
-  processingValueMax    Int?
-  submissionDayIncluded Boolean
-  clientVisas           ClientVisa[]
-  visaApplications      VisaApplication[]
-  surcharges            VisaCitizenshipSurchargeVisaType[]
-  country               Country                            @relation(fields: [countryId], references: [id])
-  Requirement           Requirement[]
-  RequirementVisaType   RequirementVisaType[]
-}
-
-model VisaApplication {
-  id                      String                @id @default(uuid())
-  orderItemId             String
-  plannedCountryEntryDate DateTime?
-  applicationCode         String?
-  submittedByAgent        Boolean
-  countryId               String
-  visaTypeId              String?
-  isMultientry            Boolean               @default(false)
-  note                    String?
-  revisedActivationDate   DateTime?
-  statusNote              String?
-  status                  VisaApplicationStatus
-  clientVisas             ClientVisa[]
-  country                 Country               @relation(fields: [countryId], references: [id])
-  orderItem               OrderItem             @relation(fields: [orderItemId], references: [id])
-  visaType                VisaType?             @relation(fields: [visaTypeId], references: [id])
-}
-
-model ClientVisa {
-  id                String          @id @default(uuid())
-  clientId          String
-  countryId         String
-  visaTypeId        String
-  visaApplicationId String
-  validFrom         DateTime
-  validTo           DateTime
-  notifiedExpiry    Boolean
-  client            Client          @relation(fields: [clientId], references: [id])
-  country           Country         @relation(fields: [countryId], references: [id])
-  visaApplication   VisaApplication @relation(fields: [visaApplicationId], references: [id])
-  visaType          VisaType        @relation(fields: [visaTypeId], references: [id])
-
-  @@index([clientId])
-  @@index([countryId])
-  @@index([visaTypeId])
-  @@index([visaApplicationId])
-}
-
-model Requirement {
-  id                       String               @id @default(uuid())
-  serviceType              ServiceType
-  isOptional               Boolean              @default(false)
-  inputType                RequirementInputType
-  operator                 RequirementOperator?
-  thresholdNumber          Float?
-  thresholdDate            DateTime?
-  thresholdText            String?
-  thresholdBool            Boolean?
-  checkpointValue          String?
-  title                    String
-  description              String?
-  appliesToAllCitizenships Boolean              @default(false)
-  sampleUrl                String?
-  applicableServices       ServiceEntityType[]
-
-  // New fields for flexible scope
-  applicationScope RequirementApplicationScope @default(specific)
-  countryId        String?
-
-  citizenships       RequirementCitizenship[]
-  documents          RequirementDocument[]
-  clientRequirements ClientRequirement[]
-  clientDocuments    ClientDocument[]
-
-  visaTypeLinks RequirementVisaType[]
-  routeLinks    RequirementVisarunRoute[]
-  VisaType      VisaType?                 @relation(fields: [visaTypeId], references: [id])
-  visaTypeId    String?
-
-  // Relation to country for country_all scope
-  country Country? @relation(fields: [countryId], references: [id])
-
-  @@index([serviceType])
-  @@index([applicationScope])
-  @@index([countryId])
-}
-
-model RequirementCitizenship {
-  id            String      @id @default(uuid())
-  requirementId String
-  citizenshipId String
-  requirement   Requirement @relation(fields: [requirementId], references: [id])
-  citizenship   Citizenship @relation(fields: [citizenshipId], references: [id])
-
-  @@index([requirementId])
-  @@index([citizenshipId])
-}
-
-model RequirementDocument {
-  id            String   @id @default(uuid())
-  requirementId String
-  fileUrl       String
-  uploadedAt    DateTime
-  uploadedById  String
-  comment       String?
-
-  requirement Requirement @relation(fields: [requirementId], references: [id])
-  uploadedBy  User        @relation(fields: [uploadedById], references: [id])
-
-  @@index([requirementId])
-  @@index([uploadedById])
-}
-
-model RequirementVisaType {
-  requirementId String
-  visaTypeId    String
-
-  requirement Requirement @relation(fields: [requirementId], references: [id])
-  visaType    VisaType    @relation(fields: [visaTypeId], references: [id])
-
-  @@id([requirementId, visaTypeId])
-  @@index([visaTypeId])
-}
-
-model RequirementVisarunRoute {
-  requirementId String
-  routeId       String
-
-  requirement Requirement @relation(fields: [requirementId], references: [id])
-  //route            VisarunRoute  @relation(fields: [routeId],       references: [id])
-
-  @@id([requirementId, routeId])
-  @@index([routeId])
-}
-
-model ClientDocument {
-  id            String    @id @default(uuid())
-  clientId      String
-  requirementId String?
-  fileName      String
-  originalName  String
-  fileUrl       String
-  fileType      String
-  fileSize      Int
-  reviewedAt    DateTime?
-  uploadedAt    DateTime  @default(now())
-  uploadedById  String
-  reviewedById  String?
-  isValid       Boolean   @default(true)
-  expiresAt     DateTime?
-  tags          String[]
-  comment       String?
-
-  client      Client       @relation(fields: [clientId], references: [id])
-  requirement Requirement? @relation(fields: [requirementId], references: [id])
-  uploadedBy  User         @relation(fields: [uploadedById], references: [id])
-  reviewedBy  User?        @relation("ReviewedDocuments", fields: [reviewedById], references: [id])
-
-  @@index([clientId])
-  @@index([requirementId])
-}
-
-model ClientRequirement {
-  id              String    @id @default(uuid())
-  clientId        String
-  requirementId   String
-  textValue       String?
-  dateValue       DateTime?
-  booleanValue    Boolean?
-  checkpointValue String?
-  submittedAt     DateTime?
-  reviewedAt      DateTime?
-  reviewedById    String?
-  comment         String?
-
-  client      Client      @relation(fields: [clientId], references: [id])
-  requirement Requirement @relation(fields: [requirementId], references: [id])
-  reviewedBy  User?       @relation(fields: [reviewedById], references: [id])
-
-  @@unique([requirementId])
-  @@index([requirementId])
-}
-
 enum AuditAction {
   create
   update
@@ -653,16 +679,7 @@ enum AuditAction {
   login
 }
 
-model AuditLog {
-  id          String      @id @default(uuid())
-  userId      String
-  entityType  String
-  entityId    String
-  action      AuditAction
-  performedAt DateTime
-  diff        Json
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([userId])
+enum PaymentMethod {
+  cash
+  transfer
 }

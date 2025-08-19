@@ -288,6 +288,29 @@ export const clientRequirementDeleteProcedure = baseProcedure.use(
   requirePermission('clientRequirements.delete')
 );
 
+// Currency management procedures
+export const currencyCreateProcedure = baseProcedure.use(requirePermission('currencies.create'));
+export const currencyReadProcedure = baseProcedure.use(requirePermission('currencies.read'));
+export const currencyUpdateProcedure = baseProcedure.use(requirePermission('currencies.update'));
+export const currencyDeleteProcedure = baseProcedure.use(requirePermission('currencies.delete'));
+
+// OrderPayment management procedures
+export const orderPaymentCreateProcedure = baseProcedure.use(
+  requirePermission('orderPayments.create')
+);
+export const orderPaymentReadProcedure = baseProcedure.use(requirePermission('orderPayments.read'));
+export const orderPaymentUpdateProcedure = baseProcedure.use(
+  requirePermission('orderPayments.update')
+);
+export const orderPaymentDeleteProcedure = baseProcedure.use(
+  requirePermission('orderPayments.delete')
+);
+
+// OrderPayment accept payments procedure
+export const orderPaymentAcceptProcedure = baseProcedure.use(
+  requirePermission('orderPayments.canAcceptPayments')
+);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

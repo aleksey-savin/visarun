@@ -24,6 +24,12 @@ import ViewCountryPage from './pages/Countries/view.js';
 import CreateCountryPage from './pages/Countries/create.js';
 import EditCountryPage from './pages/Countries/edit';
 
+// Currencies pages
+import AllCurrenciesPage from './pages/Currencies/getAll.js';
+import ViewCurrencyPage from './pages/Currencies/view.js';
+import CreateCurrencyPage from './pages/Currencies/create.js';
+import EditCurrencyPage from './pages/Currencies/edit';
+
 // Citizenships pages
 import AllCitizenshipsPage from './pages/Citizenships/getAll.js';
 import ViewCitizenshipPage from './pages/Citizenships/view.js';
@@ -101,6 +107,13 @@ import {
   getEditCitizenshipRoute,
   editCitizenshipRouteParams,
   viewCitizenshipRouteParams,
+  // Currency routes
+  getAllCurrenciesRoute,
+  getViewCurrencyRoute,
+  getCreateCurrencyRoute,
+  getEditCurrencyRoute,
+  editCurrencyRouteParams,
+  viewCurrencyRouteParams,
   // Visa Types routes
   getAllVisaTypesRoute,
   getViewVisaTypeRoute,
@@ -375,6 +388,40 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="countries.update">
                       <EditCountryPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Currencies Management Routes */}
+                <Route
+                  path={getAllCurrenciesRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="currencies.read">
+                      <AllCurrenciesPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateCurrencyRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="currencies.create">
+                      <CreateCurrencyPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewCurrencyRoute(viewCurrencyRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="currencies.read">
+                      <ViewCurrencyPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditCurrencyRoute(editCurrencyRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="currencies.update">
+                      <EditCurrencyPage />
                     </PermissionRoute>
                   }
                 />

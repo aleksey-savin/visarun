@@ -1,7 +1,7 @@
 import { StoreClient } from '@/stores/order/order-store';
 
-import { Badge } from '../ui/badge';
-import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 import { Crown, User, AlertTriangle } from 'lucide-react';
 
