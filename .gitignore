@@ -37,4 +37,5 @@ uploads/
 # Backup files
 *.backup
 *.sql
+!backend/prisma/migrations/**/*.sql
 backup_*
