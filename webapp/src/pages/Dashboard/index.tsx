@@ -5,13 +5,17 @@ import { useState } from 'react';
 import { CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Gauge, Plus } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 
 export default function DashboardPage() {
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
+  const { hasPermission } = useAuth();
 
   const handleClientClick = () => {
     setIsClientSearchOpen(true);
   };
+
+  const canCreateOrders = hasPermission('orders.create');
 
   return (
     <>
@@ -20,10 +24,12 @@ export default function DashboardPage() {
           <Gauge />
           <span className="font-semibold">Dashboard</span>
         </div>
-        <Button size="sm" onClick={handleClientClick} className="relative">
-          Create Order
-          <Plus />
-        </Button>
+        {canCreateOrders && (
+          <Button size="sm" onClick={handleClientClick} className="relative">
+            Create Order
+            <Plus />
+          </Button>
+        )}
       </CardTitle>
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/lib/auth';
 
 import { Button } from '@/components/ui/button';
 
@@ -83,6 +84,7 @@ const roundInOurFavor = (value: number, isUsdtToRub: boolean): number => {
 };
 
 export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRatesFormProps) {
+  const { hasPermission } = useAuth();
   const [formStatus, setFormStatus] = useState<{
     type: 'success' | 'error' | null;
     message: string;
@@ -242,93 +244,105 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
             >
               {isSubmitting ? (
                 <>
-                  <h2 className="text-2xl font-semibold mb-6 text-center">
-                    Check the messages that will be sent to telegram channels!
-                  </h2>
-
                   <div className="flex flex-col gap-5">
-                    <SimpleEditor
-                      className=""
-                      value={
-                        messages.find(message => message.channelId === selectedChannelId)?.body ||
-                        ''
-                      }
-                      onChange={onEditMessage}
-                    />
+                    {hasPermission('exchangeRates.broadcast') ? (
+                      <>
+                        <h2 className="text-2xl font-semibold mb-6 text-center">
+                          Check the messages that will be sent to telegram channels!
+                        </h2>
 
-                    <FormField
-                      control={form.control}
-                      name="broadcastTo"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col items-center justify-between rounded-lg border p-3 shadow-sm w-full">
-                          {telegramChannelsData?.channels.map(
-                            (channel: {
-                              id: string;
-                              chatUsername: string;
-                              chatTitle: string;
-                              messageTemplate: { id: string; body: string; title: string } | null;
-                            }) => {
-                              const isChecked =
-                                field.value?.find(
-                                  (targetChannel: { channelId: string }) =>
-                                    targetChannel.channelId === channel.id
-                                ) !== undefined;
-                              return (
-                                <div
-                                  className={`${selectedChannelId == channel.id ? `ring-2 ring-primary/50` : ``} w-full rounded-md`}
-                                  key={channel.id}
-                                >
-                                  <div
-                                    className="w-full flex justify-between flex-row bg-muted/40 p-4 rounded-md transition-all cursor-pointer hover:bg-accent/50 ${isChecked ? 'border-primary bg-primary/5' : 'border-border'}"
-                                    onClick={() => {
-                                      setSelectedChannelId(channel.id);
-                                    }}
-                                  >
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      <Checkbox
-                                        className="mt-0.5 cursor-pointer"
-                                        id={channel.id}
-                                        checked={isChecked}
-                                        onCheckedChange={(checked: boolean) => {
-                                          if (checked) {
-                                            field.onChange([
-                                              ...field.value,
-                                              {
-                                                channelId: channel.id,
-                                                body:
-                                                  messages.find(
-                                                    message => message.channelId == channel.id
-                                                  )?.body || '',
-                                              },
-                                            ]);
-                                          } else {
-                                            field.onChange(
-                                              field.value.filter(
-                                                (targetChannel: { channelId: string }) =>
-                                                  targetChannel.channelId !== channel.id
-                                              )
-                                            );
-                                          }
+                        <SimpleEditor
+                          className=""
+                          value={
+                            messages.find(message => message.channelId === selectedChannelId)
+                              ?.body || ''
+                          }
+                          onChange={onEditMessage}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="broadcastTo"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col items-center justify-between rounded-lg border p-3 shadow-sm w-full">
+                              {telegramChannelsData?.channels.map(
+                                (channel: {
+                                  id: string;
+                                  chatUsername: string;
+                                  chatTitle: string;
+                                  messageTemplate: {
+                                    id: string;
+                                    body: string;
+                                    title: string;
+                                  } | null;
+                                }) => {
+                                  const isChecked =
+                                    field.value?.find(
+                                      (targetChannel: { channelId: string }) =>
+                                        targetChannel.channelId === channel.id
+                                    ) !== undefined;
+                                  return (
+                                    <div
+                                      className={`${selectedChannelId == channel.id ? `ring-2 ring-primary/50` : ``} w-full rounded-md`}
+                                      key={channel.id}
+                                    >
+                                      <div
+                                        className="w-full flex justify-between flex-row bg-muted/40 p-4 rounded-md transition-all cursor-pointer hover:bg-accent/50 ${isChecked ? 'border-primary bg-primary/5' : 'border-border'}"
+                                        onClick={() => {
+                                          setSelectedChannelId(channel.id);
                                         }}
-                                      />
+                                      >
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          <Checkbox
+                                            className="mt-0.5 cursor-pointer"
+                                            id={channel.id}
+                                            checked={isChecked}
+                                            onCheckedChange={(checked: boolean) => {
+                                              if (checked) {
+                                                field.onChange([
+                                                  ...field.value,
+                                                  {
+                                                    channelId: channel.id,
+                                                    body:
+                                                      messages.find(
+                                                        message => message.channelId == channel.id
+                                                      )?.body || '',
+                                                  },
+                                                ]);
+                                              } else {
+                                                field.onChange(
+                                                  field.value.filter(
+                                                    (targetChannel: { channelId: string }) =>
+                                                      targetChannel.channelId !== channel.id
+                                                  )
+                                                );
+                                              }
+                                            }}
+                                          />
 
-                                      <h3 className="text-md font-medium flex items-center">
-                                        {channel.chatTitle ? channel.chatTitle : 'Null'}
-                                      </h3>
-                                    </div>
-                                    {selectedChannelId == channel.id && (
-                                      <div className="ml-2">
-                                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                          <h3 className="text-md font-medium flex items-center">
+                                            {channel.chatTitle ? channel.chatTitle : 'Null'}
+                                          </h3>
+                                        </div>
+                                        {selectedChannelId == channel.id && (
+                                          <div className="ml-2">
+                                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            }
+                                    </div>
+                                  );
+                                }
+                              )}
+                            </FormItem>
                           )}
-                        </FormItem>
-                      )}
-                    />
+                        />
+                      </>
+                    ) : null}
+
+                    <h2 className="text-2xl font-semibold mb-6 text-center">
+                      Are you sure you want to save the exchange rates?
+                    </h2>
 
                     <Button variant="default" disabled={saveExchangeRate.isPending}>
                       {saveExchangeRate.isPending ? 'Saving...' : `Save Exchange Rates`}
