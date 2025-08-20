@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { trpc } from '@/lib/trpcProvider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 const CurrencyExchangePage = () => {
   const { hasPermission } = useAuth();
@@ -112,14 +113,19 @@ const CurrencyExchangePage = () => {
   // If we have rates, show the full content, otherwise just show the appropriate message
   if (rates) {
     return (
-      <div className="container mx-auto max-w-4xl mt-6">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-center mb-2">Currency Exchange</h1>
-          <p className="text-center text-muted-foreground mb-4">Convert between RUB, VND, USDT</p>
+      <div className="container mx-auto max-w-4xl md:mt-6 mt-3">
+        <div className="md:mb-6 mb-3">
+          <h1 className="md:text-4xl text-xl font-bold text-center md:mb-2">Currency Exchange</h1>
+          <p className="md:text-lg text-sm text-center text-muted-foreground">
+            Convert between RUB, VND, USDT
+          </p>
         </div>
+        <Separator className="md:hidden" />
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
-          <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
-            <h2 className="text-2xl font-semibold mb-6 text-center">Currency Calculator</h2>
+          <div className="bg-card md:rounded-lg shadow-md md:p-6 p-2 md:border md:border-border/50 md:hover:border-border/90 transition-colors">
+            <h2 className="md:text-2xl text-lg font-semibold md:mb-6 mb-2 text-center">
+              Currency Calculator
+            </h2>
             <CurrencyExchangeForm
               isClient={false}
               rates={{
@@ -132,8 +138,11 @@ const CurrencyExchangePage = () => {
               }}
             />
           </div>
-          <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
-            <h2 className="text-2xl font-semibold mb-6 text-center">Current Exchange Rates</h2>
+          <Separator className="md:hidden" />
+          <div className="bg-card md:rounded-lg shadow-md md:p-6 px-2 md:border md:border-border/50 md:hover:border-border/90 transition-colors">
+            <h2 className="md:text-2xl text-lg font-semibold md:mb-6 mb-2 text-center">
+              Current Exchange Rates
+            </h2>
             <ExchangeRatesDisplay
               rates={{
                 rubToVnd: rates.rubToVnd,
@@ -157,7 +166,7 @@ const CurrencyExchangePage = () => {
                     : 'N/A'}
                 </Badge>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={handleRefresh}
                   className="flex items-center gap-1 w-full sm:w-auto justify-center"
@@ -172,7 +181,7 @@ const CurrencyExchangePage = () => {
         </div>
 
         {canCreateExchangeRates && (
-          <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 my-6 mx-2">
             <Collapsible
               open={isOpen}
               onOpenChange={setIsOpen}
@@ -181,7 +190,7 @@ const CurrencyExchangePage = () => {
               <div className="flex justify-between items-center p-4 bg-muted/20">
                 <h3 className="text-lg font-medium text-muted-foreground">Admin Controls</h3>
                 <CollapsibleTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Button variant="default" size="sm" className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />
                     <span>Manage Rates</span>
                     {isOpen ? (
@@ -192,7 +201,7 @@ const CurrencyExchangePage = () => {
                   </Button>
                 </CollapsibleTrigger>
               </div>
-              <CollapsibleContent className="p-4 bg-card border-t">
+              <CollapsibleContent className="md:p-4 p-2 bg-card border-t">
                 <ExchangeRatesForm
                   onRatesUpdated={handleRefresh}
                   initialValues={{

@@ -10,9 +10,9 @@ import ClientBadge from '@/components/Order/sections/ClientSection/ClientBadge';
 import ClientCard from '@/components/Order/sections/ClientSection/ClientCard';
 
 import { formatCurrency } from '@/utils/currency';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { trpc } from '@/lib/trpc';
+import { trpc, trpcClient } from '@/lib/trpc';
 
 const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmount: number }) => {
   const { order, clients, activeClientId, setActiveClientId, visaApplications, setClients } =
@@ -52,20 +52,10 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
     []
   );
 
-  // Get visa type IDs from visa applications
-  const visaTypeIds = visaApplications.map(va => va.visaType?.id).filter(Boolean);
-
-  const requirementQueries = visaTypeIds.map(visaTypeId =>
-    trpc.requirement.getByVisaType.useQuery(
-      {
-        visaTypeId: visaTypeId || '',
-        citizenshipId: client?.citizenship?.id,
-        includeGeneral: true,
-      },
-      {
-        enabled: !!visaTypeId && !!client?.citizenship?.id,
-      }
-    )
+  // Get visa type IDs from visa applications - memoized to prevent unnecessary re-renders
+  const visaTypeIds = useMemo(
+    () => visaApplications.map(va => va.visaType?.id).filter(Boolean),
+    [visaApplications]
   );
 
   // Create a stable callback for updating requirements
@@ -96,47 +86,77 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
     [client.id, setClients]
   );
 
-  // Extract dependency for useEffect to avoid complex expression
-  const requirementQueriesState = requirementQueries
-    .map(q => q.isSuccess && q.data?.requirements?.length)
-    .join(',');
+  // State to track requirements loading
+  const [isLoadingRequirements, setIsLoadingRequirements] = useState(false);
+
+  // Extract visa type IDs to stable reference
+  const visaTypeIdsString = useMemo(() => visaTypeIds.join(','), [visaTypeIds]);
 
   useEffect(() => {
     // Reset flag when client, visa applications, or visa type IDs change
     requirementsLoadedRef.current = false;
     documentsLoadedRef.current = false;
-  }, [
-    client.id,
-    client.citizenship?.id,
-    visaApplications.length,
-    visaApplications.map(va => va.visaType?.id).join(','),
-  ]);
+  }, [client.id, client.citizenship?.id, visaTypeIdsString]);
 
   useEffect(() => {
-    // Check if all queries have loaded and we haven't already processed them
-    const allQueriesLoaded = requirementQueries.every(query => query.data);
-    const hasQueries = requirementQueries.length > 0;
     const hasValidCitizenship = !!client.citizenship?.id;
-
-    if (allQueriesLoaded && hasQueries && hasValidCitizenship && !requirementsLoadedRef.current) {
-      // Flatten all requirements arrays and remove duplicates by ID
-      const allRequirements = requirementQueries
-        .flatMap(query => query.data?.requirements || [])
-        .filter((req): req is any => req !== undefined);
-
-      const uniqueRequirements = allRequirements.filter(
-        (requirement, index, array) => array.findIndex(r => r?.id === requirement?.id) === index
-      );
-
-      updateClientRequirements(uniqueRequirements);
-      requirementsLoadedRef.current = true;
-    }
+    const hasVisaTypes = visaTypeIds.length > 0;
 
     // Clear requirements if client has no citizenship
     if (!hasValidCitizenship && client.visaRequirements?.length) {
       updateClientRequirements([]);
+      return;
     }
-  }, [requirementQueriesState, updateClientRequirements, client.citizenship?.id]);
+
+    // Load requirements if we have valid citizenship and visa types
+    if (
+      hasValidCitizenship &&
+      hasVisaTypes &&
+      !requirementsLoadedRef.current &&
+      !isLoadingRequirements
+    ) {
+      setIsLoadingRequirements(true);
+
+      const fetchRequirements = async () => {
+        try {
+          const requirementPromises = visaTypeIds.map(visaTypeId =>
+            trpcClient.requirement.getByVisaType.query({
+              visaTypeId: visaTypeId || '',
+              citizenshipId: client.citizenship?.id,
+              includeGeneral: true,
+            })
+          );
+
+          const requirementResults = await Promise.all(requirementPromises);
+
+          // Flatten all requirements arrays and remove duplicates by ID
+          const allRequirements = requirementResults
+            .flatMap(result => result?.requirements || [])
+            .filter((req): req is any => req !== undefined);
+
+          const uniqueRequirements = allRequirements.filter(
+            (requirement, index, array) => array.findIndex(r => r?.id === requirement?.id) === index
+          );
+
+          updateClientRequirements(uniqueRequirements);
+          requirementsLoadedRef.current = true;
+        } catch (error) {
+          console.error('Error loading requirements:', error);
+        } finally {
+          setIsLoadingRequirements(false);
+        }
+      };
+
+      fetchRequirements();
+    }
+  }, [
+    visaTypeIdsString,
+    updateClientRequirements,
+    client.citizenship?.id,
+    isLoadingRequirements,
+    visaTypeIds,
+    client.visaRequirements?.length,
+  ]);
 
   useEffect(() => {
     if (!clientDocumentsData || documentsLoadedRef.current) return;

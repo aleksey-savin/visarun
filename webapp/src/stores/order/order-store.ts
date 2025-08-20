@@ -203,7 +203,9 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   setActiveClientId: (activeClientId: string) => set({ activeClientId }),
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) =>
     set({ activeServicePuzzleSection }),
-  setOrder: (orderData: Order) => set(() => ({ order: orderData })),
+  setOrder: (orderData: Order) => {
+    set(() => ({ order: orderData }));
+  },
   updateOrderStatus: (status: OrderStatus) =>
     set(state => ({
       order: {

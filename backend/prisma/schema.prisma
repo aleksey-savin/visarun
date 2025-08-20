@@ -91,6 +91,7 @@ model User {
   rolesUpdated             Role[]                     @relation("RoleUpdatedBy")
   contactMethods           UserContactMethod[]
   roleAssignments          UserRoleAssignment[]
+  OrderPayment             OrderPayment[]
 }
 
 model Client {
@@ -553,19 +554,21 @@ model Currency {
 }
 
 model OrderPayment {
-  id            String        @id @default(uuid())
-  orderId       String
-  amount        Decimal
-  currencyId    String
-  paidAt        DateTime
-  paymentMethod PaymentMethod
-  documentUrl   String?
-  currency      Currency      @relation(fields: [currencyId], references: [id])
-  order         Order         @relation(fields: [orderId], references: [id])
+  id             String        @id @default(uuid())
+  orderId        String
+  amount         Decimal
+  currencyId     String
+  paidAt         DateTime
+  paymentMethod  PaymentMethod
+  documentUrl    String?
+  acceptedBy     String?
+  acceptedByUser User?         @relation(fields: [acceptedBy], references: [id])
+  currency       Currency      @relation(fields: [currencyId], references: [id])
+  order          Order         @relation(fields: [orderId], references: [id])
 
   @@index([orderId])
   @@index([currencyId])
-  @@map("order_payments")
+  @@index([acceptedBy])
 }
 
 enum UserRole {

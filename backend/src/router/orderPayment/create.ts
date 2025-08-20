@@ -8,6 +8,7 @@ const zCreateOrderPaymentInput = z.object({
   paidAt: z.string().datetime(),
   paymentMethod: z.enum(['cash', 'transfer']),
   documentUrl: z.string().url().optional(),
+  acceptedBy: z.string().uuid().optional(),
 });
 
 export const createOrderPaymentTrpcRoute = orderPaymentCreateProcedure
@@ -39,6 +40,7 @@ export const createOrderPaymentTrpcRoute = orderPaymentCreateProcedure
         paidAt: new Date(input.paidAt),
         paymentMethod: input.paymentMethod,
         documentUrl: input.documentUrl,
+        acceptedBy: input.acceptedBy,
       },
       select: {
         id: true,
@@ -48,6 +50,15 @@ export const createOrderPaymentTrpcRoute = orderPaymentCreateProcedure
         paidAt: true,
         paymentMethod: true,
         documentUrl: true,
+        acceptedBy: true,
+        acceptedByUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
         order: {
           select: {
             id: true,

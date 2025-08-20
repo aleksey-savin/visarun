@@ -1,6 +1,5 @@
 import { orderPaymentUpdateProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
 
 const zEditOrderPaymentInput = z.object({
   id: z.string().uuid(),
@@ -10,6 +9,7 @@ const zEditOrderPaymentInput = z.object({
   paidAt: z.string().datetime().optional(),
   paymentMethod: z.enum(['cash', 'transfer']).optional(),
   documentUrl: z.string().url().optional().or(z.literal('')),
+  acceptedBy: z.string().uuid().optional().nullable(),
 });
 
 export const editOrderPaymentTrpcRoute = orderPaymentUpdateProcedure
@@ -47,7 +47,15 @@ export const editOrderPaymentTrpcRoute = orderPaymentUpdateProcedure
     }
 
     // Prepare update data
-    const updateData: Prisma.OrderPaymentUncheckedUpdateInput = {};
+    const updateData: {
+      orderId?: string;
+      amount?: number;
+      currencyId?: string;
+      paidAt?: Date;
+      paymentMethod?: 'cash' | 'transfer';
+      documentUrl?: string | null;
+      acceptedBy?: string | null;
+    } = {};
 
     if (input.orderId !== undefined) {
       updateData.orderId = input.orderId;
@@ -67,31 +75,13 @@ export const editOrderPaymentTrpcRoute = orderPaymentUpdateProcedure
     if (input.documentUrl !== undefined) {
       updateData.documentUrl = input.documentUrl === '' ? null : input.documentUrl;
     }
+    if (input.acceptedBy !== undefined) {
+      updateData.acceptedBy = input.acceptedBy;
+    }
 
     const orderPayment = await ctx.prisma.orderPayment.update({
       where: { id: input.id },
       data: updateData,
-      select: {
-        id: true,
-        orderId: true,
-        amount: true,
-        currencyId: true,
-        paidAt: true,
-        paymentMethod: true,
-        documentUrl: true,
-        order: {
-          select: {
-            id: true,
-            status: true,
-          },
-        },
-        currency: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
     });
 
     return { orderPayment };

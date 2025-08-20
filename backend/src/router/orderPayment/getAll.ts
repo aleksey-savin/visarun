@@ -55,6 +55,15 @@ export const getAllOrderPaymentsTrpcRoute = orderPaymentReadProcedure
           paidAt: true,
           paymentMethod: true,
           documentUrl: true,
+          acceptedBy: true,
+          acceptedByUser: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
           order: {
             select: {
               id: true,

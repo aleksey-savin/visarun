@@ -12,10 +12,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const FormSchema = z.object({
   clientRubles: z.string().optional(),
@@ -159,28 +159,14 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
 
   return (
     <Form {...form}>
-      <div className="w-full max-w-4xl space-y-6">
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={resetForm}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw size={16} />
-            Reset
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="w-full max-w-4xl md:space-y-6 space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-8 gap-3">
           {/* Left column - Client transfers to us */}
-          <Card className={direction === 'clientToUs' ? 'ring-2 ring-primary/50' : ''}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <Card className={cn('', direction === 'clientToUs' ? 'ring-2 ring-primary/50' : '')}>
+            <CardContent className="flex flex-col md:gap-6 gap-3">
+              <CardTitle className="text-lg font-medium flex items-center">
                 {isClient ? 'You transfer to us:' : 'Client transfers to us:'}
               </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <FormField
                 control={form.control}
                 name="clientRubles"
@@ -202,8 +188,6 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 )}
               />
 
-              <Separator />
-
               <FormField
                 control={form.control}
                 name="clientDongs"
@@ -224,8 +208,6 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                   </FormItem>
                 )}
               />
-
-              <Separator />
 
               <FormField
                 control={form.control}
@@ -252,12 +234,10 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
 
           {/* Right column - We transfer to client */}
           <Card className={direction === 'usToClient' ? 'ring-2 ring-primary/50' : ''}>
-            <CardHeader className="pb-3">
+            <CardContent className="flex flex-col md:gap-6 gap-3">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 {isClient ? 'We transfer to you:' : 'We transfer to user:'}
               </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <FormField
                 control={form.control}
                 name="ourRubles"
@@ -279,8 +259,6 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 )}
               />
 
-              <Separator />
-
               <FormField
                 control={form.control}
                 name="ourDongs"
@@ -301,8 +279,6 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                   </FormItem>
                 )}
               />
-
-              <Separator />
 
               <FormField
                 control={form.control}
@@ -326,6 +302,17 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
               />
             </CardContent>
           </Card>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={resetForm}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw size={16} />
+            Reset
+          </Button>
         </div>
       </div>
     </Form>

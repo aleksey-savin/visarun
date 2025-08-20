@@ -17,7 +17,6 @@ import {
 // import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -138,7 +137,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
     if (exchangeRate && !isNaN(parseFloat(exchangeRate))) {
       const rate = parseFloat(exchangeRate);
       // Calculate values based on the formula
-      const usdtToRubValue = roundInOurFavor(rate * 0.97, true); // Exchange Rate * 0.97
+      const usdtToRubValue = roundInOurFavor(rate * 0.95, true); // Exchange Rate * 0.97
       const rubToUsdtValue = roundInOurFavor(rate * 1.03, false); // Exchange Rate * 1.03
 
       // Update the form fields
@@ -197,7 +196,7 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
         updatedChannel.body =
           messages.find(message => message.channelId == channel.channelId)?.body || '';
       });
-      
+
       // Convert string values to numbers and submit
       saveExchangeRate.mutate({
         rubToVnd: parseFloat(data.rubToVnd) / 10000,
@@ -390,8 +389,6 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                     </div>
                   </div>
 
-                  <Separator />
-
                   <div className="bg-muted/40 p-4 rounded-md">
                     <h3 className="text-md font-medium mb-3 flex items-center">
                       <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs mr-2">
@@ -435,8 +432,6 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                       />
                     </div>
                   </div>
-
-                  <Separator />
 
                   <div className="bg-muted/40 p-4 rounded-md">
                     <h3 className="text-md font-medium mb-3 flex items-center">
@@ -518,13 +513,14 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                     </div>
                     {exchangeRate && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        Rates are automatically calculated as Exchange Rate × 0.97 (for USDT to RUB)
+                        Rates are automatically calculated as Exchange Rate × 0.95 (for USDT to RUB)
                         and Exchange Rate × 1.03 (for RUB to USDT) with 0.1 rounding in our favor.
                       </p>
                     )}
                   </div>
 
                   <Button
+                    className="md:w-auto w-full"
                     variant="default"
                     disabled={saveExchangeRate.isPending}
                     onClick={onConfirm}
