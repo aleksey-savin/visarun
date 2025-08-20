@@ -3,6 +3,33 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState } from 'react';
 
+const formatCurrency = (amount: number, currency?: string) => {
+  try {
+    // Try to format with the provided currency
+    if (currency) {
+      return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(amount);
+    }
+  } catch {
+    // If currency is invalid, fall back to number formatting with currency symbol
+    console.warn(`Invalid currency code: ${currency}`);
+  }
+
+  // Fallback: format as number with currency name or default
+  const currencySymbol = currency || 'VND';
+  return (
+    new Intl.NumberFormat('ru-RU', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount) + ` ${currencySymbol}`
+  );
+};
+
 import {
   Form,
   FormControl,
@@ -14,7 +41,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const FormSchema = z.object({
@@ -64,6 +91,21 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
   const formatNumber = (value: number): string => {
     if (isNaN(value) || !isFinite(value)) return '0';
     return value.toLocaleString('ru-RU', { maximumFractionDigits: 4 });
+  };
+
+  // Copy exchange offer to clipboard
+  const copyExchangeOffer = async (
+    fromCurrency: string,
+    fromAmount: string,
+    toCurrency: string,
+    toAmount: string
+  ) => {
+    const offerText = `Обмен: за ваши ${formatCurrency(parseFloat(fromAmount.replace(/\s+/g, '').replace(/,/g, '.')), fromCurrency)} с нас будет ${formatCurrency(parseFloat(toAmount.replace(/\s+/g, '').replace(/,/g, '.')), toCurrency)}.`;
+    try {
+      await navigator.clipboard.writeText(offerText);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
   };
 
   // Handle client input changes
@@ -173,16 +215,46 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-2">
                     <FormControl>
-                      <Input
-                        placeholder="0"
-                        value={field.value}
-                        onChange={e => handleClientInputChange('clientRubles', e.target.value)}
-                        className={
-                          direction === 'clientToUs' && field.value ? 'border-primary' : ''
-                        }
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="0"
+                          value={field.value}
+                          onChange={e => handleClientInputChange('clientRubles', e.target.value)}
+                          className={cn(
+                            direction === 'clientToUs' && field.value ? 'border-primary' : '',
+                            direction === 'usToClient' ? 'pr-10' : ''
+                          )}
+                        />
+                        {direction === 'usToClient' && field.value && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const ourDongsValue = form.getValues('ourDongs');
+                              const ourUsdtValue = form.getValues('ourUsdt');
+                              if (ourDongsValue)
+                                await copyExchangeOffer(
+                                  'RUB',
+                                  field.value || '',
+                                  'VND',
+                                  ourDongsValue
+                                );
+                              else if (ourUsdtValue)
+                                await copyExchangeOffer(
+                                  'RUB',
+                                  field.value || '',
+                                  'USDT',
+                                  ourUsdtValue
+                                );
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded active:scale-110 transition-all duration-150"
+                          >
+                            <Copy size={14} className="text-gray-500" />
+                          </button>
+                        )}
+                      </div>
                     </FormControl>
                     <FormLabel className="min-w-[50px] text-right font-medium">RUB</FormLabel>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -194,16 +266,46 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-2">
                     <FormControl>
-                      <Input
-                        placeholder="0"
-                        value={field.value}
-                        onChange={e => handleClientInputChange('clientDongs', e.target.value)}
-                        className={
-                          direction === 'clientToUs' && field.value ? 'border-primary' : ''
-                        }
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="0"
+                          value={field.value}
+                          onChange={e => handleClientInputChange('clientDongs', e.target.value)}
+                          className={cn(
+                            direction === 'clientToUs' && field.value ? 'border-primary' : '',
+                            direction === 'usToClient' ? 'pr-10' : ''
+                          )}
+                        />
+                        {direction === 'usToClient' && field.value && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const ourRublesValue = form.getValues('ourRubles');
+                              const ourUsdtValue = form.getValues('ourUsdt');
+                              if (ourRublesValue)
+                                await copyExchangeOffer(
+                                  'VND',
+                                  field.value || '',
+                                  'RUB',
+                                  ourRublesValue
+                                );
+                              else if (ourUsdtValue)
+                                await copyExchangeOffer(
+                                  'VND',
+                                  field.value || '',
+                                  'USDT',
+                                  ourUsdtValue
+                                );
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                          >
+                            <Copy size={14} className="text-gray-500" />
+                          </button>
+                        )}
+                      </div>
                     </FormControl>
                     <FormLabel className="min-w-[50px] text-right font-medium">VND</FormLabel>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -215,14 +317,43 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-2">
                     <FormControl>
-                      <Input
-                        placeholder="0"
-                        value={field.value}
-                        onChange={e => handleClientInputChange('clientUsdt', e.target.value)}
-                        className={
-                          direction === 'clientToUs' && field.value ? 'border-primary' : ''
-                        }
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="0"
+                          value={field.value}
+                          onChange={e => handleClientInputChange('clientUsdt', e.target.value)}
+                          className={cn(
+                            direction === 'clientToUs' && field.value ? 'border-primary' : '',
+                            direction === 'usToClient' ? 'pr-10' : ''
+                          )}
+                        />
+                        {direction === 'usToClient' && field.value && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const ourRublesValue = form.getValues('ourRubles');
+                              const ourDongsValue = form.getValues('ourDongs');
+                              if (ourRublesValue)
+                                await copyExchangeOffer(
+                                  'USDT',
+                                  field.value || '',
+                                  'RUB',
+                                  ourRublesValue
+                                );
+                              else if (ourDongsValue)
+                                await copyExchangeOffer(
+                                  'USDT',
+                                  field.value || '',
+                                  'VND',
+                                  ourDongsValue
+                                );
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                          >
+                            <Copy size={14} className="text-gray-500" />
+                          </button>
+                        )}
+                      </div>
                     </FormControl>
                     <FormLabel className="min-w-[50px] text-right font-medium">USDT</FormLabel>
                     <FormMessage />
@@ -244,16 +375,54 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-2">
                     <FormControl>
-                      <Input
-                        placeholder="0"
-                        value={field.value}
-                        onChange={e => handleOurInputChange('ourRubles', e.target.value)}
-                        className={
-                          direction === 'usToClient' && field.value ? 'border-primary' : ''
-                        }
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="0"
+                          value={field.value}
+                          onChange={e => handleOurInputChange('ourRubles', e.target.value)}
+                          className={cn(
+                            direction === 'usToClient' && field.value ? 'border-primary' : '',
+                            direction === 'clientToUs' ? 'pr-10' : ''
+                          )}
+                        />
+                        {direction === 'clientToUs' && field.value && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const clientRublesValue = form.getValues('clientRubles');
+                              const clientDongsValue = form.getValues('clientDongs');
+                              const clientUsdtValue = form.getValues('clientUsdt');
+                              if (clientRublesValue)
+                                await copyExchangeOffer(
+                                  'RUB',
+                                  clientRublesValue,
+                                  'RUB',
+                                  field.value || ''
+                                );
+                              else if (clientDongsValue)
+                                await copyExchangeOffer(
+                                  'VND',
+                                  clientDongsValue,
+                                  'RUB',
+                                  field.value || ''
+                                );
+                              else if (clientUsdtValue)
+                                await copyExchangeOffer(
+                                  'USDT',
+                                  clientUsdtValue,
+                                  'RUB',
+                                  field.value || ''
+                                );
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                          >
+                            <Copy size={14} className="text-gray-500" />
+                          </button>
+                        )}
+                      </div>
                     </FormControl>
                     <FormLabel className="min-w-[50px] text-right font-medium">RUB</FormLabel>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -265,16 +434,54 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-2">
                     <FormControl>
-                      <Input
-                        placeholder="0"
-                        value={field.value}
-                        onChange={e => handleOurInputChange('ourDongs', e.target.value)}
-                        className={
-                          direction === 'usToClient' && field.value ? 'border-primary' : ''
-                        }
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="0"
+                          value={field.value}
+                          onChange={e => handleOurInputChange('ourDongs', e.target.value)}
+                          className={cn(
+                            direction === 'usToClient' && field.value ? 'border-primary' : '',
+                            direction === 'clientToUs' ? 'pr-10' : ''
+                          )}
+                        />
+                        {direction === 'clientToUs' && field.value && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const clientRublesValue = form.getValues('clientRubles');
+                              const clientDongsValue = form.getValues('clientDongs');
+                              const clientUsdtValue = form.getValues('clientUsdt');
+                              if (clientRublesValue)
+                                await copyExchangeOffer(
+                                  'RUB',
+                                  clientRublesValue,
+                                  'VND',
+                                  field.value || ''
+                                );
+                              else if (clientDongsValue)
+                                await copyExchangeOffer(
+                                  'VND',
+                                  clientDongsValue,
+                                  'VND',
+                                  field.value || ''
+                                );
+                              else if (clientUsdtValue)
+                                await copyExchangeOffer(
+                                  'USDT',
+                                  clientUsdtValue,
+                                  'VND',
+                                  field.value || ''
+                                );
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                          >
+                            <Copy size={14} className="text-gray-500" />
+                          </button>
+                        )}
+                      </div>
                     </FormControl>
                     <FormLabel className="min-w-[50px] text-right font-medium">VND</FormLabel>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -286,16 +493,54 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-2">
                     <FormControl>
-                      <Input
-                        placeholder="0"
-                        value={field.value}
-                        onChange={e => handleOurInputChange('ourUsdt', e.target.value)}
-                        className={
-                          direction === 'usToClient' && field.value ? 'border-primary' : ''
-                        }
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="0"
+                          value={field.value}
+                          onChange={e => handleOurInputChange('ourUsdt', e.target.value)}
+                          className={cn(
+                            direction === 'usToClient' && field.value ? 'border-primary' : '',
+                            direction === 'clientToUs' ? 'pr-10' : ''
+                          )}
+                        />
+                        {direction === 'clientToUs' && field.value && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const clientRublesValue = form.getValues('clientRubles');
+                              const clientDongsValue = form.getValues('clientDongs');
+                              const clientUsdtValue = form.getValues('clientUsdt');
+                              if (clientRublesValue)
+                                await copyExchangeOffer(
+                                  'RUB',
+                                  clientRublesValue,
+                                  'USDT',
+                                  field.value || ''
+                                );
+                              else if (clientDongsValue)
+                                await copyExchangeOffer(
+                                  'VND',
+                                  clientDongsValue,
+                                  'USDT',
+                                  field.value || ''
+                                );
+                              else if (clientUsdtValue)
+                                await copyExchangeOffer(
+                                  'USDT',
+                                  clientUsdtValue,
+                                  'USDT',
+                                  field.value || ''
+                                );
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                          >
+                            <Copy size={14} className="text-gray-500" />
+                          </button>
+                        )}
+                      </div>
                     </FormControl>
                     <FormLabel className="min-w-[50px] text-right font-medium">USDT</FormLabel>
+
                     <FormMessage />
                   </FormItem>
                 )}
