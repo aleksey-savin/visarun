@@ -78,12 +78,13 @@ RUN pnpm install --prod
 ENV DATABASE_URL=${DATABASE_URL:-"postgresql://postgres:postgres@db:5432/visarun"}
 RUN npx prisma generate
 
-# Copy startup script
+# Copy startup scripts
 COPY --from=backend-build /app/backend/start.sh ./start.sh
-RUN chmod +x ./start.sh
+COPY --from=backend-build /app/backend/start-safe.sh ./start-safe.sh
+RUN chmod +x ./start.sh && chmod +x ./start-safe.sh
 
 EXPOSE 3001
-CMD ["./start.sh"]
+CMD ["./start-safe.sh"]
 
 # Frontend production stage
 FROM nginx:alpine AS webapp-prod
