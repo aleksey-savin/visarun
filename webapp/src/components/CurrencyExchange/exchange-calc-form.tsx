@@ -131,22 +131,38 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
 
     // Calculate what we transfer to client
     if (field === 'clientRubles') {
+      const bonusVnd = numValue >= 100000 ? 2 : 0;
+      const bonusUsdt = numValue >= 100000 ? 0 : 0;
+
       form.setValue(
         'ourDongs',
-        formatNumber(Math.floor((numValue * rates.rubToVnd) / 10000) * 10000)
+        formatNumber(Math.floor((numValue * (rates.rubToVnd + bonusVnd)) / 10000) * 10000)
       );
-      form.setValue('ourUsdt', formatNumber(Math.floor(numValue / rates.rubToUsdt / 0.5) * 0.5));
+      form.setValue(
+        'ourUsdt',
+        formatNumber(Math.floor(numValue / (rates.rubToUsdt + bonusUsdt) / 0.5) * 0.5)
+      );
     } else if (field === 'clientDongs') {
+      const bonusRub = numValue >= 25000000 ? 0.035 : 0;
+      const bonusUsdt = numValue >= 25000000 ? 200 : 0;
       form.setValue(
         'ourRubles',
-        formatNumber(Math.floor((numValue * rates.vndToRub) / 1000 / 50) * 50)
+        formatNumber(Math.floor((numValue * (rates.vndToRub + bonusRub)) / 1000 / 50) * 50)
       );
-      form.setValue('ourUsdt', formatNumber(Math.floor(numValue / rates.vndToUsdt / 0.5) * 0.5));
+      form.setValue(
+        'ourUsdt',
+        formatNumber(Math.floor(numValue / (rates.vndToUsdt - bonusUsdt) / 0.5) * 0.5)
+      );
     } else if (field === 'clientUsdt') {
-      form.setValue('ourRubles', formatNumber(Math.floor((numValue * rates.usdtToRub) / 50) * 50));
+      const bonusRub = numValue >= 1000 ? 0.8 : 0;
+      const bonusVnd = numValue >= 1000 ? 200 : 0;
+      form.setValue(
+        'ourRubles',
+        formatNumber(Math.floor((numValue * (rates.usdtToRub + bonusRub)) / 50) * 50)
+      );
       form.setValue(
         'ourDongs',
-        formatNumber(Math.floor((numValue * rates.usdtToVnd) / 10000) * 10000)
+        formatNumber(Math.floor((numValue * (rates.usdtToVnd + bonusVnd)) / 10000) * 10000)
       );
     }
   };
@@ -179,22 +195,38 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
 
     // Calculate what client transfers to us
     if (field === 'ourRubles') {
+      const bonusVnd = numValue >= 75850 ? 0.035 : 0;
+      const bonusUsdt = numValue >= 83100 ? 0.825 : 0;
+
       form.setValue(
         'clientDongs',
-        formatNumber(Math.ceil(((numValue / rates.vndToRub) * 1000) / 10000) * 10000)
+        formatNumber(Math.ceil(((numValue / (rates.vndToRub + bonusVnd)) * 1000) / 10000) * 10000)
       );
-      form.setValue('clientUsdt', formatNumber(Math.ceil(numValue / rates.usdtToRub / 0.5) * 0.5));
+      form.setValue(
+        'clientUsdt',
+        formatNumber(Math.ceil(numValue / (rates.usdtToRub + bonusUsdt) / 0.5) * 0.5)
+      );
     } else if (field === 'ourDongs') {
-      form.setValue('clientRubles', formatNumber(Math.ceil(numValue / rates.rubToVnd / 50) * 50));
-      form.setValue('clientUsdt', formatNumber(Math.ceil(numValue / rates.usdtToVnd / 0.5) * 0.5));
-    } else if (field === 'ourUsdt') {
+      const bonusRub = numValue >= 30200000 ? 2 : 0;
+      const bonusUsdt = numValue >= 25800000 ? 200 : 0;
+
       form.setValue(
         'clientRubles',
-        formatNumber(Math.ceil((numValue * rates.rubToUsdt) / 50) * 50)
+        formatNumber(Math.ceil(numValue / (rates.rubToVnd + bonusRub) / 50) * 50)
+      );
+      form.setValue(
+        'clientUsdt',
+        formatNumber(Math.ceil(numValue / (rates.usdtToVnd + bonusUsdt) / 0.5) * 0.5)
+      );
+    } else if (field === 'ourUsdt') {
+      const bonusVndt = numValue >= 939.5 ? 198 : 0;
+      form.setValue(
+        'clientRubles',
+        formatNumber(Math.ceil((numValue * (rates.rubToUsdt + 0)) / 50) * 50)
       );
       form.setValue(
         'clientDongs',
-        formatNumber(Math.ceil((numValue * rates.vndToUsdt) / 10000) * 10000)
+        formatNumber(Math.ceil((numValue * (rates.vndToUsdt - bonusVndt)) / 10000) * 10000)
       );
     }
   };

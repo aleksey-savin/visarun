@@ -25,7 +25,7 @@ const CurrencyExchangePage = () => {
     isFetching,
   } = trpc.exchangeRates.getLatestExchangeRate.useQuery(undefined, {
     refetchOnWindowFocus: false,
-    refetchInterval: 5000, // Refetch every 10 seconds
+    refetchInterval: 5000,
     staleTime: 1000, // Consider data stale after 15 seconds
   });
 
