@@ -26,7 +26,7 @@ export default function Layout() {
 
   return (
     <SidebarProvider>
-      <div className="md:h-screen flex justify-center md:justify-start w-screen bg-background">
+      <div className="md:h-screen flex justify-center md:justify-start w-screen bg-background p-0">
         <AppSidebar />
         {/** <div className="fixed top-4 right-4 z-10 flex items-center gap-2">
             {userEmail && <span className="text-sm text-muted-foreground mr-2">{userEmail}</span>}
@@ -39,7 +39,7 @@ export default function Layout() {
           <PageHeader />
           <Outlet />
         </div>
-        <div className="grid grid-cols-1 gap-4 md:hidden">
+        <div className="grid grid-cols-1 gap-4 md:hidden w-full">
           <PageHeader />
           <Outlet />
         </div>
