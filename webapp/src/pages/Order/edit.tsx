@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useParams } from 'react-router-dom';
+import { Prisma } from '@visarun/backend/node_modules/@prisma/client';
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,10 +16,15 @@ import SummarySection from '@/components/Order/sections/SummarySection';
 import AddClientCard from '@/components/Order/sections/ClientSection/AddClientCard';
 import OrderSummary from '@/components/Order/sections/SummarySection/OrderSummary';
 
-import { clientHasServicePuzzleErrors, clientHasPersonalDataErrors } from '@/utils/clientHasErrors';
+import {
+  clientHasServicePuzzleErrors,
+  clientHasPersonalDataErrors,
+  clientHasOrderPaymentErrors,
+} from '@/utils/clientHasErrors';
 
 import PersonalData from '@/components/Order/steps/PersonalData';
 import Payment from '@/components/Order/steps/Payment';
+import { cn } from '@/lib/utils';
 
 // Define the restricted status types that can be used in step navigation
 type StepStatus = 'draft' | 'personal_data_verification' | 'payment_pending';
@@ -64,6 +70,7 @@ const EditOrderPage = () => {
     orderItems = [],
     clients,
     visaApplications = [],
+    orderPayments,
     user,
     setOrder,
     updateOrderStatus,
@@ -72,6 +79,7 @@ const EditOrderPage = () => {
     setContactMethods,
     setOrderItems,
     setVisaApplications,
+    setOrderPayments,
     setActiveServicePuzzleSection,
   } = useOrderStore();
 
@@ -226,10 +234,31 @@ const EditOrderPage = () => {
       );
     }
 
+    if (orderData.orderPayments) {
+      setOrderPayments(
+        orderData.orderPayments.map(p => ({
+          id: p.id,
+          currencyId: p.currency.id,
+          amount: new Prisma.Decimal(p.amount),
+          amountInSelectedCurrency: new Prisma.Decimal(p.amountInSelectedCurrency),
+          confirmPaymentWithoutDocument: p.confirmPaymentWithoutDocument,
+          paymentMethod: p.paymentMethod,
+          documentUrl: p.documentUrl,
+          acceptedById: p.acceptedById,
+          acceptedByUser: p.acceptedByUser,
+          currency: p.currency,
+          acceptedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }))
+      );
+    }
+
     setActiveServicePuzzleSection('visa');
   }, [
     orderData,
     setContactMethods,
+    setOrderPayments,
     setOrder,
     setOrderItems,
     setUser,
@@ -257,6 +286,15 @@ const EditOrderPage = () => {
       }).length > 0
     );
   }, [clients, user]);
+
+  const orderHasPaymentErrors = useMemo(() => {
+    return (
+      orderPayments.filter(payment => {
+        const errors = Array.from(clientHasOrderPaymentErrors(payment) || []);
+        return errors.length > 0;
+      }).length > 0
+    );
+  }, [orderPayments]);
 
   const servicePuzzleIsActive: boolean = useMemo(() => {
     // Basic requirements
@@ -296,11 +334,18 @@ const EditOrderPage = () => {
       {
         name: 'Payment',
         status: 'payment_pending',
-        canProceed: !clientsHaveServicePuzzleErrors && false,
-        isCompleted: !['draft', 'personal_data_verification', 'payment'].includes(order.status),
+        canProceed: !clientsHaveServicePuzzleErrors && !orderHasPaymentErrors,
+        isCompleted: !['draft', 'personal_data_verification', 'payment_pending'].includes(
+          order.status
+        ),
       },
     ],
-    [clientsHaveServicePuzzleErrors, clientsHavePersonalDataErrors, order.status]
+    [
+      clientsHaveServicePuzzleErrors,
+      clientsHavePersonalDataErrors,
+      orderHasPaymentErrors,
+      order.status,
+    ]
   );
 
   const [activeStep, setActiveStep] = useState(order.status === 'draft' ? steps[0] : steps[1]);
@@ -435,8 +480,15 @@ const EditOrderPage = () => {
                   <Card className="bg-secondary mr-2.5 p-0 mb-2.5" key={client.id}>
                     <ClientSection totalAmount={totalAmount} client={client} />
                     {activeClientId === client.id && (
-                      <div className="grid grid-col-1 gap-6 px-6 pb-5">
-                        {activeStep.status === 'payment_pending' && <Payment />}
+                      <div
+                        className={cn(
+                          'grid grid-col-1 gap-6 ',
+                          activeStep.status === 'payment_pending' && !client.isPrimary
+                            ? 'p-0'
+                            : 'px-6 pb-5'
+                        )}
+                      >
+                        {activeStep.status === 'payment_pending' && client.isPrimary && <Payment />}
                         {activeStep.status === 'personal_data_verification' && (
                           <PersonalData client={client} />
                         )}
@@ -487,12 +539,22 @@ const EditOrderPage = () => {
             <SummarySection />
             <OrderSummary />
             <Button
-              variant={activeStep.canProceed && activeClientId === '' ? 'default' : 'secondary'}
-              disabled={activeStep.canProceed && activeClientId === '' ? false : true}
+              variant={
+                activeStep.canProceed &&
+                (activeClientId === '' || order.status === 'payment_pending')
+                  ? 'default'
+                  : 'secondary'
+              }
+              disabled={
+                activeStep.canProceed &&
+                (activeClientId === '' || order.status === 'payment_pending')
+                  ? false
+                  : true
+              }
               onClick={handleNext}
               className="flex border-none w-full items-center justify-between text-sm"
             >
-              <span>Next step</span>
+              <span>{`${order.status !== 'payment_pending' ? 'Next step' : 'Go to visas table'}`}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>

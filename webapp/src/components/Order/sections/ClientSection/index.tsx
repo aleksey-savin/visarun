@@ -179,6 +179,11 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
     if (activeClientId === client.id && order.status !== 'draft') {
       setEditMode(true);
     }
+
+    if (order.status === 'payment_pending' && !client.isPrimary) {
+      setEditMode(true);
+    }
+
     if (activeClientId !== client.id && order.status !== 'draft') {
       setActiveClientId(client.id);
     } else if (activeClientId !== client.id && order.status === 'draft') {
@@ -211,7 +216,18 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
           {client.isPrimary && <ContactData />}
           <div className="flex justify-between items-end">
             <ClientData client={client} />
-            {order.status !== 'draft' && <Button onClick={() => setEditMode(false)}>Save</Button>}
+            {order.status !== 'draft' && (
+              <Button
+                onClick={() => {
+                  setEditMode(false);
+                  if (order.status === 'payment_pending' && !client.isPrimary) {
+                    setActiveClientId('');
+                  }
+                }}
+              >
+                Save
+              </Button>
+            )}
           </div>
         </Card>
       )}

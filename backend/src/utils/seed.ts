@@ -292,6 +292,11 @@ async function main() {
       description: 'Accept and confirm payments',
       category: 'orderPayments',
     },
+    {
+      code: 'orderPayments.confirmWithoutDocument',
+      description: 'Confirm payments without requiring a document',
+      category: 'orderPayments',
+    },
   ];
 
   // Create permissions with duplicate checking

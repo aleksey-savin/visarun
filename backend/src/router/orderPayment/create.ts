@@ -4,11 +4,13 @@ import { z } from 'zod';
 const zCreateOrderPaymentInput = z.object({
   orderId: z.string().uuid(),
   amount: z.number().positive(),
+  amountInSelectedCurrency: z.number().positive(),
   currencyId: z.string().uuid(),
   paidAt: z.string().datetime(),
   paymentMethod: z.enum(['cash', 'transfer']),
-  documentUrl: z.string().url().optional(),
-  acceptedBy: z.string().uuid().optional(),
+  documentUrl: z.string().optional(),
+  acceptedById: z.string().uuid().optional(),
+  confirmPaymentWithoutDocument: z.boolean().optional(),
 });
 
 export const createOrderPaymentTrpcRoute = orderPaymentCreateProcedure
@@ -36,21 +38,25 @@ export const createOrderPaymentTrpcRoute = orderPaymentCreateProcedure
       data: {
         orderId: input.orderId,
         amount: input.amount,
+        amountInSelectedCurrency: input.amountInSelectedCurrency,
         currencyId: input.currencyId,
         paidAt: new Date(input.paidAt),
         paymentMethod: input.paymentMethod,
         documentUrl: input.documentUrl,
-        acceptedBy: input.acceptedBy,
+        acceptedById: input.acceptedById,
+        confirmPaymentWithoutDocument: input.confirmPaymentWithoutDocument || false,
       },
       select: {
         id: true,
         orderId: true,
         amount: true,
+        amountInSelectedCurrency: true,
         currencyId: true,
         paidAt: true,
         paymentMethod: true,
         documentUrl: true,
-        acceptedBy: true,
+        acceptedById: true,
+        confirmPaymentWithoutDocument: true,
         acceptedByUser: {
           select: {
             id: true,

@@ -311,6 +311,11 @@ export const orderPaymentAcceptProcedure = baseProcedure.use(
   requirePermission('orderPayments.canAcceptPayments')
 );
 
+// OrderPayment confirm without document procedure
+export const orderPaymentConfirmWithoutDocumentProcedure = baseProcedure.use(
+  requirePermission('orderPayments.confirmWithoutDocument')
+);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

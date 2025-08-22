@@ -120,7 +120,7 @@ const ClientCard = ({
 
   return (
     <>
-      <Card className={cn(' p-6 border-t-0 border-x-0', clientIsIncluded ? 'bg-secondary' : '')}>
+      <Card className={cn('p-6 border-t-0 border-x-0', clientIsIncluded ? 'bg-secondary' : '')}>
         <div className="grid gap-6">
           <div className="flex items-center justify-between gap-2 text-lg">
             <ClientBadge client={client} showLinkedClients={false} />
@@ -207,7 +207,11 @@ const ClientCard = ({
           <div className="flex justify-end gap-2">
             {clientIsIncluded && (
               <Button variant="secondary" onClick={handleClientEditMode}>
-                {activeClientId === client.id ? 'Edit Client' : 'Edit'} <Pencil />
+                {activeClientId === client.id ||
+                (order.status === 'payment_pending' && !client.isPrimary)
+                  ? 'Edit Client'
+                  : 'Edit'}{' '}
+                <Pencil />
               </Button>
             )}
             {!clientIsIncluded && (

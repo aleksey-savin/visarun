@@ -152,7 +152,7 @@ visarun/
 **Single `.env` file approach:**
 - Copy `.env.example` to `.env`
 - For development: Use default values, just add Telegram bot credentials
-- For production: Run `./generate-secrets.sh` to set production values
+- For production: set production values
 - Update `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` in both cases
 
 **Required Variables:**
@@ -172,10 +172,7 @@ visarun/
 ## 🚀 Production Deployment
 
 ### 1. Generate Production Environment
-```bash
-# Create .env with production-ready secrets
-./generate-secrets.sh
-```
+
 
 This script will:
 - Copy `.env.example` to `.env`
@@ -268,7 +265,7 @@ BACKEND_URL=http://backend:3001
 VITE_API_URL=http://localhost:3001
 ```
 
-### Production (set by generate-secrets.sh)
+### Production
 ```bash
 NODE_ENV=production
 POSTGRES_USER=visarun_prod

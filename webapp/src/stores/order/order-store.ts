@@ -15,7 +15,10 @@ import type {
   ClientDocument,
   Requirement,
   ClientRequirement,
+  OrderPayment,
+  PaymentMethod,
 } from '@visarun/backend/node_modules/@prisma/client';
+import { Prisma } from '@visarun/backend/node_modules/@prisma/client';
 
 export interface StoreUser extends Partial<User> {
   id: string;
@@ -126,6 +129,33 @@ export interface StoreOrderItem extends OrderItem {
   errors?: string[];
 }
 
+export interface StoreOrderPayment extends Partial<OrderPayment> {
+  id: string;
+  orderId?: string;
+  currencyId: string;
+  amount: Prisma.Decimal;
+  amountInSelectedCurrency: Prisma.Decimal;
+  paymentMethod: PaymentMethod;
+  documentUrl: string | null;
+  acceptedById: string | null;
+  acceptedAt: Date | null;
+  paidAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  confirmPaymentWithoutDocument?: boolean;
+  acceptedByUser?: {
+    id: string;
+    email: string | null;
+    firstName?: string;
+    lastName?: string;
+  } | null;
+  currency?: {
+    id: string;
+    name: string;
+  };
+  errors?: string[];
+}
+
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 type ActiveServicePuzzleSection = 'visa' | 'visarun';
 
@@ -139,6 +169,7 @@ interface OrderStore {
   contactMethods: StoreUserContactMethod[];
   orderItems: StoreOrderItem[];
   visaApplications: StoreVisaApplication[];
+  orderPayments: StoreOrderPayment[];
   setSaveStatus: (saveStatus: SaveStatus) => void;
   setActiveClientId: (activeClientId: string) => void;
   setOrder: (orderData: Order) => void;
@@ -148,6 +179,7 @@ interface OrderStore {
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => void;
   setOrderItems: (orderItems: StoreOrderItem[]) => void;
   setVisaApplications: (visaApplications: StoreVisaApplication[]) => void;
+  setOrderPayments: (orderPayments: StoreOrderPayment[]) => void;
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) => void;
 }
 
@@ -175,6 +207,7 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   contactMethods: [],
   orderItems: [],
   visaApplications: [],
+  orderPayments: [],
 
   setSaveStatus: async (saveStatus: SaveStatus) => {
     set({ saveStatus });
@@ -220,6 +253,7 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   setOrderItems: (orderItems: StoreOrderItem[]) => set(() => ({ orderItems })),
   setVisaApplications: (visaApplications: StoreVisaApplication[]) =>
     set(() => ({ visaApplications })),
+  setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),
 }));
 
 export default useOrderStore;

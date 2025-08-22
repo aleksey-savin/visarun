@@ -8,8 +8,9 @@ const zEditOrderPaymentInput = z.object({
   currencyId: z.string().uuid().optional(),
   paidAt: z.string().datetime().optional(),
   paymentMethod: z.enum(['cash', 'transfer']).optional(),
-  documentUrl: z.string().url().optional().or(z.literal('')),
-  acceptedBy: z.string().uuid().optional().nullable(),
+  documentUrl: z.string().optional().or(z.literal('')),
+  acceptedById: z.string().uuid().optional().nullable(),
+  confirmPaymentWithoutDocument: z.boolean().optional(),
 });
 
 export const editOrderPaymentTrpcRoute = orderPaymentUpdateProcedure
@@ -54,7 +55,8 @@ export const editOrderPaymentTrpcRoute = orderPaymentUpdateProcedure
       paidAt?: Date;
       paymentMethod?: 'cash' | 'transfer';
       documentUrl?: string | null;
-      acceptedBy?: string | null;
+      acceptedById?: string | null;
+      confirmPaymentWithoutDocument?: boolean;
     } = {};
 
     if (input.orderId !== undefined) {
@@ -75,8 +77,11 @@ export const editOrderPaymentTrpcRoute = orderPaymentUpdateProcedure
     if (input.documentUrl !== undefined) {
       updateData.documentUrl = input.documentUrl === '' ? null : input.documentUrl;
     }
-    if (input.acceptedBy !== undefined) {
-      updateData.acceptedBy = input.acceptedBy;
+    if (input.acceptedById !== undefined) {
+      updateData.acceptedById = input.acceptedById;
+    }
+    if (input.confirmPaymentWithoutDocument !== undefined) {
+      updateData.confirmPaymentWithoutDocument = input.confirmPaymentWithoutDocument;
     }
 
     const orderPayment = await ctx.prisma.orderPayment.update({

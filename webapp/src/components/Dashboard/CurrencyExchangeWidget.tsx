@@ -7,8 +7,10 @@ import { ArrowUpDown, ExternalLink, RefreshCw } from 'lucide-react';
 import { trpc } from '@/lib/trpcProvider';
 import { Link } from 'react-router-dom';
 import { getCurrencyExchangeRoute } from '@/lib/routes';
+import { useAuth } from '@/lib/auth';
 
 export function CurrencyExchangeWidget() {
+  const { hasPermission } = useAuth();
   const {
     data: latestRates,
     isLoading,
@@ -61,12 +63,14 @@ export function CurrencyExchangeWidget() {
           <Alert variant="destructive" className="py-2">
             <AlertDescription className="text-xs">Rates unavailable</AlertDescription>
           </Alert>
-          <Link to={getCurrencyExchangeRoute()}>
-            <Button variant="outline" size="sm" className="w-full mt-2">
-              <ExternalLink className="h-3 w-3 mr-1" />
-              View Exchange
-            </Button>
-          </Link>
+          {hasPermission('exchangeRates.create') && (
+            <Link to={getCurrencyExchangeRoute()}>
+              <Button variant="outline" size="sm" className="w-full mt-2">
+                <ExternalLink className="h-3 w-3 mr-1" />
+                View Exchange
+              </Button>
+            </Link>
+          )}
         </CardContent>
       </Card>
     );

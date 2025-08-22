@@ -18,6 +18,16 @@ export const getOneOrderPaymentTrpcRoute = orderPaymentReadProcedure
         paidAt: true,
         paymentMethod: true,
         documentUrl: true,
+        acceptedById: true,
+        confirmPaymentWithoutDocument: true,
+        acceptedByUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
         order: {
           select: {
             id: true,

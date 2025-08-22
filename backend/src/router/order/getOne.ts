@@ -75,6 +75,31 @@ export const getOrderTrpcRoute = orderReadProcedure
             },
           },
         },
+        orderPayments: {
+          select: {
+            id: true,
+            paymentMethod: true,
+            amount: true,
+            amountInSelectedCurrency: true,
+            confirmPaymentWithoutDocument: true,
+            documentUrl: true,
+            acceptedById: true,
+            acceptedByUser: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+            currency: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         items: {
           orderBy: {
             id: 'asc',

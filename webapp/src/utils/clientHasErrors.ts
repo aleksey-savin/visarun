@@ -1,6 +1,7 @@
 import {
   StoreClient,
   StoreOrderItem,
+  StoreOrderPayment,
   StoreUser,
   StoreVisaApplication,
 } from '@/stores/order/order-store';
@@ -121,6 +122,20 @@ export const clientHasPersonalDataErrors = (client: StoreClient, user?: StoreUse
     ) {
       errors.add(`Switch ${req.title} must be checked to continue`);
     }
+  }
+
+  return errors;
+};
+
+export const clientHasOrderPaymentErrors = (payment: StoreOrderPayment) => {
+  const errors = new Set(payment.errors || []);
+
+  if (!payment) {
+    errors.add('Payment is required');
+  }
+
+  if (payment && !payment.documentUrl && !payment.confirmPaymentWithoutDocument) {
+    errors.add('Uploaded document is required');
   }
 
   return errors;

@@ -267,16 +267,16 @@ model MessageTemplate {
 }
 
 model Order {
-  id           String         @id @default(uuid())
-  userId       String
-  createdAt    DateTime       @default(now())
-  status       OrderStatus    @default(draft)
-  comment      String?
-  updatedAt    DateTime       @default(now()) @updatedAt
-  user         User           @relation(fields: [userId], references: [id])
-  clients      OrderClient[]
-  items        OrderItem[]
-  OrderPayment OrderPayment[]
+  id            String         @id @default(uuid())
+  userId        String
+  createdAt     DateTime       @default(now())
+  status        OrderStatus    @default(draft)
+  comment       String?
+  updatedAt     DateTime       @default(now()) @updatedAt
+  user          User           @relation(fields: [userId], references: [id])
+  clients       OrderClient[]
+  items         OrderItem[]
+  orderPayments OrderPayment[]
 }
 
 model OrderClient {
@@ -554,21 +554,23 @@ model Currency {
 }
 
 model OrderPayment {
-  id             String        @id @default(uuid())
-  orderId        String
-  amount         Decimal
-  currencyId     String
-  paidAt         DateTime
-  paymentMethod  PaymentMethod
-  documentUrl    String?
-  acceptedBy     String?
-  acceptedByUser User?         @relation(fields: [acceptedBy], references: [id])
-  currency       Currency      @relation(fields: [currencyId], references: [id])
-  order          Order         @relation(fields: [orderId], references: [id])
+  id                            String        @id @default(uuid())
+  orderId                       String
+  amount                        Decimal
+  amountInSelectedCurrency      Decimal
+  currencyId                    String
+  paidAt                        DateTime
+  paymentMethod                 PaymentMethod
+  confirmPaymentWithoutDocument Boolean       @default(false)
+  documentUrl                   String?
+  acceptedById                  String?
+  acceptedByUser                User?         @relation(fields: [acceptedById], references: [id])
+  currency                      Currency      @relation(fields: [currencyId], references: [id])
+  order                         Order         @relation(fields: [orderId], references: [id])
 
   @@index([orderId])
   @@index([currencyId])
-  @@index([acceptedBy])
+  @@index([acceptedById])
 }
 
 enum UserRole {
