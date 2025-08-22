@@ -334,7 +334,10 @@ const EditOrderPage = () => {
       {
         name: 'Payment',
         status: 'payment_pending',
-        canProceed: !clientsHaveServicePuzzleErrors && !orderHasPaymentErrors,
+        canProceed:
+          !clientsHaveServicePuzzleErrors &&
+          !clientsHavePersonalDataErrors &&
+          !orderHasPaymentErrors,
         isCompleted: !['draft', 'personal_data_verification', 'payment_pending'].includes(
           order.status
         ),

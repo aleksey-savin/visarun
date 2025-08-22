@@ -5,7 +5,6 @@ import {
   StoreUser,
   StoreVisaApplication,
 } from '@/stores/order/order-store';
-import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
 
 // Validation function to check if client has errors
 export const clientHasServicePuzzleErrors = (
@@ -18,12 +17,8 @@ export const clientHasServicePuzzleErrors = (
   const errors = new Set(client.errors || []);
 
   // 1. Passport expires
-  const passportExpires = isPassportExpiringWithin6Months(
-    client.passportExpirationDate ? client.passportExpirationDate.toISOString() : ''
-  );
-  if (passportExpires) {
-    // passport expiry should not block the flow
-    //errors.add('Passport expires within 6 months');
+  if (!client.preConfirmPassportIsValid) {
+    errors.add('Passport expires within 6 months');
   }
 
   // 2. No order items
