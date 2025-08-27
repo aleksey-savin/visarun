@@ -15,7 +15,18 @@ export const zCreateVisaApplicationTrpcInput = z.object({
   note: z.string().optional(),
   revisedActivationDate: z.date().optional(),
   statusNote: z.string().optional(),
-  status: z.enum(['pending', 'approved', 'cancelled', 'denied']).default('pending'),
+  status: z
+    .enum([
+      'draft',
+      'pending_submit',
+      'awaiting_approval',
+      'approved',
+      'pending_refund',
+      'refunded',
+      'denied',
+      'cancelled',
+    ])
+    .default('draft'),
 });
 
 export const createVisaApplicationTrpcRoute = visaApplicationCreateProcedure

@@ -8,7 +8,6 @@ import type {
   UserContactMethod,
   Order,
   OrderItem,
-  VisaApplication,
   Citizenship,
   VisaApplicationStatus,
   OrderStatus,
@@ -90,7 +89,7 @@ export interface StoreClient extends Partial<Client> {
   errors?: string[];
 }
 
-export interface StoreVisaApplication extends Partial<VisaApplication> {
+export interface StoreVisaApplication {
   id: string;
   orderItemId: string;
   applicationCode: string | null;
@@ -98,9 +97,21 @@ export interface StoreVisaApplication extends Partial<VisaApplication> {
   status: VisaApplicationStatus;
   note: string | null;
   isMultientry: boolean;
+  clientIsInTheCountry: boolean;
   plannedCountryEntryDate: Date | null;
+  plannedCountryExitDate: Date | null;
+  plannedCompletionDate: Date | null;
+  stampUntilDate: Date | null;
   revisedActivationDate: Date | null;
   statusNote: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  countryId?: string;
+  visaTypeId?: string | null;
+  cancelReason?: string | null;
+  denialReason?: string | null;
+  stampIsRecieved?: boolean;
+  isArchived?: boolean;
   country: {
     id: string;
     name: string;
@@ -173,7 +184,7 @@ interface OrderStore {
   setSaveStatus: (saveStatus: SaveStatus) => void;
   setActiveClientId: (activeClientId: string) => void;
   setOrder: (orderData: Order) => void;
-  updateOrderStatus: (status: OrderStatus) => void;
+  updateOrderStatus: (status: OrderStatus) => Promise<void>;
   setUser: (userData: StoreUser) => void;
   setClients: (clients: StoreClient[]) => void;
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => void;
@@ -181,9 +192,10 @@ interface OrderStore {
   setVisaApplications: (visaApplications: StoreVisaApplication[]) => void;
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => void;
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) => void;
+  reset: () => void;
 }
 
-const useOrderStore = create<OrderStore>((set, get) => ({
+const useOrderStore = create<OrderStore>((set, get, store) => ({
   saveStatus: 'saved',
   activeClientId: '',
   activeServicePuzzleSection: 'visa',
@@ -239,14 +251,43 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   setOrder: (orderData: Order) => {
     set(() => ({ order: orderData }));
   },
-  updateOrderStatus: (status: OrderStatus) =>
+  updateOrderStatus: async (status: OrderStatus) => {
+    // Update order status in store
     set(state => ({
       order: {
         ...state.order,
         status,
         updatedAt: new Date(),
       },
-    })),
+    }));
+
+    // If order status is being set to 'submitted', update related visa applications
+    if (status === 'submitted') {
+      const currentState = useOrderStore.getState();
+      const draftVisaApplications = currentState.visaApplications.filter(
+        visaApp => visaApp.status === 'draft'
+      );
+
+      // Update each draft visa application to pending_submit
+      for (const visaApp of draftVisaApplications) {
+        try {
+          await trpcClient.visaApplication.updateStatus.mutate({
+            id: visaApp.id,
+            status: 'pending_submit',
+          });
+
+          // Update the visa application in the local store
+          set(state => ({
+            visaApplications: state.visaApplications.map(va =>
+              va.id === visaApp.id ? { ...va, status: 'pending_submit' as const } : va
+            ),
+          }));
+        } catch (error) {
+          console.error(`Failed to update visa application ${visaApp.id} status:`, error);
+        }
+      }
+    }
+  },
   setUser: (userData: StoreUser) => set(() => ({ user: userData })),
   setClients: (clients: StoreClient[]) => set(() => ({ clients })),
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => set(() => ({ contactMethods })),
@@ -254,6 +295,9 @@ const useOrderStore = create<OrderStore>((set, get) => ({
   setVisaApplications: (visaApplications: StoreVisaApplication[]) =>
     set(() => ({ visaApplications })),
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),
+  reset: () => {
+    set(store.getInitialState());
+  },
 }));
 
 export default useOrderStore;

@@ -10,7 +10,7 @@ const ViewClientPage = () => {
   const navigate = useNavigate();
 
   // Query to get client details
-  const { data, error, isLoading, isError } = trpc.client.getOne.useQuery({ id });
+  const { data, error, isLoading, isError } = trpc.clientData.getOne.useQuery({ id });
 
   const handleEdit = () => {
     navigate(`/clients/edit/${id}`);

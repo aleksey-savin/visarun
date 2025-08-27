@@ -142,7 +142,7 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
           submittedByAgent: false,
           countryId: input.countryId!, // Safe to use ! because we validated above
           plannedCountryEntryDate: input.plannedCountryEntryDate,
-          status: VisaApplicationStatus.pending,
+          status: VisaApplicationStatus.draft,
         };
 
         if (visaTypeId) {

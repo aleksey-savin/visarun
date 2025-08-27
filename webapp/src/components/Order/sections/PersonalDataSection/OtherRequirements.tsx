@@ -22,30 +22,22 @@ const OtherRequirements = ({
     setSaveStatus('saving');
 
     try {
-      // Check if ClientRequirement already exists
-      const existingRequirement = client.requirements?.find(
-        req => req.requirementId === requirementId
-      );
-
-      if (existingRequirement) {
-        // Update existing ClientRequirement
-        await trpcClient.clientRequirement.update.mutate({
-          id: existingRequirement.id,
-          booleanValue: checked,
-        });
-      } else {
-        // Create new ClientRequirement
-        await trpcClient.clientRequirement.create.mutate({
-          clientId: activeClientId,
-          requirementId: requirementId,
-          booleanValue: checked,
-        });
-      }
+      // Use upsert to handle create or update automatically
+      const result = await trpcClient.clientRequirement.upsert.mutate({
+        clientId: activeClientId,
+        requirementId: requirementId,
+        booleanValue: checked,
+      });
 
       // Update the client in the store with the new requirement data
       const updatedClients = clients.map(c => {
         if (c.id === activeClientId) {
           const updatedRequirements = c.requirements ? [...c.requirements] : [];
+
+          // Find existing requirement
+          const existingRequirement = client.requirements?.find(
+            req => req.requirementId === requirementId
+          );
 
           if (existingRequirement) {
             // Update existing requirement
@@ -59,9 +51,9 @@ const OtherRequirements = ({
               };
             }
           } else {
-            // Add new requirement
+            // Add new requirement using the returned data
             updatedRequirements.push({
-              id: Date.now().toString(),
+              id: result.clientRequirement.id,
               clientId: activeClientId,
               requirementId: requirementId,
               booleanValue: checked,

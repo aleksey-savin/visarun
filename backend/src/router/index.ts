@@ -50,7 +50,7 @@ export const appRouter = trpc.router({
   blacklisted: blacklistedRoute,
   visaCitizenshipSurcharge: visaCitizenshipSurchargeRoute,
   city: cityRoute,
-  client: clientRoutes,
+  clientData: clientRoutes,
   upload: uploadRoutes,
   order: orderRoutes,
   orderItem: orderItemRoutes,

@@ -8,7 +8,24 @@ export const zEditVisaApplicationTrpcInput = z.object({
   countryId: z.string().uuid().optional(),
   visaTypeId: z.string().uuid().optional(),
   isMultientry: z.boolean().optional(),
+  clientIsInTheCountry: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
   plannedCountryEntryDate: z
+    .string()
+    .datetime()
+    .optional()
+    .transform(val => (val ? new Date(val) : undefined)),
+  plannedCountryExitDate: z
+    .string()
+    .datetime()
+    .optional()
+    .transform(val => (val ? new Date(val) : undefined)),
+  plannedCompletionDate: z
+    .string()
+    .datetime()
+    .optional()
+    .transform(val => (val ? new Date(val) : undefined)),
+  stampUntilDate: z
     .string()
     .datetime()
     .optional()

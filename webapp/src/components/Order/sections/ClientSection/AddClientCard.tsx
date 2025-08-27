@@ -9,7 +9,7 @@ import { trpc } from '@/lib/trpc';
 const AddClientCard = () => {
   const { user, order, clients, setClients, setSaveStatus, setActiveClientId } = useOrderStore();
 
-  const createClientMutation = trpc.client.create.useMutation();
+  const createClientMutation = trpc.clientData.create.useMutation();
   const editOrderMutation = trpc.order.edit.useMutation();
 
   const handleAddClient = async () => {

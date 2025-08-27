@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Prisma } from '@visarun/backend/node_modules/@prisma/client';
 
 import { Card } from '@/components/ui/card';
@@ -25,15 +25,18 @@ import {
 import PersonalData from '@/components/Order/steps/PersonalData';
 import Payment from '@/components/Order/steps/Payment';
 import { cn } from '@/lib/utils';
+import { getAllVisaApplicationsRoute } from '@/lib/routes';
 
 // Define the restricted status types that can be used in step navigation
-type StepStatus = 'draft' | 'personal_data_verification' | 'payment_pending';
+type StepStatus = 'draft' | 'personal_data_verification' | 'payment_pending' | 'submitted';
 
 const EditOrderPage = () => {
   const { id } = useParams<{ id: string }>();
 
+  const navigate = useNavigate();
+
   const { data: orderData } = trpc.order.getOne.useQuery({ id: id! }, { enabled: !!id });
-  const { data: allClientsData } = trpc.client.getAllByUserId.useQuery({
+  const { data: allClientsData } = trpc.clientData.getAllByUserId.useQuery({
     userId: orderData?.userId || '',
   });
 
@@ -193,6 +196,7 @@ const EditOrderPage = () => {
 
     if (orderData.visaApplications) {
       const { visaApplications } = orderData;
+
       setVisaApplications(
         visaApplications.map(i => ({
           id: i.id,
@@ -218,11 +222,19 @@ const EditOrderPage = () => {
           plannedCountryEntryDate: i.plannedCountryEntryDate
             ? new Date(i.plannedCountryEntryDate)
             : null,
+          plannedCountryExitDate: i.plannedCountryExitDate
+            ? new Date(i.plannedCountryExitDate)
+            : null,
+          plannedCompletionDate: i.plannedCompletionDate ? new Date(i.plannedCompletionDate) : null,
+          stampUntilDate: i.stampUntilDate ? new Date(i.stampUntilDate) : null,
+          clientIsInTheCountry: i.clientIsInTheCountry,
           isMultientry: i.isMultientry,
           note: i.note,
           revisedActivationDate: i.revisedActivationDate ? new Date(i.revisedActivationDate) : null,
           statusNote: i.statusNote,
           status: i.status,
+          createdAt: i.createdAt ? new Date(i.createdAt) : null,
+          updatedAt: i.updatedAt ? new Date(i.updatedAt) : null,
           clientVisas:
             i.clientVisas?.map(cv => ({
               id: cv.id,
@@ -272,7 +284,7 @@ const EditOrderPage = () => {
     () =>
       clients.filter(
         client =>
-          Array.from(clientHasServicePuzzleErrors(client, orderItems, visaApplications, user) || [])
+          Array.from(clientHasServicePuzzleErrors(client, orderItems, visaApplications) || [])
             .length > 0
       ).length > 0,
     [clients, orderItems, visaApplications, user]
@@ -289,6 +301,7 @@ const EditOrderPage = () => {
 
   const orderHasPaymentErrors = useMemo(() => {
     return (
+      orderPayments.length === 0 ||
       orderPayments.filter(payment => {
         const errors = Array.from(clientHasOrderPaymentErrors(payment) || []);
         return errors.length > 0;
@@ -387,7 +400,7 @@ const EditOrderPage = () => {
       });
 
       // Update order status in store
-      updateOrderStatus(clickedStep.status as StepStatus);
+      await updateOrderStatus(clickedStep.status as StepStatus);
     } catch (error) {
       console.error('Failed to update order status:', error);
       // Revert on error
@@ -402,9 +415,37 @@ const EditOrderPage = () => {
     if (activeStep.status === 'personal_data_verification') {
       await handleStepClick(steps[2]);
     }
+
+    if (activeStep.status === 'payment_pending') {
+      try {
+        // Update order status in backend
+        await editOrderMutation.mutateAsync({
+          id: order.id,
+          status: 'submitted',
+        });
+
+        // Update order status in store
+        await updateOrderStatus('submitted');
+        navigate(getAllVisaApplicationsRoute());
+      } catch (error) {
+        console.error('Failed to update order status:', error);
+        // Revert on error
+        setActiveStep(activeStep);
+      }
+    }
   };
 
   const lastUpdated = new Date(order?.updatedAt || '');
+
+  useEffect(() => {
+    if (activeStep.status === 'payment_pending') {
+      // Only set to first client if no active client is currently selected
+      if (!activeClientId && clients.length > 0) {
+        console.log('hello');
+        setActiveClientId(clients[0].id);
+      }
+    }
+  }, [activeStep, setActiveClientId, clients, activeClientId]);
 
   return (
     <>
@@ -425,14 +466,14 @@ const EditOrderPage = () => {
                     step.status === activeStep.status
                       ? 'text-primary underline'
                       : step.isCompleted
-                        ? 'text-[#4ADE80]'
+                        ? 'text-success'
                         : 'text-muted-foreground'
                   } ${canNavigate ? 'cursor-pointer hover:text-primary' : 'cursor-not-allowed'}`}
                   onClick={() => canNavigate && handleStepClick(step)}
                 >
                   {step.name}{' '}
                   {step.status !== activeStep.status && step.isCompleted && (
-                    <CheckCircleIcon className="w-4 h-4 text-[#4ADE80]" />
+                    <CheckCircleIcon className="w-4 h-4 text-success" />
                   )}
                 </div>
                 {step.name !== 'Payment' && (
@@ -481,7 +522,11 @@ const EditOrderPage = () => {
                 }, 0);
                 return (
                   <Card className="bg-secondary mr-2.5 p-0 mb-2.5" key={client.id}>
-                    <ClientSection totalAmount={totalAmount} client={client} />
+                    <ClientSection
+                      totalAmount={totalAmount}
+                      client={client}
+                      activeStep={activeStep}
+                    />
                     {activeClientId === client.id && (
                       <div
                         className={cn(
@@ -522,7 +567,11 @@ const EditOrderPage = () => {
                     }, 0);
                     return (
                       <Card className="bg-secondary mr-2.5 p-0 mb-2.5" key={client.id}>
-                        <ClientSection totalAmount={totalAmount} client={client} />
+                        <ClientSection
+                          totalAmount={totalAmount}
+                          client={client}
+                          activeStep={activeStep}
+                        />
                         {activeClientId === client.id && (
                           <div className="grid grid-col-1 gap-6 px-6 pb-5">
                             <ServicePuzzle
@@ -557,7 +606,7 @@ const EditOrderPage = () => {
               onClick={handleNext}
               className="flex border-none w-full items-center justify-between text-sm"
             >
-              <span>{`${order.status !== 'payment_pending' ? 'Next step' : 'Go to visas table'}`}</span>
+              <span>{`${order.status !== 'payment_pending' ? 'Next step' : 'Confirm & go to visas table'}`}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>

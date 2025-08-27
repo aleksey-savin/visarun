@@ -47,6 +47,8 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
       return;
     }
 
+    console.log(countryId);
+
     setSaveStatus('saving');
 
     const newData = await createOrderItemMutation.mutateAsync({
@@ -87,6 +89,12 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
         id: newData.visaApplication.id,
         orderItemId: newData.visaApplication.orderItemId,
         status: newData.visaApplication.status,
+        createdAt: newData.visaApplication.createdAt
+          ? new Date(newData.visaApplication.createdAt)
+          : null,
+        updatedAt: newData.visaApplication.updatedAt
+          ? new Date(newData.visaApplication.updatedAt)
+          : null,
         clientVisas: [],
       } as StoreVisaApplication,
     ]);

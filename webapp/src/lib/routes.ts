@@ -153,3 +153,15 @@ export const getEditOrderRoute = ({ id }: EditOrderRouteParams) => `/order/edit/
 export const viewOrderRouteParams = getRouteParams({ id: true });
 export type ViewOrderRouteParams = typeof viewOrderRouteParams;
 export const getViewOrderRoute = ({ id }: ViewOrderRouteParams) => `/orders/view/${id}`;
+
+// Visa Applications routes
+export const getAllVisaApplicationsRoute = () => '/visa-applications';
+export const getCreateVisaApplicationRoute = () => '/visa-applications/create';
+export const editVisaApplicationRouteParams = getRouteParams({ id: true });
+export type EditVisaApplicationRouteParams = typeof editVisaApplicationRouteParams;
+export const getEditVisaApplicationRoute = ({ id }: EditVisaApplicationRouteParams) =>
+  `/visa-applications/edit/${id}`;
+export const viewVisaApplicationRouteParams = getRouteParams({ id: true });
+export type ViewVisaApplicationRouteParams = typeof viewVisaApplicationRouteParams;
+export const getViewVisaApplicationRoute = ({ id }: ViewVisaApplicationRouteParams) =>
+  `/visa-applications/view/${id}`;

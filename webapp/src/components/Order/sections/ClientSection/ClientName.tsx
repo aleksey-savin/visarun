@@ -24,7 +24,7 @@ const ClientName = ({ client }: { client: StoreClient | undefined }) => {
     },
   });
 
-  const editClientMutation = trpc.client.edit.useMutation();
+  const editClientMutation = trpc.clientData.edit.useMutation();
   const editUserMutation = trpc.user.edit.useMutation();
 
   const handleNameUpdate = async (fieldName: 'firstName' | 'lastName', value: string) => {

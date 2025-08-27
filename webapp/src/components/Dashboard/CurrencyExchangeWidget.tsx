@@ -186,7 +186,7 @@ export function CurrencyExchangeWidget() {
           </div>
         </div>
         <Link to={getCurrencyExchangeRoute()}>
-          <Button variant="default" size="sm" className="w-full mt-2 text-xs h-6">
+          <Button variant="default" className="w-full mt-2 text-md">
             <ExternalLink className="h-3 w-3 mr-1" />
             Manage
           </Button>

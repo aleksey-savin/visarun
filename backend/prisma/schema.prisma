@@ -378,11 +378,21 @@ model VisaApplication {
   countryId               String
   visaTypeId              String?
   note                    String?
-  revisedActivationDate   DateTime?
+  revisedActivationDate   DateTime? // check for deleting
+  cancelReason            String?
+  denialReason            String?
   statusNote              String?
   status                  VisaApplicationStatus
   plannedCountryEntryDate DateTime?
+  plannedCountryExitDate  DateTime?
+  plannedCompletionDate   DateTime?
+  stampUntilDate          DateTime?
+  stampIsRecieved         Boolean               @default(false)
+  clientIsInTheCountry    Boolean               @default(false)
   isMultientry            Boolean               @default(false)
+  isArchived              Boolean               @default(false)
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @default(now())
   clientVisas             ClientVisa[]
   country                 Country               @relation(fields: [countryId], references: [id])
   orderItem               OrderItem             @relation(fields: [orderItemId], references: [id])
@@ -617,10 +627,14 @@ enum AppliesToService {
 }
 
 enum VisaApplicationStatus {
-  pending
+  draft
+  pending_submit
+  awaiting_approval
   approved
-  cancelled
+  pending_refund
+  refunded
   denied
+  cancelled
 }
 
 enum ProcessingMode {

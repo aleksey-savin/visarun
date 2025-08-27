@@ -14,9 +14,24 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { trpc, trpcClient } from '@/lib/trpc';
 
-const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmount: number }) => {
-  const { order, clients, activeClientId, setActiveClientId, visaApplications, setClients } =
-    useOrderStore();
+const ClientSection = ({
+  client,
+  totalAmount,
+  activeStep,
+}: {
+  client: StoreClient;
+  totalAmount: number;
+  activeStep: any;
+}) => {
+  const {
+    order,
+    clients,
+    activeClientId,
+    setActiveClientId,
+    visaApplications,
+    orderItems,
+    setClients,
+  } = useOrderStore();
 
   const [editMode, setEditMode] = useState(
     clients.length === 1 && !client.citizenship?.id && !client.passportExpirationDate
@@ -52,10 +67,24 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
     []
   );
 
-  // Get visa type IDs from visa applications - memoized to prevent unnecessary re-renders
+  // Get visa type IDs and country IDs from visa applications for this client - memoized to prevent unnecessary re-renders
+  const clientVisaApplications = useMemo(() => {
+    const filtered = visaApplications.filter(va => {
+      const orderItem = orderItems.find(item => item.id === va.orderItemId);
+      return orderItem?.clientId === client.id;
+    });
+
+    return filtered;
+  }, [visaApplications, orderItems, client.id, client.firstName, client.lastName]);
+
   const visaTypeIds = useMemo(
-    () => visaApplications.map(va => va.visaType?.id).filter(Boolean),
-    [visaApplications]
+    () => clientVisaApplications.map(va => va.visaType?.id).filter(Boolean),
+    [clientVisaApplications]
+  );
+
+  const countryIds = useMemo(
+    () => clientVisaApplications.map(va => va.country?.id).filter(Boolean),
+    [clientVisaApplications]
   );
 
   // Create a stable callback for updating requirements
@@ -86,17 +115,50 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
     [client.id, setClients]
   );
 
+  // Helper function to filter requirements based on client's countries
+  const filterRequirementsForClient = useCallback(
+    (requirements: any[]) => {
+      if (!countryIds.length) return requirements;
+
+      return requirements.filter(req => {
+        // Always include global requirements
+        if (req.applicationScope === 'global') {
+          return true;
+        }
+
+        // Include country_all requirements if they match client's countries
+        if (req.applicationScope === 'country_all' && req.countryId) {
+          return countryIds.includes(req.countryId);
+        }
+
+        // Include specific requirements (they are already filtered by visaTypeId in the API call)
+        if (req.applicationScope === 'specific') {
+          return true;
+        }
+
+        // For requirements without applicationScope, include them (legacy support)
+        if (!req.applicationScope) {
+          return true;
+        }
+
+        return false;
+      });
+    },
+    [countryIds]
+  );
+
   // State to track requirements loading
   const [isLoadingRequirements, setIsLoadingRequirements] = useState(false);
 
-  // Extract visa type IDs to stable reference
+  // Extract visa type IDs and country IDs to stable reference
   const visaTypeIdsString = useMemo(() => visaTypeIds.join(','), [visaTypeIds]);
+  const countryIdsString = useMemo(() => countryIds.join(','), [countryIds]);
 
   useEffect(() => {
-    // Reset flag when client, visa applications, or visa type IDs change
+    // Reset flag when client, visa applications, visa type IDs, or country IDs change
     requirementsLoadedRef.current = false;
     documentsLoadedRef.current = false;
-  }, [client.id, client.citizenship?.id, visaTypeIdsString]);
+  }, [client.id, client.citizenship?.id, visaTypeIdsString, countryIdsString]);
 
   useEffect(() => {
     const hasValidCitizenship = !!client.citizenship?.id;
@@ -138,7 +200,10 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
             (requirement, index, array) => array.findIndex(r => r?.id === requirement?.id) === index
           );
 
-          updateClientRequirements(uniqueRequirements);
+          // Filter requirements based on client's countries
+          const filteredRequirements = filterRequirementsForClient(uniqueRequirements);
+
+          updateClientRequirements(filteredRequirements);
           requirementsLoadedRef.current = true;
         } catch (error) {
           console.error('Error loading requirements:', error);
@@ -151,10 +216,13 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
     }
   }, [
     visaTypeIdsString,
+    countryIdsString,
     updateClientRequirements,
+    filterRequirementsForClient,
     client.citizenship?.id,
     isLoadingRequirements,
     visaTypeIds,
+    countryIds,
     client.visaRequirements?.length,
   ]);
 
@@ -198,6 +266,14 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
     }
   }, [activeClientId, client.id]);
 
+  useEffect(() => {
+    if (activeStep?.status === 'draft' && activeClientId === client.id) {
+      setEditMode(true);
+    } else {
+      setEditMode(false);
+    }
+  }, [activeStep, activeClientId]);
+
   return (
     <>
       {!editMode && (
@@ -205,12 +281,13 @@ const ClientSection = ({ client, totalAmount }: { client: StoreClient; totalAmou
           client={client}
           totalAmount={totalAmount}
           handleClientEditMode={handleClientEditMode}
+          stepStatus={activeStep.status}
         />
       )}
       {editMode && (
         <Card className="bg-secondary m-0 p-6 border-x-0 border-t-0">
           <div className="flex items-center justify-between gap-2 text-lg">
-            <ClientBadge client={client} showLinkedClients={false} />
+            <ClientBadge client={client} showLinkedClients={false} stepStatus={activeStep.status} />
             <span className="text-sm text-foreground">{formatCurrency(totalAmount, 'VND')}</span>
           </div>
           {client.isPrimary && <ContactData />}

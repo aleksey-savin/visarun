@@ -49,7 +49,7 @@ const PassportExpiry = ({ client }: { client: StoreClient }) => {
     },
   });
 
-  const editClientMutation = trpc.client.edit.useMutation();
+  const editClientMutation = trpc.clientData.edit.useMutation();
 
   const handlePassportDateUpdate = async (date: Date) => {
     setSaveStatus('saving');

@@ -78,7 +78,7 @@ const ClientSummary = ({ client }: { client: StoreClient }) => {
       <Card className="p-3 bg-secondary rounded-md">
         <CardContent className="space-y-4 p-0">
           <div className="flex justify-between items-start">
-            <ClientBadge client={client} showLinkedClients={false} />
+            <ClientBadge client={client} showLinkedClients={false} stepStatus="submitted" />
             <Badge
               variant="outline"
               className={`p-1 h-auto transition-all duration-300 ${

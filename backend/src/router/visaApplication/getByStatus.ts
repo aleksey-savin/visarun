@@ -3,7 +3,16 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 
 export const zGetVisaApplicationsByStatusTrpcInput = z.object({
-  status: z.enum(['pending', 'approved', 'cancelled', 'denied']),
+  status: z.enum([
+    'draft',
+    'pending_submit',
+    'awaiting_approval',
+    'approved',
+    'pending_refund',
+    'refunded',
+    'denied',
+    'cancelled',
+  ]),
   limit: z.number().int().min(1).max(100).default(50),
   offset: z.number().int().min(0).default(0),
   countryId: z.string().uuid().optional(),

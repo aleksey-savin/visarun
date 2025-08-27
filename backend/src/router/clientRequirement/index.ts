@@ -1,5 +1,6 @@
 import { createClientRequirementTrpcRoute } from './create.js';
 import { updateClientRequirementTrpcRoute } from './update.js';
+import { upsertClientRequirementTrpcRoute } from './upsert.js';
 import { deleteClientRequirementTrpcRoute } from './delete.js';
 import { getOneClientRequirementTrpcRoute } from './getOne.js';
 import { getAllClientRequirementsTrpcRoute } from './getAll.js';
@@ -7,6 +8,7 @@ import { getAllClientRequirementsTrpcRoute } from './getAll.js';
 export const clientRequirementRoutes = {
   create: createClientRequirementTrpcRoute,
   update: updateClientRequirementTrpcRoute,
+  upsert: upsertClientRequirementTrpcRoute,
   delete: deleteClientRequirementTrpcRoute,
   getOne: getOneClientRequirementTrpcRoute,
   getAll: getAllClientRequirementsTrpcRoute,

@@ -54,13 +54,13 @@ const Payment = () => {
   });
 
   const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>(
-    orderPayments[0].currencyId || ''
+    orderPayments[0]?.currencyId || ''
   );
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    orderPayments[0].paymentMethod || 'transfer'
+    orderPayments[0]?.paymentMethod || 'transfer'
   );
   const [selectedPaymentAcceptorId, setSelectedPaymentAcceptorId] = useState<string>(
-    orderPayments[0].acceptedById || ''
+    orderPayments[0]?.acceptedById || ''
   );
 
   const [paid, setPaid] = useState<boolean>(
@@ -75,9 +75,56 @@ const Payment = () => {
     const newPaymentMethod: PaymentMethod = paymentMethod === 'transfer' ? 'cash' : 'transfer';
     setPaymentMethod(newPaymentMethod);
 
-    // Auto-save if existing payment exists
+    // Create new OrderPayment if none exists, otherwise update existing
     const existingPayment = orderPayments[0];
-    if (existingPayment) {
+    if (!existingPayment) {
+      try {
+        const currency = selectedCurrency || vndCurrency;
+        if (!currency) {
+          console.error('No currency selected for payment creation');
+          return;
+        }
+
+        const newPayment = await createOrderPaymentMutation.mutateAsync({
+          orderId: order.id,
+          amount: total,
+          amountInSelectedCurrency: total,
+          currencyId: currency.id,
+          paidAt: new Date().toISOString(),
+          paymentMethod: newPaymentMethod,
+          acceptedById: selectedPaymentAcceptorId || undefined,
+          confirmPaymentWithoutDocument: paid,
+        });
+
+        // Add new payment to store
+        const newOrderPayment = newPayment.orderPayment;
+        const updatedPayments = [
+          ...orderPayments,
+          {
+            id: newOrderPayment.id,
+            orderId: newOrderPayment.orderId,
+            currencyId: newOrderPayment.currencyId,
+            amount: newOrderPayment.amount,
+            amountInSelectedCurrency: newOrderPayment.amount,
+            paymentMethod: newOrderPayment.paymentMethod as PaymentMethod,
+            documentUrl: newOrderPayment.documentUrl,
+            acceptedById: newOrderPayment.acceptedById,
+            acceptedAt: null,
+            paidAt: newOrderPayment.paidAt ? new Date(newOrderPayment.paidAt) : undefined,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            confirmPaymentWithoutDocument: newOrderPayment.confirmPaymentWithoutDocument || false,
+            acceptedByUser: newOrderPayment.acceptedByUser || null,
+            currency: newOrderPayment.currency || currency,
+          },
+        ] as StoreOrderPayment[];
+        setOrderPayments(updatedPayments);
+      } catch (error) {
+        console.error('Failed to create OrderPayment:', error);
+        // Revert the state change on error
+        setPaymentMethod(paymentMethod);
+      }
+    } else {
       try {
         await editOrderPaymentMutation.mutateAsync({
           id: existingPayment.id,
@@ -109,16 +156,132 @@ const Payment = () => {
     }
   }, [vndCurrency, selectedCurrencyId]);
 
-  const handleCurrencyChange = (value: string) => {
+  const handleCurrencyChange = async (value: string) => {
     setSelectedCurrencyId(value);
+
+    // Create new OrderPayment if none exists
+    const existingPayment = orderPayments[0];
+    if (!existingPayment) {
+      try {
+        const currency = currencyData?.currencies?.find(curr => curr.id === value);
+        if (!currency) {
+          console.error('Currency not found for payment creation');
+          return;
+        }
+
+        const newPayment = await createOrderPaymentMutation.mutateAsync({
+          orderId: order.id,
+          amount: total,
+          amountInSelectedCurrency: total,
+          currencyId: currency.id,
+          paidAt: new Date().toISOString(),
+          paymentMethod: paymentMethod,
+          acceptedById: selectedPaymentAcceptorId || undefined,
+          confirmPaymentWithoutDocument: paid,
+        });
+
+        // Add new payment to store
+        const newOrderPayment = newPayment.orderPayment;
+        const updatedPayments = [
+          ...orderPayments,
+          {
+            id: newOrderPayment.id,
+            orderId: newOrderPayment.orderId,
+            currencyId: newOrderPayment.currencyId,
+            amount: newOrderPayment.amount,
+            amountInSelectedCurrency: newOrderPayment.amount,
+            paymentMethod: newOrderPayment.paymentMethod as PaymentMethod,
+            documentUrl: newOrderPayment.documentUrl,
+            acceptedById: newOrderPayment.acceptedById,
+            acceptedAt: null,
+            paidAt: newOrderPayment.paidAt ? new Date(newOrderPayment.paidAt) : undefined,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            confirmPaymentWithoutDocument: newOrderPayment.confirmPaymentWithoutDocument || false,
+            acceptedByUser: newOrderPayment.acceptedByUser || null,
+            currency: newOrderPayment.currency || currency,
+          },
+        ] as StoreOrderPayment[];
+        setOrderPayments(updatedPayments);
+      } catch (error) {
+        console.error('Failed to create OrderPayment:', error);
+        // Revert the state change on error
+        setSelectedCurrencyId(selectedCurrencyId);
+      }
+    } else {
+      // Update existing payment currency
+      try {
+        await editOrderPaymentMutation.mutateAsync({
+          id: existingPayment.id,
+          currencyId: value,
+        });
+
+        // Update store
+        const updatedPayments = orderPayments.map((payment, index) =>
+          index === 0 ? { ...payment, currencyId: value } : payment
+        );
+        setOrderPayments(updatedPayments);
+      } catch (error) {
+        console.error('Failed to update currency:', error);
+        // Revert the state change on error
+        setSelectedCurrencyId(selectedCurrencyId);
+      }
+    }
   };
 
   const handlePaymentAcceptorChange = async (value: string) => {
     setSelectedPaymentAcceptorId(value);
 
-    // Auto-save if existing payment exists
+    // Create new OrderPayment if none exists, otherwise update existing
     const existingPayment = orderPayments[0];
-    if (existingPayment) {
+    if (!existingPayment) {
+      try {
+        const currency = selectedCurrency || vndCurrency;
+        if (!currency) {
+          console.error('No currency selected for payment creation');
+          return;
+        }
+
+        const newPayment = await createOrderPaymentMutation.mutateAsync({
+          orderId: order.id,
+          amount: total,
+          amountInSelectedCurrency: total,
+          currencyId: currency.id,
+          paidAt: new Date().toISOString(),
+          paymentMethod: paymentMethod,
+          acceptedById: value || undefined,
+          confirmPaymentWithoutDocument: paid,
+        });
+
+        // Add new payment to store
+        const newOrderPayment = newPayment.orderPayment;
+        const updatedPayments = [
+          ...orderPayments,
+          {
+            id: newOrderPayment.id,
+            orderId: newOrderPayment.orderId,
+            currencyId: newOrderPayment.currencyId,
+            amount: newOrderPayment.amount,
+            amountInSelectedCurrency: newOrderPayment.amount,
+            paymentMethod: newOrderPayment.paymentMethod as PaymentMethod,
+            documentUrl: newOrderPayment.documentUrl,
+            acceptedById: newOrderPayment.acceptedById,
+            acceptedAt: null,
+            paidAt: newOrderPayment.paidAt ? new Date(newOrderPayment.paidAt) : undefined,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            confirmPaymentWithoutDocument: newOrderPayment.confirmPaymentWithoutDocument || false,
+            acceptedByUser: newOrderPayment.acceptedByUser || null,
+            currency: newOrderPayment.currency || currency,
+          },
+        ] as StoreOrderPayment[];
+        setOrderPayments(updatedPayments);
+      } catch (error) {
+        console.error('Failed to create OrderPayment:', error);
+        // Revert the state change on error
+        setSelectedPaymentAcceptorId('');
+      }
+    } else {
       try {
         await editOrderPaymentMutation.mutateAsync({
           id: existingPayment.id,
@@ -141,9 +304,56 @@ const Payment = () => {
   const handlePaidChange = async (checked: boolean) => {
     setPaid(checked);
 
-    // Auto-save if existing payment exists
+    // Create new OrderPayment if none exists, otherwise update existing
     const existingPayment = orderPayments[0];
-    if (existingPayment) {
+    if (!existingPayment) {
+      try {
+        const currency = selectedCurrency || vndCurrency;
+        if (!currency) {
+          console.error('No currency selected for payment creation');
+          return;
+        }
+
+        const newPayment = await createOrderPaymentMutation.mutateAsync({
+          orderId: order.id,
+          amount: total,
+          amountInSelectedCurrency: total,
+          currencyId: currency.id,
+          paidAt: new Date().toISOString(),
+          paymentMethod: paymentMethod,
+          acceptedById: selectedPaymentAcceptorId || undefined,
+          confirmPaymentWithoutDocument: checked,
+        });
+
+        // Add new payment to store
+        const newOrderPayment = newPayment.orderPayment;
+        const updatedPayments = [
+          ...orderPayments,
+          {
+            id: newOrderPayment.id,
+            orderId: newOrderPayment.orderId,
+            currencyId: newOrderPayment.currencyId,
+            amount: newOrderPayment.amount,
+            amountInSelectedCurrency: newOrderPayment.amount,
+            paymentMethod: newOrderPayment.paymentMethod as PaymentMethod,
+            documentUrl: newOrderPayment.documentUrl,
+            acceptedById: newOrderPayment.acceptedById,
+            acceptedAt: null,
+            paidAt: newOrderPayment.paidAt ? new Date(newOrderPayment.paidAt) : undefined,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            confirmPaymentWithoutDocument: newOrderPayment.confirmPaymentWithoutDocument || false,
+            acceptedByUser: newOrderPayment.acceptedByUser || null,
+            currency: newOrderPayment.currency || currency,
+          },
+        ] as StoreOrderPayment[];
+        setOrderPayments(updatedPayments);
+      } catch (error) {
+        console.error('Failed to create OrderPayment:', error);
+        // Revert the state change on error
+        setPaid(!checked);
+      }
+    } else {
       try {
         await editOrderPaymentMutation.mutateAsync({
           id: existingPayment.id,

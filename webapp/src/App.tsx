@@ -1,6 +1,8 @@
 import './App.css';
 import { TrpcProvider } from './lib/trpcProvider';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import useOrderStore from './stores/order/order-store';
 
 import AllUsersPage from './pages/Users/getAll.js';
 import ViewUserPage from './pages/Users/view.js';
@@ -71,6 +73,10 @@ import ViewAuditLogPage from './pages/AuditLogs/view.js';
 import AllOrdersPage from './pages/Order/index.js';
 import EditOrderPage from './pages/Order/edit.js';
 import ViewOrderPage from './pages/Order/view.js';
+
+// Visa Applications pages
+import AllVisaApplicationsPage from './pages/VisaApplications/getAll.js';
+import ViewVisaApplicationPage from './pages/VisaApplications/view.js';
 
 import {
   getAllUsersRoute,
@@ -152,6 +158,10 @@ import {
   getViewOrderRoute,
   editOrderRouteParams,
   viewOrderRouteParams,
+  // Visa Applications routes
+  getAllVisaApplicationsRoute,
+  getViewVisaApplicationRoute,
+  viewVisaApplicationRouteParams,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -161,6 +171,19 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { PermissionRoute } from '@/components/PermissionRoute';
 import { Toaster } from '@/components/ui/sonner';
 import AccessDeniedPage from '@/pages/AccessDenied';
+
+const OrderEditWrapper = ({ children }: { children: React.ReactNode }) => {
+  const reset = useOrderStore(state => state.reset);
+
+  useEffect(() => {
+    return () => {
+      // Reset the order store when leaving the order edit page
+      reset();
+    };
+  }, [reset]);
+
+  return <>{children}</>;
+};
 
 const App = () => {
   return (
@@ -577,7 +600,32 @@ const App = () => {
                     </PermissionRoute>
                   }
                 />
-                <Route path={getEditOrderRoute(editOrderRouteParams)} element={<EditOrderPage />} />
+                <Route
+                  path={getEditOrderRoute(editOrderRouteParams)}
+                  element={
+                    <OrderEditWrapper>
+                      <EditOrderPage />
+                    </OrderEditWrapper>
+                  }
+                />
+
+                {/* Visa Applications Routes */}
+                <Route
+                  path={getAllVisaApplicationsRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="visaApplications.read">
+                      <AllVisaApplicationsPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getViewVisaApplicationRoute(viewVisaApplicationRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="visaApplications.read">
+                      <ViewVisaApplicationPage />
+                    </PermissionRoute>
+                  }
+                />
               </Route>
 
               {/* Fallback route */}

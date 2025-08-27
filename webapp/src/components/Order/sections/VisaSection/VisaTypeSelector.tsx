@@ -5,11 +5,13 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 
-import { formatCurrency } from '@/utils/currency';
-
 import useOrderStore, { StoreVisaApplication } from '@/stores/order/order-store';
 
 import { trpc } from '@/lib/trpc';
+import {
+  calculatePlannedCompletionDate,
+  isVisaTypeDisabled,
+} from '@/utils/visa-completion-calculator';
 
 import type { OrderItem, VisaType } from '@visarun/backend/node_modules/@prisma/client';
 
@@ -184,11 +186,29 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
 
     setOrderItems(updatedOrderItems);
 
+    // Calculate planned completion date
+    const plannedCompletionDate = calculatePlannedCompletionDate(
+      visaTypeObject.processingMode && visaTypeObject.processingUnit
+        ? {
+            processingMode: visaTypeObject.processingMode,
+            processingUnit: visaTypeObject.processingUnit,
+            processingValueFixed: visaTypeObject.processingValueFixed,
+            processingValueMax: visaTypeObject.processingValueMax,
+          }
+        : null,
+      visaApplication?.plannedCountryExitDate
+        ? new Date(visaApplication.plannedCountryExitDate)
+        : null,
+      visaApplication?.clientIsInTheCountry || false,
+      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+    );
+
     const updatedVisaApplications = visaApplications.map(application =>
       application.orderItemId === item.id
         ? {
             ...application,
             visaType: visaTypeObject,
+            ...(plannedCompletionDate && { plannedCompletionDate }),
           }
         : application
     );
@@ -196,10 +216,16 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
     setVisaApplications(updatedVisaApplications);
 
     try {
-      await editVisaApplicationMutation.mutateAsync({
+      const mutationData: any = {
         id: visaApplication?.id || '',
         visaTypeId: id,
-      });
+      };
+
+      if (plannedCompletionDate) {
+        mutationData.plannedCompletionDate = plannedCompletionDate.toISOString();
+      }
+
+      await editVisaApplicationMutation.mutateAsync(mutationData);
 
       await editOrderItemMutation.mutateAsync({
         id: item?.id || '',
@@ -314,6 +340,18 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
 
             const renderVisaTypeButton = (visaType: VisaType, isLastInGroup: boolean = false) => {
               const isSelected = visaType.id === selected;
+              const isDisabled =
+                visaType.processingMode && visaType.processingUnit
+                  ? isVisaTypeDisabled(
+                      {
+                        processingMode: visaType.processingMode,
+                        processingUnit: visaType.processingUnit,
+                        processingValueFixed: visaType.processingValueFixed,
+                        processingValueMax: visaType.processingValueMax,
+                      },
+                      visaApplication?.clientIsInTheCountry || false
+                    )
+                  : false;
 
               return (
                 <Button
@@ -321,12 +359,15 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
                   variant={isSelected ? 'accent' : 'secondary'}
                   size="sm"
                   type="button"
+                  disabled={isDisabled}
                   onClick={event => {
                     event?.preventDefault();
                     event?.stopPropagation();
                     handleVisaTypeSelect(visaType.id);
                   }}
-                  className={`transition-all duration-200 ${isLastInGroup ? 'mr-2' : ''}`}
+                  className={`transition-all duration-200 ${isLastInGroup ? 'mr-2' : ''} ${
+                    isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   {visaType.name}
                 </Button>
@@ -367,7 +408,6 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
             <Label>Multi</Label>
           </div>
         </div>
-        <div>{formatCurrency(item?.finalPrice || 0, 'VND')}</div>
       </div>
     </>
   );

@@ -58,7 +58,7 @@ const ViewUserPage = () => {
   const { data, error, isLoading, isError } = trpc.user.getOne.useQuery({ id });
 
   // Query to get all client profiles for this user
-  const { data: clientsData, refetch: refetchClients } = trpc.client.getAllByUserId.useQuery({
+  const { data: clientsData, refetch: refetchClients } = trpc.clientData.getAllByUserId.useQuery({
     userId: id,
   });
 

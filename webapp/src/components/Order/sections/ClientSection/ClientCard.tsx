@@ -22,10 +22,12 @@ const ClientCard = ({
   client,
   totalAmount,
   handleClientEditMode,
+  stepStatus,
 }: {
   client: StoreClient;
   totalAmount: number;
   handleClientEditMode: () => void;
+  stepStatus?: string;
 }) => {
   const {
     order,
@@ -123,7 +125,7 @@ const ClientCard = ({
       <Card className={cn('p-6 border-t-0 border-x-0', clientIsIncluded ? 'bg-secondary' : '')}>
         <div className="grid gap-6">
           <div className="flex items-center justify-between gap-2 text-lg">
-            <ClientBadge client={client} showLinkedClients={false} />
+            <ClientBadge client={client} showLinkedClients={false} stepStatus={stepStatus} />
             <span className="text-sm text-foreground">{formatCurrency(totalAmount, 'VND')}</span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">

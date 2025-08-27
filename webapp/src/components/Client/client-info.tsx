@@ -40,12 +40,12 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
   const [showInlineUpload, setShowInlineUpload] = useState(false);
 
   // Query to get client details
-  const { data, error, isLoading, isError, refetch } = trpc.client.getOne.useQuery({
+  const { data, error, isLoading, isError, refetch } = trpc.clientData.getOne.useQuery({
     id: clientId,
   });
 
   // Mutation to delete client
-  const deleteClientMutation = trpc.client.delete.useMutation({
+  const deleteClientMutation = trpc.clientData.delete.useMutation({
     onSuccess: () => {
       toast.success('Client profile deleted successfully');
       if (onDelete) {

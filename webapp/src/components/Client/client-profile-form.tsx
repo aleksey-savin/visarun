@@ -77,7 +77,7 @@ export const ClientProfileForm = ({
   });
 
   // Create client mutation
-  const createClientMutation = trpc.client.create.useMutation({
+  const createClientMutation = trpc.clientData.create.useMutation({
     onSuccess: data => {
       toast.success('Client profile created successfully');
       if (onSuccess) {
@@ -95,7 +95,7 @@ export const ClientProfileForm = ({
   });
 
   // Edit client mutation
-  const editClientMutation = trpc.client.edit.useMutation({
+  const editClientMutation = trpc.clientData.edit.useMutation({
     onSuccess: data => {
       toast.success('Client profile updated successfully');
       if (onSuccess) {

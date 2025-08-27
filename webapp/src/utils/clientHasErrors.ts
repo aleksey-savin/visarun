@@ -10,8 +10,7 @@ import {
 export const clientHasServicePuzzleErrors = (
   client: StoreClient,
   orderItems: StoreOrderItem[],
-  visaApplications: StoreVisaApplication[],
-  user?: StoreUser
+  visaApplications: StoreVisaApplication[]
 ) => {
   const clientOrderItems = orderItems.filter(item => item.clientId === client.id);
   const errors = new Set(client.errors || []);
@@ -46,16 +45,6 @@ export const clientHasServicePuzzleErrors = (
   });
   if (hasBlacklistedApplications) {
     errors.add('Client is blacklisted for countries they are applying visas for');
-  }
-
-  // 5. User contact information (only for primary client)
-  if (client.isPrimary && user) {
-    if (!user.email || user.email.trim() === '') {
-      errors.add('Email is required');
-    }
-    if (!user.phoneNumber || user.phoneNumber.trim() === '') {
-      errors.add('Phone number is required');
-    }
   }
 
   return errors;
@@ -116,6 +105,16 @@ export const clientHasPersonalDataErrors = (client: StoreClient, user?: StoreUse
       (!existingClientRequirement || existingClientRequirement.booleanValue === false)
     ) {
       errors.add(`Switch ${req.title} must be checked to continue`);
+    }
+  }
+
+  // 5. User contact information (only for primary client)
+  if (client.isPrimary && user) {
+    if (!user.email || user.email.trim() === '') {
+      errors.add('Email is required');
+    }
+    if (!user.phoneNumber || user.phoneNumber.trim() === '') {
+      errors.add('Phone number is required');
     }
   }
 

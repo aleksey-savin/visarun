@@ -313,7 +313,7 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
 
   return (
     <div className="w-full space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 2xl:grid-cols-4 xl:grid-cols-3 gap-6 items-start">
         {fileUploadRequirements.map(requirement => {
           const existingDoc = getExistingDocument(requirement.id);
           const isUploading = uploadingRequirements.has(requirement.id);

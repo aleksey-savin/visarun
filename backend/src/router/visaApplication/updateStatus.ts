@@ -3,15 +3,36 @@ import { z } from 'zod';
 
 export const zUpdateVisaApplicationStatusTrpcInput = z.object({
   id: z.string().uuid(),
-  status: z.enum(['pending', 'approved', 'cancelled', 'denied']),
+  status: z.enum([
+    'pending_submit',
+    'awaiting_approval',
+    'approved',
+    'pending_refund',
+    'refunded',
+    'denied',
+    'cancelled',
+  ]),
   statusNote: z.string().optional(),
+  denialReason: z.string().optional(),
+  cancelReason: z.string().optional(),
   revisedActivationDate: z.date().optional(),
+  stampIsRecieved: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
 });
 
 export const updateVisaApplicationStatusTrpcRoute = visaApplicationUpdateProcedure
   .input(zUpdateVisaApplicationStatusTrpcInput)
   .mutation(async ({ input, ctx }) => {
-    const { id, status, statusNote, revisedActivationDate } = input;
+    const {
+      id,
+      status,
+      statusNote,
+      denialReason,
+      cancelReason,
+      revisedActivationDate,
+      stampIsRecieved,
+      isArchived,
+    } = input;
 
     // Check if visa application exists
     const existingApplication = await ctx.prisma.visaApplication.findUnique({
@@ -52,15 +73,21 @@ export const updateVisaApplicationStatusTrpcRoute = visaApplicationUpdateProcedu
     // Validate status transitions
     const currentStatus = existingApplication.status;
     const validTransitions: Record<string, string[]> = {
-      pending: ['submitted', 'cancelled', 'denied'],
-      submitted: ['approved', 'cancelled', 'denied'],
-      approved: ['used', 'cancelled', 'denied'],
-      used: ['cancelled'], // Can only be cancelled if used
-      cancelled: [], // Terminal state
-      denied: [], // Terminal state
+      draft: ['pending_submit'],
+      pending_submit: ['awaiting_approval', 'cancelled', 'pending_refund'],
+      awaiting_approval: ['approved', 'denied'],
+      cancelled: ['pending_refund'],
+      pending_refund: ['refunded'],
+      approved: [],
+      refunded: [],
+      denied: [],
     };
 
-    if (!validTransitions[currentStatus]?.includes(status)) {
+    // Allow same-status transitions when updating other fields (like stampIsRecieved)
+    const isSameStatus = currentStatus === status;
+    const isValidTransition = validTransitions[currentStatus]?.includes(status);
+
+    if (!isSameStatus && !isValidTransition) {
       throw new Error(`Invalid status transition from ${currentStatus} to ${status}`);
     }
 
@@ -70,7 +97,11 @@ export const updateVisaApplicationStatusTrpcRoute = visaApplicationUpdateProcedu
       data: {
         status,
         statusNote,
+        denialReason,
+        cancelReason,
         revisedActivationDate,
+        ...(stampIsRecieved !== undefined && { stampIsRecieved }),
+        ...(isArchived !== undefined && { isArchived }),
       },
       include: {
         orderItem: {

@@ -39,7 +39,7 @@ const ClientData = ({ client }: { client: StoreClient }) => {
     },
   });
 
-  const editClientMutation = trpc.client.edit.useMutation();
+  const editClientMutation = trpc.clientData.edit.useMutation();
 
   const handleCitizenshipUpdate = async (citizenshipId: string) => {
     setSaveStatus('saving');

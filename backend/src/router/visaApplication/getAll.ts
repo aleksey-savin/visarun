@@ -8,16 +8,36 @@ export const zGetAllVisaApplicationsTrpcInput = z.object({
   orderItemId: z.string().uuid().optional(),
   countryId: z.string().uuid().optional(),
   visaTypeId: z.string().uuid().optional(),
-  status: z.enum(['pending', 'approved', 'cancelled', 'denied']).optional(),
+  status: z
+    .enum([
+      'pending_submit',
+      'awaiting_approval',
+      'approved',
+      'pending_refund',
+      'refunded',
+      'denied',
+      'cancelled',
+    ])
+    .optional(),
   submittedByAgent: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
   search: z.string().optional(),
 });
 
 export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
   .input(zGetAllVisaApplicationsTrpcInput)
   .query(async ({ input, ctx }) => {
-    const { limit, offset, orderItemId, countryId, visaTypeId, status, submittedByAgent, search } =
-      input;
+    const {
+      limit,
+      offset,
+      orderItemId,
+      countryId,
+      visaTypeId,
+      status,
+      submittedByAgent,
+      isArchived,
+      search,
+    } = input;
 
     // Build where clause
     const where: Prisma.VisaApplicationWhereInput = {};
@@ -40,6 +60,10 @@ export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
 
     if (submittedByAgent !== undefined) {
       where.submittedByAgent = submittedByAgent;
+    }
+
+    if (isArchived !== undefined) {
+      where.isArchived = isArchived;
     }
 
     if (search) {
@@ -122,12 +146,37 @@ export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
             client: {
               select: {
                 id: true,
+                userId: true,
+                user: {
+                  select: {
+                    email: true,
+                    phoneNumber: true,
+                    contactMethods: {
+                      select: {
+                        id: true,
+                        value: true,
+                        method: true,
+                      },
+                    },
+                  },
+                },
+                isPrimary: true,
+                preConfirmPassportIsValid: true,
                 firstName: true,
                 lastName: true,
+                documents: {
+                  select: {
+                    id: true,
+                    fileUrl: true,
+                    originalName: true,
+                    requirement: true,
+                  },
+                },
                 citizenship: {
                   select: {
                     id: true,
                     name: true,
+                    abbreviation: true,
                   },
                 },
               },
@@ -146,6 +195,7 @@ export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
             name: true,
             serviceCost: true,
             isMultientry: true,
+            processingValueFixed: true,
           },
         },
         _count: {

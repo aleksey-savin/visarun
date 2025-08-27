@@ -30,6 +30,9 @@ const UserContacts = () => {
 
     setSaveStatus('saving');
 
+    // Clear any existing errors for this field
+    form.clearErrors(fieldName);
+
     setUser({
       ...user,
       [fieldName]: value,
@@ -42,8 +45,52 @@ const UserContacts = () => {
       });
 
       setSaveStatus('saved');
-    } catch {
+    } catch (error: any) {
       setSaveStatus('error');
+
+      // Handle unique constraint errors - check for various patterns
+      const errorMessage = error?.message || '';
+
+      const isUniqueConstraintError =
+        error?.code === 'P2002' ||
+        errorMessage.includes('Unique constraint failed') ||
+        errorMessage.includes('unique') ||
+        errorMessage.includes('already in use');
+
+      if (isUniqueConstraintError) {
+        if (fieldName === 'email') {
+          form.setError('email', {
+            type: 'manual',
+            message: 'This email is already in use',
+          });
+        } else if (fieldName === 'phoneNumber') {
+          form.setError('phoneNumber', {
+            type: 'manual',
+            message: 'This phone number is already in use',
+          });
+        }
+      } else {
+        // Handle other types of errors with more specific messages
+        let userFriendlyMessage = 'An unexpected error occurred';
+
+        if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          userFriendlyMessage = 'Network error - please check your connection and try again';
+        } else if (errorMessage.includes('validation')) {
+          userFriendlyMessage =
+            fieldName === 'email'
+              ? 'Please enter a valid email address'
+              : 'Please enter a valid phone number';
+        } else if (errorMessage.includes('unauthorized')) {
+          userFriendlyMessage = 'You are not authorized to make this change';
+        } else if (errorMessage.includes('server')) {
+          userFriendlyMessage = 'Server error - please try again later';
+        }
+
+        form.setError(fieldName, {
+          type: 'manual',
+          message: userFriendlyMessage,
+        });
+      }
     }
   };
 

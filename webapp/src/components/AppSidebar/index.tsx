@@ -51,6 +51,7 @@ import {
   getAllCitizenshipsRoute,
   getAllVisaTypesRoute,
   getAllVisaCitizenshipSurchargesRoute,
+  getAllVisaApplicationsRoute,
   getMessageTemplatesRoute,
   getAllAuditLogsRoute,
   getDashboardRoute,
@@ -85,7 +86,9 @@ export function AppSidebar() {
     location.pathname === getAllVisaTypesRoute() ||
     location.pathname.startsWith(`${getAllVisaTypesRoute()}/`) ||
     location.pathname === getAllVisaCitizenshipSurchargesRoute() ||
-    location.pathname.startsWith(`${getAllVisaCitizenshipSurchargesRoute()}/`);
+    location.pathname.startsWith(`${getAllVisaCitizenshipSurchargesRoute()}/`) ||
+    location.pathname === getAllVisaApplicationsRoute() ||
+    location.pathname.startsWith(`${getAllVisaApplicationsRoute()}/`);
 
   // Permission checks
   const canAccessExchangeRates = hasPermission('exchangeRates.create');
@@ -129,6 +132,12 @@ export function AppSidebar() {
     hasPermission('visaCitizenshipSurcharges.update') ||
     hasPermission('visaCitizenshipSurcharges.delete');
 
+  const canReadVisaApplications =
+    hasPermission('visaApplications.read') ||
+    hasPermission('visaApplications.create') ||
+    hasPermission('visaApplications.update') ||
+    hasPermission('visaApplications.delete');
+
   const canManageAudit = hasPermission('audit.manage');
   const canReadOrders =
     hasPermission('orders.read') ||
@@ -153,7 +162,8 @@ export function AppSidebar() {
     canReadCurrencies ||
     canReadCitizenships ||
     canReadVisaTypes ||
-    canReadVisaCitizenshipSurcharges;
+    canReadVisaCitizenshipSurcharges ||
+    canReadVisaApplications;
 
   return (
     <Sidebar collapsible="none" className="bg-secondary h-full hidden md:block">
@@ -195,6 +205,22 @@ export function AppSidebar() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+              )}
+              {canReadVisaApplications && (
+                <SidebarMenuSubItem key="VisaApplications">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={
+                      location.pathname === getAllVisaApplicationsRoute() ||
+                      location.pathname.startsWith(`${getAllVisaApplicationsRoute()}/`)
+                    }
+                  >
+                    <Link to={getAllVisaApplicationsRoute()}>
+                      <FileSearch className="w-4 h-4" />
+                      <span>Visa Applications</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuSubItem>
               )}
               {canReadOrders && (
                 <SidebarMenuItem key="Orders">

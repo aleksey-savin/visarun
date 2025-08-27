@@ -1,4 +1,4 @@
-import { StoreClient } from '@/stores/order/order-store';
+//import { useState, useEffect } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -7,18 +7,56 @@ import { Crown, User, AlertTriangle } from 'lucide-react';
 
 import useOrderStore from '@/stores/order/order-store';
 
-import { clientHasServicePuzzleErrors } from '@/utils/clientHasErrors';
+import { clientHasServicePuzzleErrors, clientHasPersonalDataErrors } from '@/utils/clientHasErrors';
+
+//import { trpc } from '@/lib/trpc';
 
 const ClientBadge = ({
   client,
   showLinkedClients,
+  stepStatus,
 }: {
-  client: StoreClient;
+  client: any;
   showLinkedClients: boolean;
+  stepStatus?: string;
 }) => {
   const { activeClientId, orderItems, visaApplications, clients, user } = useOrderStore();
 
-  const clientErrors = clientHasServicePuzzleErrors(client, orderItems, visaApplications, user);
+  //const [user, setUser] = useState<any>(null);
+
+  //const { data: userData } = trpc.user.getOne.useQuery(
+  //  { id: client.userId! },
+  //  { enabled: !!client.userId }
+  //);
+
+  //useEffect(() => {
+  //  if (userData) {
+  //    setUser(userData.user);
+  //  }
+  //}, [userData]);
+  //
+
+  // Get errors based on the current step
+  const getClientErrors = () => {
+    if (clients.length === 0) return [];
+
+    const servicePuzzleErrors = clientHasServicePuzzleErrors(client, orderItems, visaApplications);
+    const personalDataErrors = clientHasPersonalDataErrors(client, user);
+
+    // Show appropriate errors based on step status
+    if (stepStatus === 'personal_data_verification') {
+      // In personal data step, show both service puzzle and personal data errors
+      return new Set([...servicePuzzleErrors, ...personalDataErrors]);
+    } else if (stepStatus === 'payment_pending') {
+      // In payment step, show both types of errors
+      return new Set([...servicePuzzleErrors, ...personalDataErrors]);
+    } else {
+      // In service puzzle step (draft) or default, show only service puzzle errors
+      return servicePuzzleErrors;
+    }
+  };
+
+  const clientErrors = getClientErrors();
 
   const clientIsIncluded = clients.filter(c => c.id === client.id).length > 0;
 

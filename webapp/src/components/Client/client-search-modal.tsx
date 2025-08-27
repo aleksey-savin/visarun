@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Search, UserPlus, CheckSquare, Square } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { getEditOrderRoute } from '@/lib/routes';
-import ClientCard from './client-card';
+import ClientCard from './ClientCard';
 
 interface ClientSearchModalProps {
   isOpen: boolean;
@@ -66,7 +66,7 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
     data: searchResults,
     isLoading,
     error,
-  } = trpc.client.search.useQuery(
+  } = trpc.clientData.search.useQuery(
     { query: debouncedQuery },
     {
       enabled: debouncedQuery.length >= 2 && isOpen,
@@ -201,7 +201,7 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
     return selectableClients.every(client => clientIds.includes(client.id));
   }, [selectableClients, clientIds]);
 
-  const createClientMutation = trpc.client.create.useMutation();
+  const createClientMutation = trpc.clientData.create.useMutation();
   const createOrderMutation = trpc.order.create.useMutation();
 
   // Handle client selection change
@@ -411,6 +411,7 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
                   <ClientCard
                     key={client.id}
                     client={client}
+                    showLinkedClients
                     isFirstResult={index === 0}
                     isSelected={clientIds.includes(client.id)}
                     onSelectionChange={handleClientSelectionChange}
