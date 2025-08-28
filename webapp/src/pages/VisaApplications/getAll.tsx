@@ -10,6 +10,7 @@ import {
   ArrowUpDown,
   TriangleAlert,
   RotateCcw,
+  CircleCheck,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -100,6 +101,7 @@ const AllVisaApplicationsPage = () => {
     selectedCountryFilter: 'all',
     selectedVisaTypeFilter: 'all',
     selectedStatusGroupFilter: 'visas-to-apply',
+    visasToApplyTimeFilter: 'today' as 'today' | 'later',
     sortField: null as string | null,
     sortDirection: 'asc' as 'asc' | 'desc',
     groupByOrder: true,
@@ -131,6 +133,9 @@ const AllVisaApplicationsPage = () => {
   const [selectedStatusGroupFilter, setSelectedStatusGroupFilter] = useState(
     initialState.selectedStatusGroupFilter
   );
+  const [visasToApplyTimeFilter, setVisasToApplyTimeFilter] = useState<'today' | 'later'>(
+    initialState.visasToApplyTimeFilter
+  );
   const [sortField, setSortField] = useState<string | null>(initialState.sortField);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(initialState.sortDirection);
   const [groupByOrder, setGroupByOrder] = useState(initialState.groupByOrder);
@@ -142,6 +147,7 @@ const AllVisaApplicationsPage = () => {
       selectedCountryFilter,
       selectedVisaTypeFilter,
       selectedStatusGroupFilter,
+      visasToApplyTimeFilter,
       sortField,
       sortDirection,
       groupByOrder,
@@ -157,6 +163,7 @@ const AllVisaApplicationsPage = () => {
     selectedCountryFilter,
     selectedVisaTypeFilter,
     selectedStatusGroupFilter,
+    visasToApplyTimeFilter,
     sortField,
     sortDirection,
     groupByOrder,
@@ -168,6 +175,7 @@ const AllVisaApplicationsPage = () => {
     setSelectedCountryFilter(defaultFilters.selectedCountryFilter);
     setSelectedVisaTypeFilter(defaultFilters.selectedVisaTypeFilter);
     setSelectedStatusGroupFilter(defaultFilters.selectedStatusGroupFilter);
+    setVisasToApplyTimeFilter(defaultFilters.visasToApplyTimeFilter);
     setSortField(defaultFilters.sortField);
     setSortDirection(defaultFilters.sortDirection);
     setGroupByOrder(defaultFilters.groupByOrder);
@@ -182,10 +190,85 @@ const AllVisaApplicationsPage = () => {
   // Get unique values for filters
   const allVisaApplications = useMemo(() => data?.visaApplications || [], [data?.visaApplications]);
 
+  // Helper function to determine if a visa should be in "today" filter
+  const isVisaForToday = (va: any) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // For visas with status ready, denied, cancelled - always in today
+    if (['approved', 'denied', 'cancelled'].includes(va.status)) {
+      return true;
+    }
+
+    // For awaiting_approval - check if needs attention (stamp required or check readiness)
+    if (va.status === 'awaiting_approval') {
+      // Stamp required - if stamp not received and exit date is in the past
+      const stampRequired =
+        !va.stampIsRecieved &&
+        va.plannedCountryExitDate &&
+        new Date(va.plannedCountryExitDate) < new Date();
+
+      // Check readiness - if no fixed processing time and entry date is within 5 days
+      const checkReadiness =
+        !va.visaType?.processingValueFixed &&
+        va.plannedCountryEntryDate &&
+        new Date(va.plannedCountryEntryDate) <= new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+
+      const result = stampRequired || checkReadiness;
+      return result;
+    }
+
+    // For other statuses, check processing logic
+    if (!va.visaType) {
+      return false;
+    }
+
+    // For approximate processing mode - same day as created
+    if (va.visaType.processingMode === 'approximate' && va.createdAt) {
+      const createdDate = new Date(va.createdAt);
+      const createdDay = new Date(
+        createdDate.getFullYear(),
+        createdDate.getMonth(),
+        createdDate.getDate()
+      );
+      const result = createdDay.getTime() === today.getTime();
+      return result;
+    }
+
+    // For fixed processing mode
+    if (va.visaType.processingMode === 'fixed' && va.plannedCompletionDate) {
+      const plannedDate = new Date(va.plannedCompletionDate);
+      const plannedDay = new Date(
+        plannedDate.getFullYear(),
+        plannedDate.getMonth(),
+        plannedDate.getDate()
+      );
+
+      if (va.visaType.processingUnit === 'hours') {
+        // For fixed hours - one day before plannedCompletionDate
+        const dayBefore = new Date(plannedDay);
+        dayBefore.setDate(dayBefore.getDate() - 1);
+        const result = dayBefore.getTime() <= today.getTime();
+        return result;
+      } else if (va.visaType.processingUnit === 'days' && va.visaType.processingValueFixed) {
+        // For fixed days - plannedCompletionDate minus processing days minus one more day
+        const targetDate = new Date(plannedDay);
+        targetDate.setDate(targetDate.getDate() - va.visaType.processingValueFixed - 1);
+        const result = targetDate.getTime() <= today.getTime();
+        return result;
+      }
+    }
+
+    return false;
+  };
+
   // Filter visa applications based on selected status group filter
   const visaApplications = useMemo(() => {
+    let filtered = allVisaApplications;
+
+    // First apply status group filter
     if (selectedStatusGroupFilter === 'visas-to-apply') {
-      return allVisaApplications.filter(
+      filtered = allVisaApplications.filter(
         va =>
           [
             'pending_submit',
@@ -197,12 +280,23 @@ const AllVisaApplicationsPage = () => {
           ].includes(va.status) && !va.isArchived
       );
     } else if (selectedStatusGroupFilter === 'drafts') {
-      return allVisaApplications.filter(va => va.status === 'draft');
+      filtered = allVisaApplications.filter(va => va.status === 'draft');
     } else if (selectedStatusGroupFilter === 'archived') {
-      return allVisaApplications.filter(va => va.isArchived === true);
+      filtered = allVisaApplications.filter(va => va.isArchived === true);
     }
-    return allVisaApplications;
-  }, [allVisaApplications, selectedStatusGroupFilter]);
+
+    // Then apply today/later filter to ALL visas (not just visas-to-apply)
+    if (selectedStatusGroupFilter === 'visas-to-apply') {
+      if (visasToApplyTimeFilter === 'today') {
+        filtered = filtered.filter(isVisaForToday);
+      } else {
+        // For "later" - show ALL visas that don't fit today criteria
+        filtered = filtered.filter(va => !isVisaForToday(va));
+      }
+    }
+
+    return filtered;
+  }, [allVisaApplications, selectedStatusGroupFilter, visasToApplyTimeFilter]);
 
   // Sort visa applications
   const sortedVisaApplications = useMemo(() => {
@@ -367,6 +461,23 @@ const AllVisaApplicationsPage = () => {
                 <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>
             </Select>
+
+            {selectedStatusGroupFilter === 'visas-to-apply' && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={visasToApplyTimeFilter === 'today' ? 'default' : 'ghost'}
+                  onClick={() => setVisasToApplyTimeFilter('today')}
+                >
+                  Today
+                </Button>
+                <Button
+                  variant={visasToApplyTimeFilter === 'later' ? 'default' : 'ghost'}
+                  onClick={() => setVisasToApplyTimeFilter('later')}
+                >
+                  Later
+                </Button>
+              </div>
+            )}
           </div>
           <div className="flex justify-between gap-6">
             <div className="relative">
@@ -692,18 +803,28 @@ const AllVisaApplicationsPage = () => {
                               {stampUntilDate && (
                                 <>
                                   {new Date(application.plannedCountryExitDate || '') <
-                                    new Date() && new Date(stampUntilDate) > new Date() ? (
+                                    new Date() &&
+                                  new Date(stampUntilDate) > new Date() &&
+                                  !application.stampIsRecieved ? (
                                     <Badge className="bg-warning">
                                       {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}{' '}
                                       <CircleAlert />
                                     </Badge>
+                                  ) : new Date(stampUntilDate) < new Date() &&
+                                    !application.stampIsRecieved ? (
+                                    <Badge className="bg-destructive">
+                                      {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
+                                      <TriangleAlert />
+                                    </Badge>
+                                  ) : application.stampIsRecieved ? (
+                                    <Badge className="bg-success">
+                                      {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
+                                      <CircleCheck />
+                                    </Badge>
                                   ) : (
-                                    new Date(stampUntilDate) < new Date() && (
-                                      <Badge className="bg-destructive">
-                                        {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}{' '}
-                                        <TriangleAlert />
-                                      </Badge>
-                                    )
+                                    <span>
+                                      {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
+                                    </span>
                                   )}
                                 </>
                               )}

@@ -44,6 +44,11 @@ export const getSignInRoute = () => '/sign-in';
 export const getAccessDeniedRoute = () => '/access-denied';
 
 export const getAllContactMethodsRoute = () => '/contact-methods';
+export const getCreateContactMethodRoute = () => '/contact-methods/create';
+export const editContactMethodRouteParams = getRouteParams({ id: true });
+export type EditContactMethodRouteParams = typeof editContactMethodRouteParams;
+export const getEditContactMethodRoute = ({ id }: EditContactMethodRouteParams) =>
+  `/contact-methods/edit/${id}`;
 
 export const getAllRequirementsRoute = () => '/requirements';
 export const getCreateRequirementRoute = () => '/requirements/create';

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,16 +26,11 @@ import useOrderStore, { StoreOrderPayment } from '@/stores/order/order-store';
 import { formatCurrency } from '@/utils/currency';
 import { Eye, Replace, Trash2, File } from 'lucide-react';
 import { FileUpload } from '@/components/ui/file-upload';
+import { toast } from 'sonner';
 import Comments from '../Comments';
 
 const Payment = () => {
-  const {
-    order,
-    orderItems,
-    orderPayments = [],
-    setOrderPayments,
-    setActiveClientId,
-  } = useOrderStore();
+  const { order, orderItems, orderPayments = [], setOrderPayments } = useOrderStore();
 
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewingDocument, setViewingDocument] = useState<{
@@ -43,6 +38,7 @@ const Payment = () => {
     originalName: string;
     fileUrl: string;
   } | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: currencyData } = trpc.currency.getAll.useQuery({
     search: '',
@@ -410,23 +406,68 @@ const Payment = () => {
     setViewModalOpen(true);
   };
 
-  const handleReplaceClick = async () => {
+  const handleReplaceClick = () => {
+    if (replaceInputRef.current) {
+      replaceInputRef.current.click();
+    }
+  };
+
+  const handleReplaceFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
     const existingPayment = orderPayments[0];
     if (!existingPayment) return;
 
+    // Validate file
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    const acceptedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!acceptedTypes.includes(fileExtension)) {
+      toast.error('File type not supported. Accepted types: PDF, DOC, DOCX, JPG, PNG');
+      return;
+    }
+
     try {
-      // Remove document filename from existing payment
-      await editOrderPaymentMutation.mutateAsync({
-        id: existingPayment.id,
-        documentUrl: '',
+      // Upload new file
+      const formData = new FormData();
+      formData.append('document', file);
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${baseUrl}/upload/payment-document`, {
+        method: 'POST',
+        body: formData,
       });
 
-      // Update store
-      const updatedPayments = orderPayments.map((payment, index) =>
-        index === 0 ? { ...payment, documentUrl: null } : payment
-      );
-      setOrderPayments(updatedPayments);
+      const result = await response.json();
+
+      if (result.success) {
+        // Extract just the filename from the response
+        const fileUrl = result.filePath || result.fileUrl;
+        const filename = fileUrl.split('/').pop() || fileUrl;
+
+        // Update payment with new document filename
+        await editOrderPaymentMutation.mutateAsync({
+          id: existingPayment.id,
+          documentUrl: filename,
+        });
+
+        // Update store
+        const updatedPayments = orderPayments.map((payment, index) =>
+          index === 0 ? { ...payment, documentUrl: filename } : payment
+        );
+        setOrderPayments(updatedPayments);
+        toast.success('Document replaced successfully');
+      } else {
+        toast.error(result.error || 'Upload failed');
+      }
     } catch (error) {
+      toast.error('Failed to replace document. Please try again.');
       console.error('Failed to replace document:', error);
     }
   };
@@ -525,10 +566,6 @@ const Payment = () => {
     } catch (error) {
       console.error('Failed to create/update OrderPayment:', error);
     }
-  };
-
-  const handleConfirm = () => {
-    setActiveClientId('');
   };
 
   return (
@@ -634,6 +671,14 @@ const Payment = () => {
                   </Button>
                 </div>
               </div>
+              {/* Hidden file input for replace functionality */}
+              <input
+                ref={replaceInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                onChange={e => handleReplaceFileSelect(e.target.files)}
+                className="hidden"
+              />
             </Card>
           ) : (
             /* Upload new document */
@@ -660,9 +705,6 @@ const Payment = () => {
       <Separator />
       <div className="flex flex-wrap justify-between align-center">
         <Comments />
-        <Button type="button" onClick={handleConfirm}>
-          Save & close
-        </Button>
       </div>
       {/* View Document Modal */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>

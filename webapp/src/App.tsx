@@ -19,6 +19,8 @@ import HomePage from './pages/HomePage';
 import TelegramChannelsPage from './pages/Telegram/getAll.js';
 import ViewTelegramChannelPage from './pages/Telegram/view.js';
 import ContactMethodsPage from './pages/ContactMethods/getAll.js';
+import CreateContactMethodPage from './pages/ContactMethods/create.js';
+import EditContactMethodPage from './pages/ContactMethods/edit.js';
 
 // Countries pages
 import AllCountriesPage from './pages/Countries/getAll.js';
@@ -99,6 +101,9 @@ import {
   viewTelegramChannelRouteParams,
   getAccessDeniedRoute,
   getAllContactMethodsRoute,
+  getCreateContactMethodRoute,
+  getEditContactMethodRoute,
+  editContactMethodRouteParams,
   // Countries routes
   getAllCountriesRoute,
   getViewCountryRoute,
@@ -343,6 +348,22 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="global.fullAccess">
                       <ContactMethodsPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateContactMethodRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="global.fullAccess">
+                      <CreateContactMethodPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditContactMethodRoute(editContactMethodRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="global.fullAccess">
+                      <EditContactMethodPage />
                     </PermissionRoute>
                   }
                 />

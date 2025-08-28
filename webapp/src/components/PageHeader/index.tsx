@@ -99,7 +99,9 @@ const pageConfigs: Record<string, PageConfig> = {
   '/contact-methods': {
     title: 'Contact Methods',
     icon: <MessageSquare />,
-    showButton: false,
+    entity: 'contact-method',
+    createRoute: '/contact-methods/create',
+    showButton: true,
   },
   '/currency-exchange': {
     title: 'Currency Exchange',

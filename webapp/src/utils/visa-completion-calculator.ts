@@ -178,7 +178,9 @@ export function isVisaTypeDisabled(
   visaType: VisaTypeForCalculation,
   clientIsInTheCountry: boolean
 ): boolean {
+  console.log(visaType);
+  console.log(clientIsInTheCountry);
   // Visa types with approximate processing mode should be inactive ONLY when client is in the country
   // For clients not in the country, approximate processing is allowed
-  return clientIsInTheCountry && visaType.processingMode === 'approximate';
+  return false;
 }

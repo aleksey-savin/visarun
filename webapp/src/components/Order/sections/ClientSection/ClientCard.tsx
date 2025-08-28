@@ -17,6 +17,7 @@ import { formatCurrency } from '@/utils/currency';
 import useOrderStore from '@/stores/order/order-store';
 
 import { Copy, Check, Mail, Pencil, Plus } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const ClientCard = ({
   client,
@@ -205,23 +206,28 @@ const ClientCard = ({
               </>
             )}
           </div>
-          <hr />
-          <div className="flex justify-end gap-2">
-            {clientIsIncluded && (
-              <Button variant="secondary" onClick={handleClientEditMode}>
-                {activeClientId === client.id ||
-                (order.status === 'payment_pending' && !client.isPrimary)
-                  ? 'Edit Client'
-                  : 'Edit'}{' '}
-                <Pencil />
-              </Button>
-            )}
-            {!clientIsIncluded && (
-              <Button variant="primary" onClick={handleAddToOrder}>
-                Add to order <Plus />
-              </Button>
-            )}
-          </div>
+
+          {clientIsIncluded && (order.status !== 'payment_pending' || client.isPrimary) && (
+            <>
+              <Separator />
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" onClick={handleClientEditMode}>
+                  {activeClientId === client.id || !client.isPrimary ? 'Edit Client' : 'Edit'}{' '}
+                  <Pencil />
+                </Button>
+              </div>
+            </>
+          )}
+          {!clientIsIncluded && (
+            <>
+              <Separator />
+              <div className="flex justify-end gap-2">
+                <Button variant="primary" onClick={handleAddToOrder}>
+                  Add to order <Plus />
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Card>
     </>

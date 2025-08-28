@@ -1,20 +1,8 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { trpc } from '@/lib/trpcProvider';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -31,14 +19,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -49,27 +29,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, MessageCircle, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Edit, Trash2, MessageCircle, Search } from 'lucide-react';
 import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { ContactMethodIcon } from '@/components/ContactMethod';
+import { getEditContactMethodRoute } from '@/lib/routes';
 import { toast } from 'sonner';
 
-const contactMethodSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
-  description: z.string().max(500, 'Description too long').optional(),
-  icon: z.string().max(2000, 'Icon too large').optional(),
-});
-
-type ContactMethodFormData = z.infer<typeof contactMethodSchema>;
-
 export default function ContactMethodsManagementPage() {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingContactMethod, setEditingContactMethod] = useState<{
-    id: string;
-    name: string;
-    description: string | null;
-    icon: string | null;
-  } | null>(null);
+  const navigate = useNavigate();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [usageFilter, setUsageFilter] = useState('all');
@@ -85,33 +53,6 @@ export default function ContactMethodsManagementPage() {
   const { data: usersData } = trpc.user.getAll.useQuery();
 
   // Mutations
-  const createMutation = trpc.contactMethod.create.useMutation({
-    onSuccess: () => {
-      toast.success('Contact method created successfully');
-      refetch();
-      setIsCreateDialogOpen(false);
-      createForm.reset();
-    },
-    onError: error => {
-      toast.error('Failed to create contact method', {
-        description: error.message,
-      });
-    },
-  });
-
-  const updateMutation = trpc.contactMethod.edit.useMutation({
-    onSuccess: () => {
-      toast.success('Contact method updated successfully');
-      refetch();
-      setEditingContactMethod(null);
-      editForm.reset();
-    },
-    onError: error => {
-      toast.error('Failed to update contact method', {
-        description: error.message,
-      });
-    },
-  });
 
   const deleteMutation = trpc.contactMethod.delete.useMutation({
     onSuccess: () => {
@@ -134,25 +75,6 @@ export default function ContactMethodsManagementPage() {
         });
       }
       setDeleteId(null);
-    },
-  });
-
-  // Forms
-  const createForm = useForm<ContactMethodFormData>({
-    resolver: zodResolver(contactMethodSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      icon: '',
-    },
-  });
-
-  const editForm = useForm<ContactMethodFormData>({
-    resolver: zodResolver(contactMethodSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      icon: '',
     },
   });
 
@@ -189,41 +111,10 @@ export default function ContactMethodsManagementPage() {
   });
 
   // Handlers
-  const handleCreate = (data: ContactMethodFormData) => {
-    createMutation.mutate({
-      name: data.name,
-      description: data.description || undefined,
-      icon: data.icon || undefined,
-    });
-  };
-
-  const handleEdit = (data: ContactMethodFormData) => {
-    if (!editingContactMethod) return;
-    updateMutation.mutate({
-      id: editingContactMethod.id,
-      name: data.name,
-      description: data.description || undefined,
-      icon: data.icon || undefined,
-    });
-  };
 
   const handleDelete = () => {
     if (!deleteId) return;
     deleteMutation.mutate({ id: deleteId });
-  };
-
-  const startEditing = (contactMethod: {
-    id: string;
-    name: string;
-    description: string | null;
-    icon: string | null;
-  }) => {
-    setEditingContactMethod(contactMethod);
-    editForm.reset({
-      name: contactMethod.name,
-      description: contactMethod.description || '',
-      icon: contactMethod.icon || '',
-    });
   };
 
   const resetFilters = () => {
@@ -265,19 +156,6 @@ export default function ContactMethodsManagementPage() {
 
       {/* Contact Methods */}
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>
-              Contact Methods ({filteredContactMethods.length})
-              {filteredContactMethods.length !== contactMethods.length && (
-                <span className="text-sm font-normal text-muted-foreground">
-                  {' '}
-                  of {contactMethods.length} total
-                </span>
-              )}
-            </CardTitle>
-          </div>
-        </CardHeader>
         <CardContent>
           {isLoading && (
             <div className="flex justify-center items-center p-8">
@@ -305,12 +183,6 @@ export default function ContactMethodsManagementPage() {
                   ? "You haven't created any contact method types yet. Add some to let users specify their contact information."
                   : 'Try adjusting your search or filter criteria.'}
               </p>
-              {contactMethods.length === 0 && (
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Contact Method
-                </Button>
-              )}
             </div>
           ) : (
             <>
@@ -361,7 +233,9 @@ export default function ContactMethodsManagementPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => startEditing(contactMethod)}
+                                  onClick={() =>
+                                    navigate(getEditContactMethodRoute({ id: contactMethod.id }))
+                                  }
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -408,7 +282,9 @@ export default function ContactMethodsManagementPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => startEditing(contactMethod)}
+                              onClick={() =>
+                                navigate(getEditContactMethodRoute({ id: contactMethod.id }))
+                              }
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -500,162 +376,6 @@ export default function ContactMethodsManagementPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Contact Method</DialogTitle>
-            <DialogDescription>Add a new contact method type that users can use.</DialogDescription>
-          </DialogHeader>
-          <Form {...createForm}>
-            <form onSubmit={createForm.handleSubmit(handleCreate)} className="space-y-4">
-              <FormField
-                control={createForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., telegram, whatsapp, phone" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={createForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Brief description of this contact method" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={createForm.control}
-                name="icon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Icon (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="SVG icon code (e.g., <svg>...</svg>)"
-                        {...field}
-                        rows={3}
-                      />
-                    </FormControl>
-                    {field.value && (
-                      <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
-                        <span className="text-sm text-muted-foreground">Preview:</span>
-                        <div
-                          className="w-6 h-6 flex items-center justify-center"
-                          dangerouslySetInnerHTML={{ __html: field.value }}
-                        />
-                      </div>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating...' : 'Create'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editingContactMethod} onOpenChange={() => setEditingContactMethod(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Contact Method</DialogTitle>
-            <DialogDescription>Update the contact method information.</DialogDescription>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-4">
-              <FormField
-                control={editForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., telegram, whatsapp, phone" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Brief description of this contact method" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="icon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Icon (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="SVG icon code (e.g., <svg>...</svg>)"
-                        {...field}
-                        rows={3}
-                      />
-                    </FormControl>
-                    {field.value && (
-                      <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
-                        <span className="text-sm text-muted-foreground">Preview:</span>
-                        <div
-                          className="w-6 h-6 flex items-center justify-center"
-                          dangerouslySetInnerHTML={{ __html: field.value }}
-                        />
-                      </div>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditingContactMethod(null)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
