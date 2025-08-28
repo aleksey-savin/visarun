@@ -18,7 +18,7 @@ import { SquarePen, MessageSquareDiff } from 'lucide-react';
 import { trpc } from '@/lib/trpcProvider';
 import { getMessageTemplatesRoute } from '@/lib/routes';
 import { useState } from 'react';
-import { Checkbox } from '@/components/ui/checkbox.tsx';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 

@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 import { SquarePen, MessageSquareDiff } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox.tsx';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
 

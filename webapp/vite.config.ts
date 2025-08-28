@@ -19,15 +19,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      // Алиас для правильного разрешения Prisma Client из backend
-      '@visarun/backend/node_modules/@prisma/client': path.resolve(
-        __dirname,
-        '../backend/node_modules/@prisma/client/index-browser.js'
-      ),
     },
   },
   define: {
-    // Определяем переменные окружения для Prisma
     global: 'globalThis',
+  },
+  build: {
+    rollupOptions: {
+      external: ['@prisma/client'],
+    },
   },
 });

@@ -12,6 +12,7 @@
     "types": "tsc --noEmit --project tsconfig.app.json && tsc --noEmit --project tsconfig.node.json"
   },
   "dependencies": {
+    "@prisma/client": "^6.6.0",
     "@floating-ui/react": "^0.27.13",
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-alert-dialog": "^1.1.11",
