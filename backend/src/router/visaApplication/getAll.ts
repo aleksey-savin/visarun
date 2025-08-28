@@ -195,7 +195,12 @@ export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
             name: true,
             serviceCost: true,
             isMultientry: true,
+            multientryExtraCost: true,
+            processingMode: true,
+            processingUnit: true,
             processingValueFixed: true,
+            processingValueMin: true,
+            processingValueMax: true,
           },
         },
         _count: {
