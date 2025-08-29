@@ -103,50 +103,46 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
   };
 
   return (
-    <>
-      <Card className="border-none p-4">
-        <div>Add Visa</div>
-        {clientOrderItems
-          ?.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-          .map((item, index) => <VisaCard item={item} key={index} />)}
-        <div className="flex justify-start gap-3">
-          {countries
-            .filter(
-              country => !clientVisaApplications.some(item => item.country?.id === country.id)
-            )
-            .map(country => {
-              const isBlacklisted = isCountryBlacklisted(country.id);
-              return (
-                <div key={country.id}>
-                  {!isBlacklisted && (
-                    <Button
-                      size="sm"
-                      variant={'primary'}
-                      onClick={() => handleAddOrderItem(country.id)}
-                    >
-                      <Plus /> {country.name}
-                    </Button>
-                  )}
-                  {isBlacklisted && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="bg-secondary border-transparent hover:bg-secondary text-muted-foreground hover:text-muted-foreground"
-                        >
-                          <Plus /> {country.name} <CircleAlert />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Citizenship is blacklisted for this country</TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-              );
-            })}
-        </div>
-      </Card>
-    </>
+    <Card className="border-none p-4">
+      <div>Add Visa</div>
+      {clientOrderItems
+        ?.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        .map((item, index) => <VisaCard item={item} key={index} />)}
+      <div className="flex justify-start gap-3">
+        {countries
+          .filter(country => !clientVisaApplications.some(item => item.country?.id === country.id))
+          .map(country => {
+            const isBlacklisted = isCountryBlacklisted(country.id);
+            return (
+              <div key={country.id}>
+                {!isBlacklisted && (
+                  <Button
+                    size="sm"
+                    variant={'primary'}
+                    onClick={() => handleAddOrderItem(country.id)}
+                  >
+                    <Plus /> {country.name}
+                  </Button>
+                )}
+                {isBlacklisted && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="bg-secondary border-transparent hover:bg-secondary text-muted-foreground hover:text-muted-foreground"
+                      >
+                        <Plus /> {country.name} <CircleAlert />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Citizenship is blacklisted for this country</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            );
+          })}
+      </div>
+    </Card>
   );
 };
 

@@ -98,6 +98,7 @@ export function AppSidebar() {
   const canReadRoles = hasPermission('roles.read');
   const canReadTelegram = hasPermission('telegram.channels.read');
   const canManageContactMethods = hasPermission('global.fullAccess');
+  const isAdmin = hasPermission('global.fullAccess');
 
   // Requirements permissions
   const canReadRequirements =
@@ -250,7 +251,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {/* User management (коллапсируемый пункт без ссылки) */}
-                {(canReadUsers || canReadRoles) && (
+                {isAdmin && (
                   <SidebarMenuItem key="UsersManagement">
                     <SidebarMenuButton
                       onClick={() => setUsersManagementOpen(prev => !prev)}
