@@ -114,14 +114,17 @@ export const editRoleTrpcRoute = roleUpdateProcedure
 
         // Then, create new role permissions
         if (input.permissions.length > 0) {
+          // Deduplicate permissions to avoid unique constraint violations
+          const uniquePermissions = [...new Set(input.permissions)];
+
           // Validate that all permissions exist
           const existingPermissions = await prisma.permission.findMany({
-            where: { id: { in: input.permissions } },
+            where: { id: { in: uniquePermissions } },
             select: { id: true },
           });
 
           const existingPermissionIds = existingPermissions.map(p => p.id);
-          const invalidPermissions = input.permissions.filter(
+          const invalidPermissions = uniquePermissions.filter(
             id => !existingPermissionIds.includes(id)
           );
 
@@ -129,17 +132,14 @@ export const editRoleTrpcRoute = roleUpdateProcedure
             throw new Error(`Invalid permission IDs: ${invalidPermissions.join(', ')}`);
           }
 
-          // Create new role permissions
-          await Promise.all(
-            input.permissions.map(permissionId =>
-              prisma.rolePermission.create({
-                data: {
-                  roleId: input.id,
-                  permissionId,
-                },
-              })
-            )
-          );
+          // Create new role permissions using createMany for better performance
+          await prisma.rolePermission.createMany({
+            data: uniquePermissions.map(permissionId => ({
+              roleId: input.id,
+              permissionId,
+            })),
+            skipDuplicates: true,
+          });
         }
       }
 
