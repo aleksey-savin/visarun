@@ -19,6 +19,7 @@ import {
   Gauge,
   ShoppingCart,
   Coins,
+  LogOut,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -27,6 +28,7 @@ import { useAuth } from '@/lib/auth';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarGroupContent,
@@ -59,7 +61,7 @@ import {
 } from '@/lib/routes';
 
 export function AppSidebar() {
-  const { hasPermission } = useAuth();
+  const { hasPermission, logout } = useAuth();
   const location = useLocation();
   const [isTelegramOpen, setTelegramOpen] = useState(false);
 
@@ -166,7 +168,7 @@ export function AppSidebar() {
     canReadVisaApplications;
 
   return (
-    <Sidebar collapsible="none" className="bg-secondary h-full hidden md:block">
+    <Sidebar className="bg-secondary hidden md:block">
       <SidebarHeader className="border-b flex py-2.5 px-3 justify-between gap-2">
         <div className="flex gap-2 items-center justify-start">
           <span className="font-semibold">Visarun Vietnam</span>
@@ -529,6 +531,12 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenuButton onClick={logout} className="w-full justify-start">
+          <LogOut className="w-4 h-4" />
+          <span>Logout</span>
+        </SidebarMenuButton>
+      </SidebarFooter>
     </Sidebar>
   );
 }
