@@ -456,7 +456,7 @@ const AllVisaApplicationsPage = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="visas-to-apply">Visas to apply</SelectItem>
+                <SelectItem value="visas-to-apply">Visas in work</SelectItem>
                 <SelectItem value="drafts">Drafts</SelectItem>
                 <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>

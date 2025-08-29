@@ -17,7 +17,7 @@ import type {
   OrderPayment,
   PaymentMethod,
 } from '@visarun/backend/node_modules/@prisma/client';
-import { Prisma } from '@visarun/backend/node_modules/@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export interface StoreUser extends Partial<User> {
   id: string;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Prisma } from '@visarun/backend/node_modules/@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
