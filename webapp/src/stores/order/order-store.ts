@@ -14,10 +14,17 @@ import type {
   ClientDocument,
   Requirement,
   ClientRequirement,
-  OrderPayment,
   PaymentMethod,
 } from '@visarun/backend/node_modules/@prisma/client';
-import { Prisma } from '@prisma/client';
+
+// Frontend-compatible Decimal type that works without Prisma runtime dependency
+export type Decimal = string;
+
+// Helper function to ensure decimal values are strings
+export const toDecimal = (value: any): Decimal => {
+  if (value === null || value === undefined) return '0';
+  return String(value);
+};
 
 export interface StoreUser extends Partial<User> {
   id: string;
@@ -140,12 +147,12 @@ export interface StoreOrderItem extends OrderItem {
   errors?: string[];
 }
 
-export interface StoreOrderPayment extends Partial<OrderPayment> {
+export interface StoreOrderPayment {
   id: string;
   orderId?: string;
   currencyId: string;
-  amount: Prisma.Decimal;
-  amountInSelectedCurrency: Prisma.Decimal;
+  amount: Decimal;
+  amountInSelectedCurrency: Decimal;
   paymentMethod: PaymentMethod;
   documentUrl: string | null;
   acceptedById: string | null;

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Prisma } from '@prisma/client';
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -251,8 +250,8 @@ const EditOrderPage = () => {
         orderData.orderPayments.map(p => ({
           id: p.id,
           currencyId: p.currency.id,
-          amount: new Prisma.Decimal(p.amount),
-          amountInSelectedCurrency: new Prisma.Decimal(p.amountInSelectedCurrency),
+          amount: String(p.amount),
+          amountInSelectedCurrency: String(p.amountInSelectedCurrency),
           confirmPaymentWithoutDocument: p.confirmPaymentWithoutDocument,
           paymentMethod: p.paymentMethod,
           documentUrl: p.documentUrl,
