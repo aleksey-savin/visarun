@@ -164,7 +164,7 @@ export default function EditMessageTemplatePage() {
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => navigate(getMessageTemplatesRoute())}
                   >
                     Cancel

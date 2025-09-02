@@ -42,7 +42,7 @@ export default function AccessDeniedPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={handleGoBack} variant="outline" className="flex-1">
+            <Button onClick={handleGoBack} variant="secondary" className="flex-1">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back
             </Button>

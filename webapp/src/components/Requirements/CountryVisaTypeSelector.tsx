@@ -120,7 +120,7 @@ export const CountryVisaTypeSelector: React.FC<CountryVisaTypeSelectorProps> = (
         <Label>Selected Visa Types ({selectedIds.length})</Label>
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => setShowSelector(!showSelector)}
           disabled={disabled}
@@ -254,7 +254,7 @@ export const CountryVisaTypeSelector: React.FC<CountryVisaTypeSelectorProps> = (
                             {!isFullySelected && visaTypeCount > 0 && (
                               <Button
                                 type="button"
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
                                 onClick={e => {
                                   e.stopPropagation();
@@ -268,7 +268,7 @@ export const CountryVisaTypeSelector: React.FC<CountryVisaTypeSelectorProps> = (
                             {(isFullySelected || isPartiallySelected) && (
                               <Button
                                 type="button"
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
                                 onClick={e => {
                                   e.stopPropagation();
@@ -296,7 +296,7 @@ export const CountryVisaTypeSelector: React.FC<CountryVisaTypeSelectorProps> = (
                 </span>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setShowSelector(false)}
                 >

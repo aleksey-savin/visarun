@@ -159,7 +159,7 @@ const ViewAuditLogPage = () => {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate(getAllAuditLogsRoute())}>
+          <Button variant="secondary" onClick={() => navigate(getAllAuditLogsRoute())}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Audit Logs
           </Button>

@@ -432,7 +432,7 @@ const AllAuditLogsPage = () => {
 
                   <div className="flex items-center gap-2">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => setPage(1)}
                       disabled={page === 1}
@@ -440,7 +440,7 @@ const AllAuditLogsPage = () => {
                       First
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => setPage(p => Math.max(1, p - 1))}
                       disabled={page === 1}
@@ -465,7 +465,7 @@ const AllAuditLogsPage = () => {
                         return (
                           <Button
                             key={pageNum}
-                            variant={page === pageNum ? 'default' : 'outline'}
+                            variant={page === pageNum ? 'default' : 'secondary'}
                             size="sm"
                             onClick={() => setPage(pageNum)}
                             className="w-8 h-8 p-0"
@@ -479,7 +479,7 @@ const AllAuditLogsPage = () => {
                         <>
                           <span className="px-2 text-muted-foreground">...</span>
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
                             onClick={() => setPage(totalPages)}
                             className="w-8 h-8 p-0"
@@ -491,7 +491,7 @@ const AllAuditLogsPage = () => {
                     </div>
 
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
@@ -499,7 +499,7 @@ const AllAuditLogsPage = () => {
                       Next
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => setPage(totalPages)}
                       disabled={page === totalPages}

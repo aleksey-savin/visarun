@@ -89,7 +89,7 @@ const EditCitizenshipPage = () => {
         <Button
           onClick={() => navigate(getAllCitizenshipsRoute())}
           className="mt-4"
-          variant="outline"
+          variant="secondary"
         >
           Back to Citizenships
         </Button>
@@ -101,7 +101,7 @@ const EditCitizenshipPage = () => {
     <>
       <div className="flex items-center gap-4 mb-6">
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => navigate(getViewCitizenshipRoute({ id: id! }))}
         >
@@ -188,7 +188,7 @@ const EditCitizenshipPage = () => {
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={() => navigate(getViewCitizenshipRoute({ id: id! }))}
                 disabled={editCitizenshipMutation.isPending}
               >

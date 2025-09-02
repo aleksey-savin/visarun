@@ -126,7 +126,7 @@ export const RequirementsPage: React.FC = () => {
     };
     return (
       <Badge
-        variant="outline"
+        variant="secondary"
         className={colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800'}
       >
         <span className="mr-1">{getInputTypeIcon(type)}</span>
@@ -143,28 +143,28 @@ export const RequirementsPage: React.FC = () => {
     switch (requirement.applicationScope) {
       case 'global':
         return (
-          <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+          <Badge variant="secondary" className="bg-purple-50 text-purple-700 border-purple-200">
             <Globe className="w-3 h-3 mr-1" />
             Global
           </Badge>
         );
       case 'country_all':
         return (
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
             <Flag className="w-3 h-3 mr-1" />
             {requirement.country?.name || 'Country'}
           </Badge>
         );
       case 'specific':
         return (
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
             <Target className="w-3 h-3 mr-1" />
             {requirement.visaTypeLinks?.length || 0} Types
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
             <Target className="w-3 h-3 mr-1" />
             Specific
           </Badge>
@@ -175,14 +175,14 @@ export const RequirementsPage: React.FC = () => {
   const getCitizenshipScopeBadge = (requirement: any) => {
     if (requirement.appliesToAllCitizenships) {
       return (
-        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+        <Badge variant="secondary" className="bg-purple-50 text-purple-700 border-purple-200">
           <Users className="w-3 h-3 mr-1" />
           All
         </Badge>
       );
     } else {
       return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+        <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
           <Target className="w-3 h-3 mr-1" />
           {requirement.citizenships?.length || 0}
         </Badge>

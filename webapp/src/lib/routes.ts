@@ -170,3 +170,37 @@ export const viewVisaApplicationRouteParams = getRouteParams({ id: true });
 export type ViewVisaApplicationRouteParams = typeof viewVisaApplicationRouteParams;
 export const getViewVisaApplicationRoute = ({ id }: ViewVisaApplicationRouteParams) =>
   `/visa-applications/view/${id}`;
+
+// TransportType routes
+export const getAllTransportTypesRoute = () => '/transport-types';
+export const getCreateTransportTypeRoute = () => '/transport-types/create';
+export const editTransportTypeRouteParams = getRouteParams({ id: true });
+export type EditTransportTypeRouteParams = typeof editTransportTypeRouteParams;
+export const getEditTransportTypeRoute = ({ id }: EditTransportTypeRouteParams) =>
+  `/transport-types/edit/${id}`;
+export const viewTransportTypeRouteParams = getRouteParams({ id: true });
+export type ViewTransportTypeRouteParams = typeof viewTransportTypeRouteParams;
+export const getViewTransportTypeRoute = ({ id }: ViewTransportTypeRouteParams) =>
+  `/transport-types/view/${id}`;
+
+// Transport routes
+export const getAllTransportsRoute = () => '/transports';
+export const getCreateTransportRoute = () => '/transports/create';
+export const editTransportRouteParams = getRouteParams({ id: true });
+export type EditTransportRouteParams = typeof editTransportRouteParams;
+export const getEditTransportRoute = ({ id }: EditTransportRouteParams) => `/transports/edit/${id}`;
+export const viewTransportRouteParams = getRouteParams({ id: true });
+export type ViewTransportRouteParams = typeof viewTransportRouteParams;
+export const getViewTransportRoute = ({ id }: ViewTransportRouteParams) => `/transports/view/${id}`;
+
+// SeatClass routes
+export const getAllSeatClassesRoute = () => '/seat-classes';
+export const getCreateSeatClassRoute = () => '/seat-classes/create';
+export const editSeatClassRouteParams = getRouteParams({ id: true });
+export type EditSeatClassRouteParams = typeof editSeatClassRouteParams;
+export const getEditSeatClassRoute = ({ id }: EditSeatClassRouteParams) =>
+  `/seat-classes/edit/${id}`;
+export const viewSeatClassRouteParams = getRouteParams({ id: true });
+export type ViewSeatClassRouteParams = typeof viewSeatClassRouteParams;
+export const getViewSeatClassRoute = ({ id }: ViewSeatClassRouteParams) =>
+  `/seat-classes/view/${id}`;

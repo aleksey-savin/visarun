@@ -427,7 +427,7 @@ export default function RoleForm({
                       {/* Filter Toggle */}
                       <Button
                         type="button"
-                        variant={showOnlySelected ? 'default' : 'outline'}
+                        variant={showOnlySelected ? 'default' : 'secondary'}
                         size="sm"
                         onClick={() => setShowOnlySelected(!showOnlySelected)}
                         className="shrink-0"
@@ -438,13 +438,18 @@ export default function RoleForm({
 
                       {/* Global Actions */}
                       <div className="flex gap-2">
-                        <Button type="button" variant="outline" size="sm" onClick={handleSelectAll}>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={handleSelectAll}
+                        >
                           <CheckSquare className="h-4 w-4 mr-2" />
                           Select All
                         </Button>
                         <Button
                           type="button"
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           onClick={handleDeselectAll}
                         >
@@ -480,7 +485,7 @@ export default function RoleForm({
                                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                   )}
                                   <CardTitle className="text-lg">{category}</CardTitle>
-                                  <Badge variant="outline">
+                                  <Badge variant="secondary">
                                     {selectedInCategory}/{permissions.length}
                                   </Badge>
                                   {categoryState === 'all' && (

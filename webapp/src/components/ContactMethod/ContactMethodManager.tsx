@@ -178,7 +178,7 @@ export const ContactMethodManager: React.FC<ContactMethodManagerProps> = ({ user
                   }
                 />
                 <div className="text-xs capitalize"> {contactMethod.method?.name || 'Unknown'}</div>
-                <Badge variant="outline" className="capitalize m-0"></Badge>
+                <Badge variant="secondary" className="capitalize m-0"></Badge>
               </div>
               <div className="text-sm text-gray-500">{contactMethod.value}</div>
             </div>

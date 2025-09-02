@@ -26,7 +26,7 @@ const ViewClientPage = () => {
       <div className="w-full max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="secondary" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-3xl font-bold">Client Details</h1>
@@ -44,7 +44,7 @@ const ViewClientPage = () => {
       <div className="w-full max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="secondary" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-3xl font-bold">Client Details</h1>
@@ -53,7 +53,7 @@ const ViewClientPage = () => {
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <p className="text-red-600 mb-4">Error loading client: {error.message}</p>
-            <Button variant="outline" onClick={() => navigate(-1)}>
+            <Button variant="secondary" onClick={() => navigate(-1)}>
               Go Back
             </Button>
           </div>
@@ -67,7 +67,7 @@ const ViewClientPage = () => {
       <div className="w-full max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="secondary" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-3xl font-bold">Client Details</h1>
@@ -76,7 +76,7 @@ const ViewClientPage = () => {
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <p className="text-gray-600 mb-4">Client not found</p>
-            <Button variant="outline" onClick={() => navigate(-1)}>
+            <Button variant="secondary" onClick={() => navigate(-1)}>
               Go Back
             </Button>
           </div>
@@ -89,7 +89,7 @@ const ViewClientPage = () => {
     <div className="w-full max-w-7xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="secondary" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>

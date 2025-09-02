@@ -274,7 +274,12 @@ const CountryForm = ({
                     </>
                   )}
                 </Button>
-                <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={onCancel}
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
               </div>

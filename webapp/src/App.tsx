@@ -46,6 +46,21 @@ import ViewVisaTypePage from './pages/VisaTypes/view.js';
 import CreateVisaTypePage from './pages/VisaTypes/create.js';
 import EditVisaTypePage from './pages/VisaTypes/edit';
 
+// Transport Types pages
+import AllTransportTypesPage from './pages/TransportTypes/index.js';
+import CreateTransportTypePage from './pages/TransportTypes/edit.js';
+import EditTransportTypePage from './pages/TransportTypes/edit.js';
+
+// Transports pages
+import AllTransportsPage from './pages/Transports/index.js';
+import CreateTransportPage from './pages/Transports/edit.js';
+import EditTransportPage from './pages/Transports/edit.js';
+
+// Seat Classes pages
+import AllSeatClassesPage from './pages/SeatClasses/index.js';
+import CreateSeatClassPage from './pages/SeatClasses/edit.js';
+import EditSeatClassPage from './pages/SeatClasses/edit.js';
+
 // Visa Citizenship Surcharges pages
 import AllVisaCitizenshipSurchargesPage from './pages/VisaCitizenshipSurcharges/getAll.js';
 import ViewVisaCitizenshipSurchargePage from './pages/VisaCitizenshipSurcharges/view.js';
@@ -129,6 +144,21 @@ import {
   getAllVisaTypesRoute,
   getViewVisaTypeRoute,
   getCreateVisaTypeRoute,
+  editTransportTypeRouteParams,
+  editTransportRouteParams,
+  editSeatClassRouteParams,
+  // Transport Types routes
+  getAllTransportTypesRoute,
+  getCreateTransportTypeRoute,
+  getEditTransportTypeRoute,
+  // Transports routes
+  getAllTransportsRoute,
+  getCreateTransportRoute,
+  getEditTransportRoute,
+  // Seat Classes routes
+  getAllSeatClassesRoute,
+  getCreateSeatClassRoute,
+  getEditSeatClassRoute,
   getEditVisaTypeRoute,
   editVisaTypeRouteParams,
   viewVisaTypeRouteParams,
@@ -534,6 +564,84 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="visaTypes.update">
                       <EditVisaTypePage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Transport Types Routes */}
+                <Route
+                  path={getAllTransportTypesRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="transportTypes.read">
+                      <AllTransportTypesPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateTransportTypeRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="transportTypes.create">
+                      <CreateTransportTypePage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditTransportTypeRoute(editTransportTypeRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="transportTypes.update">
+                      <EditTransportTypePage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Transports Routes */}
+                <Route
+                  path={getAllTransportsRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="transports.read">
+                      <AllTransportsPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateTransportRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="transports.create">
+                      <CreateTransportPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditTransportRoute(editTransportRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="transports.update">
+                      <EditTransportPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* Seat Classes Routes */}
+                <Route
+                  path={getAllSeatClassesRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="seatClasses.read">
+                      <AllSeatClassesPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateSeatClassRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="seatClasses.create">
+                      <CreateSeatClassPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditSeatClassRoute(editSeatClassRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="seatClasses.update">
+                      <EditSeatClassPage />
                     </PermissionRoute>
                   }
                 />

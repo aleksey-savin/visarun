@@ -65,7 +65,7 @@ export function CurrencyExchangeWidget() {
           </Alert>
           {hasPermission('exchangeRates.create') && (
             <Link to={getCurrencyExchangeRoute()}>
-              <Button variant="outline" size="sm" className="w-full mt-2">
+              <Button variant="secondary" size="sm" className="w-full mt-2">
                 <ExternalLink className="h-3 w-3 mr-1" />
                 View Exchange
               </Button>

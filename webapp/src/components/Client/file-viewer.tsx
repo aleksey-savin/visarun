@@ -92,23 +92,23 @@ export const FileViewer = ({ filePath, fileName, isOpen, onClose }: FileViewerPr
           <div className="flex items-center gap-2">
             {isImage && (
               <>
-                <Button variant="outline" size="sm" onClick={handleZoomOut} disabled={zoom <= 50}>
+                <Button variant="secondary" size="sm" onClick={handleZoomOut} disabled={zoom <= 50}>
                   <ZoomOut className="h-4 w-4" />
                 </Button>
                 <span className="text-sm font-medium min-w-[3rem] text-center">{zoom}%</span>
-                <Button variant="outline" size="sm" onClick={handleZoomIn} disabled={zoom >= 200}>
+                <Button variant="secondary" size="sm" onClick={handleZoomIn} disabled={zoom >= 200}>
                   <ZoomIn className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={resetZoom}>
+                <Button variant="secondary" size="sm" onClick={resetZoom}>
                   Reset
                 </Button>
               </>
             )}
-            <Button variant="outline" size="sm" onClick={handleDownload}>
+            <Button variant="secondary" size="sm" onClick={handleDownload}>
               <Download className="h-4 w-4 mr-2" />
               Download
             </Button>
-            <Button variant="outline" size="sm" onClick={onClose}>
+            <Button variant="secondary" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -143,7 +143,7 @@ export const FileViewer = ({ filePath, fileName, isOpen, onClose }: FileViewerPr
                   <p className="mb-2">{error}</p>
                   <p className="text-sm text-gray-500 mb-4">URL: {fileUrl}</p>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => window.open(fileUrl, '_blank')}
                     className="mt-2"
                   >

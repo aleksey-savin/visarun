@@ -320,7 +320,7 @@ const ViewCountryPage = () => {
     return (
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" size="icon" onClick={() => navigate(getAllCountriesRoute())}>
+          <Button variant="secondary" size="icon" onClick={() => navigate(getAllCountriesRoute())}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -335,7 +335,7 @@ const ViewCountryPage = () => {
         </Alert>
 
         <div className="mt-6">
-          <Button variant="outline" onClick={() => navigate(getAllCountriesRoute())}>
+          <Button variant="secondary" onClick={() => navigate(getAllCountriesRoute())}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Countries
           </Button>
@@ -372,7 +372,7 @@ const ViewCountryPage = () => {
     <div className="container mx-auto p-6 max-w-7xl space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Button variant="outline" size="icon" onClick={() => navigate(getAllCountriesRoute())}>
+        <Button variant="secondary" size="icon" onClick={() => navigate(getAllCountriesRoute())}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
@@ -426,7 +426,7 @@ const ViewCountryPage = () => {
                       <label className="text-sm font-medium text-muted-foreground">
                         Abbreviation
                       </label>
-                      <Badge variant="outline" className="w-fit font-mono text-lg">
+                      <Badge variant="secondary" className="w-fit font-mono text-lg">
                         {country.name?.substring(0, 3).toUpperCase() || 'N/A'}
                       </Badge>
                     </div>
@@ -541,7 +541,7 @@ const ViewCountryPage = () => {
                     Edit Country
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full justify-start"
                     onClick={() => setSelectedTab('access')}
                   >
@@ -549,7 +549,7 @@ const ViewCountryPage = () => {
                     Manage Visa Access
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full justify-start"
                     onClick={() => setSelectedTab('cities')}
                   >
@@ -599,7 +599,7 @@ const ViewCountryPage = () => {
                   </div>
                   <Dialog open={visaFreeDialogOpen} onOpenChange={setVisaFreeDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="secondary">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -642,7 +642,7 @@ const ViewCountryPage = () => {
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setVisaFreeDialogOpen(false)}>
+                        <Button variant="secondary" onClick={() => setVisaFreeDialogOpen(false)}>
                           Cancel
                         </Button>
                         <Button onClick={handleAddVisaFree}>Add Access</Button>
@@ -705,7 +705,7 @@ const ViewCountryPage = () => {
                   </div>
                   <Dialog open={blacklistDialogOpen} onOpenChange={setBlacklistDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="secondary">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -735,7 +735,7 @@ const ViewCountryPage = () => {
                         </Select>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setBlacklistDialogOpen(false)}>
+                        <Button variant="secondary" onClick={() => setBlacklistDialogOpen(false)}>
                           Cancel
                         </Button>
                         <Button variant="destructive" onClick={handleAddBlacklist}>
@@ -796,7 +796,7 @@ const ViewCountryPage = () => {
                     </div>
                     <Dialog open={surchargeDialogOpen} onOpenChange={setSurchargeDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="secondary">
                           <Plus className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
@@ -865,7 +865,7 @@ const ViewCountryPage = () => {
                           </div>
                         </div>
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setSurchargeDialogOpen(false)}>
+                          <Button variant="secondary" onClick={() => setSurchargeDialogOpen(false)}>
                             Cancel
                           </Button>
                           <Button onClick={handleAddSurcharge}>Add Surcharge</Button>
@@ -897,7 +897,7 @@ const ViewCountryPage = () => {
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="font-mono">
+                            <Badge variant="secondary" className="font-mono">
                               {surcharge.surchargeAmount.toLocaleString()} VND
                             </Badge>
                             {canDeleteSurcharges && (
@@ -939,7 +939,7 @@ const ViewCountryPage = () => {
                 {canCreateCities && (
                   <Dialog open={cityDialogOpen} onOpenChange={setCityDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="secondary">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -968,7 +968,7 @@ const ViewCountryPage = () => {
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setCityDialogOpen(false)}>
+                        <Button variant="secondary" onClick={() => setCityDialogOpen(false)}>
                           Cancel
                         </Button>
                         <Button onClick={handleAddCity}>Add City</Button>
@@ -1040,7 +1040,7 @@ const ViewCountryPage = () => {
                     <h3 className="text-lg font-medium mb-2">No Cities Added</h3>
                     <p className="mb-4">Start by adding cities to this country.</p>
                     {canCreateCities && (
-                      <Button variant="outline" onClick={() => setCityDialogOpen(true)}>
+                      <Button variant="secondary" onClick={() => setCityDialogOpen(true)}>
                         <Plus className="h-4 w-4 mr-2" />
                         Add First City
                       </Button>

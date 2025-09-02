@@ -171,7 +171,7 @@ export default function EditUserPage() {
             <CardContent>
               <p className="text-red-600">The user with ID {id} could not be found.</p>
               <div className="mt-4">
-                <Button variant="outline" onClick={() => navigate(getAllUsersRoute())}>
+                <Button variant="secondary" onClick={() => navigate(getAllUsersRoute())}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to All Users
                 </Button>

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import FormPageLayout from '@/components/Forms/FormPageLayout';
 import VisaCitizenshipSurchargeForm, {
   type VisaCitizenshipSurchargeFormData,
-} from '@/components/Forms/VisaCitizenshipSurchargeForm';
+} from '@/components/VisaCitizenshipSurcharge/Form';
 
 const CreateVisaCitizenshipSurchargePage = () => {
   const navigate = useNavigate();

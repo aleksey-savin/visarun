@@ -147,10 +147,10 @@ const AllCurrenciesPage = () => {
                             </Link>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{currency._count.orderPayments}</Badge>
+                            <Badge variant="secondary">{currency._count.orderPayments}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{currency._count.exchangeRates}</Badge>
+                            <Badge variant="secondary">{currency._count.exchangeRates}</Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">

@@ -263,7 +263,11 @@ const ViewCitizenshipPage = () => {
     return (
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" size="icon" onClick={() => navigate(getAllCitizenshipsRoute())}>
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => navigate(getAllCitizenshipsRoute())}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -278,7 +282,7 @@ const ViewCitizenshipPage = () => {
         </Alert>
 
         <div className="mt-6">
-          <Button variant="outline" onClick={() => navigate(getAllCitizenshipsRoute())}>
+          <Button variant="secondary" onClick={() => navigate(getAllCitizenshipsRoute())}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Citizenships
           </Button>
@@ -293,7 +297,7 @@ const ViewCitizenshipPage = () => {
     <div className="container mx-auto p-6 max-w-7xl space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Button variant="outline" size="icon" onClick={() => navigate(getAllCitizenshipsRoute())}>
+        <Button variant="secondary" size="icon" onClick={() => navigate(getAllCitizenshipsRoute())}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
@@ -304,7 +308,7 @@ const ViewCitizenshipPage = () => {
               {citizenship.abbreviation}
             </Badge>
             {citizenship.favourite && (
-              <Badge variant="outline" className="gap-1 text-yellow-600 border-yellow-200">
+              <Badge variant="secondary" className="gap-1 text-yellow-600 border-yellow-200">
                 <Star className="h-3 w-3 fill-current" />
                 Favourite
               </Badge>
@@ -356,7 +360,7 @@ const ViewCitizenshipPage = () => {
                       <label className="text-sm font-medium text-muted-foreground">
                         Abbreviation
                       </label>
-                      <Badge variant="outline" className="w-fit font-mono text-lg">
+                      <Badge variant="secondary" className="w-fit font-mono text-lg">
                         {citizenship.abbreviation}
                       </Badge>
                     </div>
@@ -472,7 +476,7 @@ const ViewCitizenshipPage = () => {
                     Edit Citizenship
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full justify-start"
                     onClick={() => setSelectedTab('access')}
                   >
@@ -480,7 +484,7 @@ const ViewCitizenshipPage = () => {
                     Manage Travel Access
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full justify-start"
                     onClick={() => setSelectedTab('analytics')}
                   >
@@ -557,7 +561,7 @@ const ViewCitizenshipPage = () => {
                   </div>
                   <Dialog open={visaFreeDialogOpen} onOpenChange={setVisaFreeDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="secondary">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -597,7 +601,7 @@ const ViewCitizenshipPage = () => {
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setVisaFreeDialogOpen(false)}>
+                        <Button variant="secondary" onClick={() => setVisaFreeDialogOpen(false)}>
                           Cancel
                         </Button>
                         <Button onClick={handleAddVisaFree}>Add Access</Button>
@@ -660,7 +664,7 @@ const ViewCitizenshipPage = () => {
                   </div>
                   <Dialog open={blacklistDialogOpen} onOpenChange={setBlacklistDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="secondary">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -687,7 +691,7 @@ const ViewCitizenshipPage = () => {
                         </Select>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setBlacklistDialogOpen(false)}>
+                        <Button variant="secondary" onClick={() => setBlacklistDialogOpen(false)}>
                           Cancel
                         </Button>
                         <Button variant="destructive" onClick={handleAddBlacklist}>
@@ -747,7 +751,7 @@ const ViewCitizenshipPage = () => {
                   </div>
                   <Dialog open={surchargeDialogOpen} onOpenChange={setSurchargeDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="secondary">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
@@ -807,7 +811,7 @@ const ViewCitizenshipPage = () => {
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setSurchargeDialogOpen(false)}>
+                        <Button variant="secondary" onClick={() => setSurchargeDialogOpen(false)}>
                           Cancel
                         </Button>
                         <Button onClick={handleAddSurcharge}>Add Surcharge</Button>
@@ -839,7 +843,7 @@ const ViewCitizenshipPage = () => {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="font-mono">
+                          <Badge variant="secondary" className="font-mono">
                             {formatCurrency(surcharge.surchargeAmount, 'VND')}
                           </Badge>
                           <Button

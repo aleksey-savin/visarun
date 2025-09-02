@@ -214,7 +214,7 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
             </CardTitle>
             <div className="flex gap-2">
               {onEdit && (
-                <Button variant="outline" size="sm" onClick={onEdit}>
+                <Button variant="secondary" size="sm" onClick={onEdit}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
@@ -303,7 +303,7 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
               <h3 className="text-lg font-semibold">Documents</h3>
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 onClick={() => setShowInlineUpload(!showInlineUpload)}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -342,7 +342,7 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
                     {addDocumentMutation.isPending ? 'Adding...' : 'Add Document'}
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     onClick={() => {
                       setShowInlineUpload(false);
@@ -396,12 +396,12 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
                           {document.tags && document.tags.length > 0 && (
                             <div className="flex gap-1 mt-1">
                               {document.tags.slice(0, 3).map((tag: string, index: number) => (
-                                <Badge key={index} variant="outline" className="text-xs">
+                                <Badge key={index} variant="secondary" className="text-xs">
                                   {tag}
                                 </Badge>
                               ))}
                               {document.tags.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="secondary" className="text-xs">
                                   +{document.tags.length - 3}
                                 </Badge>
                               )}

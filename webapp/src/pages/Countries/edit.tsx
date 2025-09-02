@@ -4,7 +4,7 @@ import { trpc } from '../../lib/trpcProvider';
 import { getAllCountriesRoute, getViewCountryRoute } from '../../lib/routes';
 import { toast } from 'sonner';
 import FormPageLayout from '@/components/Forms/FormPageLayout';
-import CountryForm, { type CountryFormData } from '@/components/Forms/CountryForm';
+import CountryForm, { type CountryFormData } from '@/components/Country/Form';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,8 +20,6 @@ const EditCountryPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<CountryFormData | null>(null);
 
@@ -37,8 +35,6 @@ const EditCountryPage = () => {
           ? `Country updated successfully. ${data.affectedVisaTypesCount} visa types were updated with global multi-entry settings.`
           : 'Country updated successfully';
       toast.success(message);
-      setSaveStatus('saved');
-      setLastSavedTime(new Date());
       setIsSubmitting(false);
       setShowConfirmDialog(false);
       setPendingFormData(null);
@@ -46,7 +42,6 @@ const EditCountryPage = () => {
     },
     onError: error => {
       toast.error(error.message);
-      setSaveStatus('error');
       setIsSubmitting(false);
       setShowConfirmDialog(false);
       setPendingFormData(null);
@@ -67,7 +62,6 @@ const EditCountryPage = () => {
 
   const executeUpdate = (formData: CountryFormData) => {
     setIsSubmitting(true);
-    setSaveStatus('saving');
     editCountryMutation.mutate({
       id: id!,
       ...formData,
@@ -84,7 +78,6 @@ const EditCountryPage = () => {
     setShowConfirmDialog(false);
     setPendingFormData(null);
     setIsSubmitting(false);
-    setSaveStatus('idle');
   };
 
   const handleCancel = () => {
@@ -154,7 +147,7 @@ const EditCountryPage = () => {
   ];
 
   return (
-    <FormPageLayout breadcrumbs={breadcrumbs} saveStatus={saveStatus} lastSavedTime={lastSavedTime}>
+    <FormPageLayout breadcrumbs={breadcrumbs}>
       <CountryForm
         initialData={{
           name: country.name,

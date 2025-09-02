@@ -224,7 +224,7 @@ export default function ContactMethodsManagementPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={usageCount > 0 ? 'default' : 'outline'}>
+                              <Badge variant={usageCount > 0 ? 'default' : 'secondary'}>
                                 {usageCount > 0 ? `${usageCount} user(s)` : 'Not used'}
                               </Badge>
                             </TableCell>
@@ -298,7 +298,7 @@ export default function ContactMethodsManagementPage() {
                           </div>
                         </div>
                         <div className="flex justify-end pt-2">
-                          <Badge variant={usageCount > 0 ? 'default' : 'outline'}>
+                          <Badge variant={usageCount > 0 ? 'default' : 'secondary'}>
                             {usageCount > 0 ? `${usageCount} user(s)` : 'Not used'}
                           </Badge>
                         </div>

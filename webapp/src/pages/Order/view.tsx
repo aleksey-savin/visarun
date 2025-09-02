@@ -67,7 +67,7 @@ export default function ViewOrderPage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="secondary" size="sm" asChild>
             <Link to={getAllOrdersRoute()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Orders
@@ -186,7 +186,7 @@ export default function ViewOrderPage() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline">{item.serviceType}</Badge>
+                          <Badge variant="secondary">{item.serviceType}</Badge>
                           <span className="text-sm text-muted-foreground">
                             Service ID: {item.serviceTypeId}
                           </span>

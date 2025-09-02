@@ -218,7 +218,7 @@ export const ClientDocumentCard: React.FC<ClientDocumentCardProps> = ({
           )}
 
           {document._count && document._count.serviceRequirements > 0 && (
-            <Badge variant="outline" className="border-blue-300 text-blue-700">
+            <Badge variant="secondary" className="border-blue-300 text-blue-700">
               Used in {document._count.serviceRequirements} requirements
             </Badge>
           )}
@@ -258,7 +258,7 @@ export const ClientDocumentCard: React.FC<ClientDocumentCardProps> = ({
             <div className="text-sm font-medium text-gray-700 mb-2">Tags:</div>
             <div className="flex flex-wrap gap-1">
               {document.tags.map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
+                <Badge key={index} variant="secondary" className="text-xs">
                   <Tag className="w-3 h-3 mr-1" />
                   {tag}
                 </Badge>
@@ -290,10 +290,10 @@ export const ClientDocumentCard: React.FC<ClientDocumentCardProps> = ({
                 <div className="text-gray-600 mt-1">{document.requirement.description}</div>
               )}
               <div className="flex gap-2 mt-2">
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="secondary" className="text-xs">
                   {document.requirement.serviceType}
                 </Badge>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="secondary" className="text-xs">
                   {document.requirement.inputType}
                 </Badge>
               </div>

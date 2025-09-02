@@ -30,7 +30,7 @@ export default function Layout() {
         <AppSidebar />
         {/** <div className="fixed top-4 right-4 z-10 flex items-center gap-2">
             {userEmail && <span className="text-sm text-muted-foreground mr-2">{userEmail}</span>}
-            <Button variant="outline" size="icon" onClick={handleLogout} title="Logout">
+            <Button variant="secondary" size="icon" onClick={handleLogout} title="Logout">
               <LogOut className="h-4 w-4" />
             </Button>
             <ModeToggle />

@@ -96,7 +96,7 @@ const AllVisaTypesPage = () => {
           <div className="text-lg text-red-600">
             Error loading visa types: {error?.message || 'Unknown error'}
             <div className="mt-4">
-              <Button onClick={() => refetch()} variant="outline">
+              <Button onClick={() => refetch()} variant="secondary">
                 Try Again
               </Button>
             </div>
@@ -270,7 +270,7 @@ const AllVisaTypesPage = () => {
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4 text-muted-foreground" />
-                              <Badge variant="outline">
+                              <Badge variant="secondary">
                                 {visaType.processingMode === 'fixed' ? 'Fixed: ' : 'Approx: '}
                                 {visaType.processingMode === 'fixed'
                                   ? visaType.processingValueFixed

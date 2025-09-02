@@ -75,7 +75,7 @@ const ViewCurrencyPage = () => {
 
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => navigate(`/currencies/edit/${currency.id}`)}
             className="flex items-center gap-2"
@@ -87,7 +87,7 @@ const ViewCurrencyPage = () => {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 className="flex items-center gap-2 text-destructive hover:text-destructive"
               >
@@ -144,7 +144,7 @@ const ViewCurrencyPage = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Order Payments:</span>
-                    <Badge variant="outline">{currency._count.orderPayments}</Badge>
+                    <Badge variant="secondary">{currency._count.orderPayments}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Exchange Rates:</span>

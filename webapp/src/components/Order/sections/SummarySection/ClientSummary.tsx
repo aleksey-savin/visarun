@@ -80,7 +80,7 @@ const ClientSummary = ({ client }: { client: StoreClient }) => {
           <div className="flex justify-between items-start">
             <ClientBadge client={client} showLinkedClients={false} stepStatus="submitted" />
             <Badge
-              variant="outline"
+              variant="secondary"
               className={`p-1 h-auto transition-all duration-300 ${
                 isCopied ? 'text-green-500' : 'text-muted-foreground hover:text-foreground'
               }`}

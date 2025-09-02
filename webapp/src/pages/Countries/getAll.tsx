@@ -218,15 +218,15 @@ const AllCountriesPage = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{country._count.cities}</Badge>
+                            <Badge variant="secondary">{country._count.cities}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
+                            <Badge variant="secondary" className="bg-green-50 text-green-700">
                               {country._count.visaFree}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-red-50 text-red-700">
+                            <Badge variant="secondary" className="bg-red-50 text-red-700">
                               {country._count.blacklisted}
                             </Badge>
                           </TableCell>

@@ -93,7 +93,7 @@ export default function EditContactMethodPage() {
           <CardContent>
             <p className="text-red-600">The contact method with ID {id} could not be found.</p>
             <div className="mt-4">
-              <Button variant="outline" onClick={() => navigate(getAllContactMethodsRoute())}>
+              <Button variant="secondary" onClick={() => navigate(getAllContactMethodsRoute())}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Contact Methods
               </Button>

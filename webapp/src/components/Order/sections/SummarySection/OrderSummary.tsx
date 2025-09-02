@@ -92,7 +92,7 @@ const OrderSummary = () => {
         <div className="flex items-center justify-between">
           <span className="font-semibold text-primary">Order Summary</span>
           <Badge
-            variant="outline"
+            variant="secondary"
             className={`p-1 h-auto transition-all duration-300 ${
               isCopied ? 'text-green-500' : 'text-muted-foreground hover:text-foreground'
             }`}

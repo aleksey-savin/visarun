@@ -202,7 +202,7 @@ export const RequirementCard: React.FC<RequirementCardProps> = ({
             <span className="ml-1 capitalize">{requirement.inputType}</span>
           </Badge>
           {requirement.appliesToAllCitizenships && (
-            <Badge variant="outline" className="border-blue-300 text-blue-700">
+            <Badge variant="secondary" className="border-blue-300 text-blue-700">
               <Users className="w-3 h-3 mr-1" />
               All Citizenships
             </Badge>
@@ -229,12 +229,12 @@ export const RequirementCard: React.FC<RequirementCardProps> = ({
               <div className="text-sm font-medium text-gray-700 mb-2">Applies to:</div>
               <div className="flex flex-wrap gap-1">
                 {requirement.citizenships.slice(0, 3).map(link => (
-                  <Badge key={link.citizenship.id} variant="outline" className="text-xs">
+                  <Badge key={link.citizenship.id} variant="secondary" className="text-xs">
                     {link.citizenship.name}
                   </Badge>
                 ))}
                 {requirement.citizenships.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="secondary" className="text-xs">
                     +{requirement.citizenships.length - 3} more
                   </Badge>
                 )}
@@ -248,12 +248,12 @@ export const RequirementCard: React.FC<RequirementCardProps> = ({
               <div className="text-sm font-medium text-gray-700 mb-2">Visa Types:</div>
               <div className="flex flex-wrap gap-1">
                 {requirement.visaTypeLinks.slice(0, 2).map(link => (
-                  <Badge key={link.visaType.id} variant="outline" className="text-xs">
+                  <Badge key={link.visaType.id} variant="secondary" className="text-xs">
                     {link.visaType.country.name} - {link.visaType.name}
                   </Badge>
                 ))}
                 {requirement.visaTypeLinks.length > 2 && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="secondary" className="text-xs">
                     +{requirement.visaTypeLinks.length - 2} more
                   </Badge>
                 )}
@@ -293,7 +293,7 @@ export const RequirementCard: React.FC<RequirementCardProps> = ({
             <div className="flex flex-wrap gap-2">
               {onLinkCitizenships && (
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => onLinkCitizenships(requirement.id)}
                   className="text-xs"
@@ -304,7 +304,7 @@ export const RequirementCard: React.FC<RequirementCardProps> = ({
               )}
               {onLinkVisaTypes && (
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => onLinkVisaTypes(requirement.id)}
                   className="text-xs"
@@ -315,7 +315,7 @@ export const RequirementCard: React.FC<RequirementCardProps> = ({
               )}
               {requirement.sampleUrl && (
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() =>
                     requirement.sampleUrl && window.open(requirement.sampleUrl, '_blank')

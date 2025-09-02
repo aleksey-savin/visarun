@@ -56,7 +56,7 @@ const ViewVisaCitizenshipSurchargePage = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
-              variant="outline"
+              variant="secondary"
               size="icon"
               onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
             >
@@ -100,7 +100,7 @@ const ViewVisaCitizenshipSurchargePage = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
-              variant="outline"
+              variant="secondary"
               size="icon"
               onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
             >
@@ -127,7 +127,7 @@ const ViewVisaCitizenshipSurchargePage = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
-              variant="outline"
+              variant="secondary"
               size="icon"
               onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
             >
@@ -155,7 +155,7 @@ const ViewVisaCitizenshipSurchargePage = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
-            variant="outline"
+            variant="secondary"
             size="icon"
             onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
           >
@@ -290,7 +290,7 @@ const ViewVisaCitizenshipSurchargePage = () => {
             <CardContent className="space-y-3">
               {canUpdate && (
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   className="w-full justify-start"
                   onClick={() =>
                     navigate(getEditVisaCitizenshipSurchargeRoute({ id: surcharge.id }))

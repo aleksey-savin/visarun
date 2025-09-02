@@ -6,14 +6,12 @@ import { toast } from 'sonner';
 import FormPageLayout from '@/components/Forms/FormPageLayout';
 import VisaCitizenshipSurchargeForm, {
   type VisaCitizenshipSurchargeFormData,
-} from '@/components/Forms/VisaCitizenshipSurchargeForm';
+} from '@/components/VisaCitizenshipSurcharge/Form';
 
 const EditVisaCitizenshipSurchargePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
 
   const {
     data: surchargeData,
@@ -31,14 +29,11 @@ const EditVisaCitizenshipSurchargePage = () => {
           ? `Visa citizenship surcharge updated successfully. Applied to ${data.affectedVisaTypesCount} visa types.`
           : 'Visa citizenship surcharge updated successfully';
       toast.success(message);
-      setSaveStatus('saved');
-      setLastSavedTime(new Date());
       setIsSubmitting(false);
       navigate(getAllVisaCitizenshipSurchargesRoute());
     },
     onError: error => {
       toast.error(error.message);
-      setSaveStatus('error');
       setIsSubmitting(false);
     },
   });
@@ -50,7 +45,6 @@ const EditVisaCitizenshipSurchargePage = () => {
     }
 
     setIsSubmitting(true);
-    setSaveStatus('saving');
 
     editVisaCitizenshipSurchargeMutation.mutate({
       id,
@@ -141,7 +135,7 @@ const EditVisaCitizenshipSurchargePage = () => {
   console.log(surcharge.citizenshipId);
 
   return (
-    <FormPageLayout breadcrumbs={breadcrumbs} saveStatus={saveStatus} lastSavedTime={lastSavedTime}>
+    <FormPageLayout breadcrumbs={breadcrumbs}>
       <VisaCitizenshipSurchargeForm
         initialData={{
           citizenshipId: surcharge.citizenshipId,

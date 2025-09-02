@@ -190,7 +190,7 @@ const ViewUserPage = () => {
               </p>
             </CardContent>
             <div className="p-6">
-              <Button variant="outline" onClick={() => navigate(getAllUsersRoute())}>
+              <Button variant="secondary" onClick={() => navigate(getAllUsersRoute())}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to All Users
               </Button>
@@ -256,7 +256,7 @@ const ViewUserPage = () => {
                         </Badge>
                       ))
                     ) : (
-                      <Badge variant="outline">No roles</Badge>
+                      <Badge variant="secondary">No roles</Badge>
                     )}
                   </div>
                 </div>

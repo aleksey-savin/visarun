@@ -164,7 +164,7 @@ const HomePage = () => {
         <h1 className="text-2xl font-bold">Visarun Vietnam</h1>
         <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
           <DialogTrigger asChild>
-            <Button variant="outline">Sign In</Button>
+            <Button variant="accent">Sign In</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogTitle className="text-xl font-semibold mb-4"></DialogTitle>

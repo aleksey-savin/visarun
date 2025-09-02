@@ -4,7 +4,7 @@ import { trpc } from '../../lib/trpcProvider';
 import { getAllVisaTypesRoute } from '../../lib/routes';
 import { toast } from 'sonner';
 import FormPageLayout from '@/components/Forms/FormPageLayout';
-import VisaTypeForm, { type VisaTypeFormData } from '@/components/Forms/VisaTypeForm';
+import VisaTypeForm, { type VisaTypeFormData } from '@/components/VisaType/Form';
 
 const CreateVisaTypePage = () => {
   const navigate = useNavigate();

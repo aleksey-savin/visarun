@@ -153,7 +153,7 @@ const ViewRolePage = () => {
     return (
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" size="icon" onClick={() => navigate(getAllRolesRoute())}>
+          <Button variant="secondary" size="icon" onClick={() => navigate(getAllRolesRoute())}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -170,7 +170,7 @@ const ViewRolePage = () => {
         </Alert>
 
         <div className="mt-6">
-          <Button variant="outline" onClick={() => navigate(getAllRolesRoute())}>
+          <Button variant="secondary" onClick={() => navigate(getAllRolesRoute())}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Roles
           </Button>
@@ -185,7 +185,7 @@ const ViewRolePage = () => {
     <div className="container mx-auto p-6 max-w-7xl space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Button variant="outline" size="icon" onClick={() => navigate(getAllRolesRoute())}>
+        <Button variant="secondary" size="icon" onClick={() => navigate(getAllRolesRoute())}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
@@ -198,7 +198,7 @@ const ViewRolePage = () => {
             {roleData.name.charAt(0).toUpperCase() + roleData.name.slice(1)}
           </Badge>
           {roleData.isSystem && (
-            <Badge variant="outline" className="h-6">
+            <Badge variant="secondary" className="h-6">
               <Lock className="h-3 w-3 mr-1" />
               System Role
             </Badge>
@@ -259,7 +259,7 @@ const ViewRolePage = () => {
                     Permissions ({roleData.permissions.length})
                   </h3>
                   {roleData.permissions.length === 0 && (
-                    <Badge variant="outline" className="text-amber-600 border-amber-200">
+                    <Badge variant="secondary" className="text-amber-600 border-amber-200">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       No permissions
                     </Badge>
@@ -374,7 +374,7 @@ const ViewRolePage = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Role Type</span>
-                <Badge variant={roleData.isSystem ? 'outline' : 'default'}>
+                <Badge variant={roleData.isSystem ? 'secondary' : 'default'}>
                   {roleData.isSystem ? 'System' : 'Custom'}
                 </Badge>
               </div>

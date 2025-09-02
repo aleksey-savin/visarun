@@ -69,7 +69,7 @@ export const CitizenshipSelector: React.FC<CitizenshipSelectorProps> = ({
         <Label>Selected Citizenships ({selectedIds.length})</Label>
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => setShowSelector(!showSelector)}
           disabled={disabled}
@@ -212,7 +212,7 @@ export const CitizenshipSelector: React.FC<CitizenshipSelectorProps> = ({
                 </span>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setShowSelector(false)}
                 >

@@ -69,7 +69,7 @@ const ViewRequirementPage: React.FC = () => {
     };
     return (
       <Badge
-        variant="outline"
+        variant="secondary"
         className={colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800'}
       >
         <span className="mr-1">{getInputTypeIcon(type)}</span>
@@ -219,7 +219,7 @@ const ViewRequirementPage: React.FC = () => {
                   <label className="text-sm font-medium text-gray-700">Requirement Type</label>
                   <div>
                     <Badge
-                      variant="outline"
+                      variant="secondary"
                       className={
                         requirement.isOptional
                           ? 'border-amber-300 text-amber-700'
@@ -244,7 +244,7 @@ const ViewRequirementPage: React.FC = () => {
                   <label className="text-sm font-medium text-gray-700">Sample URL</label>
                   <div>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => {
                         if (requirement.sampleUrl) {
@@ -370,7 +370,7 @@ const ViewRequirementPage: React.FC = () => {
                       (requirement as any).citizenships.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {(requirement as any).citizenships.map((link: any) => (
-                            <Badge key={link.citizenship.id} variant="outline">
+                            <Badge key={link.citizenship.id} variant="secondary">
                               {link.citizenship.name}
                             </Badge>
                           ))}
@@ -408,14 +408,14 @@ const ViewRequirementPage: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="secondary" className="text-xs">
                             {link.visaType.isMultientry ? 'Multi-entry' : 'Single-entry'}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="secondary" className="text-xs">
                             <Calendar className="w-3 h-3 mr-1" />
                             {formatProcessingTime(link.visaType)}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="secondary" className="text-xs">
                             <DollarSign className="w-3 h-3 mr-1" />
                             {formatCurrency(link.visaType.serviceCost, 'VND')}
                           </Badge>

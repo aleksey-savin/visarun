@@ -113,7 +113,7 @@ const ViewVisaTypePage = () => {
     return (
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" size="icon" onClick={() => navigate(getAllVisaTypesRoute())}>
+          <Button variant="secondary" size="icon" onClick={() => navigate(getAllVisaTypesRoute())}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -128,7 +128,7 @@ const ViewVisaTypePage = () => {
         </Alert>
 
         <div className="mt-6">
-          <Button variant="outline" onClick={() => navigate(getAllVisaTypesRoute())}>
+          <Button variant="secondary" onClick={() => navigate(getAllVisaTypesRoute())}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Visa Types
           </Button>
@@ -166,7 +166,7 @@ const ViewVisaTypePage = () => {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate(getAllVisaTypesRoute())}>
+          <Button variant="secondary" size="icon" onClick={() => navigate(getAllVisaTypesRoute())}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
@@ -180,7 +180,7 @@ const ViewVisaTypePage = () => {
         <div className="flex items-center gap-2">
           {getEntryTypeBadge()}
           {visaType.isMultientry && visaType.multientryExtraCost && (
-            <Badge variant="outline" className="gap-1">
+            <Badge variant="secondary" className="gap-1">
               <CreditCard className="h-3 w-3" />+
               {formatCurrency(visaType.multientryExtraCost, 'USD')}
             </Badge>
@@ -389,7 +389,7 @@ const ViewVisaTypePage = () => {
                               </p>
                             )}
                           </div>
-                          <Badge variant="outline" className="font-mono text-lg">
+                          <Badge variant="secondary" className="font-mono text-lg">
                             +{formatCurrency(surcharge.surcharge.surchargeAmount, 'USD')}
                           </Badge>
                         </div>
@@ -419,7 +419,7 @@ const ViewVisaTypePage = () => {
                   )}
                   {canManageRequirements && (
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       className="w-full justify-start"
                       onClick={() => setSelectedTab('requirements')}
                     >
@@ -428,7 +428,7 @@ const ViewVisaTypePage = () => {
                     </Button>
                   )}
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full justify-start"
                     onClick={() => setSelectedTab('analytics')}
                   >

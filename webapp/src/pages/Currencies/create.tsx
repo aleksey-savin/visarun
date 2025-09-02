@@ -80,7 +80,7 @@ const CreateCurrencyPage = () => {
             <div className="flex justify-end gap-4">
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={() => navigate('/currencies')}
                 disabled={isSubmitting}
               >

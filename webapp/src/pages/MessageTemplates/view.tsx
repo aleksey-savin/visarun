@@ -132,7 +132,7 @@ const ViewMessageTemplatePage = () => {
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="flex items-center gap-4 mb-8">
           <Button
-            variant="outline"
+            variant="secondary"
             size="icon"
             onClick={() => navigate(getMessageTemplatesRoute())}
           >
@@ -152,7 +152,7 @@ const ViewMessageTemplatePage = () => {
         </Alert>
 
         <div className="mt-6">
-          <Button variant="outline" onClick={() => navigate(getMessageTemplatesRoute())}>
+          <Button variant="secondary" onClick={() => navigate(getMessageTemplatesRoute())}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Templates
           </Button>
@@ -167,7 +167,11 @@ const ViewMessageTemplatePage = () => {
     <div className="container mx-auto p-6 max-w-7xl space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <Button variant="outline" size="icon" onClick={() => navigate(getMessageTemplatesRoute())}>
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={() => navigate(getMessageTemplatesRoute())}
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
@@ -175,7 +179,7 @@ const ViewMessageTemplatePage = () => {
           <p className="text-muted-foreground">Message template configuration and content</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="gap-1">
+          <Badge variant="secondary" className="gap-1">
             <Hash className="h-3 w-3" />
             ID: {messageTemplate.id.slice(0, 8)}
           </Badge>
@@ -247,11 +251,11 @@ const ViewMessageTemplatePage = () => {
                       <CardDescription>Template body and message content</CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={handleCopyContent}>
+                      <Button variant="secondary" size="sm" onClick={handleCopyContent}>
                         <Copy className="h-4 w-4 mr-2" />
                         Copy
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="secondary" size="sm">
                         <Eye className="h-4 w-4 mr-2" />
                         Preview
                       </Button>
@@ -362,7 +366,7 @@ const ViewMessageTemplatePage = () => {
                     Edit Template
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full justify-start"
                     onClick={handleCopyContent}
                   >
@@ -370,7 +374,7 @@ const ViewMessageTemplatePage = () => {
                     Copy Content
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full justify-start"
                     onClick={() => setSelectedTab('channels')}
                   >
@@ -486,7 +490,7 @@ const ViewMessageTemplatePage = () => {
                             </div>
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-blue-600 border-blue-300">
+                        <Badge variant="secondary" className="text-blue-600 border-blue-300">
                           Connected
                         </Badge>
                       </div>
@@ -499,7 +503,7 @@ const ViewMessageTemplatePage = () => {
                     <p className="text-muted-foreground mb-4">
                       This template is not currently connected to any Telegram channels.
                     </p>
-                    <Button variant="outline">
+                    <Button variant="secondary">
                       <Users className="h-4 w-4 mr-2" />
                       Connect Channel
                     </Button>
@@ -522,11 +526,11 @@ const ViewMessageTemplatePage = () => {
                   </AlertDescription>
                 </Alert>
                 <div className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="secondary" className="w-full justify-start">
                     <Users className="h-4 w-4 mr-2" />
                     Add Channel Connection
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="secondary" className="w-full justify-start">
                     <Hash className="h-4 w-4 mr-2" />
                     View All Channels
                   </Button>

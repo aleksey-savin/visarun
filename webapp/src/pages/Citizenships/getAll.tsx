@@ -218,17 +218,17 @@ const AllCitizenshipsPage = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
+                            <Badge variant="secondary" className="bg-green-50 text-green-700">
                               {citizenship._count.visaFree}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-red-50 text-red-700">
+                            <Badge variant="secondary" className="bg-red-50 text-red-700">
                               {citizenship._count.blacklisted}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                            <Badge variant="secondary" className="bg-blue-50 text-blue-700">
                               {citizenship._count.surcharges}
                             </Badge>
                           </TableCell>

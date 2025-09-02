@@ -95,7 +95,7 @@ export default function EditRequirementPage() {
             <CardContent>
               <p className="text-red-600">The requirement with ID {id} could not be found.</p>
               <div className="mt-4">
-                <Button variant="outline" onClick={() => navigate(getAllRequirementsRoute())}>
+                <Button variant="secondary" onClick={() => navigate(getAllRequirementsRoute())}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to All Requirements
                 </Button>

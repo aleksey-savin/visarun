@@ -4,14 +4,12 @@ import { trpc } from '../../lib/trpcProvider';
 import { getAllVisaTypesRoute } from '../../lib/routes';
 import { toast } from 'sonner';
 import FormPageLayout from '@/components/Forms/FormPageLayout';
-import VisaTypeForm, { type VisaTypeFormData } from '@/components/Forms/VisaTypeForm';
+import VisaTypeForm, { type VisaTypeFormData } from '@/components/VisaType/Form';
 
 const EditVisaTypePage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
 
   const { data: countriesData } = trpc.country.getAll.useQuery();
 
@@ -23,14 +21,11 @@ const EditVisaTypePage = () => {
   const editVisaTypeMutation = trpc.visaType.edit.useMutation({
     onSuccess: () => {
       toast.success('Visa type updated successfully');
-      setSaveStatus('saved');
-      setLastSavedTime(new Date());
       setIsSubmitting(false);
       navigate(getAllVisaTypesRoute());
     },
     onError: error => {
       toast.error(error.message);
-      setSaveStatus('error');
       setIsSubmitting(false);
     },
   });
@@ -42,7 +37,6 @@ const EditVisaTypePage = () => {
     }
 
     setIsSubmitting(true);
-    setSaveStatus('saving');
 
     editVisaTypeMutation.mutate({
       id,
@@ -110,7 +104,7 @@ const EditVisaTypePage = () => {
   ];
 
   return (
-    <FormPageLayout breadcrumbs={breadcrumbs} saveStatus={saveStatus} lastSavedTime={lastSavedTime}>
+    <FormPageLayout breadcrumbs={breadcrumbs}>
       <VisaTypeForm
         initialData={{
           name: visaType.name,

@@ -139,7 +139,7 @@ const ViewTelegramChannelPage = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
-            variant="outline"
+            variant="secondary"
             size="icon"
             onClick={() => navigate(getTelegramChannelsRoute())}
           >
@@ -189,7 +189,7 @@ const ViewTelegramChannelPage = () => {
             <p className="text-red-600">{error.message}</p>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" onClick={() => navigate(getTelegramChannelsRoute())}>
+            <Button variant="secondary" onClick={() => navigate(getTelegramChannelsRoute())}>
               Back to Telegram Channels
             </Button>
           </CardFooter>
@@ -203,7 +203,7 @@ const ViewTelegramChannelPage = () => {
             <CardDescription>The telegram channel with ID {id} could not be found.</CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button variant="outline" onClick={() => navigate(getTelegramChannelsRoute())}>
+            <Button variant="secondary" onClick={() => navigate(getTelegramChannelsRoute())}>
               Back to Telegram Channels
             </Button>
           </CardFooter>
@@ -218,7 +218,7 @@ const ViewTelegramChannelPage = () => {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-2xl">{chatTitle}</CardTitle>
-                  <Badge variant="outline" className="ml-2 capitalize">
+                  <Badge variant="secondary" className="ml-2 capitalize">
                     {chatType}
                   </Badge>
                 </div>

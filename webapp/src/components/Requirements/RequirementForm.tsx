@@ -428,7 +428,7 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
                               <Button
                                 key={option.value}
                                 type="button"
-                                variant={isSelected ? 'default' : 'outline'}
+                                variant={isSelected ? 'default' : 'secondary'}
                                 className="flex flex-col h-auto p-3"
                                 onClick={() => {
                                   field.onChange(option.value);
@@ -489,7 +489,7 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
                                 <PopoverTrigger asChild>
                                   <FormControl>
                                     <Button
-                                      variant="outline"
+                                      variant="secondary"
                                       className={cn(
                                         'w-full justify-start text-left font-normal',
                                         !field.value && 'text-muted-foreground'

@@ -195,7 +195,7 @@ const AllRolesPage = () => {
                                 System
                               </Badge>
                             ) : (
-                              <Badge variant="outline">Custom</Badge>
+                              <Badge variant="secondary">Custom</Badge>
                             )}
                           </TableCell>
                           <TableCell>
@@ -286,7 +286,7 @@ const AllRolesPage = () => {
                               System
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="secondary" className="text-xs">
                               Custom
                             </Badge>
                           )}

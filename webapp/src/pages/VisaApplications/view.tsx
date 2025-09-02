@@ -114,7 +114,7 @@ const ViewVisaApplicationPage = () => {
       <div className="w-full max-w-7xl mx-auto space-y-8 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="secondary" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-3xl font-bold">Visa Application Details</h1>
@@ -132,7 +132,7 @@ const ViewVisaApplicationPage = () => {
       <div className="w-full max-w-7xl mx-auto space-y-8 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="secondary" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-3xl font-bold">Visa Application Details</h1>
@@ -141,7 +141,7 @@ const ViewVisaApplicationPage = () => {
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <p className="text-red-600 mb-4">Error loading visa application: {error.message}</p>
-            <Button variant="outline" onClick={() => navigate(getAllVisaApplicationsRoute())}>
+            <Button variant="secondary" onClick={() => navigate(getAllVisaApplicationsRoute())}>
               Back to Applications
             </Button>
           </div>
@@ -155,7 +155,7 @@ const ViewVisaApplicationPage = () => {
       <div className="w-full max-w-7xl mx-auto space-y-8 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="secondary" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-3xl font-bold">Visa Application Details</h1>
@@ -164,7 +164,7 @@ const ViewVisaApplicationPage = () => {
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <p className="text-gray-600 mb-4">Visa application not found</p>
-            <Button variant="outline" onClick={() => navigate(getAllVisaApplicationsRoute())}>
+            <Button variant="secondary" onClick={() => navigate(getAllVisaApplicationsRoute())}>
               Back to Applications
             </Button>
           </div>
@@ -186,7 +186,7 @@ const ViewVisaApplicationPage = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
-            variant="outline"
+            variant="secondary"
             size="icon"
             onClick={() => navigate(getAllVisaApplicationsRoute())}
           >
@@ -236,7 +236,7 @@ const ViewVisaApplicationPage = () => {
                 <label className="text-sm font-medium text-muted-foreground">Visa Type</label>
                 <div className="mt-1">
                   {visaApplication.visaType && (
-                    <Badge variant="outline" className="bg-blue-600 border-blue-600 text-white">
+                    <Badge variant="secondary" className="bg-blue-600 border-blue-600 text-white">
                       {visaApplication.visaType.name}
                     </Badge>
                   )}
@@ -273,7 +273,10 @@ const ViewVisaApplicationPage = () => {
                 <label className="text-sm font-medium text-muted-foreground">Stamp Status</label>
                 <div className="flex items-center gap-2 mt-1">
                   <Stamp className="h-4 w-4 text-green-600" />
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-50 text-green-700 border-green-200"
+                  >
                     Stamp Received
                   </Badge>
                 </div>
@@ -324,7 +327,7 @@ const ViewVisaApplicationPage = () => {
 
             <div>
               <label className="text-sm font-medium text-muted-foreground">Order Status</label>
-              <Badge variant="outline" className="mt-1">
+              <Badge variant="secondary" className="mt-1">
                 {visaApplication.orderItem?.order?.status}
               </Badge>
             </div>
@@ -389,7 +392,7 @@ const ViewVisaApplicationPage = () => {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => navigate(getAllVisaApplicationsRoute())}>
+        <Button variant="secondary" onClick={() => navigate(getAllVisaApplicationsRoute())}>
           Back to Applications
         </Button>
         <Button onClick={() => navigate(`/visa-applications/edit/${id}`)}>Edit Application</Button>

@@ -328,7 +328,7 @@ export const ClientDocumentUpload: React.FC<ClientDocumentUploadProps> = ({
                   />
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     onClick={handleAddTag}
                     disabled={!formData.newTag.trim()}
@@ -339,7 +339,7 @@ export const ClientDocumentUpload: React.FC<ClientDocumentUploadProps> = ({
                 {formData.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {formData.tags.map(tag => (
-                      <Badge key={tag} variant="outline" className="text-xs">
+                      <Badge key={tag} variant="secondary" className="text-xs">
                         <Tag className="w-3 h-3 mr-1" />
                         {tag}
                         <Button
@@ -363,7 +363,7 @@ export const ClientDocumentUpload: React.FC<ClientDocumentUploadProps> = ({
         <DialogFooter>
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => onOpenChange(false)}
             disabled={isUploading}
           >

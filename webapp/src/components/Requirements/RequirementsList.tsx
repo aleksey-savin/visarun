@@ -175,7 +175,7 @@ export const RequirementsList: React.FC<RequirementsListProps> = ({
           {(search || serviceType || inputType) && (
             <div className="flex flex-wrap gap-2 mt-4">
               {search && (
-                <Badge variant="outline" className="px-2 py-1">
+                <Badge variant="secondary" className="px-2 py-1">
                   Search: {search}
                   <Button
                     variant="ghost"
@@ -188,7 +188,7 @@ export const RequirementsList: React.FC<RequirementsListProps> = ({
                 </Badge>
               )}
               {serviceType && (
-                <Badge variant="outline" className="px-2 py-1">
+                <Badge variant="secondary" className="px-2 py-1">
                   Service: {serviceType}
                   <Button
                     variant="ghost"
@@ -201,7 +201,7 @@ export const RequirementsList: React.FC<RequirementsListProps> = ({
                 </Badge>
               )}
               {inputType && (
-                <Badge variant="outline" className="px-2 py-1">
+                <Badge variant="secondary" className="px-2 py-1">
                   Type: {inputType}
                   <Button
                     variant="ghost"
@@ -317,7 +317,7 @@ export const RequirementsList: React.FC<RequirementsListProps> = ({
               </div>
               <div className="flex gap-2">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setPage(page - 1)}
                   disabled={page === 0}
@@ -325,7 +325,7 @@ export const RequirementsList: React.FC<RequirementsListProps> = ({
                   Previous
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setPage(page + 1)}
                   disabled={!pagination.hasMore}

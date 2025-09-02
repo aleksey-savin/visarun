@@ -87,7 +87,7 @@ export default function EditRolePage() {
                 {roleError instanceof Error ? roleError.message : 'The role could not be found.'}
               </p>
               <div className="mt-4">
-                <Button variant="outline" onClick={() => navigate(getAllRolesRoute())}>
+                <Button variant="secondary" onClick={() => navigate(getAllRolesRoute())}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to All Roles
                 </Button>
@@ -116,7 +116,7 @@ export default function EditRolePage() {
             <CardContent>
               <p className="text-red-600">The role with ID {id} could not be found.</p>
               <div className="mt-4">
-                <Button variant="outline" onClick={() => navigate(getAllRolesRoute())}>
+                <Button variant="secondary" onClick={() => navigate(getAllRolesRoute())}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to All Roles
                 </Button>

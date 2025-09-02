@@ -238,7 +238,7 @@ const AllUsersPage = () => {
                                 </Badge>
                               ))}
                               {user.roleAssignments.length === 0 && (
-                                <Badge variant="outline">No roles</Badge>
+                                <Badge variant="secondary">No roles</Badge>
                               )}
                             </div>
                           </TableCell>
@@ -327,7 +327,7 @@ const AllUsersPage = () => {
                             </Badge>
                           ))}
                           {user.roleAssignments.length === 0 && (
-                            <Badge variant="outline">No roles</Badge>
+                            <Badge variant="secondary">No roles</Badge>
                           )}
                         </div>
                       </div>

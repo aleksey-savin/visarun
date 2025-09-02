@@ -94,7 +94,7 @@ export const VisaTypeSelector: React.FC<VisaTypeSelectorProps> = ({
         <Label>Selected Visa Types ({selectedIds.length})</Label>
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => setShowSelector(!showSelector)}
           disabled={disabled}
@@ -218,14 +218,14 @@ export const VisaTypeSelector: React.FC<VisaTypeSelectorProps> = ({
                             </div>
 
                             <div className="flex flex-wrap gap-2 mb-2">
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="secondary" className="text-xs">
                                 {visaType.isMultientry ? 'Multi-entry' : 'Single-entry'}
                               </Badge>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="secondary" className="text-xs">
                                 <Calendar className="w-3 h-3 mr-1" />
                                 {formatProcessingTime(visaType)}
                               </Badge>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="secondary" className="text-xs">
                                 <DollarSign className="w-3 h-3 mr-1" />
                                 {formatCurrency(visaType.serviceCost, 'VND')}
                               </Badge>
@@ -247,7 +247,7 @@ export const VisaTypeSelector: React.FC<VisaTypeSelectorProps> = ({
                 </span>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setShowSelector(false)}
                 >
