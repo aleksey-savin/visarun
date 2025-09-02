@@ -316,6 +316,32 @@ export const orderPaymentConfirmWithoutDocumentProcedure = baseProcedure.use(
   requirePermission('orderPayments.confirmWithoutDocument')
 );
 
+// TransportType management procedures
+export const transportTypeCreateProcedure = baseProcedure.use(
+  requirePermission('transportTypes.create')
+);
+export const transportTypeReadProcedure = baseProcedure.use(
+  requirePermission('transportTypes.read')
+);
+export const transportTypeUpdateProcedure = baseProcedure.use(
+  requirePermission('transportTypes.update')
+);
+export const transportTypeDeleteProcedure = baseProcedure.use(
+  requirePermission('transportTypes.delete')
+);
+
+// Transport management procedures
+export const transportCreateProcedure = baseProcedure.use(requirePermission('transports.create'));
+export const transportReadProcedure = baseProcedure.use(requirePermission('transports.read'));
+export const transportUpdateProcedure = baseProcedure.use(requirePermission('transports.update'));
+export const transportDeleteProcedure = baseProcedure.use(requirePermission('transports.delete'));
+
+// SeatClass management procedures
+export const seatClassCreateProcedure = baseProcedure.use(requirePermission('seatClasses.create'));
+export const seatClassReadProcedure = baseProcedure.use(requirePermission('seatClasses.read'));
+export const seatClassUpdateProcedure = baseProcedure.use(requirePermission('seatClasses.update'));
+export const seatClassDeleteProcedure = baseProcedure.use(requirePermission('seatClasses.delete'));
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter
