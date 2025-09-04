@@ -66,7 +66,7 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
     application?.orderItem?.client?.user?.email,
   ]);
 
-  const handleCopyToClipboard = async () => {
+  const handleCopyToClipboard = useCallback(async () => {
     try {
       const summaryText = generateVisaSummary();
       await navigator.clipboard.writeText(summaryText);
@@ -76,7 +76,7 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
-  };
+  }, [generateVisaSummary]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
