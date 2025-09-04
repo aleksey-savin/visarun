@@ -72,6 +72,15 @@ export const DeniedStatusDialog = ({ application }: { application: any }) => {
     }
   };
 
+  const forceViewportUpdate = useCallback(() => {
+    // Force viewport height recalculation on mobile
+    if (window.visualViewport) {
+      window.visualViewport.dispatchEvent(new Event('resize'));
+    } else {
+      window.dispatchEvent(new Event('resize'));
+    }
+  }, []);
+
   const DeniedContent = ({ className }: { className?: string }) => (
     <div className={className}>
       <ClientCard
@@ -109,6 +118,8 @@ export const DeniedStatusDialog = ({ application }: { application: any }) => {
                         checked={clientInformed}
                         onCheckedChange={() => {
                           setClientInformed(!clientInformed);
+                          // Force viewport update after switch toggle
+                          setTimeout(forceViewportUpdate, 100);
                         }}
                       />
                       <Label>Client informed</Label>
@@ -155,6 +166,8 @@ export const DeniedStatusDialog = ({ application }: { application: any }) => {
                   checked={clientInformed}
                   onCheckedChange={() => {
                     setClientInformed(!clientInformed);
+                    // Force viewport update after switch toggle
+                    setTimeout(forceViewportUpdate, 100);
                   }}
                 />
                 <Label>Client informed</Label>

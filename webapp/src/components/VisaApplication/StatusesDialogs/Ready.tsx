@@ -71,6 +71,15 @@ export const ReadyStatusDialog = ({ application }: { application: any }) => {
     }
   };
 
+  const forceViewportUpdate = useCallback(() => {
+    // Force viewport height recalculation on mobile
+    if (window.visualViewport) {
+      window.visualViewport.dispatchEvent(new Event('resize'));
+    } else {
+      window.dispatchEvent(new Event('resize'));
+    }
+  }, []);
+
   const ReadyContent = ({ className }: { className?: string }) => (
     <div className={className}>
       <ClientCard application={application} order={application.orderItem?.order} />
@@ -103,6 +112,8 @@ export const ReadyStatusDialog = ({ application }: { application: any }) => {
                         checked={clientInformed}
                         onCheckedChange={() => {
                           setClientInformed(!clientInformed);
+                          // Force viewport update after switch toggle
+                          setTimeout(forceViewportUpdate, 100);
                         }}
                       />
                       <Label>Client informed</Label>
@@ -149,6 +160,8 @@ export const ReadyStatusDialog = ({ application }: { application: any }) => {
                   checked={clientInformed}
                   onCheckedChange={() => {
                     setClientInformed(!clientInformed);
+                    // Force viewport update after switch toggle
+                    setTimeout(forceViewportUpdate, 100);
                   }}
                 />
                 <Label>Client informed</Label>

@@ -9,7 +9,6 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { trpc } from '@/lib/trpcProvider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 
 const CurrencyExchangePage = () => {
   const { hasPermission } = useAuth();
@@ -113,8 +112,8 @@ const CurrencyExchangePage = () => {
   // If we have rates, show the full content, otherwise just show the appropriate message
   if (rates) {
     return (
-      <div className="container mx-auto max-w-4xl md:mt-6 mt-3">
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+      <div className="container mx-auto max-w-4xl md:mt-6 ">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-4">
           <div className="bg-card md:rounded-lg shadow-md md:p-6 p-2 md:border md:border-border/50 md:hover:border-border/90 transition-colors">
             <h2 className="md:text-2xl text-lg font-semibold md:mb-6 mb-2 text-center">
               Currency Calculator
@@ -131,7 +130,7 @@ const CurrencyExchangePage = () => {
               }}
             />
           </div>
-          <Separator className="md:hidden" />
+
           <div className="bg-card md:rounded-lg shadow-md md:p-6 px-2 md:border md:border-border/50 md:hover:border-border/90 transition-colors">
             <h2 className="md:text-2xl text-lg font-semibold md:mb-6 mb-2 text-center">
               Current Exchange Rates

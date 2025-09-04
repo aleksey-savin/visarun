@@ -293,6 +293,26 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              {canAccessExchangeRates && shouldShowMenuItem('Currency Exchange') && (
+                <SidebarMenuItem key="CurrencyExchange" className="hidden md:block">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={
+                      location.pathname === getCurrencyExchangeRoute() ||
+                      location.pathname.startsWith(`${getCurrencyExchangeRoute()}/`)
+                    }
+                  >
+                    <Link
+                      to={getCurrencyExchangeRoute()}
+                      className="flex items-center gap-2"
+                      onClick={handleMenuItemClick}
+                    >
+                      <DollarSign />
+                      <span>Currency Exchange</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               {canReadOrders && shouldShowMenuItem('Orders') && (
                 <SidebarMenuItem key="Orders">
                   <SidebarMenuButton

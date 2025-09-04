@@ -120,6 +120,15 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
 
   const reasonInputRef = React.useRef<HTMLInputElement>(null);
 
+  const forceViewportUpdate = useCallback(() => {
+    // Force viewport height recalculation on mobile
+    if (window.visualViewport) {
+      window.visualViewport.dispatchEvent(new Event('resize'));
+    } else {
+      window.dispatchEvent(new Event('resize'));
+    }
+  }, []);
+
   const handleReasonChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setReason(e.target.value);
   }, []);
@@ -202,10 +211,22 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
         <DrawerFooter className="pt-4 shrink-0">
           {!denied && (
             <>
-              <Button className={status.buttonClassname} onClick={handleSubmit}>
+              <Button
+                className={status.buttonClassname}
+                onClick={e => {
+                  forceViewportUpdate();
+                  handleSubmit(e);
+                }}
+              >
                 {status.buttonText}
               </Button>
-              <Button variant="destructive" onClick={handleDenied}>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  forceViewportUpdate();
+                  handleDenied();
+                }}
+              >
                 Denied
               </Button>
               <DrawerClose asChild>
@@ -215,7 +236,14 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
           )}
           {denied && (
             <>
-              <Button disabled={!reason} variant="destructive" onClick={handleSubmitDenial}>
+              <Button
+                disabled={!reason}
+                variant="destructive"
+                onClick={() => {
+                  forceViewportUpdate();
+                  handleSubmitDenial();
+                }}
+              >
                 Visa denied
               </Button>
               <DrawerClose asChild>

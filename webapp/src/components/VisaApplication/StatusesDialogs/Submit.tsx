@@ -121,6 +121,15 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
     }
   }, []);
 
+  const forceViewportUpdate = useCallback(() => {
+    // Force viewport height recalculation on mobile
+    if (window.visualViewport) {
+      window.visualViewport.dispatchEvent(new Event('resize'));
+    } else {
+      window.dispatchEvent(new Event('resize'));
+    }
+  }, []);
+
   const reasonInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleReasonChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,6 +222,8 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
                         checked={refund}
                         onCheckedChange={() => {
                           setRefund(!refund);
+                          // Force viewport update after switch toggle
+                          setTimeout(forceViewportUpdate, 100);
                         }}
                       />
                       <Label>Refund</Label>
@@ -267,6 +278,8 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
                   checked={refund}
                   onCheckedChange={() => {
                     setRefund(!refund);
+                    // Force viewport update after switch toggle
+                    setTimeout(forceViewportUpdate, 100);
                   }}
                 />
                 <Label>Refund</Label>

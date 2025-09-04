@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, useEffect } from 'react';
+import { useMobile } from '@/hooks/use-mobile';
 
 const formatCurrency = (amount: number, currency?: string) => {
   try {
@@ -80,6 +81,8 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
       ourUsdt: '',
     },
   });
+
+  const isMobile = useMobile();
 
   const [direction, setDirection] = useState<'clientToUs' | 'usToClient'>('clientToUs');
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
@@ -255,44 +258,437 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
 
   return (
     <Form {...form}>
-      <div
-        className={cn('w-full max-w-4xl md:space-y-6', isKeyboardOpen ? 'space-y-1' : 'space-y-2')}
-      >
-        <div
-          className={cn(
-            'grid md:grid-cols-2 md:gap-8',
-            isKeyboardOpen ? 'grid-cols-1 gap-1' : 'grid-cols-1 gap-2'
-          )}
-        >
-          {/* Left column - Client transfers to us */}
-          <Card className={cn('', direction === 'clientToUs' ? 'ring-2 ring-primary/50' : '')}>
-            <CardContent
+      {!isMobile && (
+        <>
+          {' '}
+          <div
+            className={cn(
+              'w-full max-w-4xl md:space-y-6',
+              isKeyboardOpen ? 'space-y-1' : 'space-y-2'
+            )}
+          >
+            <div
               className={cn(
-                'flex flex-col md:gap-6 md:p-6',
-                isKeyboardOpen ? 'gap-1 p-2' : 'gap-2 p-3'
+                'grid md:grid-cols-2 md:gap-8',
+                isKeyboardOpen ? 'grid-cols-1 gap-1' : 'grid-cols-1 gap-2'
               )}
             >
-              <CardTitle className="md:text-lg text-base font-medium flex items-center">
-                {isClient ? 'You transfer to us:' : 'Client transfers to us:'}
-              </CardTitle>
-              <FormField
-                control={form.control}
-                name="clientRubles"
-                render={({ field }) => (
-                  <FormItem className="flex items-center md:space-x-2 space-x-1">
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="0"
-                          value={field.value}
-                          onChange={e => handleClientInputChange('clientRubles', e.target.value)}
-                          className={cn(
-                            direction === 'clientToUs' && field.value ? 'border-primary' : '',
-                            direction === 'usToClient' ? 'pr-10' : '',
-                            'md:h-10 h-8'
-                          )}
-                        />
-                        {direction === 'usToClient' && field.value && (
+              {/* Left column - Client transfers to us */}
+              <Card className={cn('', direction === 'clientToUs' ? 'ring-2 ring-primary/50' : '')}>
+                <CardContent
+                  className={cn(
+                    'flex flex-col md:gap-6 md:p-6',
+                    isKeyboardOpen ? 'gap-1 p-2' : 'gap-2 p-3'
+                  )}
+                >
+                  <CardTitle className="md:text-lg text-base font-medium flex items-center">
+                    {isClient ? 'You transfer to us:' : 'Client transfers to us:'}
+                  </CardTitle>
+                  <FormField
+                    control={form.control}
+                    name="clientRubles"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center md:space-x-2 space-x-1">
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="0"
+                              value={field.value}
+                              onChange={e =>
+                                handleClientInputChange('clientRubles', e.target.value)
+                              }
+                              className={cn(
+                                direction === 'clientToUs' && field.value ? 'border-primary' : '',
+                                direction === 'usToClient' ? 'pr-10' : '',
+                                'md:h-10 h-8'
+                              )}
+                            />
+                            {direction === 'usToClient' && field.value && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const ourDongsValue = form.getValues('ourDongs');
+                                  const ourUsdtValue = form.getValues('ourUsdt');
+                                  if (ourDongsValue)
+                                    await copyExchangeOffer(
+                                      'RUB',
+                                      field.value || '',
+                                      'VND',
+                                      ourDongsValue
+                                    );
+                                  else if (ourUsdtValue)
+                                    await copyExchangeOffer(
+                                      'RUB',
+                                      field.value || '',
+                                      'USDT',
+                                      ourUsdtValue
+                                    );
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded active:scale-110 transition-all duration-150"
+                              >
+                                <Copy size={14} className="text-gray-500" />
+                              </button>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                          RUB
+                        </FormLabel>
+
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="clientDongs"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center md:space-x-2 space-x-1">
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="0"
+                              value={field.value}
+                              onChange={e => handleClientInputChange('clientDongs', e.target.value)}
+                              className={cn(
+                                direction === 'clientToUs' && field.value ? 'border-primary' : '',
+                                direction === 'usToClient' ? 'pr-10' : '',
+                                'md:h-10 h-8'
+                              )}
+                            />
+                            {direction === 'usToClient' && field.value && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const ourRublesValue = form.getValues('ourRubles');
+                                  const ourUsdtValue = form.getValues('ourUsdt');
+                                  if (ourRublesValue)
+                                    await copyExchangeOffer(
+                                      'VND',
+                                      field.value || '',
+                                      'RUB',
+                                      ourRublesValue
+                                    );
+                                  else if (ourUsdtValue)
+                                    await copyExchangeOffer(
+                                      'VND',
+                                      field.value || '',
+                                      'USDT',
+                                      ourUsdtValue
+                                    );
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                              >
+                                <Copy size={14} className="text-gray-500" />
+                              </button>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                          VND
+                        </FormLabel>
+
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="clientUsdt"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center md:space-x-2 space-x-1">
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="0"
+                              value={field.value}
+                              onChange={e => handleClientInputChange('clientUsdt', e.target.value)}
+                              className={cn(
+                                direction === 'clientToUs' && field.value ? 'border-primary' : '',
+                                direction === 'usToClient' ? 'pr-10' : '',
+                                'md:h-10 h-8'
+                              )}
+                            />
+                            {direction === 'usToClient' && field.value && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const ourRublesValue = form.getValues('ourRubles');
+                                  const ourDongsValue = form.getValues('ourDongs');
+                                  if (ourRublesValue)
+                                    await copyExchangeOffer(
+                                      'USDT',
+                                      field.value || '',
+                                      'RUB',
+                                      ourRublesValue
+                                    );
+                                  else if (ourDongsValue)
+                                    await copyExchangeOffer(
+                                      'USDT',
+                                      field.value || '',
+                                      'VND',
+                                      ourDongsValue
+                                    );
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                              >
+                                <Copy size={14} className="text-gray-500" />
+                              </button>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                          USDT
+                        </FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Right column - We transfer to client */}
+              <Card className={direction === 'usToClient' ? 'ring-2 ring-primary/50' : ''}>
+                <CardContent
+                  className={cn(
+                    'flex flex-col md:gap-6 md:p-6',
+                    isKeyboardOpen ? 'gap-1 p-2' : 'gap-2 p-3'
+                  )}
+                >
+                  <CardTitle className="md:text-lg text-base font-medium flex items-center gap-2">
+                    {isClient ? 'We transfer to you:' : 'We transfer to user:'}
+                  </CardTitle>
+                  <FormField
+                    control={form.control}
+                    name="ourRubles"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center md:space-x-2 space-x-1">
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="0"
+                              value={field.value}
+                              onChange={e => handleOurInputChange('ourRubles', e.target.value)}
+                              className={cn(
+                                direction === 'usToClient' && field.value ? 'border-primary' : '',
+                                direction === 'clientToUs' ? 'pr-10' : '',
+                                'md:h-10 h-8'
+                              )}
+                            />
+                            {direction === 'clientToUs' && field.value && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const clientRublesValue = form.getValues('clientRubles');
+                                  const clientDongsValue = form.getValues('clientDongs');
+                                  const clientUsdtValue = form.getValues('clientUsdt');
+                                  if (clientRublesValue)
+                                    await copyExchangeOffer(
+                                      'RUB',
+                                      clientRublesValue,
+                                      'RUB',
+                                      field.value || ''
+                                    );
+                                  else if (clientDongsValue)
+                                    await copyExchangeOffer(
+                                      'VND',
+                                      clientDongsValue,
+                                      'RUB',
+                                      field.value || ''
+                                    );
+                                  else if (clientUsdtValue)
+                                    await copyExchangeOffer(
+                                      'USDT',
+                                      clientUsdtValue,
+                                      'RUB',
+                                      field.value || ''
+                                    );
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                              >
+                                <Copy size={14} className="text-gray-500" />
+                              </button>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                          RUB
+                        </FormLabel>
+
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="ourDongs"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center md:space-x-2 space-x-1">
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="0"
+                              value={field.value}
+                              onChange={e => handleOurInputChange('ourDongs', e.target.value)}
+                              className={cn(
+                                direction === 'usToClient' && field.value ? 'border-primary' : '',
+                                direction === 'clientToUs' ? 'pr-10' : '',
+                                'md:h-10 h-8'
+                              )}
+                            />
+                            {direction === 'clientToUs' && field.value && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const clientRublesValue = form.getValues('clientRubles');
+                                  const clientDongsValue = form.getValues('clientDongs');
+                                  const clientUsdtValue = form.getValues('clientUsdt');
+                                  if (clientRublesValue)
+                                    await copyExchangeOffer(
+                                      'RUB',
+                                      clientRublesValue,
+                                      'VND',
+                                      field.value || ''
+                                    );
+                                  else if (clientDongsValue)
+                                    await copyExchangeOffer(
+                                      'VND',
+                                      clientDongsValue,
+                                      'VND',
+                                      field.value || ''
+                                    );
+                                  else if (clientUsdtValue)
+                                    await copyExchangeOffer(
+                                      'USDT',
+                                      clientUsdtValue,
+                                      'VND',
+                                      field.value || ''
+                                    );
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                              >
+                                <Copy size={14} className="text-gray-500" />
+                              </button>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                          VND
+                        </FormLabel>
+
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="ourUsdt"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center md:space-x-2 space-x-1">
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="0"
+                              value={field.value}
+                              onChange={e => handleOurInputChange('ourUsdt', e.target.value)}
+                              className={cn(
+                                direction === 'usToClient' && field.value ? 'border-primary' : '',
+                                direction === 'clientToUs' ? 'pr-10' : '',
+                                'md:h-10 h-8'
+                              )}
+                            />
+                            {direction === 'clientToUs' && field.value && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const clientRublesValue = form.getValues('clientRubles');
+                                  const clientDongsValue = form.getValues('clientDongs');
+                                  const clientUsdtValue = form.getValues('clientUsdt');
+                                  if (clientRublesValue)
+                                    await copyExchangeOffer(
+                                      'RUB',
+                                      clientRublesValue,
+                                      'USDT',
+                                      field.value || ''
+                                    );
+                                  else if (clientDongsValue)
+                                    await copyExchangeOffer(
+                                      'VND',
+                                      clientDongsValue,
+                                      'USDT',
+                                      field.value || ''
+                                    );
+                                  else if (clientUsdtValue)
+                                    await copyExchangeOffer(
+                                      'USDT',
+                                      clientUsdtValue,
+                                      'USDT',
+                                      field.value || ''
+                                    );
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                              >
+                                <Copy size={14} className="text-gray-500" />
+                              </button>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                          USDT
+                        </FormLabel>
+
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+            <div className={cn('flex', isKeyboardOpen ? 'justify-center' : 'justify-end')}>
+              <Button
+                variant="secondary"
+                size={isKeyboardOpen ? 'sm' : 'sm'}
+                onClick={resetForm}
+                className={cn('flex items-center', isKeyboardOpen ? 'gap-1' : 'gap-2')}
+              >
+                <RefreshCw size={isKeyboardOpen ? 14 : 16} />
+                {!isKeyboardOpen && 'Reset'}
+                {isKeyboardOpen && '↻'}
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+      {isMobile && (
+        <Card className="ring-2 ring-primary/50 py-0">
+          <CardContent className={cn(isKeyboardOpen ? 'gap-1 p-2' : 'gap-2 p-3')}>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Left column - Client transfers to us */}
+              <div className="space-y-2">
+                <CardTitle className="text-sm font-medium">
+                  {isClient ? 'You transfer:' : 'Client transfers:'}
+                </CardTitle>
+                <FormField
+                  control={form.control}
+                  name="clientRubles"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1">
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            placeholder="0"
+                            value={field.value}
+                            onChange={e => handleClientInputChange('clientRubles', e.target.value)}
+                            className={cn(
+                              direction === 'clientToUs' && field.value ? 'border-primary' : '',
+                              direction === 'usToClient' ? 'pr-12' : 'pr-10',
+                              'h-8 text-xs'
+                            )}
+                          />
                           <button
                             type="button"
                             onClick={async () => {
@@ -313,40 +709,66 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                                   ourUsdtValue
                                 );
                             }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded active:scale-110 transition-all duration-150"
+                            className={cn(
+                              'absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500',
+                              direction === 'usToClient' && field.value
+                                ? 'cursor-pointer hover:text-gray-700'
+                                : 'pointer-events-none'
+                            )}
                           >
-                            <Copy size={14} className="text-gray-500" />
+                            RUB
                           </button>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
-                      RUB
-                    </FormLabel>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="clientDongs"
-                render={({ field }) => (
-                  <FormItem className="flex items-center md:space-x-2 space-x-1">
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="0"
-                          value={field.value}
-                          onChange={e => handleClientInputChange('clientDongs', e.target.value)}
-                          className={cn(
-                            direction === 'clientToUs' && field.value ? 'border-primary' : '',
-                            direction === 'usToClient' ? 'pr-10' : '',
-                            'md:h-10 h-8'
+                          {direction === 'usToClient' && field.value && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const ourDongsValue = form.getValues('ourDongs');
+                                const ourUsdtValue = form.getValues('ourUsdt');
+                                if (ourDongsValue)
+                                  await copyExchangeOffer(
+                                    'RUB',
+                                    field.value || '',
+                                    'VND',
+                                    ourDongsValue
+                                  );
+                                else if (ourUsdtValue)
+                                  await copyExchangeOffer(
+                                    'RUB',
+                                    field.value || '',
+                                    'USDT',
+                                    ourUsdtValue
+                                  );
+                              }}
+                              className="absolute right-8 top-1/2 -translate-y-1/2 p-1 rounded active:scale-110 transition-all duration-150"
+                            >
+                              <Copy size={10} className="text-gray-500" />
+                            </button>
                           )}
-                        />
-                        {direction === 'usToClient' && field.value && (
+                        </div>
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="clientDongs"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1">
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            placeholder="0"
+                            value={field.value}
+                            onChange={e => handleClientInputChange('clientDongs', e.target.value)}
+                            className={cn(
+                              direction === 'clientToUs' && field.value ? 'border-primary' : '',
+                              direction === 'usToClient' ? 'pr-12' : 'pr-10',
+                              'h-8 text-xs'
+                            )}
+                          />
                           <button
                             type="button"
                             onClick={async () => {
@@ -367,40 +789,66 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                                   ourUsdtValue
                                 );
                             }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                            className={cn(
+                              'absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500',
+                              direction === 'usToClient' && field.value
+                                ? 'cursor-pointer hover:text-gray-700'
+                                : 'pointer-events-none'
+                            )}
                           >
-                            <Copy size={14} className="text-gray-500" />
+                            VND
                           </button>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
-                      VND
-                    </FormLabel>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="clientUsdt"
-                render={({ field }) => (
-                  <FormItem className="flex items-center md:space-x-2 space-x-1">
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="0"
-                          value={field.value}
-                          onChange={e => handleClientInputChange('clientUsdt', e.target.value)}
-                          className={cn(
-                            direction === 'clientToUs' && field.value ? 'border-primary' : '',
-                            direction === 'usToClient' ? 'pr-10' : '',
-                            'md:h-10 h-8'
+                          {direction === 'usToClient' && field.value && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const ourRublesValue = form.getValues('ourRubles');
+                                const ourUsdtValue = form.getValues('ourUsdt');
+                                if (ourRublesValue)
+                                  await copyExchangeOffer(
+                                    'VND',
+                                    field.value || '',
+                                    'RUB',
+                                    ourRublesValue
+                                  );
+                                else if (ourUsdtValue)
+                                  await copyExchangeOffer(
+                                    'VND',
+                                    field.value || '',
+                                    'USDT',
+                                    ourUsdtValue
+                                  );
+                              }}
+                              className="absolute right-8 top-1/2 -translate-y-1/2 p-1 rounded active:scale-110 transition-all duration-150"
+                            >
+                              <Copy size={10} className="text-gray-500" />
+                            </button>
                           )}
-                        />
-                        {direction === 'usToClient' && field.value && (
+                        </div>
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="clientUsdt"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1">
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            placeholder="0"
+                            value={field.value}
+                            onChange={e => handleClientInputChange('clientUsdt', e.target.value)}
+                            className={cn(
+                              direction === 'clientToUs' && field.value ? 'border-primary' : '',
+                              direction === 'usToClient' ? 'pr-16' : 'pr-12',
+                              'h-8 text-xs'
+                            )}
+                          />
                           <button
                             type="button"
                             onClick={async () => {
@@ -421,52 +869,72 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                                   ourDongsValue
                                 );
                             }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                            className={cn(
+                              'absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500',
+                              direction === 'usToClient' && field.value
+                                ? 'cursor-pointer hover:text-gray-700'
+                                : 'pointer-events-none'
+                            )}
                           >
-                            <Copy size={14} className="text-gray-500" />
+                            USDT
                           </button>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
-                      USDT
-                    </FormLabel>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Right column - We transfer to client */}
-          <Card className={direction === 'usToClient' ? 'ring-2 ring-primary/50' : ''}>
-            <CardContent
-              className={cn(
-                'flex flex-col md:gap-6 md:p-6',
-                isKeyboardOpen ? 'gap-1 p-2' : 'gap-2 p-3'
-              )}
-            >
-              <CardTitle className="md:text-lg text-base font-medium flex items-center gap-2">
-                {isClient ? 'We transfer to you:' : 'We transfer to user:'}
-              </CardTitle>
-              <FormField
-                control={form.control}
-                name="ourRubles"
-                render={({ field }) => (
-                  <FormItem className="flex items-center md:space-x-2 space-x-1">
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="0"
-                          value={field.value}
-                          onChange={e => handleOurInputChange('ourRubles', e.target.value)}
-                          className={cn(
-                            direction === 'usToClient' && field.value ? 'border-primary' : '',
-                            direction === 'clientToUs' ? 'pr-10' : '',
-                            'md:h-10 h-8'
+                          {direction === 'usToClient' && field.value && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const ourRublesValue = form.getValues('ourRubles');
+                                const ourDongsValue = form.getValues('ourDongs');
+                                if (ourRublesValue)
+                                  await copyExchangeOffer(
+                                    'USDT',
+                                    field.value || '',
+                                    'RUB',
+                                    ourRublesValue
+                                  );
+                                else if (ourDongsValue)
+                                  await copyExchangeOffer(
+                                    'USDT',
+                                    field.value || '',
+                                    'VND',
+                                    ourDongsValue
+                                  );
+                              }}
+                              className="absolute right-10 top-1/2 -translate-y-1/2 p-1 rounded active:scale-110 transition-all duration-150"
+                            >
+                              <Copy size={10} className="text-gray-500" />
+                            </button>
                           )}
-                        />
-                        {direction === 'clientToUs' && field.value && (
+                        </div>
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Right column - We transfer to client */}
+              <div className="space-y-2">
+                <CardTitle className="text-sm font-medium">
+                  {isClient ? 'We transfer:' : 'We transfer:'}
+                </CardTitle>
+                <FormField
+                  control={form.control}
+                  name="ourRubles"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1">
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            placeholder="0"
+                            value={field.value}
+                            onChange={e => handleOurInputChange('ourRubles', e.target.value)}
+                            className={cn(
+                              direction === 'usToClient' && field.value ? 'border-primary' : '',
+                              direction === 'clientToUs' ? 'pr-12' : 'pr-10',
+                              'h-8 text-xs'
+                            )}
+                          />
                           <button
                             type="button"
                             onClick={async () => {
@@ -495,40 +963,74 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                                   field.value || ''
                                 );
                             }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                            className={cn(
+                              'absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500',
+                              direction === 'clientToUs' && field.value
+                                ? 'cursor-pointer hover:text-gray-700'
+                                : 'pointer-events-none'
+                            )}
                           >
-                            <Copy size={14} className="text-gray-500" />
+                            RUB
                           </button>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
-                      RUB
-                    </FormLabel>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="ourDongs"
-                render={({ field }) => (
-                  <FormItem className="flex items-center md:space-x-2 space-x-1">
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="0"
-                          value={field.value}
-                          onChange={e => handleOurInputChange('ourDongs', e.target.value)}
-                          className={cn(
-                            direction === 'usToClient' && field.value ? 'border-primary' : '',
-                            direction === 'clientToUs' ? 'pr-10' : '',
-                            'md:h-10 h-8'
+                          {direction === 'clientToUs' && field.value && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const clientRublesValue = form.getValues('clientRubles');
+                                const clientDongsValue = form.getValues('clientDongs');
+                                const clientUsdtValue = form.getValues('clientUsdt');
+                                if (clientRublesValue)
+                                  await copyExchangeOffer(
+                                    'RUB',
+                                    clientRublesValue,
+                                    'RUB',
+                                    field.value || ''
+                                  );
+                                else if (clientDongsValue)
+                                  await copyExchangeOffer(
+                                    'VND',
+                                    clientDongsValue,
+                                    'RUB',
+                                    field.value || ''
+                                  );
+                                else if (clientUsdtValue)
+                                  await copyExchangeOffer(
+                                    'USDT',
+                                    clientUsdtValue,
+                                    'RUB',
+                                    field.value || ''
+                                  );
+                              }}
+                              className="absolute right-8 top-1/2 -translate-y-1/2 p-1 rounded active:scale-110 transition-all duration-150"
+                            >
+                              <Copy size={10} className="text-gray-500" />
+                            </button>
                           )}
-                        />
-                        {direction === 'clientToUs' && field.value && (
+                        </div>
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="ourDongs"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1">
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            placeholder="0"
+                            value={field.value}
+                            onChange={e => handleOurInputChange('ourDongs', e.target.value)}
+                            className={cn(
+                              direction === 'usToClient' && field.value ? 'border-primary' : '',
+                              direction === 'clientToUs' ? 'pr-12' : 'pr-10',
+                              'h-8 text-xs'
+                            )}
+                          />
                           <button
                             type="button"
                             onClick={async () => {
@@ -557,40 +1059,74 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                                   field.value || ''
                                 );
                             }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                            className={cn(
+                              'absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500',
+                              direction === 'clientToUs' && field.value
+                                ? 'cursor-pointer hover:text-gray-700'
+                                : 'pointer-events-none'
+                            )}
                           >
-                            <Copy size={14} className="text-gray-500" />
+                            VND
                           </button>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
-                      VND
-                    </FormLabel>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="ourUsdt"
-                render={({ field }) => (
-                  <FormItem className="flex items-center md:space-x-2 space-x-1">
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          placeholder="0"
-                          value={field.value}
-                          onChange={e => handleOurInputChange('ourUsdt', e.target.value)}
-                          className={cn(
-                            direction === 'usToClient' && field.value ? 'border-primary' : '',
-                            direction === 'clientToUs' ? 'pr-10' : '',
-                            'md:h-10 h-8'
+                          {direction === 'clientToUs' && field.value && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const clientRublesValue = form.getValues('clientRubles');
+                                const clientDongsValue = form.getValues('clientDongs');
+                                const clientUsdtValue = form.getValues('clientUsdt');
+                                if (clientRublesValue)
+                                  await copyExchangeOffer(
+                                    'RUB',
+                                    clientRublesValue,
+                                    'VND',
+                                    field.value || ''
+                                  );
+                                else if (clientDongsValue)
+                                  await copyExchangeOffer(
+                                    'VND',
+                                    clientDongsValue,
+                                    'VND',
+                                    field.value || ''
+                                  );
+                                else if (clientUsdtValue)
+                                  await copyExchangeOffer(
+                                    'USDT',
+                                    clientUsdtValue,
+                                    'VND',
+                                    field.value || ''
+                                  );
+                              }}
+                              className="absolute right-8 top-1/2 -translate-y-1/2 p-1 rounded active:scale-110 transition-all duration-150"
+                            >
+                              <Copy size={10} className="text-gray-500" />
+                            </button>
                           )}
-                        />
-                        {direction === 'clientToUs' && field.value && (
+                        </div>
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="ourUsdt"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col space-y-1">
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            placeholder="0"
+                            value={field.value}
+                            onChange={e => handleOurInputChange('ourUsdt', e.target.value)}
+                            className={cn(
+                              direction === 'usToClient' && field.value ? 'border-primary' : '',
+                              direction === 'clientToUs' ? 'pr-16' : 'pr-12',
+                              'h-8 text-xs'
+                            )}
+                          />
                           <button
                             type="button"
                             onClick={async () => {
@@ -619,37 +1155,72 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                                   field.value || ''
                                 );
                             }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded  active:scale-110 transition-all duration-150"
+                            className={cn(
+                              'absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500',
+                              direction === 'clientToUs' && field.value
+                                ? 'cursor-pointer hover:text-gray-700'
+                                : 'pointer-events-none'
+                            )}
                           >
-                            <Copy size={14} className="text-gray-500" />
+                            USDT
                           </button>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
-                      USDT
-                    </FormLabel>
+                          {direction === 'clientToUs' && field.value && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const clientRublesValue = form.getValues('clientRubles');
+                                const clientDongsValue = form.getValues('clientDongs');
+                                const clientUsdtValue = form.getValues('clientUsdt');
+                                if (clientRublesValue)
+                                  await copyExchangeOffer(
+                                    'RUB',
+                                    clientRublesValue,
+                                    'USDT',
+                                    field.value || ''
+                                  );
+                                else if (clientDongsValue)
+                                  await copyExchangeOffer(
+                                    'VND',
+                                    clientDongsValue,
+                                    'USDT',
+                                    field.value || ''
+                                  );
+                                else if (clientUsdtValue)
+                                  await copyExchangeOffer(
+                                    'USDT',
+                                    clientUsdtValue,
+                                    'USDT',
+                                    field.value || ''
+                                  );
+                              }}
+                              className="absolute right-10 top-1/2 -translate-y-1/2 p-1 rounded active:scale-110 transition-all duration-150"
+                            >
+                              <Copy size={10} className="text-gray-500" />
+                            </button>
+                          )}
+                        </div>
+                      </FormControl>
 
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-        </div>
-        <div className={cn('flex', isKeyboardOpen ? 'justify-center' : 'justify-end')}>
-          <Button
-            variant="secondary"
-            size={isKeyboardOpen ? 'sm' : 'sm'}
-            onClick={resetForm}
-            className={cn('flex items-center', isKeyboardOpen ? 'gap-1' : 'gap-2')}
-          >
-            <RefreshCw size={isKeyboardOpen ? 14 : 16} />
-            {!isKeyboardOpen && 'Reset'}
-            {isKeyboardOpen && '↻'}
-          </Button>
-        </div>
-      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+            <div className={cn('flex mt-6 justify-end')}>
+              <Button
+                variant="secondary"
+                size={'sm'}
+                onClick={resetForm}
+                className={cn('flex items-center')}
+              >
+                <RefreshCw size={16} />
+                Reset
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </Form>
   );
 }
