@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useMobile } from '@/hooks/use-mobile';
 
 import ClientCard from '@/components/VisaApplication/ClientCard';
@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -18,13 +17,13 @@ import {
 import {
   Drawer,
   DrawerClose,
-  DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+
+import { MobileDrawerContent } from '@/components/ui/mobile-drawer-content';
 
 import { Separator } from '@/components/ui/separator';
 import { CircleX } from 'lucide-react';
@@ -44,6 +43,13 @@ export const DeniedStatusDialog = ({ application }: { application: any }) => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [clientInformed, setClientInformed] = useState(false);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setClientInformed(false);
+    }
+  }, []);
 
   const utils = trpc.useUtils();
   const archiveVisaApplicationMutation = trpc.visaApplication.archive.useMutation({
@@ -79,7 +85,7 @@ export const DeniedStatusDialog = ({ application }: { application: any }) => {
 
   if (!isMobile) {
     return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <form onSubmit={handleSubmit}>
           <DialogTrigger asChild>
             <Button variant={status.variant} className={status.className}>
@@ -91,7 +97,6 @@ export const DeniedStatusDialog = ({ application }: { application: any }) => {
               <DialogTitle>
                 {!application.isArchived ? 'Update Status' : 'Archived visa application overview'}
               </DialogTitle>
-              <DialogDescription></DialogDescription>
             </DialogHeader>
             <DeniedContent className="flex flex-col gap-4" />
             {!application.isArchived && (
@@ -127,53 +132,49 @@ export const DeniedStatusDialog = ({ application }: { application: any }) => {
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
       <form onSubmit={handleSubmit}>
         <DrawerTrigger asChild>
           <Button variant={status.variant} className={status.className}>
             {status.icon} {status.text}
           </Button>
         </DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader className="text-left">
+        <MobileDrawerContent>
+          <DrawerHeader className="text-left shrink-0">
             <DrawerTitle>
               {!application.isArchived ? 'Update Status' : 'Archived visa application overview'}
             </DrawerTitle>
-            <DrawerDescription></DrawerDescription>
           </DrawerHeader>
-          <DeniedContent className="flex flex-col gap-4 px-4" />
+          <div className="flex-1 overflow-y-auto">
+            <DeniedContent className="flex flex-col gap-4 px-4" />
+          </div>
           {!application.isArchived && (
-            <>
-              <DrawerFooter className="pt-4">
-                <div className="flex gap-2 items-center mb-2">
-                  <Switch
-                    checked={clientInformed}
-                    onCheckedChange={() => {
-                      setClientInformed(!clientInformed);
-                    }}
-                  />
-                  <Label>Client informed</Label>
-                </div>
-                <Button
-                  type="submit"
-                  disabled={!clientInformed}
-                  className={status.buttonClassname}
-                  onClick={handleSubmit}
-                >
-                  {status.buttonText}
-                </Button>
-                <DrawerClose asChild></DrawerClose>
-              </DrawerFooter>
-            </>
+            <DrawerFooter className="pt-4 shrink-0">
+              <div className="flex gap-2 items-center mb-2">
+                <Switch
+                  checked={clientInformed}
+                  onCheckedChange={() => {
+                    setClientInformed(!clientInformed);
+                  }}
+                />
+                <Label>Client informed</Label>
+              </div>
+              <Button type="submit" className={status.buttonClassname} onClick={handleSubmit}>
+                {status.buttonText}
+              </Button>
+              <DrawerClose asChild>
+                <Button variant="secondary">Cancel</Button>
+              </DrawerClose>
+            </DrawerFooter>
           )}
           {application.isArchived && (
-            <DrawerFooter className="pt-4">
+            <DrawerFooter className="pt-4 shrink-0">
               <DrawerClose asChild>
                 <Button variant="secondary">Close</Button>
               </DrawerClose>
             </DrawerFooter>
           )}
-        </DrawerContent>
+        </MobileDrawerContent>
       </form>
     </Drawer>
   );

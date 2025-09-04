@@ -5,7 +5,6 @@ import { useMobile } from '@/hooks/use-mobile';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -14,19 +13,19 @@ import {
 import {
   Drawer,
   DrawerClose,
-  DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
 
+import { MobileDrawerContent } from '@/components/ui/mobile-drawer-content';
+import { Input } from '@/components/ui/input';
+
 import { Separator } from '@/components/ui/separator';
 import { LoaderCircle } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { trpc } from '@/lib/trpc';
-import { Input } from '@/components/ui/input';
 
 export const InProcessStatusDialog = ({ application }: { application: any }) => {
   const isMobile = useMobile();
@@ -62,7 +61,6 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
   const utils = trpc.useUtils();
   const updateVisaApplicationStatusMutation = trpc.visaApplication.updateStatus.useMutation({
     onSuccess: () => {
-      // Invalidate and refetch visa applications query to update the table
       utils.visaApplication.getAll.invalidate();
     },
   });
@@ -92,10 +90,10 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
     }
   };
 
-  const handleDenied = () => {
+  const handleDenied = useCallback(() => {
     setDenied(true);
     setClientCardBorder('border-destructive');
-  };
+  }, []);
 
   const handleSubmitDenial = async () => {
     try {
@@ -112,31 +110,40 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
     }
   };
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = useCallback((open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      // Reset all state when dialog closes
       setDenied(false);
       setClientCardBorder('border-dashed border-[#FAFAFA]');
+      setReason('');
     }
-  };
+  }, []);
 
-  const InProcessContent = ({ className }: { className?: string }) => (
-    <div className={className}>
-      <ClientCard
-        application={application}
-        order={application.orderItem?.order}
-        border={clientCardBorder}
-      />
-      {denied && (
-        <Input
-          placeholder="Reason for denial"
-          onChange={e => {
-            setReason(e.target.value);
-          }}
+  const reasonInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleReasonChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setReason(e.target.value);
+  }, []);
+
+  const InProcessContent = useCallback(
+    ({ className }: { className?: string }) => (
+      <div className={className}>
+        <ClientCard
+          application={application}
+          order={application.orderItem?.order}
+          border={clientCardBorder}
         />
-      )}
-    </div>
+        {denied && (
+          <Input
+            ref={reasonInputRef}
+            placeholder="Reason for denial"
+            onChange={handleReasonChange}
+            autoComplete="off"
+          />
+        )}
+      </div>
+    ),
+    [application, clientCardBorder, denied, handleReasonChange]
   );
 
   if (!isMobile) {
@@ -151,9 +158,8 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
           <DialogContent className="sm:max-w-[825px] bg-secondary gap-6">
             <DialogHeader>
               <DialogTitle>Update Status</DialogTitle>
-              <DialogDescription></DialogDescription>
             </DialogHeader>
-            <InProcessContent />
+            <InProcessContent className="flex flex-col gap-4 px-4" />
             <Separator />
             <div className="flex justify-end">
               <div className="flex gap-4">
@@ -182,43 +188,44 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
 
   return (
     <Drawer open={isOpen} onOpenChange={handleOpenChange}>
-      <form onSubmit={handleSubmit}>
-        <DrawerTrigger asChild>
-          <Button variant={status.variant} className={status.className}>
-            {status.icon} {status.text}
-          </Button>
-        </DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader className="text-left">
-            <DrawerTitle>Update Status</DrawerTitle>
-            <DrawerDescription></DrawerDescription>
-          </DrawerHeader>
+      <DrawerTrigger asChild>
+        <Button variant={status.variant} className={status.className}>
+          {status.icon} {status.text}
+        </Button>
+      </DrawerTrigger>
+      <MobileDrawerContent>
+        <DrawerHeader className="text-left shrink-0">
+          <DrawerTitle>Update Status</DrawerTitle>
+        </DrawerHeader>
+        <div className="flex-1 overflow-y-auto">
           <InProcessContent className="flex flex-col gap-4 px-4" />
-          <DrawerFooter className="pt-4">
-            {!denied && (
-              <>
-                <Button type="submit" className={status.buttonClassname} onClick={handleSubmit}>
-                  {status.buttonText}
-                </Button>
-                <Button variant="destructive" onClick={handleDenied}>
-                  Denied
-                </Button>
-                <DrawerClose asChild>
-                  <Button variant="secondary">Cancel</Button>
-                </DrawerClose>
-              </>
-            )}
-            {denied && (
-              <>
-                <Button disabled={!reason} variant="destructive" onClick={handleSubmitDenial}>
-                  Visa denied
-                </Button>
-                <DrawerClose asChild></DrawerClose>
-              </>
-            )}
-          </DrawerFooter>
-        </DrawerContent>
-      </form>
+        </div>
+        <DrawerFooter className="pt-4 shrink-0">
+          {!denied && (
+            <>
+              <Button className={status.buttonClassname} onClick={handleSubmit}>
+                {status.buttonText}
+              </Button>
+              <Button variant="destructive" onClick={handleDenied}>
+                Denied
+              </Button>
+              <DrawerClose asChild>
+                <Button variant="secondary">Cancel</Button>
+              </DrawerClose>
+            </>
+          )}
+          {denied && (
+            <>
+              <Button disabled={!reason} variant="destructive" onClick={handleSubmitDenial}>
+                Visa denied
+              </Button>
+              <DrawerClose asChild>
+                <Button variant="secondary">Cancel</Button>
+              </DrawerClose>
+            </>
+          )}
+        </DrawerFooter>
+      </MobileDrawerContent>
     </Drawer>
   );
 };

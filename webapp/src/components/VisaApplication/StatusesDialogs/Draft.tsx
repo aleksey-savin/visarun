@@ -5,7 +5,6 @@ import { useMobile } from '@/hooks/use-mobile';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -14,17 +13,17 @@ import {
 import {
   Drawer,
   DrawerClose,
-  DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
 
+import { MobileDrawerContent } from '@/components/ui/mobile-drawer-content';
+
 import { Separator } from '@/components/ui/separator';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getEditOrderRoute } from '@/lib/routes';
 
@@ -40,6 +39,10 @@ export const DraftStatusDialog = ({ application }: { application: any }) => {
   };
 
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+  }, []);
 
   const handleEditOrderClick = () => {
     const orderId = application.orderItem?.order?.id;
@@ -57,7 +60,7 @@ export const DraftStatusDialog = ({ application }: { application: any }) => {
 
   if (!isMobile) {
     return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           <Button variant={status.variant} className={status.className}>
             {status.icon} {status.text}
@@ -66,7 +69,6 @@ export const DraftStatusDialog = ({ application }: { application: any }) => {
         <DialogContent className="sm:max-w-[825px] bg-secondary gap-6">
           <DialogHeader>
             <DialogTitle>Draft</DialogTitle>
-            <DialogDescription></DialogDescription>
           </DialogHeader>
           <DraftContent />
           <div className="flex justify-end">
@@ -78,23 +80,26 @@ export const DraftStatusDialog = ({ application }: { application: any }) => {
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
       <DrawerTrigger asChild>
         <Button variant={status.variant} className={status.className}>
           {status.icon} {status.text}
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader className="text-left">
+      <MobileDrawerContent>
+        <DrawerHeader className="text-left shrink-0">
           <DrawerTitle>Draft</DrawerTitle>
-          <DrawerDescription></DrawerDescription>
         </DrawerHeader>
-        <DraftContent className="px-4" />
-        <DrawerFooter className="pt-4">
+        <div className="flex-1 overflow-y-auto">
+          <DraftContent className="px-4" />
+        </div>
+        <DrawerFooter className="pt-4 shrink-0">
           <Button onClick={handleEditOrderClick}>Edit order</Button>
-          <DrawerClose asChild></DrawerClose>
+          <DrawerClose asChild>
+            <Button variant="secondary">Cancel</Button>
+          </DrawerClose>
         </DrawerFooter>
-      </DrawerContent>
+      </MobileDrawerContent>
     </Drawer>
   );
 };

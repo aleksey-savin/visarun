@@ -1,7 +1,6 @@
 import ClientCard from '@/components/VisaApplication/ClientCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useMobile } from '@/hooks/use-mobile';
@@ -18,17 +17,18 @@ import {
 import {
   Drawer,
   DrawerClose,
-  DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
 
+import { MobileDrawerContent } from '@/components/ui/mobile-drawer-content';
+import { Input } from '@/components/ui/input';
+
 import { Separator } from '@/components/ui/separator';
 import { Copy } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { trpc } from '@/lib/trpc';
 
 export const SubmitStatusDialog = ({ application }: { application: any }) => {
@@ -44,13 +44,12 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
   const utils = trpc.useUtils();
   const updateVisaApplicationStatusMutation = trpc.visaApplication.updateStatus.useMutation({
     onSuccess: () => {
-      // Invalidate and refetch visa applications query to update the table
       utils.visaApplication.getAll.invalidate();
     },
   });
 
   // Generate visa summary text - you can customize this based on your application data
-  const generateVisaSummary = () => {
+  const generateVisaSummary = useCallback(() => {
     const date = new Date(application.plannedCountryEntryDate);
     const day = date.getDate();
     const month = date.getMonth() + 1;
@@ -61,7 +60,11 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
 
     const summaryText = `Khai báo và điền mẫu ${application.visaType?.name} gập. Nộp hồ sơ vào ngày ${day} tháng ${month}, lúc ${time}. Kết quả sẽ có vào chiều mai. ${application?.orderItem?.client?.user?.email}`;
     return summaryText;
-  };
+  }, [
+    application.plannedCountryEntryDate,
+    application.visaType?.name,
+    application?.orderItem?.client?.user?.email,
+  ]);
 
   const handleCopyToClipboard = async () => {
     try {
@@ -88,10 +91,10 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setCancel(true);
     setClientCardBorder('border-destructive');
-  };
+  }, []);
 
   const handleSubmitCancel = async () => {
     try {
@@ -108,49 +111,76 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
     }
   };
 
-  const SubmitContent = ({ className }: { className?: string }) => (
-    <div className={className}>
-      <ClientCard
-        application={application}
-        order={application.orderItem?.order}
-        border={clientCardBorder}
-      />
-      {!cancel && (
-        <div className="flex flex-col gap-2">
-          <Label>Visa summary</Label>
-          <Card className="bg-secondary p-3">
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-[#A1A1AA] flex-1">{generateVisaSummary()}</div>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleCopyToClipboard}
-                className={`transition-all duration-200 shrink-0 ${
-                  copied
-                    ? 'bg-green-500/20 text-green-300 hover:bg-green-500/20'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                }`}
-              >
-                Copy <Copy className="w-4 h-4" />
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
-      {cancel && (
-        <Input
-          placeholder="Reason for cancellation"
-          onChange={e => {
-            setReason(e.target.value);
-          }}
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setCancel(false);
+      setRefund(false);
+      setReason('');
+      setClientCardBorder('border-success');
+    }
+  }, []);
+
+  const reasonInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleReasonChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setReason(e.target.value);
+  }, []);
+
+  const SubmitContent = useCallback(
+    ({ className }: { className?: string }) => (
+      <div className={className}>
+        <ClientCard
+          application={application}
+          order={application.orderItem?.order}
+          border={clientCardBorder}
         />
-      )}
-    </div>
+        {!cancel && (
+          <div className="flex flex-col gap-2">
+            <Label>Visa summary</Label>
+            <Card className="bg-secondary p-3">
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-[#A1A1AA] flex-1">{generateVisaSummary()}</div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleCopyToClipboard}
+                  className={`transition-all duration-200 shrink-0 ${
+                    copied
+                      ? 'bg-green-500/20 text-green-300 hover:bg-green-500/20'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                  }`}
+                >
+                  Copy <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+        {cancel && (
+          <Input
+            ref={reasonInputRef}
+            placeholder="Reason for cancellation"
+            onChange={handleReasonChange}
+            autoComplete="off"
+          />
+        )}
+      </div>
+    ),
+    [
+      application,
+      clientCardBorder,
+      cancel,
+      generateVisaSummary,
+      copied,
+      handleCopyToClipboard,
+      handleReasonChange,
+    ]
   );
 
   if (!isMobile) {
     return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <form onSubmit={handleSubmit}>
           <DialogTrigger asChild>
             <Button variant="default" className="bg-fuchsia-300 w-32 hover:bg-fuchsia-400">
@@ -162,7 +192,7 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
               <DialogTitle>Update Status</DialogTitle>
               <DialogDescription></DialogDescription>
             </DialogHeader>
-            <SubmitContent />
+            <SubmitContent className="flex flex-col gap-4 px-4" />
             <Separator />
             <div className="flex justify-end">
               <div className="flex gap-4">
@@ -205,58 +235,56 @@ export const SubmitStatusDialog = ({ application }: { application: any }) => {
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
-      <form onSubmit={handleSubmit}>
-        <DrawerTrigger asChild>
-          <Button variant="default" className="bg-fuchsia-300 w-32 hover:bg-fuchsia-400">
-            Submit
-          </Button>
-        </DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader className="text-left">
-            <DrawerTitle>Update Status</DrawerTitle>
-            <DrawerDescription></DrawerDescription>
-          </DrawerHeader>
+    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
+      <DrawerTrigger asChild>
+        <Button variant="default" className="bg-fuchsia-300 w-32 hover:bg-fuchsia-400">
+          Submit
+        </Button>
+      </DrawerTrigger>
+      <MobileDrawerContent>
+        <DrawerHeader className="text-left shrink-0">
+          <DrawerTitle>Update Status</DrawerTitle>
+        </DrawerHeader>
+        <div className="flex-1 overflow-y-auto">
           <SubmitContent className="flex flex-col gap-4 px-4" />
-
-          <DrawerFooter className="pt-4">
-            {!cancel && (
-              <>
-                <Button type="submit" onClick={handleSubmit}>
-                  Visa submitted
-                </Button>
-                <Button variant="destructive" onClick={handleCancel}>
-                  Cancel order
-                </Button>
-                <DrawerClose asChild>
-                  <Button variant="secondary">Cancel</Button>
-                </DrawerClose>
-              </>
-            )}
-            {cancel && (
-              <>
-                <div className="flex gap-2 items-center mb-2">
-                  <Switch
-                    checked={refund}
-                    onCheckedChange={() => {
-                      setRefund(!refund);
-                    }}
-                  />
-                  <Label>Refund</Label>
-                </div>
-                <Button
-                  variant="destructive"
-                  disabled={reason.length === 0}
-                  onClick={handleSubmitCancel}
-                >
-                  {refund ? 'Confirm cancellation & refund' : 'Confirm cancellation'}
-                </Button>
-                <DrawerClose asChild></DrawerClose>
-              </>
-            )}
-          </DrawerFooter>
-        </DrawerContent>
-      </form>
+        </div>
+        <DrawerFooter className="pt-4 shrink-0">
+          {!cancel && (
+            <>
+              <Button onClick={handleSubmit}>Visa submitted</Button>
+              <Button variant="destructive" onClick={handleCancel}>
+                Cancel order
+              </Button>
+              <DrawerClose asChild>
+                <Button variant="secondary">Cancel</Button>
+              </DrawerClose>
+            </>
+          )}
+          {cancel && (
+            <>
+              <div className="flex gap-2 items-center mb-2">
+                <Switch
+                  checked={refund}
+                  onCheckedChange={() => {
+                    setRefund(!refund);
+                  }}
+                />
+                <Label>Refund</Label>
+              </div>
+              <Button
+                variant="destructive"
+                disabled={reason.length === 0}
+                onClick={handleSubmitCancel}
+              >
+                {refund ? 'Confirm cancellation & refund' : 'Confirm cancellation'}
+              </Button>
+              <DrawerClose asChild>
+                <Button variant="secondary">Cancel</Button>
+              </DrawerClose>
+            </>
+          )}
+        </DrawerFooter>
+      </MobileDrawerContent>
     </Drawer>
   );
 };

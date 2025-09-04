@@ -5,6 +5,79 @@
   overflow-y: auto;
 }
 
+/* Mobile viewport and keyboard support */
+@supports (height: 100dvh) {
+  html,
+  body {
+    height: 100dvh;
+  }
+}
+
+/* Prevent zoom on input focus on iOS */
+@media screen and (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+
+  /* Prevent input field jumping */
+  input:focus,
+  textarea:focus {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+/* Improve input focus stability */
+input,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Prevent input field re-rendering issues */
+input:focus,
+textarea:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Better mobile drawer positioning */
+[data-vaul-drawer] {
+  touch-action: none;
+}
+
+[data-vaul-drawer][data-vaul-drawer-direction='bottom'] {
+  bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Prevent body scroll when drawer is open */
+.vaul-dragging .vaul-scrollable {
+  overflow: hidden !important;
+}
+
+/* Mobile keyboard handling */
+@media screen and (max-width: 767px) {
+  .mobile-drawer-content {
+    max-height: 100vh;
+    max-height: 100dvh;
+  }
+
+  @supports (height: env(keyboard-inset-height)) {
+    .mobile-drawer-content {
+      max-height: calc(100vh - env(keyboard-inset-height));
+      max-height: calc(100dvh - env(keyboard-inset-height));
+    }
+  }
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

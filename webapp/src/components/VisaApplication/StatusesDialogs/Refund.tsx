@@ -6,7 +6,6 @@ import { useMobile } from '@/hooks/use-mobile';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -15,17 +14,17 @@ import {
 import {
   Drawer,
   DrawerClose,
-  DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
 
+import { MobileDrawerContent } from '@/components/ui/mobile-drawer-content';
+
 import { Separator } from '@/components/ui/separator';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 export const RefundStatusDialog = ({ application }: { application: any }) => {
   const isMobile = useMobile();
@@ -38,6 +37,10 @@ export const RefundStatusDialog = ({ application }: { application: any }) => {
   };
 
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+  }, []);
 
   const handleRefundSubmit = () => {
     return;
@@ -55,7 +58,7 @@ export const RefundStatusDialog = ({ application }: { application: any }) => {
 
   if (!isMobile) {
     return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           <Button variant={status.variant} className={status.className}>
             {status.icon} {status.text}
@@ -67,7 +70,6 @@ export const RefundStatusDialog = ({ application }: { application: any }) => {
               <span>Refund</span>
               <Badge variant="destructive">{application.cancelReason}</Badge>
             </DialogTitle>
-            <DialogDescription></DialogDescription>
           </DialogHeader>
           <RefundContent />
           <Separator />
@@ -82,28 +84,31 @@ export const RefundStatusDialog = ({ application }: { application: any }) => {
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
       <DrawerTrigger asChild>
         <Button variant={status.variant} className={status.className}>
           {status.icon} {status.text}
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader className="text-left">
+      <MobileDrawerContent>
+        <DrawerHeader className="text-left shrink-0">
           <DrawerTitle className="flex gap-2 items-center flex-wrap">
             <span>Refund</span>
             <Badge variant="destructive">{application.cancelReason}</Badge>
           </DrawerTitle>
-          <DrawerDescription></DrawerDescription>
         </DrawerHeader>
-        <RefundContent className="px-4" />
-        <DrawerFooter className="pt-4">
+        <div className="flex-1 overflow-y-auto">
+          <RefundContent className="px-4" />
+        </div>
+        <DrawerFooter className="pt-4 shrink-0">
           <Button onClick={handleRefundSubmit} variant="destructive">
             Refunded
           </Button>
-          <DrawerClose asChild></DrawerClose>
+          <DrawerClose asChild>
+            <Button variant="secondary">Cancel</Button>
+          </DrawerClose>
         </DrawerFooter>
-      </DrawerContent>
+      </MobileDrawerContent>
     </Drawer>
   );
 };
