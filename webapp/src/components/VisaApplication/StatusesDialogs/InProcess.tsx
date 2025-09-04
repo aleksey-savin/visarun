@@ -1,15 +1,26 @@
 import ClientCard from '@/components/VisaApplication/ClientCard';
 import { Button } from '@/components/ui/button';
+import { useMobile } from '@/hooks/use-mobile';
 
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 
 import { Separator } from '@/components/ui/separator';
 import { LoaderCircle } from 'lucide-react';
@@ -18,6 +29,8 @@ import { trpc } from '@/lib/trpc';
 import { Input } from '@/components/ui/input';
 
 export const InProcessStatusDialog = ({ application }: { application: any }) => {
+  const isMobile = useMobile();
+
   const stampRequired =
     !application.stampIsRecieved &&
     application?.plannedCountryExitDate &&
@@ -42,8 +55,9 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
   };
 
   const [isOpen, setIsOpen] = useState(false);
-
   const [clientCardBorder, setClientCardBorder] = useState('border-dashed border-[#FAFAFA]');
+  const [denied, setDenied] = useState(false);
+  const [reason, setReason] = useState('');
 
   const utils = trpc.useUtils();
   const updateVisaApplicationStatusMutation = trpc.visaApplication.updateStatus.useMutation({
@@ -78,9 +92,6 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
     }
   };
 
-  const [denied, setDenied] = useState(false);
-  const [reason, setReason] = useState('');
-
   const handleDenied = () => {
     setDenied(true);
     setClientCardBorder('border-destructive');
@@ -101,66 +112,113 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      // Reset all state when dialog closes
+      setDenied(false);
+      setClientCardBorder('border-dashed border-[#FAFAFA]');
+    }
+  };
+
+  const InProcessContent = ({ className }: { className?: string }) => (
+    <div className={className}>
+      <ClientCard
+        application={application}
+        order={application.orderItem?.order}
+        border={clientCardBorder}
+      />
+      {denied && (
+        <Input
+          placeholder="Reason for denial"
+          onChange={e => {
+            setReason(e.target.value);
+          }}
+        />
+      )}
+    </div>
+  );
+
+  if (!isMobile) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <form onSubmit={handleSubmit}>
+          <DialogTrigger asChild>
+            <Button variant={status.variant} className={status.className}>
+              {status.icon} {status.text}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[825px] bg-secondary gap-6">
+            <DialogHeader>
+              <DialogTitle>Update Status</DialogTitle>
+              <DialogDescription></DialogDescription>
+            </DialogHeader>
+            <InProcessContent />
+            <Separator />
+            <div className="flex justify-end">
+              <div className="flex gap-4">
+                {!denied && (
+                  <>
+                    <Button variant="destructive" onClick={handleDenied}>
+                      Denied
+                    </Button>
+                    <Button type="submit" className={status.buttonClassname} onClick={handleSubmit}>
+                      {status.buttonText}
+                    </Button>
+                  </>
+                )}
+                {denied && (
+                  <Button disabled={!reason} variant="destructive" onClick={handleSubmitDenial}>
+                    Visa denied
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </form>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={open => {
-        setIsOpen(open);
-        if (!open) {
-          // Reset all state when dialog closes
-          setDenied(false);
-          setClientCardBorder('border-dashed border-[#FAFAFA]');
-        }
-      }}
-    >
+    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
       <form onSubmit={handleSubmit}>
-        <DialogTrigger asChild>
+        <DrawerTrigger asChild>
           <Button variant={status.variant} className={status.className}>
             {status.icon} {status.text}
           </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[825px] bg-secondary gap-6">
-          <DialogHeader>
-            <DialogTitle>Update Status</DialogTitle>
-            <DialogDescription></DialogDescription>
-          </DialogHeader>
-          <ClientCard
-            application={application}
-            order={application.orderItem?.order}
-            border={clientCardBorder}
-          />
-          {denied && (
-            <>
-              <Input
-                placeholder="Reason for denial"
-                onChange={e => {
-                  setReason(e.target.value);
-                }}
-              />
-            </>
-          )}
-          <Separator />
-          <DialogFooter>
-            <div className="flex gap-4">
-              {!denied && (
-                <>
-                  <Button variant="destructive" onClick={handleDenied}>
-                    Denied
-                  </Button>
-                  <Button type="submit" className={status.buttonClassname} onClick={handleSubmit}>
-                    {status.buttonText}
-                  </Button>
-                </>
-              )}
-              {denied && (
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader className="text-left">
+            <DrawerTitle>Update Status</DrawerTitle>
+            <DrawerDescription></DrawerDescription>
+          </DrawerHeader>
+          <InProcessContent className="flex flex-col gap-4 px-4" />
+          <DrawerFooter className="pt-4">
+            {!denied && (
+              <>
+                <Button type="submit" className={status.buttonClassname} onClick={handleSubmit}>
+                  {status.buttonText}
+                </Button>
+                <Button variant="destructive" onClick={handleDenied}>
+                  Denied
+                </Button>
+                <DrawerClose asChild>
+                  <Button variant="secondary">Cancel</Button>
+                </DrawerClose>
+              </>
+            )}
+            {denied && (
+              <>
                 <Button disabled={!reason} variant="destructive" onClick={handleSubmitDenial}>
                   Visa denied
                 </Button>
-              )}
-            </div>
-          </DialogFooter>
-        </DialogContent>
+                <DrawerClose asChild></DrawerClose>
+              </>
+            )}
+          </DrawerFooter>
+        </DrawerContent>
       </form>
-    </Dialog>
+    </Drawer>
   );
 };

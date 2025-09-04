@@ -1,6 +1,10 @@
 import { CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { ClientSearchModal } from '@/components/Client/client-search-modal.js';
+import { useAuth } from '@/lib/auth';
+import { useSidebar } from '@/components/ui/sidebar';
 import {
   UserPlus,
   Plus,
@@ -14,6 +18,12 @@ import {
   History,
   Gauge,
   Coins,
+  Car,
+  Bus,
+  Armchair,
+  ShoppingCart,
+  Menu,
+  FileSearch,
 } from 'lucide-react';
 
 interface PageConfig {
@@ -29,8 +39,13 @@ const pageConfigs: Record<string, PageConfig> = {
   '/dashboard': {
     title: 'Dashboard',
     icon: <Gauge />,
-    entity: 'client',
-    buttonText: 'Client',
+    entity: 'order',
+    showButton: true,
+  },
+  '/orders': {
+    title: 'Orders',
+    icon: <ShoppingCart />,
+    entity: 'order',
     showButton: true,
   },
   '/users': {
@@ -118,23 +133,39 @@ const pageConfigs: Record<string, PageConfig> = {
     icon: <History />,
     showButton: false,
   },
-  '/orders': {
-    title: 'Orders',
-    icon: <FileText />,
-    entity: 'order',
-    createRoute: '/order/create',
+
+  '/transports': {
+    title: 'Transports',
+    icon: <Bus />,
+    entity: 'transport',
+    createRoute: '/transports/create',
     showButton: true,
+  },
+  '/transport-types': {
+    title: 'Transport Types',
+    icon: <Car />,
+    entity: 'transport-type',
+    createRoute: '/transport-types/create',
+    showButton: true,
+  },
+  '/seat-classes': {
+    title: 'Seat Classes',
+    icon: <Armchair />,
+    entity: 'seat-class',
+    createRoute: '/seat-classes/create',
+    showButton: true,
+  },
+  '/visa-applications': {
+    title: 'Visa Applications',
+    icon: <FileSearch />,
+    entity: 'visa-application',
+    createRoute: '',
+    showButton: false,
   },
 };
 
 // Routes that should not show the PageHeader (they have their own custom headers like breadcrumbs)
-const skipHeaderRoutes = [
-  '/order/create',
-  '/order/edit/:id',
-  '/dashboard',
-  '/currency-exchange',
-  '/orders',
-];
+const skipHeaderRoutes = ['/order/create', '/order/edit/:id'];
 
 interface PageHeaderProps {
   onButtonClick?: () => void;
@@ -143,6 +174,9 @@ interface PageHeaderProps {
 export function PageHeader({ onButtonClick }: PageHeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
+  const { hasPermission } = useAuth();
+  const { toggleSidebar } = useSidebar();
 
   // Check if current route should skip the header
   const shouldSkipHeader = skipHeaderRoutes.some(route => {
@@ -188,6 +222,9 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
   const handleButtonClick = () => {
     if (onButtonClick) {
       onButtonClick();
+    } else if (['/dashboard', '/orders'].includes(location.pathname) && config.entity === 'order') {
+      // Special handling for dashboard order creation
+      setIsClientSearchOpen(true);
     } else if (config.createRoute) {
       navigate(config.createRoute);
     }
@@ -202,27 +239,41 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
-      return `Create ${entityName}`;
+      return `${entityName}`;
     }
     return 'Create';
   };
 
+  // Check permissions for dashboard order creation
+  const canCreateOrders = hasPermission('orders.create');
+  const shouldShowButton =
+    config.showButton && (['/dashboard', '/orders'].includes(location.pathname) || canCreateOrders);
+
   return (
-    <CardTitle className="sticky top-0 z-10 bg-background border-b flex py-1.5 md:px-6 justify-between gap-2 min-h-[45px]">
-      <div className="flex gap-2 items-center">
-        {config.icon}
-        <span className="font-semibold">{config.title}</span>
-      </div>
-      {config.showButton && (
-        <Button size="sm" onClick={handleButtonClick} className="relative">
-          {getButtonText()}{' '}
-          {config.buttonText === 'Client' ? (
-            <UserPlus className="ml-1 h-4 w-4" />
-          ) : (
-            <Plus className="ml-1 h-4 w-4" />
-          )}
-        </Button>
+    <>
+      <CardTitle className="px-4 sticky top-0 z-10 bg-background border-b flex items-center py-1.5 md:px-6 justify-between gap-2 h-[50px] mb-4 md:mb-0">
+        <div className="flex gap-3 items-center">
+          <Button variant="primary" onClick={toggleSidebar} className="block md:hidden">
+            <Menu className="h-4 w-4" />
+          </Button>
+          {config.icon}
+          <span className="font-semibold">{config.title}</span>
+        </div>
+        {shouldShowButton && (
+          <Button size="sm" onClick={handleButtonClick} className={`relative whitespace-nowrap `}>
+            {getButtonText()}
+            {config.buttonText === 'Client' ? (
+              <UserPlus className="ml-1 h-4 w-4" />
+            ) : (
+              <Plus className="ml-1 h-4 w-4" />
+            )}
+          </Button>
+        )}
+      </CardTitle>
+
+      {['/dashboard', '/orders'].includes(location.pathname) && (
+        <ClientSearchModal isOpen={isClientSearchOpen} onOpenChange={setIsClientSearchOpen} />
       )}
-    </CardTitle>
+    </>
   );
 }

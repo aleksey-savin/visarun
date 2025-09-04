@@ -9,7 +9,6 @@ import {
   ArrowDown,
   ArrowUpDown,
   TriangleAlert,
-  RotateCcw,
   CircleCheck,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +44,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { CancelledStatusDialog } from '@/components/VisaApplication/StatusesDialogs/Cancelled';
 import { RefundStatusDialog } from '@/components/VisaApplication/StatusesDialogs/Refund';
+import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 
 // Get status badge styling
 const getStatusButton = (application: any) => {
@@ -433,431 +433,509 @@ const AllVisaApplicationsPage = () => {
     );
   };
 
-  // Status count badges
-  {
-    /* const statusCounts = useMemo(() => {
-    const counts = { pending: 0, approved: 0, cancelled: 0, denied: 0, total: 0 };
-    allVisaApplications.forEach(va => {
-      counts[va.status]++;
-      counts.total++;
-    });
-    return counts;
-  }, [allVisaApplications]); */
-  }
-
   return (
     <div className="min-h-screen">
       <div className="grid gap-6 p-6">
-        {/* Header with time badges and status counts */}
-        <div className="flex flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <Select value={selectedStatusGroupFilter} onValueChange={setSelectedStatusGroupFilter}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="visas-to-apply">Visas in work</SelectItem>
-                <SelectItem value="drafts">Drafts</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
+        <FilterContainer onClearFilters={resetFilters}>
+          <FilterFields>
+            <FilterField label="Status">
+              <Select
+                value={selectedStatusGroupFilter}
+                onValueChange={setSelectedStatusGroupFilter}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="visas-to-apply">Visas in work</SelectItem>
+                  <SelectItem value="drafts">Drafts</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+            </FilterField>
 
             {selectedStatusGroupFilter === 'visas-to-apply' && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={visasToApplyTimeFilter === 'today' ? 'default' : 'ghost'}
-                  onClick={() => setVisasToApplyTimeFilter('today')}
-                >
-                  Today
-                </Button>
-                <Button
-                  variant={visasToApplyTimeFilter === 'later' ? 'default' : 'ghost'}
-                  onClick={() => setVisasToApplyTimeFilter('later')}
-                >
-                  Later
-                </Button>
-              </div>
+              <FilterField label="Time">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={visasToApplyTimeFilter === 'today' ? 'default' : 'ghost'}
+                    onClick={() => setVisasToApplyTimeFilter('today')}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant={visasToApplyTimeFilter === 'later' ? 'default' : 'ghost'}
+                    onClick={() => setVisasToApplyTimeFilter('later')}
+                  >
+                    Later
+                  </Button>
+                </div>
+              </FilterField>
             )}
-          </div>
-          <div className="flex justify-between gap-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={selectedCountryFilter} onValueChange={setSelectedCountryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All countries" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All countries</SelectItem>
-                {uniqueCountries.map(country => (
-                  <SelectItem key={country.id} value={country.id}>
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedVisaTypeFilter} onValueChange={setSelectedVisaTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All visa types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All visa types</SelectItem>
-                {uniqueVisaTypes.map(visaType => (
-                  <SelectItem key={visaType.id} value={visaType.id}>
-                    {visaType.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="group-by-order"
-                checked={groupByOrder}
-                onCheckedChange={setGroupByOrder}
-              />
-              <Label htmlFor="group-by-order" className="text-sm font-medium">
-                Group by order
-              </Label>
-            </div>
-          </div>
-          <Button variant="secondary" onClick={resetFilters} className="flex items-center gap-2">
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </Button>
 
-          {/* <Badge className="flex items-center gap-4 bg-muted rounded-lg font-medium text-[#FAFAFA]">
-            <span className="text-sm  font-medium">Status</span>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center space-x-2 bg-gray-700 px-3 py-1 rounded-lg">
-                <Checkbox
-                  id="header-total"
-                  checked={Object.values(selectedStatusFilters).every(Boolean)}
-                  onCheckedChange={checked =>
-                    setSelectedStatusFilters({
-                      pending_submit: !!checked,
-                      awaiting_approval: !!checked,
-                      approved: !!checked,
-                      pending_refund: !!checked,
-                    })
-                  }
+            <FilterField label="Search">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pl-10"
                 />
-                <label
-                  htmlFor="header-total"
-                  className="text-sm text-white font-medium cursor-pointer"
-                >
-                  {statusCounts.total}
-                </label>
               </div>
+            </FilterField>
 
-              <div className="flex items-center space-x-2 bg-yellow-500 px-3 py-1 rounded-lg">
-                <Checkbox
-                  id="header-pending"
-                  checked={selectedStatusFilters.pending}
-                  onCheckedChange={checked =>
-                    setSelectedStatusFilters(prev => ({ ...prev, pending: !!checked }))
-                  }
-                  className="data-[state=checked]:bg-yellow-600 data-[state=checked]:border-yellow-600"
-                />
-                <label
-                  htmlFor="header-pending"
-                  className="text-sm text-black font-medium cursor-pointer"
-                >
-                  {statusCounts.pending}
-                </label>
-              </div>
+            <FilterField label="Country">
+              <Select value={selectedCountryFilter} onValueChange={setSelectedCountryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All countries" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All countries</SelectItem>
+                  {uniqueCountries.map(country => (
+                    <SelectItem key={country.id} value={country.id}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterField>
 
-              <div className="flex items-center space-x-2 bg-green-500 px-3 py-1 rounded-lg">
-                <Checkbox
-                  id="header-approved"
-                  checked={selectedStatusFilters.approved}
-                  onCheckedChange={checked =>
-                    setSelectedStatusFilters(prev => ({ ...prev, approved: !!checked }))
-                  }
-                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            <FilterField label="Visa Type">
+              <Select value={selectedVisaTypeFilter} onValueChange={setSelectedVisaTypeFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All visa types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All visa types</SelectItem>
+                  {uniqueVisaTypes.map(visaType => (
+                    <SelectItem key={visaType.id} value={visaType.id}>
+                      {visaType.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterField>
+            <div className="flex gap-2 items-end pb-1.5 pt-4 md:pt-0">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="group-by-order"
+                  checked={groupByOrder}
+                  onCheckedChange={setGroupByOrder}
                 />
-                <label
-                  htmlFor="header-approved"
-                  className="text-sm text-white font-medium cursor-pointer"
-                >
-                  {statusCounts.approved}
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2 bg-red-500 px-3 py-1 rounded-lg">
-                <Checkbox
-                  id="header-denied"
-                  checked={selectedStatusFilters.denied}
-                  onCheckedChange={checked =>
-                    setSelectedStatusFilters(prev => ({ ...prev, denied: !!checked }))
-                  }
-                  className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                />
-                <label
-                  htmlFor="header-denied"
-                  className="text-sm text-white font-medium cursor-pointer"
-                >
-                  {statusCounts.denied}
-                </label>
-              </div>
-
-              <div className="flex items-center space-x-2 bg-red-600 px-3 py-1 rounded-lg">
-                <Checkbox
-                  id="header-cancelled"
-                  checked={selectedStatusFilters.cancelled}
-                  onCheckedChange={checked =>
-                    setSelectedStatusFilters(prev => ({ ...prev, cancelled: !!checked }))
-                  }
-                  className="data-[state=checked]:bg-red-700 data-[state=checked]:border-red-700"
-                />
-                <label
-                  htmlFor="header-cancelled"
-                  className="text-sm text-white font-medium cursor-pointer"
-                >
-                  {statusCounts.cancelled}
-                </label>
+                <Label htmlFor="group-by-order" className="text-sm font-medium">
+                  Group by order
+                </Label>
               </div>
             </div>
-          </Badge> */}
-        </div>
-        {/* Main Table */}
-        <Card className="rounded-md py-0">
-          <CardContent className="p-0">
-            {isLoading && (
+          </FilterFields>
+        </FilterContainer>
+
+        {/* Loading state */}
+        {isLoading && (
+          <Card className="rounded-md py-0">
+            <CardContent className="p-0">
               <div className="flex justify-center items-center p-8 ">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        )}
 
-            {isError && (
+        {/* Error state */}
+        {isError && (
+          <Card className="rounded-md py-0">
+            <CardContent className="p-0">
               <div className="p-6 bg-red-900/20 border border-red-800 rounded-lg text-red-400">
                 <h3 className="font-medium text-lg mb-2">Error Loading Visa Applications</h3>
                 <p>{error.message}</p>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        )}
 
-            {visaApplications.length === 0 && !isLoading && !isError ? (
+        {/* Empty state */}
+        {visaApplications.length === 0 && !isLoading && !isError && (
+          <Card className="rounded-md py-0">
+            <CardContent className="p-0">
               <div className="text-center py-8 text-gray-400">No visa applications found</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table className="text-gray-400">
-                  <TableHeader className=" ">
-                    <TableRow className="bg-muted hover:bg-gray-800/50">
-                      <TableHead
-                        className="text-gray-300 cursor-pointer rounded-tl-sm hover:text-white select-none"
-                        onClick={() => handleSort('client')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Client
-                          {getSortIcon('client')}
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="text-gray-300 cursor-pointer hover:text-white select-none"
-                        onClick={() => handleSort('country')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Country
-                          {getSortIcon('country')}
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="text-gray-300 cursor-pointer hover:text-white select-none"
-                        onClick={() => handleSort('type')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Type
-                          {getSortIcon('type')}
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="text-gray-300 cursor-pointer hover:text-white select-none"
-                        onClick={() => handleSort('readinessDate')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Readiness date
-                          {getSortIcon('readinessDate')}
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="text-gray-300 cursor-pointer hover:text-white select-none"
-                        onClick={() => handleSort('startDate')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Start date
-                          {getSortIcon('startDate')}
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="text-gray-300 cursor-pointer hover:text-white select-none"
-                        onClick={() => handleSort('stampUntil')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Stamp until
-                          {getSortIcon('stampUntil')}
-                        </div>
-                      </TableHead>
-                      <TableHead
-                        className="text-gray-300 cursor-pointer hover:text-white select-none rounded-tr-sm"
-                        onClick={() => handleSort('status')}
-                      >
-                        <div className="flex items-center gap-2 justify-end">
-                          Status
-                          {getSortIcon('status')}
-                        </div>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {groupedVisaApplications.flatMap(({ applications }) => {
-                      const rows: any[] = [];
-                      let previousClient: any = null;
+            </CardContent>
+          </Card>
+        )}
 
-                      // Sort applications by primary clients first, then by client name within each group
-                      const sortedApplications = applications.sort((a, b) => {
-                        const clientA = a.orderItem.client;
-                        const clientB = b.orderItem.client;
+        {/* Desktop Table View */}
+        {visaApplications.length > 0 && !isLoading && !isError && (
+          <>
+            <Card className="rounded-md py-0 hidden md:block">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto rounded-md border border-muted">
+                  <Table className="text-gray-400">
+                    <TableHeader>
+                      <TableRow className="bg-muted hover:bg-gray-800/50">
+                        <TableHead
+                          className="text-gray-300 cursor-pointer rounded-tl-sm hover:text-white select-none"
+                          onClick={() => handleSort('client')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Client
+                            {getSortIcon('client')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none"
+                          onClick={() => handleSort('country')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Country
+                            {getSortIcon('country')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none"
+                          onClick={() => handleSort('type')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Type
+                            {getSortIcon('type')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none"
+                          onClick={() => handleSort('readinessDate')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Readiness date
+                            {getSortIcon('readinessDate')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none"
+                          onClick={() => handleSort('startDate')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Start date
+                            {getSortIcon('startDate')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none"
+                          onClick={() => handleSort('stampUntil')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Stamp until
+                            {getSortIcon('stampUntil')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none rounded-tr-sm"
+                          onClick={() => handleSort('status')}
+                        >
+                          <div className="flex items-center gap-2 justify-end">
+                            Status
+                            {getSortIcon('status')}
+                          </div>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {groupedVisaApplications.flatMap(({ applications }) => {
+                        const rows: any[] = [];
+                        let previousClient: any = null;
 
-                        // Primary clients go first
-                        if (clientA.isPrimary && !clientB.isPrimary) return -1;
-                        if (!clientA.isPrimary && clientB.isPrimary) return 1;
+                        // Sort applications by primary clients first, then by client name within each group
+                        const sortedApplications = applications.sort((a, b) => {
+                          const clientA = a.orderItem.client;
+                          const clientB = b.orderItem.client;
 
-                        // If both are primary or both are not primary, sort by name
-                        const nameA = `${clientA.firstName || ''} ${clientA.lastName || ''}`.trim();
-                        const nameB = `${clientB.firstName || ''} ${clientB.lastName || ''}`.trim();
-                        return nameA.localeCompare(nameB);
-                      });
+                          // Primary clients go first
+                          if (clientA.isPrimary && !clientB.isPrimary) return -1;
+                          if (!clientA.isPrimary && clientB.isPrimary) return 1;
 
-                      // Add application rows
-                      sortedApplications.forEach((application, index) => {
-                        const statusButton = getStatusButton(application);
-                        const readinessDate = application.plannedCompletionDate;
-                        const startDate = application.plannedCountryEntryDate;
-                        const stampUntilDate = application.stampUntilDate;
-                        const client = application.orderItem.client;
-                        const isFirstInGroup = index === 0;
-                        const isLastInGroup = index === sortedApplications.length - 1;
-                        const hasMultipleInGroup = sortedApplications.length > 1 && groupByOrder;
+                          // If both are primary or both are not primary, sort by name
+                          const nameA =
+                            `${clientA.firstName || ''} ${clientA.lastName || ''}`.trim();
+                          const nameB =
+                            `${clientB.firstName || ''} ${clientB.lastName || ''}`.trim();
+                          return nameA.localeCompare(nameB);
+                        });
 
-                        // Check if current client is the same as previous client
-                        const showClientBadge = !previousClient || previousClient.id !== client.id;
-                        previousClient = client;
+                        // Add application rows
+                        sortedApplications.forEach((application, index) => {
+                          const statusButton = getStatusButton(application);
+                          const readinessDate = application.plannedCompletionDate;
+                          const startDate = application.plannedCountryEntryDate;
+                          const stampUntilDate = application.stampUntilDate;
+                          const client = application.orderItem.client;
+                          const isFirstInGroup = index === 0;
+                          const isLastInGroup = index === sortedApplications.length - 1;
+                          const hasMultipleInGroup = sortedApplications.length > 1 && groupByOrder;
 
-                        rows.push(
-                          <TableRow
-                            key={application.id}
-                            className={cn(
-                              'border-gray-700 hover:bg-gray-800/50 relative',
-                              hasMultipleInGroup ? 'border-dashed' : '',
-                              isLastInGroup ? 'border-solid' : ''
-                            )}
-                          >
-                            {/* Left vertical line indicator */}
-                            <TableCell className="relative pl-6">
-                              {hasMultipleInGroup && (
-                                <div
-                                  className={`absolute left-0 w-1 bg-purple-900 ${
-                                    isFirstInGroup
-                                      ? 'top-1/6 bottom-0'
-                                      : isLastInGroup
-                                        ? 'top-0 bottom-1/6'
-                                        : 'top-0 bottom-0'
-                                  }`}
-                                />
+                          // Check if current client is the same as previous client
+                          const showClientBadge =
+                            !previousClient || previousClient.id !== client.id;
+                          previousClient = client;
+
+                          rows.push(
+                            <TableRow
+                              key={application.id}
+                              className={cn(
+                                'border-gray-700 hover:bg-gray-800/50 relative',
+                                hasMultipleInGroup ? 'border-dashed' : '',
+                                isLastInGroup ? 'border-solid' : ''
                               )}
-                              {showClientBadge && (
+                            >
+                              {/* Left vertical line indicator */}
+                              <TableCell className="relative pl-6">
+                                {hasMultipleInGroup && (
+                                  <div
+                                    className={`absolute left-0 w-1 bg-purple-900 ${
+                                      isFirstInGroup
+                                        ? 'top-1/6 bottom-0'
+                                        : isLastInGroup
+                                          ? 'top-0 bottom-1/6'
+                                          : 'top-0 bottom-0'
+                                    }`}
+                                  />
+                                )}
+                                {showClientBadge && (
+                                  <ClientBadge
+                                    client={client}
+                                    showLinkedClients={false}
+                                    stepStatus="submitted"
+                                  />
+                                )}
+                              </TableCell>
+                              <TableCell>{application.country.name}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  {application.visaType && application.visaType.name}
+                                  {application.isMultientry && (
+                                    <Badge variant="accent">Multi</Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {readinessDate && (
+                                  <>
+                                    {formatDate(readinessDate)} {formatTime(readinessDate)}
+                                  </>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {startDate && (
+                                  <>
+                                    {formatDate(startDate)} {formatTime(startDate)}
+                                  </>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {stampUntilDate && (
+                                  <>
+                                    {new Date(application.plannedCountryExitDate || '') <
+                                      new Date() &&
+                                    new Date(stampUntilDate) > new Date() &&
+                                    !application.stampIsRecieved ? (
+                                      <Badge className="bg-warning">
+                                        {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}{' '}
+                                        <CircleAlert />
+                                      </Badge>
+                                    ) : new Date(stampUntilDate) < new Date() &&
+                                      !application.stampIsRecieved ? (
+                                      <Badge className="bg-destructive">
+                                        {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
+                                        <TriangleAlert />
+                                      </Badge>
+                                    ) : application.stampIsRecieved ? (
+                                      <Badge className="bg-success">
+                                        {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
+                                        <CircleCheck />
+                                      </Badge>
+                                    ) : (
+                                      <span>
+                                        {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right relative pr-6">
+                                {/* Right vertical line indicator */}
+                                {hasMultipleInGroup && (
+                                  <div
+                                    className={`absolute right-0 w-1 bg-purple-900 ${
+                                      isFirstInGroup
+                                        ? 'top-1/6 bottom-0'
+                                        : isLastInGroup
+                                          ? 'top-0 bottom-1/6'
+                                          : 'top-0 bottom-0'
+                                    }`}
+                                  />
+                                )}
+                                <div className="flex items-center justify-end gap-2">
+                                  {statusButton.component}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        });
+
+                        return rows;
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-4">
+              {groupedVisaApplications.map(({ orderId, applications }) => {
+                let previousClient: any = null;
+
+                // Sort applications by primary clients first, then by client name within each group
+                const sortedApplications = applications.sort((a, b) => {
+                  const clientA = a.orderItem.client;
+                  const clientB = b.orderItem.client;
+
+                  // Primary clients go first
+                  if (clientA.isPrimary && !clientB.isPrimary) return -1;
+                  if (!clientA.isPrimary && clientB.isPrimary) return 1;
+
+                  // If both are primary or both are not primary, sort by name
+                  const nameA = `${clientA.firstName || ''} ${clientA.lastName || ''}`.trim();
+                  const nameB = `${clientB.firstName || ''} ${clientB.lastName || ''}`.trim();
+                  return nameA.localeCompare(nameB);
+                });
+
+                return (
+                  <div key={orderId} className="space-y-2">
+                    {sortedApplications.map((application, index) => {
+                      const statusButton = getStatusButton(application);
+                      const readinessDate = application.plannedCompletionDate;
+                      const startDate = application.plannedCountryEntryDate;
+                      const stampUntilDate = application.stampUntilDate;
+                      const client = application.orderItem.client;
+                      const isFirstInGroup = index === 0;
+                      const isLastInGroup = index === sortedApplications.length - 1;
+                      const hasMultipleInGroup = sortedApplications.length > 1 && groupByOrder;
+
+                      // Check if current client is the same as previous client
+                      const showClientBadge = !previousClient || previousClient.id !== client.id;
+                      previousClient = client;
+
+                      return (
+                        <Card
+                          key={application.id}
+                          className={cn(
+                            'p-4 relative',
+                            hasMultipleInGroup && !isLastInGroup ? 'mb-2' : ''
+                          )}
+                        >
+                          {/* Left border indicator for grouped items */}
+                          {hasMultipleInGroup && (
+                            <div
+                              className={`absolute left-0 w-1 bg-purple-900 ${
+                                isFirstInGroup
+                                  ? 'top-4 bottom-0 rounded-t'
+                                  : isLastInGroup
+                                    ? 'top-0 bottom-4 rounded-b'
+                                    : 'top-0 bottom-0'
+                              }`}
+                            />
+                          )}
+
+                          <CardContent className="p-0 space-y-3">
+                            {/* Client Badge */}
+                            {showClientBadge && (
+                              <div className="flex justify-between items-start">
                                 <ClientBadge
                                   client={client}
                                   showLinkedClients={false}
                                   stepStatus="submitted"
                                 />
-                              )}
-                            </TableCell>
-                            <TableCell>{application.country.name}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                {application.visaType && application.visaType.name}
-                                {application.isMultientry && <Badge variant="accent">Multi</Badge>}
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              {readinessDate && (
-                                <>
-                                  {formatDate(readinessDate)} {formatTime(readinessDate)}
-                                </>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {startDate && (
-                                <>
-                                  {formatDate(startDate)} {formatTime(startDate)}
-                                </>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {stampUntilDate && (
-                                <>
-                                  {new Date(application.plannedCountryExitDate || '') <
-                                    new Date() &&
-                                  new Date(stampUntilDate) > new Date() &&
-                                  !application.stampIsRecieved ? (
-                                    <Badge className="bg-warning">
-                                      {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}{' '}
-                                      <CircleAlert />
-                                    </Badge>
-                                  ) : new Date(stampUntilDate) < new Date() &&
-                                    !application.stampIsRecieved ? (
-                                    <Badge className="bg-destructive">
-                                      {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
-                                      <TriangleAlert />
-                                    </Badge>
-                                  ) : application.stampIsRecieved ? (
-                                    <Badge className="bg-success">
-                                      {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
-                                      <CircleCheck />
-                                    </Badge>
-                                  ) : (
-                                    <span>
-                                      {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
-                                    </span>
-                                  )}
-                                </>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right relative pr-6">
-                              {/* Right vertical line indicator */}
-                              {hasMultipleInGroup && (
-                                <div
-                                  className={`absolute right-0 w-1 bg-purple-900 ${
-                                    isFirstInGroup
-                                      ? 'top-1/6 bottom-0'
-                                      : isLastInGroup
-                                        ? 'top-0 bottom-1/6'
-                                        : 'top-0 bottom-0'
-                                  }`}
-                                />
-                              )}
-                              <div className="flex items-center justify-end gap-2">
-                                {statusButton.component}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      });
+                            )}
 
-                      return rows;
+                            {/* Country and Type */}
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h3 className="font-medium text-white">
+                                    {application.country.name}
+                                  </h3>
+                                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                                    {application.visaType && application.visaType.name}
+                                    {application.isMultientry && (
+                                      <Badge variant="accent">Multi</Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Dates */}
+                            <div className="space-y-2 text-sm">
+                              {readinessDate && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-400">Readiness:</span>
+                                  <span className="text-gray-300">
+                                    {formatDate(readinessDate)} {formatTime(readinessDate)}
+                                  </span>
+                                </div>
+                              )}
+
+                              {startDate && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-400">Start:</span>
+                                  <span className="text-gray-300">
+                                    {formatDate(startDate)} {formatTime(startDate)}
+                                  </span>
+                                </div>
+                              )}
+
+                              {stampUntilDate && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-400">Stamp until:</span>
+                                  <div>
+                                    {new Date(application.plannedCountryExitDate || '') <
+                                      new Date() &&
+                                    new Date(stampUntilDate) > new Date() &&
+                                    !application.stampIsRecieved ? (
+                                      <Badge className="bg-warning text-xs">
+                                        {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}{' '}
+                                        <CircleAlert className="w-3 h-3 ml-1" />
+                                      </Badge>
+                                    ) : new Date(stampUntilDate) < new Date() &&
+                                      !application.stampIsRecieved ? (
+                                      <Badge className="bg-destructive text-xs">
+                                        {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
+                                        <TriangleAlert className="w-3 h-3 ml-1" />
+                                      </Badge>
+                                    ) : application.stampIsRecieved ? (
+                                      <Badge className="bg-success text-xs">
+                                        {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
+                                        <CircleCheck className="w-3 h-3 ml-1" />
+                                      </Badge>
+                                    ) : (
+                                      <span className="text-gray-300">
+                                        {formatDate(stampUntilDate)} {formatTime(stampUntilDate)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">{statusButton.component}</div>
+                          </CardContent>
+                        </Card>
+                      );
                     })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

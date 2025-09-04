@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { trpc } from '../../lib/trpcProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Eye, RotateCcw, Clock, User, Database } from 'lucide-react';
+import { Eye, RotateCcw, Clock, User } from 'lucide-react';
 import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,6 +50,26 @@ type AuditLog = {
   changeCount: number;
 };
 
+// Define a type for the recovery preview response
+type RecoveryPreview = {
+  entityType: string;
+  success: boolean;
+  dryRun: boolean;
+  recoveredData?: Record<string, unknown>;
+  conflicts: string[];
+  originalId: string;
+  newId?: string;
+  useOriginalId: boolean;
+  deletedAt: string;
+  deletedBy: {
+    id: string;
+    email: string;
+    name: string;
+  } | null;
+  recoveredAt?: string;
+  recoveredEntity?: unknown;
+};
+
 // Get action badge color based on action type
 const getActionBadgeColor = (action: string) => {
   switch (action.toUpperCase()) {
@@ -75,6 +95,109 @@ const formatUserName = (user: AuditLog['user']) => {
   return user.name || user.email;
 };
 
+const formatEntityType = (entityType: string) => {
+  // Convert camelCase or snake_case to human-readable format
+  return entityType
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/_/g, ' ')
+    .replace(/^./, str => str.toUpperCase())
+    .trim();
+};
+
+const formatChangeSummary = (changeSummary: string, action: string, entityType: string): string => {
+  if (!changeSummary || changeSummary === 'No summary available') {
+    return '';
+  }
+
+  // Try to parse JSON-based change summaries
+  try {
+    if (changeSummary.includes('{') && changeSummary.includes('}')) {
+      const parsed = JSON.parse(changeSummary);
+
+      // Handle "Added items" pattern
+      if (changeSummary.startsWith('Added items:') && parsed.to) {
+        const items = Array.isArray(parsed.to) ? parsed.to : [parsed.to];
+        const count = items.length;
+
+        if (items[0]?.serviceType === 'visa') {
+          return `Added ${count} visa service${count !== 1 ? 's' : ''} to order`;
+        }
+        return `Added ${count} item${count !== 1 ? 's' : ''}`;
+      }
+
+      // Handle "Updated fields" pattern
+      if (parsed.from && parsed.to) {
+        const changes = Object.keys(parsed.to).length;
+        return `Updated ${changes} field${changes !== 1 ? 's' : ''}`;
+      }
+
+      // Handle "Removed items" pattern
+      if (changeSummary.startsWith('Removed items:') && parsed.from) {
+        const items = Array.isArray(parsed.from) ? parsed.from : [parsed.from];
+        const count = items.length;
+        return `Removed ${count} item${count !== 1 ? 's' : ''}`;
+      }
+    }
+  } catch {
+    // If JSON parsing fails, continue with text-based parsing
+  }
+
+  // Handle common text patterns
+  if (changeSummary.includes('email')) {
+    return 'Updated email address';
+  }
+  if (changeSummary.includes('password')) {
+    return 'Changed password';
+  }
+  if (changeSummary.includes('name')) {
+    return 'Updated name';
+  }
+  if (changeSummary.includes('phone')) {
+    return 'Updated phone number';
+  }
+  if (changeSummary.includes('status')) {
+    return 'Changed status';
+  }
+
+  // For very long summaries, provide a generic description
+  if (changeSummary.length > 100) {
+    const actionLower = action.toLowerCase();
+    const entity = formatEntityType(entityType).toLowerCase();
+
+    switch (actionLower) {
+      case 'create':
+        return `Created new ${entity} with initial data`;
+      case 'update':
+        return `Made changes to ${entity}`;
+      case 'delete':
+        return `Removed ${entity}`;
+      default:
+        return `Performed ${actionLower} on ${entity}`;
+    }
+  }
+
+  // Return the original if it's short and readable
+  return changeSummary;
+};
+
+const formatActionDescription = (action: string, entityType: string) => {
+  const formattedEntity = formatEntityType(entityType);
+  const actionLower = action.toLowerCase();
+
+  switch (actionLower) {
+    case 'create':
+      return `Created a new ${formattedEntity}`;
+    case 'update':
+      return `Modified ${formattedEntity}`;
+    case 'delete':
+      return `Deleted ${formattedEntity}`;
+    case 'login':
+      return 'User logged in';
+    default:
+      return `${action} action on ${formattedEntity}`;
+  }
+};
+
 const AllAuditLogsPage = () => {
   const navigate = useNavigate();
   const [selectedEntityType, setSelectedEntityType] = useState('all');
@@ -85,8 +208,18 @@ const AllAuditLogsPage = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [recoverLogId, setRecoverLogId] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [recoveryPreview, setRecoveryPreview] = useState<Record<string, any> | null>(null);
+  const [recoveryPreview, setRecoveryPreview] = useState<RecoveryPreview | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [isRecovering, setIsRecovering] = useState(false);
 
   // Get filter options
@@ -96,14 +229,6 @@ const AllAuditLogsPage = () => {
     error: filtersError,
   } = trpc.audit.getFilterOptions.useQuery();
 
-  // Debug logging
-  if (filterOptions) {
-    console.log('🎯 Filter options loaded:', filterOptions);
-  }
-  if (filtersError) {
-    console.error('❌ Filter options error:', filtersError);
-  }
-
   // Get audit logs with filters
   const { data, error, isLoading, isError, refetch } = trpc.audit.getAll.useQuery({
     page,
@@ -112,16 +237,15 @@ const AllAuditLogsPage = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     action: selectedAction === 'all' ? undefined : (selectedAction as any),
     userId: selectedUser === 'all' ? undefined : selectedUser,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
+    startDate: startDate ? new Date(startDate).toISOString() : undefined,
+    endDate: endDate ? new Date(endDate).toISOString() : undefined,
   });
 
   // Recovery mutation (dry run first)
   const recoverMutation = trpc.audit.recover.useMutation({
     onSuccess: result => {
       if (result.dryRun) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setRecoveryPreview(result as any);
+        setRecoveryPreview(result as unknown as RecoveryPreview);
       } else {
         refetch();
         setRecoverLogId(null);
@@ -154,7 +278,7 @@ const AllAuditLogsPage = () => {
       auditLogId: recoverLogId,
       options: {
         dryRun: false,
-        generateNewId: (recoveryPreview?.conflicts?.length || 0) > 0,
+        generateNewId: (recoveryPreview?.conflicts.length || 0) > 0,
         forceRecover: false,
       },
     });
@@ -192,7 +316,6 @@ const AllAuditLogsPage = () => {
               onChange={e => setEndDate(e.target.value)}
             />
           </FilterField>
-
           <FilterField label="Entity Type">
             <Select
               value={selectedEntityType}
@@ -212,7 +335,6 @@ const AllAuditLogsPage = () => {
               </SelectContent>
             </Select>
           </FilterField>
-
           <FilterField label="Action">
             <Select
               value={selectedAction}
@@ -232,7 +354,6 @@ const AllAuditLogsPage = () => {
               </SelectContent>
             </Select>
           </FilterField>
-
           <FilterField label="User">
             <Select value={selectedUser} onValueChange={setSelectedUser} disabled={filtersLoading}>
               <SelectTrigger>
@@ -262,126 +383,76 @@ const AllAuditLogsPage = () => {
               </details>
             </div>
           )}
-          {filterOptions &&
-            !filtersLoading &&
-            !filtersError &&
-            `${filterOptions.entityTypes?.length || 0} entity types, ${filterOptions.users?.length || 0} users`}
         </div>
       </FilterContainer>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Audit Logs ({data?.pagination?.total || 0})</CardTitle>
-            <div className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="flex justify-center items-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          )}
+      {isLoading && (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
 
-          {isError && (
-            <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              <h3 className="font-medium text-lg mb-2">Error Loading Audit Logs</h3>
-              <p>{error.message}</p>
-            </div>
-          )}
+      {isError && (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <h3 className="font-medium text-lg mb-2">Error Loading Audit Logs</h3>
+          <p>{error.message}</p>
+        </div>
+      )}
 
-          {auditLogs.length === 0 && !isLoading && !isError ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No audit logs found matching your criteria.
-            </div>
-          ) : (
-            <>
-              {/* Table view (hidden on mobile) */}
-              <div className="hidden lg:block">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Action</TableHead>
-                        <TableHead>Entity</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead>Performed At</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {auditLogs.map((log: AuditLog) => (
-                        <TableRow key={log.id} className="hover:bg-muted/50">
-                          <TableCell>
-                            <Badge className={getActionBadgeColor(log.action)}>
-                              {log.action.toUpperCase()}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{log.entityType}</div>
-                              <div className="text-sm text-muted-foreground">{log.entityId}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-muted-foreground" />
-                              <span>{formatUserName(log.user)}</span>
-                            </div>
-                          </TableCell>
-
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{formatDateTime(log.performedAt)}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(getViewAuditLogRoute({ id: log.id }))}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {log.action.toUpperCase() === 'DELETE' && log.changeCount > 0 && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRecoveryPreview(log.id)}
-                                  title="Recover deleted entity"
-                                >
-                                  <RotateCcw className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Card view (visible on mobile) */}
-              <div className="grid grid-cols-1 gap-4 lg:hidden">
-                {auditLogs.map((log: AuditLog) => (
-                  <Card key={log.id} className="hover:border-primary/50 transition-colors">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-2">
-                          <Badge className={getActionBadgeColor(log.action)}>
-                            {log.action.toUpperCase()}
-                          </Badge>
-                          <div className="flex items-center gap-1">
-                            <Database className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{log.entityType}</span>
+      {auditLogs.length === 0 && !isLoading && !isError ? (
+        <div className="text-center py-8 text-muted-foreground">
+          No audit logs found matching your criteria.
+        </div>
+      ) : (
+        <>
+          {/* Table view (hidden on mobile) */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto rounded-md border border-muted">
+              <Table className="text-gray-400">
+                <TableHeader>
+                  <TableRow className="bg-muted hover:bg-gray-800/50">
+                    <TableHead>Action</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>When</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {auditLogs.map((log: AuditLog) => (
+                    <TableRow key={log.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <Badge className={getActionBadgeColor(log.action)}>
+                          {log.action.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">
+                            {formatActionDescription(log.action, log.entityType)}
                           </div>
+                          {formatChangeSummary(log.changeSummary, log.action, log.entityType) && (
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {formatChangeSummary(log.changeSummary, log.action, log.entityType)}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1">
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span>{formatUserName(log.user)}</span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{formatDateTime(log.performedAt)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right text-white">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -394,168 +465,220 @@ const AllAuditLogsPage = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleRecoveryPreview(log.id)}
+                              title="Recover deleted entity"
                             >
                               <RotateCcw className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
-                      </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
 
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span>{formatUserName(log.user)}</span>
-                        </div>
-                        <div className="text-muted-foreground">Entity ID: {log.entityId}</div>
-                        <div className="text-muted-foreground">
-                          {log.changeSummary} • {log.changeCount} change
-                          {log.changeCount !== 1 ? 's' : ''}
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span>{formatDateTime(log.performedAt)}</span>
-                        </div>
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {auditLogs.map((log: AuditLog) => (
+              <Card key={log.id} className="border border-muted">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-base">
+                      <div className="flex items-center gap-2">
+                        <Badge className={getActionBadgeColor(log.action)}>
+                          {log.action.toUpperCase()}
+                        </Badge>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 p-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {(page - 1) * limit + 1} to{' '}
-                    {Math.min(page * limit, data?.pagination?.total || 0)} of{' '}
-                    {data?.pagination?.total || 0} entries
+                      <div className="mt-2 text-sm font-normal text-muted-foreground">
+                        {formatActionDescription(log.action, log.entityType)}
+                      </div>
+                    </CardTitle>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setPage(1)}
-                      disabled={page === 1}
-                    >
-                      First
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                    >
-                      Previous
-                    </Button>
-
-                    <div className="flex items-center gap-1">
-                      {/* Show page numbers */}
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (page <= 3) {
-                          pageNum = i + 1;
-                        } else if (page >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = page - 2 + i;
-                        }
-
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={page === pageNum ? 'default' : 'secondary'}
-                            size="sm"
-                            onClick={() => setPage(pageNum)}
-                            className="w-8 h-8 p-0"
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-
-                      {totalPages > 5 && page < totalPages - 2 && (
-                        <>
-                          <span className="px-2 text-muted-foreground">...</span>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setPage(totalPages)}
-                            className="w-8 h-8 p-0"
-                          >
-                            {totalPages}
-                          </Button>
-                        </>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Performed by:</span>
+                      <span className="text-sm font-medium">{formatUserName(log.user)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">When:</span>
+                      <span className="text-sm">{formatDateTime(log.performedAt)}</span>
+                    </div>
+                    {log.changeCount > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Changes made:</span>
+                        <span className="text-sm">
+                          {log.changeCount} field{log.changeCount !== 1 ? 's' : ''} modified
+                        </span>
+                      </div>
+                    )}
+                    {formatChangeSummary(log.changeSummary, log.action, log.entityType) && (
+                      <div className="flex flex-col gap-1 pt-2 border-t">
+                        <span className="text-sm text-muted-foreground">Details:</span>
+                        <span className="text-sm">
+                          {formatChangeSummary(log.changeSummary, log.action, log.entityType)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(getViewAuditLogRoute({ id: log.id }))}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </Button>
+                      {log.action.toUpperCase() === 'DELETE' && log.changeCount > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRecoveryPreview(log.id)}
+                          className="flex items-center gap-1"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          Recover
+                        </Button>
                       )}
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                    >
-                      Next
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setPage(totalPages)}
-                      disabled={page === totalPages}
-                    >
-                      Last
-                    </Button>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="space-y-4 mt-6 p-4 border-t">
+              <div className="text-sm text-muted-foreground text-center">
+                Showing {(page - 1) * limit + 1} to{' '}
+                {Math.min(page * limit, data?.pagination?.total || 0)} of{' '}
+                {data?.pagination?.total || 0} entries
+              </div>
+
+              {/* Navigation Controls */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                    className={isMobile ? 'text-xs px-2' : ''}
+                  >
+                    {isMobile ? '<<' : 'First'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className={isMobile ? 'text-xs px-2' : ''}
+                  >
+                    {isMobile ? '<' : 'Previous'}
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {/* Show page numbers */}
+                    {Array.from({ length: Math.min(isMobile ? 3 : 5, totalPages) }, (_, i) => {
+                      const maxPages = isMobile ? 3 : 5;
+                      let pageNum;
+                      if (totalPages <= maxPages) {
+                        pageNum = i + 1;
+                      } else if (page <= Math.ceil(maxPages / 2)) {
+                        pageNum = i + 1;
+                      } else if (page >= totalPages - Math.floor(maxPages / 2)) {
+                        pageNum = totalPages - maxPages + 1 + i;
+                      } else {
+                        pageNum = page - Math.floor(maxPages / 2) + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={page === pageNum ? 'default' : 'secondary'}
+                          size="sm"
+                          onClick={() => setPage(pageNum)}
+                          className={isMobile ? 'w-7 h-7 p-0 text-xs' : 'w-8 h-8 p-0'}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">Go to page:</span>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={totalPages}
-                        value={page.toString()}
-                        onChange={e => {
-                          const newPage = parseInt(e.target.value);
-                          if (newPage >= 1 && newPage <= totalPages) {
-                            setPage(newPage);
-                          }
-                        }}
-                        className="w-16 h-8"
-                      />
-                      <span className="text-sm text-muted-foreground">of {totalPages}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">Items per page:</span>
-                      <Select
-                        value={limit.toString()}
-                        onValueChange={value => {
-                          const newLimit = parseInt(value);
-                          setLimit(newLimit);
-                          const maxPage = Math.ceil((data?.pagination?.total || 0) / newLimit);
-                          setPage(Math.min(page, maxPage));
-                        }}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="10">10</SelectItem>
-                          <SelectItem value="20">20</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
-                          <SelectItem value="100">100</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className={isMobile ? 'text-xs px-2' : ''}
+                  >
+                    {isMobile ? '>' : 'Next'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage(totalPages)}
+                    disabled={page === totalPages}
+                    className={isMobile ? 'text-xs px-2' : ''}
+                  >
+                    {isMobile ? '>>' : 'Last'}
+                  </Button>
                 </div>
-              )}
-            </>
+              </div>
+
+              {/* Page Controls - Hidden on mobile, stacked on small screens */}
+              <div className="hidden sm:flex flex-col lg:flex-row items-center justify-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Go to page:</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={page.toString()}
+                    onChange={e => {
+                      const newPage = parseInt(e.target.value);
+                      if (newPage >= 1 && newPage <= totalPages) {
+                        setPage(newPage);
+                      }
+                    }}
+                    className="w-16 h-8"
+                  />
+                  <span className="text-sm text-muted-foreground">of {totalPages}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Items per page:</span>
+                  <Select
+                    value={limit.toString()}
+                    onValueChange={value => {
+                      const newLimit = parseInt(value);
+                      setLimit(newLimit);
+                      const maxPage = Math.ceil((data?.pagination?.total || 0) / newLimit);
+                      setPage(Math.min(page, maxPage));
+                    }}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </>
+      )}
 
       {/* Recovery Confirmation Dialog */}
       <AlertDialog
@@ -573,10 +696,7 @@ const AllAuditLogsPage = () => {
                 {recoveryPreview && (
                   <>
                     <div>
-                      <strong>Entity Type:</strong> {recoveryPreview.entityType}
-                    </div>
-                    <div>
-                      <strong>Original ID:</strong> {recoveryPreview.originalId}
+                      <strong>Item Type:</strong> {formatEntityType(recoveryPreview.entityType)}
                     </div>
                     {recoveryPreview.deletedBy && (
                       <div>
@@ -588,7 +708,7 @@ const AllAuditLogsPage = () => {
                       <strong>Deleted At:</strong> {formatDateTime(recoveryPreview.deletedAt)}
                     </div>
 
-                    {recoveryPreview.conflicts?.length > 0 && (
+                    {recoveryPreview.conflicts.length > 0 && (
                       <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
                         <strong>Conflicts:</strong>
                         <ul className="list-disc list-inside mt-1">
@@ -605,10 +725,12 @@ const AllAuditLogsPage = () => {
                     )}
 
                     <div>
-                      <strong>Recoverable Data:</strong>
-                      <pre className="mt-2 p-3 bg-gray-50 border rounded text-xs overflow-auto max-h-40">
-                        {JSON.stringify(recoveryPreview.recoveredData, null, 2)}
-                      </pre>
+                      <strong>What will be recovered:</strong>
+                      <div className="mt-2 p-3 bg-gray-50 border rounded text-sm">
+                        This will restore the deleted{' '}
+                        {formatEntityType(recoveryPreview.entityType).toLowerCase()} with all its
+                        original data and settings.
+                      </div>
                     </div>
                   </>
                 )}

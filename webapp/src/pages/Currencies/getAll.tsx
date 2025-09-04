@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '../../lib/trpcProvider';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Coins, Search, Eye, Edit, Trash2, Plus } from 'lucide-react';
+import { Coins, Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -84,121 +84,57 @@ const AllCurrenciesPage = () => {
         </FilterFields>
       </FilterContainer>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>
-              Currencies ({currencies.length})
-              {data?.total && currencies.length !== data.total && (
-                <span className="text-sm font-normal text-muted-foreground">
-                  {' '}
-                  of {data.total} total
-                </span>
-              )}
-            </CardTitle>
-            <Button onClick={() => navigate('/currencies/create')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Currency
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="flex justify-center items-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          )}
+      {isLoading && (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
 
-          {isError && (
-            <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              <h3 className="font-medium text-lg mb-2">Error Loading Currencies</h3>
-              <p>{error.message}</p>
-            </div>
-          )}
+      {isError && (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <h3 className="font-medium text-lg mb-2">Error Loading Currencies</h3>
+          <p>{error.message}</p>
+        </div>
+      )}
 
-          {currencies.length === 0 && !isLoading && !isError ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No currencies found. Create one to get started.
-            </div>
-          ) : (
-            <>
-              {/* Table view (hidden on mobile) */}
-              <div className="hidden md:block">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[200px]">Currency Name</TableHead>
-                        <TableHead className="w-[120px]">Order Payments</TableHead>
-                        <TableHead className="w-[120px]">Exchange Rates</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currencies.map((currency: Currency) => (
-                        <TableRow key={currency.id} className="hover:bg-muted/50">
-                          <TableCell>
-                            <Link
-                              to={`/currencies/view/${currency.id}`}
-                              className="flex items-center space-x-2 font-medium hover:underline"
-                            >
-                              <Coins className="h-4 w-4 text-primary" />
-                              <span>{currency.name}</span>
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{currency._count.orderPayments}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{currency._count.exchangeRates}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/currencies/view/${currency.id}`)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/currencies/edit/${currency.id}`)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteCurrencyId(currency.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Card view (visible only on mobile) */}
-              <div className="grid grid-cols-1 gap-4 md:hidden">
-                {currencies.map((currency: Currency) => (
-                  <Card key={currency.id} className="hover:border-primary/50 transition-colors">
-                    <CardContent className="px-4 py-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center space-x-2">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Coins className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">{currency.name}</h3>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
+      {currencies.length === 0 && !isLoading && !isError ? (
+        <div className="text-center py-8 text-muted-foreground">
+          No currencies found. Create one to get started.
+        </div>
+      ) : (
+        <>
+          {/* Table view (hidden on mobile) */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto rounded-md border border-muted">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted hover:bg-gray-800/50">
+                    <TableHead className="w-[200px]">Currency Name</TableHead>
+                    <TableHead className="w-[120px]">Order Payments</TableHead>
+                    <TableHead className="w-[120px]">Exchange Rates</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {currencies.map((currency: Currency) => (
+                    <TableRow key={currency.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <Link
+                          to={`/currencies/view/${currency.id}`}
+                          className="flex items-center space-x-2 font-medium hover:underline"
+                        >
+                          <Coins className="h-4 w-4 text-primary" />
+                          <span>{currency.name}</span>
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{currency._count.orderPayments}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{currency._count.exchangeRates}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -221,21 +157,76 @@ const AllCurrenciesPage = () => {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                      <div className="mt-3 flex justify-between items-end">
-                        <div className="text-sm text-muted-foreground">
-                          <div>Order Payments: {currency._count.orderPayments}</div>
-                          <div>Exchange Rates: {currency._count.exchangeRates}</div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {currencies.map((currency: Currency) => (
+              <Card key={currency.id} className="border border-muted">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <Link to={`/currencies/view/${currency.id}`} className="hover:underline flex-1">
+                      <CardTitle className="text-base">
+                        <div className="flex items-center space-x-2">
+                          <Coins className="h-4 w-4 text-primary" />
+                          <span className="font-medium text-foreground">{currency.name}</span>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                      </CardTitle>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Order Payments:</span>
+                      <Badge variant="secondary">{currency._count.orderPayments}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Exchange Rates:</span>
+                      <Badge variant="secondary">{currency._count.exchangeRates}</Badge>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/currencies/view/${currency.id}`)}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/currencies/edit/${currency.id}`)}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteCurrencyId(currency.id)}
+                        className="flex items-center gap-1"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteCurrencyId} onOpenChange={() => setDeleteCurrencyId(null)}>

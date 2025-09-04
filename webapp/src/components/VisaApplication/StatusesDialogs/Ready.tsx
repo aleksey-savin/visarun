@@ -2,16 +2,27 @@ import ClientCard from '@/components/VisaApplication/ClientCard';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { useMobile } from '@/hooks/use-mobile';
 
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 
 import { Separator } from '@/components/ui/separator';
 import { CircleCheck } from 'lucide-react';
@@ -19,9 +30,11 @@ import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 
 export const ReadyStatusDialog = ({ application }: { application: any }) => {
+  const isMobile = useMobile();
+
   const status = {
     variant: 'default' as const,
-    className: 'bg-transparent text-[#FAFAFA] border-transparent w-32  hover:bg-gray-800',
+    className: 'bg-transparent text-[#FAFAFA] w-32  hover:bg-gray-800',
     text: 'Ready',
     icon: <CircleCheck className="text-success" />,
     buttonText: 'Move to archive',
@@ -52,51 +65,110 @@ export const ReadyStatusDialog = ({ application }: { application: any }) => {
     }
   };
 
+  const ReadyContent = ({ className }: { className?: string }) => (
+    <div className={className}>
+      <ClientCard application={application} order={application.orderItem?.order} />
+    </div>
+  );
+
+  if (!isMobile) {
+    return (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <form onSubmit={handleSubmit}>
+          <DialogTrigger asChild>
+            <Button variant={status.variant} className={status.className}>
+              {status.icon} {status.text}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[825px] bg-secondary gap-6">
+            <DialogHeader>
+              <DialogTitle>
+                {!application.isArchived ? 'Update Status' : 'Archived visa application overview'}
+              </DialogTitle>
+              <DialogDescription></DialogDescription>
+            </DialogHeader>
+            <ReadyContent />
+            {!application.isArchived && (
+              <>
+                <Separator />
+                <div className="flex justify-end">
+                  <div className="flex gap-4">
+                    <div className="flex gap-2 items-center">
+                      <Switch
+                        checked={clientInformed}
+                        onCheckedChange={() => {
+                          setClientInformed(!clientInformed);
+                        }}
+                      />
+                      <Label>Client informed</Label>
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={!clientInformed}
+                      className={status.buttonClassname}
+                      onClick={handleSubmit}
+                    >
+                      {status.buttonText}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </form>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <form onSubmit={handleSubmit}>
-        <DialogTrigger asChild>
+        <DrawerTrigger asChild>
           <Button variant={status.variant} className={status.className}>
             {status.icon} {status.text}
           </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[825px] bg-secondary gap-6">
-          <DialogHeader>
-            <DialogTitle>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader className="text-left">
+            <DrawerTitle>
               {!application.isArchived ? 'Update Status' : 'Archived visa application overview'}
-            </DialogTitle>
-            <DialogDescription></DialogDescription>
-          </DialogHeader>
-          <ClientCard application={application} order={application.orderItem?.order} />
-
+            </DrawerTitle>
+            <DrawerDescription></DrawerDescription>
+          </DrawerHeader>
+          <ReadyContent className="px-4" />
           {!application.isArchived && (
             <>
-              <Separator />
-              <DialogFooter>
-                <div className="flex gap-4">
-                  <div className="flex gap-2 items-center">
-                    <Switch
-                      checked={clientInformed}
-                      onCheckedChange={() => {
-                        setClientInformed(!clientInformed);
-                      }}
-                    />
-                    <Label>Client informed</Label>
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={!clientInformed}
-                    className={status.buttonClassname}
-                    onClick={handleSubmit}
-                  >
-                    {status.buttonText}
-                  </Button>
+              <DrawerFooter className="pt-4">
+                <div className="flex gap-2 items-center mb-2">
+                  <Switch
+                    checked={clientInformed}
+                    onCheckedChange={() => {
+                      setClientInformed(!clientInformed);
+                    }}
+                  />
+                  <Label>Client informed</Label>
                 </div>
-              </DialogFooter>
+                <Button
+                  type="submit"
+                  disabled={!clientInformed}
+                  className={status.buttonClassname}
+                  onClick={handleSubmit}
+                >
+                  {status.buttonText}
+                </Button>
+                <DrawerClose asChild></DrawerClose>
+              </DrawerFooter>
             </>
           )}
-        </DialogContent>
+          {application.isArchived && (
+            <DrawerFooter className="pt-2">
+              <DrawerClose asChild>
+                <Button variant="secondary">Close</Button>
+              </DrawerClose>
+            </DrawerFooter>
+          )}
+        </DrawerContent>
       </form>
-    </Dialog>
+    </Drawer>
   );
 };

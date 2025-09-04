@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '@/lib/trpcProvider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -155,130 +155,78 @@ export default function ContactMethodsManagementPage() {
       </FilterContainer>
 
       {/* Contact Methods */}
-      <Card>
-        <CardContent>
-          {isLoading && (
-            <div className="flex justify-center items-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          )}
 
-          {isError && (
-            <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              <h3 className="font-medium text-lg mb-2">Error Loading Contact Methods</h3>
-              <p>{error.message}</p>
-            </div>
-          )}
+      {isLoading && (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
 
-          {filteredContactMethods.length === 0 && !isLoading && !isError ? (
-            <div className="text-center py-12">
-              <MessageCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-              <h3 className="text-xl font-medium mb-2">
-                {contactMethods.length === 0
-                  ? 'No Contact Methods'
-                  : 'No contact methods match your filters'}
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                {contactMethods.length === 0
-                  ? "You haven't created any contact method types yet. Add some to let users specify their contact information."
-                  : 'Try adjusting your search or filter criteria.'}
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Table view (hidden on mobile) */}
-              <div className="hidden md:block">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[60px]">Icon</TableHead>
-                        <TableHead className="w-[200px]">Name</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="w-[120px]">Usage</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredContactMethods.map(contactMethod => {
-                        const usageCount = getContactMethodUsageCount(contactMethod.id);
-                        return (
-                          <TableRow key={contactMethod.id} className="hover:bg-muted/50">
-                            <TableCell>
-                              <div className="flex items-center justify-center">
-                                <ContactMethodIcon method={contactMethod} className="w-6 h-6" />
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <span className="font-medium capitalize">{contactMethod.name}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="max-w-xs">
-                                {contactMethod.description || (
-                                  <span className="text-muted-foreground italic">
-                                    No description
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={usageCount > 0 ? 'default' : 'secondary'}>
-                                {usageCount > 0 ? `${usageCount} user(s)` : 'Not used'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    navigate(getEditContactMethodRoute({ id: contactMethod.id }))
-                                  }
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setDeleteId(contactMethod.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+      {isError && (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <h3 className="font-medium text-lg mb-2">Error Loading Contact Methods</h3>
+          <p>{error.message}</p>
+        </div>
+      )}
 
-              {/* Card view (visible only on mobile) */}
-              <div className="grid grid-cols-1 gap-4 md:hidden">
-                {filteredContactMethods.map(contactMethod => {
-                  const usageCount = getContactMethodUsageCount(contactMethod.id);
-                  return (
-                    <Card
-                      key={contactMethod.id}
-                      className="hover:border-primary/50 transition-colors"
-                    >
-                      <CardContent className="px-4 py-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center space-x-2">
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <ContactMethodIcon method={contactMethod} className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium capitalize">{contactMethod.name}</h3>
-                              <div className="text-sm text-muted-foreground">
-                                {contactMethod.description || 'No description'}
-                              </div>
-                            </div>
+      {filteredContactMethods.length === 0 && !isLoading && !isError ? (
+        <div className="text-center py-12">
+          <MessageCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+          <h3 className="text-xl font-medium mb-2">
+            {contactMethods.length === 0
+              ? 'No Contact Methods'
+              : 'No contact methods match your filters'}
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            {contactMethods.length === 0
+              ? "You haven't created any contact method types yet. Add some to let users specify their contact information."
+              : 'Try adjusting your search or filter criteria.'}
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Table view (hidden on mobile) */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto rounded-md border border-muted">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted hover:bg-gray-800/50">
+                    <TableHead className="w-[60px]">Icon</TableHead>
+                    <TableHead className="w-[200px]">Name</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="w-[120px]">Usage</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredContactMethods.map(contactMethod => {
+                    const usageCount = getContactMethodUsageCount(contactMethod.id);
+                    return (
+                      <TableRow key={contactMethod.id} className="hover:bg-muted/50">
+                        <TableCell>
+                          <div className="flex items-center justify-center">
+                            <ContactMethodIcon method={contactMethod} className="w-6 h-6" />
                           </div>
-                          <div className="flex items-center gap-1">
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium capitalize">{contactMethod.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-xs">
+                            {contactMethod.description || (
+                              <span className="text-muted-foreground italic">No description</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={usageCount > 0 ? 'default' : 'secondary'}>
+                            {usageCount > 0 ? `${usageCount} user(s)` : 'Not used'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -296,21 +244,77 @@ export default function ContactMethodsManagementPage() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {filteredContactMethods.map(contactMethod => {
+              const usageCount = getContactMethodUsageCount(contactMethod.id);
+              return (
+                <Card key={contactMethod.id} className="border border-muted">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-base">
+                        <div className="flex items-center space-x-2">
+                          <ContactMethodIcon
+                            method={contactMethod}
+                            className="w-4 h-4 text-primary"
+                          />
+                          <span className="font-medium text-foreground capitalize">
+                            {contactMethod.name}
+                          </span>
                         </div>
-                        <div className="flex justify-end pt-2">
-                          <Badge variant={usageCount > 0 ? 'default' : 'secondary'}>
-                            {usageCount > 0 ? `${usageCount} user(s)` : 'Not used'}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                      </CardTitle>
+                      <Badge variant={usageCount > 0 ? 'default' : 'secondary'}>
+                        {usageCount > 0 ? `${usageCount} user(s)` : 'Not used'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Description:</span>
+                        <span className="text-sm">
+                          {contactMethod.description || 'No description'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            navigate(getEditContactMethodRoute({ id: contactMethod.id }))
+                          }
+                          className="flex items-center gap-1"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteId(contactMethod.id)}
+                          className="flex items-center gap-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

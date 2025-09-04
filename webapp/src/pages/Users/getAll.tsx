@@ -170,129 +170,65 @@ const AllUsersPage = () => {
         </FilterFields>
       </FilterContainer>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>
-              Users ({filteredUsers.length})
-              {filteredUsers.length !== users.length && (
-                <span className="text-sm font-normal text-muted-foreground">
-                  {' '}
-                  of {users.length} total
-                </span>
-              )}
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="flex justify-center items-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          )}
+      {isLoading && (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
 
-          {isError && (
-            <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              <h3 className="font-medium text-lg mb-2">Error Loading Users</h3>
-              <p>{error.message}</p>
-            </div>
-          )}
+      {isError && (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <h3 className="font-medium text-lg mb-2">Error Loading Users</h3>
+          <p>{error.message}</p>
+        </div>
+      )}
 
-          {filteredUsers.length === 0 && !isLoading && !isError ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {users.length === 0
-                ? 'No users found. Create one to get started.'
-                : 'No users match your current filters.'}
-            </div>
-          ) : (
-            <>
-              {/* Table view (hidden on mobile) */}
-              <div className="hidden md:block">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[100px]">Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredUsers.map((user: User) => (
-                        <TableRow key={user.id} className="hover:bg-muted/50">
-                          <TableCell>
-                            <Link to={`/users/${user.id}`} className="hover:underline font-medium">
-                              {formatName(user)}
-                            </Link>
-                          </TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell className="capitalize">
-                            <div className="flex flex-wrap gap-1">
-                              {user.roleAssignments.map(assignment => (
-                                <Badge
-                                  key={assignment.id}
-                                  className={getRoleBadgeColor(assignment.role.name)}
-                                >
-                                  {assignment.role.name}
-                                </Badge>
-                              ))}
-                              {user.roleAssignments.length === 0 && (
-                                <Badge variant="secondary">No roles</Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/users/${user.id}`)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/users/edit/${user.id}`)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteUserId(user.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Card view (visible only on mobile) */}
-              <div className="grid grid-cols-1 gap-4 md:hidden">
-                {filteredUsers.map((user: User) => (
-                  <Card key={user.id} className="hover:border-primary/50 transition-colors">
-                    <CardContent className="px-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center space-x-2">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">{formatName(user)}</h3>
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <Mail className="mr-1 h-3 w-3" />
-                              {user.email}
-                            </div>
-                          </div>
+      {filteredUsers.length === 0 && !isLoading && !isError ? (
+        <div className="text-center py-8 text-muted-foreground">
+          {users.length === 0
+            ? 'No users found. Create one to get started.'
+            : 'No users match your current filters.'}
+        </div>
+      ) : (
+        <>
+          {/* Table view (hidden on mobile) */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto rounded-md border border-muted">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted hover:bg-gray-800/50">
+                    <TableHead className="w-[100px]">Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user: User) => (
+                    <TableRow key={user.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <Link to={`/users/${user.id}`} className="hover:underline font-medium">
+                          {formatName(user)}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell className="capitalize">
+                        <div className="flex flex-wrap gap-1">
+                          {user.roleAssignments.map(assignment => (
+                            <Badge
+                              key={assignment.id}
+                              className={getRoleBadgeColor(assignment.role.name)}
+                            >
+                              {assignment.role.name}
+                            </Badge>
+                          ))}
+                          {user.roleAssignments.length === 0 && (
+                            <Badge variant="secondary">No roles</Badge>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1">
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -315,30 +251,88 @@ const AllUsersPage = () => {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                      <div className="flex justify-between items-end pt-2">
-                        <div className="flex flex-wrap gap-1">
-                          {user.roleAssignments.map(assignment => (
-                            <Badge
-                              key={assignment.id}
-                              className={getRoleBadgeColor(assignment.role.name)}
-                            >
-                              {assignment.role.name}
-                            </Badge>
-                          ))}
-                          {user.roleAssignments.length === 0 && (
-                            <Badge variant="secondary">No roles</Badge>
-                          )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {filteredUsers.map((user: User) => (
+              <Card key={user.id} className="border border-muted">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <Link to={`/users/${user.id}`} className="hover:underline flex-1">
+                      <CardTitle className="text-base">
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-primary" />
+                          <span className="font-medium text-foreground">{formatName(user)}</span>
                         </div>
+                        <div className="flex items-center text-sm text-muted-foreground font-normal mt-1">
+                          <Mail className="mr-1 h-3 w-3" />
+                          {user.email}
+                        </div>
+                      </CardTitle>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-muted-foreground">Roles:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {user.roleAssignments.map(assignment => (
+                          <Badge
+                            key={assignment.id}
+                            className={getRoleBadgeColor(assignment.role.name)}
+                          >
+                            {assignment.role.name}
+                          </Badge>
+                        ))}
+                        {user.roleAssignments.length === 0 && (
+                          <Badge variant="secondary">No roles</Badge>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/users/${user.id}`)}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/users/edit/${user.id}`)}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteUserId(user.id)}
+                        className="flex items-center gap-1"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>

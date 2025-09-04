@@ -1,7 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
 
 interface FilterContainerProps {
   children: React.ReactNode;
@@ -14,26 +12,22 @@ export const FilterContainer: React.FC<FilterContainerProps> = ({
   children,
   onClearFilters,
   showClearButton = true,
-  title = 'Filters',
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Filter className="h-5 w-5" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 sm:items-end">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
         {children}
-        {showClearButton && (
-          <div className="flex justify-end mt-4">
-            <Button variant="secondary" onClick={onClearFilters}>
-              Clear Filters
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+      {showClearButton && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClearFilters}
+          className="self-end text-xs text-muted-foreground hover:text-foreground mt-1 sm:mt-0"
+        >
+          Clear Filters
+        </Button>
+      )}
+    </div>
   );
 };

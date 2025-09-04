@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -14,9 +13,10 @@ import { Input } from '@/components/ui/input';
 import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { AlertTriangle, Edit, Search, Trash2, X, Plus, Armchair } from 'lucide-react';
+import { AlertTriangle, Edit, Search, Trash2, X, Armchair } from 'lucide-react';
 import { IconDisplay } from '@/components/ui/icon-display';
-import { getEditSeatClassRoute, getCreateSeatClassRoute } from '@/lib/routes';
+import { getEditSeatClassRoute } from '@/lib/routes';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,17 +85,7 @@ export default function SeatClassesPage() {
 
   return (
     <>
-      <CardTitle className="sticky top-0 z-10 border-b flex py-1.5 px-6 justify-between gap-2">
-        <div className="flex gap-2 items-center">
-          <Armchair />
-          <span className="font-semibold">Seat Classes</span>
-        </div>
-        <Button size="sm" onClick={() => navigate(getCreateSeatClassRoute())} className="relative">
-          Create Seat Class
-          <Plus />
-        </Button>
-      </CardTitle>
-      <div className="grid gap-6 p-6 pb-0">
+      <div className="grid gap-3 sm:gap-4 lg:gap-6 p-4 sm:p-6 pb-0">
         <FilterContainer onClearFilters={resetFilters}>
           <FilterFields>
             <FilterField label="Search Seat Classes">
@@ -122,26 +112,22 @@ export default function SeatClassesPage() {
           </FilterFields>
         </FilterContainer>
 
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Seat Classes ({seatClasses.length})</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              </div>
-            ) : seatClasses.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No seat classes found matching your criteria.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
+        {isLoading ? (
+          <div className="flex justify-center items-center p-4 sm:p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : seatClasses.length === 0 ? (
+          <div className="text-center py-4 sm:py-8 text-muted-foreground">
+            No seat classes found matching your criteria.
+          </div>
+        ) : (
+          <>
+            {/* Table view (hidden on mobile) */}
+            <div className="hidden lg:block">
+              <div className="overflow-x-auto rounded-md border border-muted">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-muted hover:bg-gray-800/50">
                       <TableHead>Icon</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Description</TableHead>
@@ -214,9 +200,82 @@ export default function SeatClassesPage() {
                   </TableBody>
                 </Table>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-3">
+              {seatClasses.map(seatClass => (
+                <Card key={seatClass.id} className="border border-muted">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <Link
+                        to={getEditSeatClassRoute({ id: seatClass.id })}
+                        className="hover:underline flex-1"
+                      >
+                        <CardTitle className="text-base">
+                          <div className="flex items-center space-x-3">
+                            <IconDisplay
+                              iconFilename={seatClass.icon || undefined}
+                              iconType="transport-seat"
+                              alt={seatClass.name}
+                              size="md"
+                              fallback={<Armchair className="h-6 w-6 text-muted-foreground" />}
+                            />
+                            <span className="font-medium text-foreground">{seatClass.name}</span>
+                          </div>
+                        </CardTitle>
+                      </Link>
+                    </div>
+                    {seatClass.description && (
+                      <p className="text-sm text-muted-foreground mt-1 ml-9">
+                        {seatClass.description}
+                      </p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(getEditSeatClassRoute({ id: seatClass.id }))}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Seat Class</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{seatClass.name}"? This action cannot
+                              be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteSeatClass(seatClass.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </>
   );

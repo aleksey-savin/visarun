@@ -114,13 +114,6 @@ const CurrencyExchangePage = () => {
   if (rates) {
     return (
       <div className="container mx-auto max-w-4xl md:mt-6 mt-3">
-        <div className="md:mb-6 mb-3">
-          <h1 className="md:text-4xl text-xl font-bold text-center md:mb-2">Currency Exchange</h1>
-          <p className="md:text-lg text-sm text-center text-muted-foreground">
-            Convert between RUB, VND, USDT
-          </p>
-        </div>
-        <Separator className="md:hidden" />
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
           <div className="bg-card md:rounded-lg shadow-md md:p-6 p-2 md:border md:border-border/50 md:hover:border-border/90 transition-colors">
             <h2 className="md:text-2xl text-lg font-semibold md:mb-6 mb-2 text-center">

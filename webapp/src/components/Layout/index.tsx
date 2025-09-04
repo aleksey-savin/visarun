@@ -26,20 +26,16 @@ export default function Layout() {
 
   return (
     <SidebarProvider>
-      <div className="md:h-screen flex justify-center md:justify-start w-screen bg-background p-0">
+      <div className="min-h-screen flex justify-center md:justify-start w-screen bg-background p-0 pb-4">
         <AppSidebar />
-        {/** <div className="fixed top-4 right-4 z-10 flex items-center gap-2">
-            {userEmail && <span className="text-sm text-muted-foreground mr-2">{userEmail}</span>}
-            <Button variant="secondary" size="icon" onClick={handleLogout} title="Logout">
-              <LogOut className="h-4 w-4" />
-            </Button>
-            <ModeToggle />
-            </div> **/}
-        <div className="hidden md:block h-full w-full rounded-none border-none overflow-auto scrollbar-hide p-0 m-0">
+        {/* <div className="fixed top-4 right-4 z-10 flex items-center gap-2">
+          <ModeToggle />
+        </div> */}
+        <div className="hidden md:block w-full rounded-none border-none overflow-auto scrollbar-hide p-0 m-0">
           <PageHeader />
           <Outlet />
         </div>
-        <div className="grid grid-cols-1 gap-4 md:hidden w-full">
+        <div className="flex flex-col md:hidden w-full">
           <PageHeader />
           <Outlet />
         </div>

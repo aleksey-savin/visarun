@@ -272,102 +272,178 @@ export const RequirementsPage: React.FC = () => {
         </FilterContainer>
 
         {/* Requirements Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Requirements ({requirements.length})</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="w-8 h-8 animate-spin" />
-                <span className="ml-2">Loading requirements...</span>
-              </div>
-            ) : requirements.length === 0 ? (
-              <div className="text-center py-8">
-                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No requirements found</h3>
-                <p className="text-gray-600 mb-4">
-                  {search || serviceType !== 'all' || inputType !== 'all' || countryFilter !== 'all'
-                    ? 'Try adjusting your filters'
-                    : 'Get started by creating your first requirement'}
-                </p>
-                <Button onClick={() => navigate(getCreateRequirementRoute())}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Requirement
-                </Button>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Input Type</TableHead>
-                    <TableHead>Application Scope</TableHead>
-                    <TableHead>Citizenship Scope</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {requirements.map(requirement => (
-                    <TableRow key={requirement.id} className="hover:bg-muted/50">
-                      <TableCell>
-                        <Link
-                          to={getViewRequirementRoute({ id: requirement.id })}
-                          className="hover:underline"
-                        >
-                          <div className="space-y-1">
-                            <div className="font-medium">{requirement.title}</div>
-                            {requirement.description && (
-                              <div className="text-sm text-gray-600 truncate max-w-[200px]">
-                                {requirement.description}
-                              </div>
-                            )}
-                          </div>
-                        </Link>
-                      </TableCell>
-                      <TableCell>{getServiceTypeBadge(requirement.serviceType)}</TableCell>
-                      <TableCell>{getInputTypeBadge(requirement.inputType)}</TableCell>
-                      <TableCell>{getApplicationScopeBadge(requirement)}</TableCell>
-                      <TableCell>{getCitizenshipScopeBadge(requirement)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              navigate(getViewRequirementRoute({ id: requirement.id }))
-                            }
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              navigate(getEditRequirementRoute({ id: requirement.id }))
-                            }
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteRequirementId(requirement.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+        {isLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="ml-2">Loading requirements...</span>
+          </div>
+        ) : requirements.length === 0 ? (
+          <div className="text-center py-8">
+            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No requirements found</h3>
+            <p className="text-gray-600 mb-4">
+              {search || serviceType !== 'all' || inputType !== 'all' || countryFilter !== 'all'
+                ? 'Try adjusting your filters'
+                : 'Get started by creating your first requirement'}
+            </p>
+            <Button onClick={() => navigate(getCreateRequirementRoute())}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create First Requirement
+            </Button>
+          </div>
+        ) : (
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block">
+              <div className="overflow-x-auto rounded-md border border-muted">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted hover:bg-gray-800/50">
+                      <TableHead>Title</TableHead>
+                      <TableHead>Service</TableHead>
+                      <TableHead>Input Type</TableHead>
+                      <TableHead>Application Scope</TableHead>
+                      <TableHead>Citizenship Scope</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {requirements.map(requirement => (
+                      <TableRow key={requirement.id} className="hover:bg-muted/50">
+                        <TableCell>
+                          <Link
+                            to={getViewRequirementRoute({ id: requirement.id })}
+                            className="hover:underline"
+                          >
+                            <div className="space-y-1">
+                              <div className="font-medium">{requirement.title}</div>
+                              {requirement.description && (
+                                <div className="text-sm text-gray-600 truncate max-w-[200px]">
+                                  {requirement.description}
+                                </div>
+                              )}
+                            </div>
+                          </Link>
+                        </TableCell>
+                        <TableCell>{getServiceTypeBadge(requirement.serviceType)}</TableCell>
+                        <TableCell>{getInputTypeBadge(requirement.inputType)}</TableCell>
+                        <TableCell>{getApplicationScopeBadge(requirement)}</TableCell>
+                        <TableCell>{getCitizenshipScopeBadge(requirement)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                navigate(getViewRequirementRoute({ id: requirement.id }))
+                              }
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                navigate(getEditRequirementRoute({ id: requirement.id }))
+                              }
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteRequirementId(requirement.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-4">
+              {requirements.map(requirement => (
+                <Card key={requirement.id} className="border border-muted">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <Link
+                        to={getViewRequirementRoute({ id: requirement.id })}
+                        className="hover:underline flex-1"
+                      >
+                        <CardTitle className="text-base">
+                          <div className="flex items-center space-x-2">
+                            {getInputTypeIcon(requirement.inputType)}
+                            <span className="font-medium text-foreground">{requirement.title}</span>
+                          </div>
+                        </CardTitle>
+                      </Link>
+                      <div className="flex items-center gap-2">
+                        {getServiceTypeBadge(requirement.serviceType)}
+                      </div>
+                    </div>
+                    {requirement.description && (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        {requirement.description}
+                      </p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Input Type:</span>
+                        {getInputTypeBadge(requirement.inputType)}
+                      </div>
+                      {requirement.serviceType === 'visa' && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Application Scope:</span>
+                          {getApplicationScopeBadge(requirement)}
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Citizenship Scope:</span>
+                        {getCitizenshipScopeBadge(requirement)}
+                      </div>
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(getViewRequirementRoute({ id: requirement.id }))}
+                          className="flex items-center gap-1"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(getEditRequirementRoute({ id: requirement.id }))}
+                          className="flex items-center gap-1"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteRequirementId(requirement.id)}
+                          className="flex items-center gap-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!deleteRequirementId} onOpenChange={() => setDeleteRequirementId(null)}>

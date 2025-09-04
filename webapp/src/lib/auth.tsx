@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
 interface AuthTokens {
@@ -22,18 +22,29 @@ interface AuthContextType {
     role: string,
     id: string,
     permissions?: string[],
-    mustChangePassword?: boolean
+    mustChangePassword?: boolean,
+    firstName?: string,
+    lastName?: string
   ) => void;
   logout: () => void;
   getAccessToken: () => string | null;
   userEmail: string | null;
+  userFirstName: string | null;
+  userLastName: string | null;
   userRole: string | null;
   userId: string | null;
   refreshAuth: () => Promise<boolean>;
   isAuthLoading: boolean;
   isPasswordChangeRequired: boolean;
   passwordChangeCompleted: () => void;
-  user: { id: string; email: string; roles: string[]; permissions: string[] } | null;
+  user: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    roles: string[];
+    permissions: string[];
+  } | null;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
 }
@@ -48,6 +59,8 @@ const USER_DATA_KEY = 'visarun_user_data';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userFirstName, setUserFirstName] = useState<string | null>(null);
+  const [userLastName, setUserLastName] = useState<string | null>(null);
   const [userRoles, setUserRoles] = useState<string[] | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null); // Keep for backward compatibility
   const [userPermissions, setUserPermissions] = useState<string[] | null>(null);
@@ -76,48 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Check token and user data on mount
-  useEffect(() => {
-    const initAuth = async () => {
-      setIsAuthLoading(true);
-
-      try {
-        const token = getAccessToken();
-        const userData = localStorage.getItem(USER_DATA_KEY);
-
-        if (token && userData) {
-          const parsedUserData = JSON.parse(userData);
-          setIsAuthenticated(true);
-          setUserEmail(parsedUserData.email);
-          setUserRoles(parsedUserData.roles || []);
-          setUserRole(
-            parsedUserData.roles && parsedUserData.roles.length > 0 ? parsedUserData.roles[0] : null
-          );
-          setUserPermissions(parsedUserData.permissions || []);
-          setUserId(parsedUserData.id);
-          setIsPasswordChangeRequired(parsedUserData.mustChangePassword || false);
-        } else {
-          // Try to refresh the token if we have a refresh token
-          const refreshSuccess = await refreshAuth();
-
-          if (!refreshSuccess) {
-            // Clear auth state if refresh failed
-            clearAuthState();
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        clearAuthState();
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
-
-    initAuth();
-  }, []);
-
   // Function to refresh auth using the refresh token
-  const refreshAuth = async (): Promise<boolean> => {
+  const refreshAuth = useCallback(async (): Promise<boolean> => {
     const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
     if (!refreshToken) return false;
 
@@ -149,6 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         JSON.stringify({
           id: user.id,
           email: user.email,
+          firstName: user.firstName || null,
+          lastName: user.lastName || null,
           roles: user.roles || [],
           permissions: user.permissions || [],
           mustChangePassword: user.mustChangePassword || false,
@@ -157,6 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setIsAuthenticated(true);
       setUserEmail(user.email);
+      setUserFirstName(user.firstName || null);
+      setUserLastName(user.lastName || null);
       setUserRoles(user.roles || []);
       setUserRole(user.roles && user.roles.length > 0 ? user.roles[0] : null);
       setUserPermissions(user.permissions || []);
@@ -169,11 +146,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearAuthState();
       return false;
     }
-  };
+  }, []);
+
+  // Check token and user data on mount
+  useEffect(() => {
+    const initAuth = async () => {
+      setIsAuthLoading(true);
+
+      try {
+        const token = getAccessToken();
+        const userData = localStorage.getItem(USER_DATA_KEY);
+
+        if (token && userData) {
+          const parsedUserData = JSON.parse(userData);
+          setIsAuthenticated(true);
+          setUserEmail(parsedUserData.email);
+          setUserFirstName(parsedUserData.firstName || null);
+          setUserLastName(parsedUserData.lastName || null);
+          setUserRoles(parsedUserData.roles || []);
+          setUserRole(
+            parsedUserData.roles && parsedUserData.roles.length > 0 ? parsedUserData.roles[0] : null
+          );
+          setUserPermissions(parsedUserData.permissions || []);
+          setUserId(parsedUserData.id);
+          setIsPasswordChangeRequired(parsedUserData.mustChangePassword || false);
+        } else {
+          // Try to refresh the token if we have a refresh token
+          const refreshSuccess = await refreshAuth();
+
+          if (!refreshSuccess) {
+            // Clear auth state if refresh failed
+            clearAuthState();
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        clearAuthState();
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+
+    initAuth();
+  }, [refreshAuth]);
 
   const clearAuthState = () => {
     setIsAuthenticated(false);
     setUserEmail(null);
+    setUserFirstName(null);
+    setUserLastName(null);
     setUserRole(null);
     setUserRoles(null);
     setUserPermissions(null);
@@ -189,7 +210,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: string,
     id: string,
     permissions: string[] = [],
-    mustChangePassword: boolean = false
+    mustChangePassword: boolean = false,
+    firstName: string = '',
+    lastName: string = ''
   ) => {
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
@@ -198,6 +221,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       JSON.stringify({
         id,
         email,
+        firstName,
+        lastName,
         roles: [role],
         permissions,
         mustChangePassword,
@@ -206,6 +231,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setIsAuthenticated(true);
     setUserEmail(email);
+    setUserFirstName(firstName);
+    setUserLastName(lastName);
     setUserRole(role);
     setUserRoles([role]);
     setUserPermissions(permissions);
@@ -268,7 +295,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Create user object for easier access
   const user =
     isAuthenticated && userEmail && userRoles && userPermissions && userId
-      ? { id: userId, email: userEmail, roles: userRoles, permissions: userPermissions }
+      ? {
+          id: userId,
+          email: userEmail,
+          firstName: userFirstName,
+          lastName: userLastName,
+          roles: userRoles,
+          permissions: userPermissions,
+        }
       : null;
 
   return (
@@ -279,6 +313,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         getAccessToken,
         userEmail,
+        userFirstName,
+        userLastName,
         userRole,
         userId,
         refreshAuth,

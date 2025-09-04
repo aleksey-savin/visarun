@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -21,9 +21,10 @@ import {
 } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { AlertTriangle, Edit, Search, Trash2, X, Plus, Bus, Users } from 'lucide-react';
-import { getEditTransportRoute, getCreateTransportRoute } from '@/lib/routes';
+import { AlertTriangle, Edit, Search, Trash2, X, Users } from 'lucide-react';
+import { getEditTransportRoute } from '@/lib/routes';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,17 +99,7 @@ export default function TransportsPage() {
 
   return (
     <>
-      <CardTitle className="sticky top-0 z-10 border-b flex py-1.5 px-6 justify-between gap-2">
-        <div className="flex gap-2 items-center">
-          <Bus />
-          <span className="font-semibold">Transports</span>
-        </div>
-        <Button size="sm" onClick={() => navigate(getCreateTransportRoute())} className="relative">
-          Create Transport
-          <Plus />
-        </Button>
-      </CardTitle>
-      <div className="grid gap-6 p-6 pb-0">
+      <div className="grid gap-3 sm:gap-4 lg:gap-6 p-4 sm:p-6 pb-0">
         <FilterContainer onClearFilters={resetFilters}>
           <FilterFields>
             <FilterField label="Search Transports">
@@ -154,26 +145,22 @@ export default function TransportsPage() {
           </FilterFields>
         </FilterContainer>
 
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Transports ({transports.length})</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              </div>
-            ) : transports.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No transports found matching your criteria.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
+        {isLoading ? (
+          <div className="flex justify-center items-center p-4 sm:p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : transports.length === 0 ? (
+          <div className="text-center py-4 sm:py-8 text-muted-foreground">
+            No transports found matching your criteria.
+          </div>
+        ) : (
+          <>
+            {/* Table view (hidden on mobile) */}
+            <div className="hidden lg:block">
+              <div className="overflow-x-auto rounded-md border border-muted">
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-muted hover:bg-gray-800/50">
                       <TableHead>Name</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Description</TableHead>
@@ -266,9 +253,104 @@ export default function TransportsPage() {
                   </TableBody>
                 </Table>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-3">
+              {transports.map(transport => (
+                <Card key={transport.id} className="border border-muted">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <Link
+                        to={getEditTransportRoute({ id: transport.id })}
+                        className="hover:underline flex-1"
+                      >
+                        <CardTitle className="text-base">
+                          <span className="font-medium text-foreground">{transport.name}</span>
+                        </CardTitle>
+                      </Link>
+                      <Badge variant="outline" className="text-xs">
+                        {transport.transportType?.name || 'N/A'}
+                      </Badge>
+                    </div>
+                    {transport.description && (
+                      <p className="text-sm text-muted-foreground mt-1">{transport.description}</p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Seat Count:</span>
+                        <span className="text-sm font-medium">{transport.seatCount || 'N/A'}</span>
+                      </div>
+                      {transport.seatCount && (
+                        <div className="flex justify-between items-start">
+                          <span className="text-sm text-muted-foreground">Seat Distribution:</span>
+                          <div className="text-right">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Users className="w-3 h-3" />
+                              <span>
+                                {transport.seatDistributionSummary?.totalAllocatedSeats || 0} /{' '}
+                                {transport.seatDistributionSummary?.totalCapacity || 0}
+                              </span>
+                            </div>
+                            {transport.seatDistributionSummary?.hasDistribution && (
+                              <Badge variant="secondary" className="text-xs mt-1">
+                                Configured
+                              </Badge>
+                            )}
+                            {transport.seatDistributionSummary?.remainingSeats !== undefined && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {transport.seatDistributionSummary.remainingSeats} remaining
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(getEditTransportRoute({ id: transport.id }))}
+                          className="flex items-center gap-1"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Edit
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Transport</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{transport.name}"? This action
+                                cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteTransport(transport.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </>
   );

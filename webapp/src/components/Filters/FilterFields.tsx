@@ -5,5 +5,5 @@ interface FilterFieldsProps {
 }
 
 export const FilterFields: React.FC<FilterFieldsProps> = ({ children }) => {
-  return <div className="flex flex-wrap justify-start gap-4">{children}</div>;
+  return <div className="flex flex-wrap justify-start gap-2 sm:gap-3 md:gap-4">{children}</div>;
 };

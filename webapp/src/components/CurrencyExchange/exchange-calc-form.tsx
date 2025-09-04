@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const formatCurrency = (amount: number, currency?: string) => {
   try {
@@ -82,6 +82,28 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
   });
 
   const [direction, setDirection] = useState<'clientToUs' | 'usToClient'>('clientToUs');
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  // Detect keyboard opening on mobile
+  useEffect(() => {
+    const initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+
+    const handleViewportChange = () => {
+      const currentHeight = window.visualViewport?.height || window.innerHeight;
+      const heightDifference = initialViewportHeight - currentHeight;
+
+      // Keyboard is likely open if viewport height decreased by more than 150px
+      setIsKeyboardOpen(heightDifference > 150);
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      return () => window.visualViewport?.removeEventListener('resize', handleViewportChange);
+    } else {
+      window.addEventListener('resize', handleViewportChange);
+      return () => window.removeEventListener('resize', handleViewportChange);
+    }
+  }, []);
 
   // Reset all form fields
   const resetForm = () => {
@@ -233,19 +255,31 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
 
   return (
     <Form {...form}>
-      <div className="w-full max-w-4xl md:space-y-6 space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-8 gap-3">
+      <div
+        className={cn('w-full max-w-4xl md:space-y-6', isKeyboardOpen ? 'space-y-1' : 'space-y-2')}
+      >
+        <div
+          className={cn(
+            'grid md:grid-cols-2 md:gap-8',
+            isKeyboardOpen ? 'grid-cols-1 gap-1' : 'grid-cols-1 gap-2'
+          )}
+        >
           {/* Left column - Client transfers to us */}
           <Card className={cn('', direction === 'clientToUs' ? 'ring-2 ring-primary/50' : '')}>
-            <CardContent className="flex flex-col md:gap-6 gap-3">
-              <CardTitle className="text-lg font-medium flex items-center">
+            <CardContent
+              className={cn(
+                'flex flex-col md:gap-6 md:p-6',
+                isKeyboardOpen ? 'gap-1 p-2' : 'gap-2 p-3'
+              )}
+            >
+              <CardTitle className="md:text-lg text-base font-medium flex items-center">
                 {isClient ? 'You transfer to us:' : 'Client transfers to us:'}
               </CardTitle>
               <FormField
                 control={form.control}
                 name="clientRubles"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
+                  <FormItem className="flex items-center md:space-x-2 space-x-1">
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -254,7 +288,8 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                           onChange={e => handleClientInputChange('clientRubles', e.target.value)}
                           className={cn(
                             direction === 'clientToUs' && field.value ? 'border-primary' : '',
-                            direction === 'usToClient' ? 'pr-10' : ''
+                            direction === 'usToClient' ? 'pr-10' : '',
+                            'md:h-10 h-8'
                           )}
                         />
                         {direction === 'usToClient' && field.value && (
@@ -285,7 +320,9 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                         )}
                       </div>
                     </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium">RUB</FormLabel>
+                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                      RUB
+                    </FormLabel>
 
                     <FormMessage />
                   </FormItem>
@@ -296,7 +333,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 control={form.control}
                 name="clientDongs"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
+                  <FormItem className="flex items-center md:space-x-2 space-x-1">
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -305,7 +342,8 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                           onChange={e => handleClientInputChange('clientDongs', e.target.value)}
                           className={cn(
                             direction === 'clientToUs' && field.value ? 'border-primary' : '',
-                            direction === 'usToClient' ? 'pr-10' : ''
+                            direction === 'usToClient' ? 'pr-10' : '',
+                            'md:h-10 h-8'
                           )}
                         />
                         {direction === 'usToClient' && field.value && (
@@ -336,7 +374,9 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                         )}
                       </div>
                     </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium">VND</FormLabel>
+                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                      VND
+                    </FormLabel>
 
                     <FormMessage />
                   </FormItem>
@@ -347,7 +387,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 control={form.control}
                 name="clientUsdt"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
+                  <FormItem className="flex items-center md:space-x-2 space-x-1">
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -356,7 +396,8 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                           onChange={e => handleClientInputChange('clientUsdt', e.target.value)}
                           className={cn(
                             direction === 'clientToUs' && field.value ? 'border-primary' : '',
-                            direction === 'usToClient' ? 'pr-10' : ''
+                            direction === 'usToClient' ? 'pr-10' : '',
+                            'md:h-10 h-8'
                           )}
                         />
                         {direction === 'usToClient' && field.value && (
@@ -387,7 +428,9 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                         )}
                       </div>
                     </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium">USDT</FormLabel>
+                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                      USDT
+                    </FormLabel>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -397,15 +440,20 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
 
           {/* Right column - We transfer to client */}
           <Card className={direction === 'usToClient' ? 'ring-2 ring-primary/50' : ''}>
-            <CardContent className="flex flex-col md:gap-6 gap-3">
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <CardContent
+              className={cn(
+                'flex flex-col md:gap-6 md:p-6',
+                isKeyboardOpen ? 'gap-1 p-2' : 'gap-2 p-3'
+              )}
+            >
+              <CardTitle className="md:text-lg text-base font-medium flex items-center gap-2">
                 {isClient ? 'We transfer to you:' : 'We transfer to user:'}
               </CardTitle>
               <FormField
                 control={form.control}
                 name="ourRubles"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
+                  <FormItem className="flex items-center md:space-x-2 space-x-1">
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -414,7 +462,8 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                           onChange={e => handleOurInputChange('ourRubles', e.target.value)}
                           className={cn(
                             direction === 'usToClient' && field.value ? 'border-primary' : '',
-                            direction === 'clientToUs' ? 'pr-10' : ''
+                            direction === 'clientToUs' ? 'pr-10' : '',
+                            'md:h-10 h-8'
                           )}
                         />
                         {direction === 'clientToUs' && field.value && (
@@ -453,7 +502,9 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                         )}
                       </div>
                     </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium">RUB</FormLabel>
+                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                      RUB
+                    </FormLabel>
 
                     <FormMessage />
                   </FormItem>
@@ -464,7 +515,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 control={form.control}
                 name="ourDongs"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
+                  <FormItem className="flex items-center md:space-x-2 space-x-1">
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -473,7 +524,8 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                           onChange={e => handleOurInputChange('ourDongs', e.target.value)}
                           className={cn(
                             direction === 'usToClient' && field.value ? 'border-primary' : '',
-                            direction === 'clientToUs' ? 'pr-10' : ''
+                            direction === 'clientToUs' ? 'pr-10' : '',
+                            'md:h-10 h-8'
                           )}
                         />
                         {direction === 'clientToUs' && field.value && (
@@ -512,7 +564,9 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                         )}
                       </div>
                     </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium">VND</FormLabel>
+                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                      VND
+                    </FormLabel>
 
                     <FormMessage />
                   </FormItem>
@@ -523,7 +577,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 control={form.control}
                 name="ourUsdt"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
+                  <FormItem className="flex items-center md:space-x-2 space-x-1">
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -532,7 +586,8 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                           onChange={e => handleOurInputChange('ourUsdt', e.target.value)}
                           className={cn(
                             direction === 'usToClient' && field.value ? 'border-primary' : '',
-                            direction === 'clientToUs' ? 'pr-10' : ''
+                            direction === 'clientToUs' ? 'pr-10' : '',
+                            'md:h-10 h-8'
                           )}
                         />
                         {direction === 'clientToUs' && field.value && (
@@ -571,7 +626,9 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                         )}
                       </div>
                     </FormControl>
-                    <FormLabel className="min-w-[50px] text-right font-medium">USDT</FormLabel>
+                    <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
+                      USDT
+                    </FormLabel>
 
                     <FormMessage />
                   </FormItem>
@@ -580,15 +637,16 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
             </CardContent>
           </Card>
         </div>
-        <div className="flex justify-end">
+        <div className={cn('flex', isKeyboardOpen ? 'justify-center' : 'justify-end')}>
           <Button
             variant="secondary"
-            size="sm"
+            size={isKeyboardOpen ? 'sm' : 'sm'}
             onClick={resetForm}
-            className="flex items-center gap-2"
+            className={cn('flex items-center', isKeyboardOpen ? 'gap-1' : 'gap-2')}
           >
-            <RefreshCw size={16} />
-            Reset
+            <RefreshCw size={isKeyboardOpen ? 14 : 16} />
+            {!isKeyboardOpen && 'Reset'}
+            {isKeyboardOpen && '↻'}
           </Button>
         </div>
       </div>

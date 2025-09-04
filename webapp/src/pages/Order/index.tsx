@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { AlertTriangle, Edit, Search, Trash2, X, ShoppingCart, Plus } from 'lucide-react';
+import { AlertTriangle, Edit, Search, Trash2, X } from 'lucide-react';
 import { getEditOrderRoute } from '@/lib/routes';
 import { ClientSearchModal } from '@/components/Client/client-search-modal.js';
 import {
@@ -110,10 +110,6 @@ export default function AllOrdersPage() {
     setStatusFilter('ALL');
   };
 
-  const handleCreateOrder = () => {
-    setIsClientSearchOpen(true);
-  };
-
   if (error) {
     return (
       <div className="p-6">
@@ -126,172 +122,246 @@ export default function AllOrdersPage() {
   }
 
   return (
-    <>
-      <CardTitle className="sticky top-0 z-10 border-b flex py-1.5 px-6 justify-between gap-2">
-        <div className="flex gap-2 items-center">
-          <ShoppingCart />
-          <span className="font-semibold">Orders</span>
-        </div>
-        <Button size="sm" onClick={handleCreateOrder} className="relative">
-          Create Order
-          <Plus />
-        </Button>
-      </CardTitle>
-      <div className="grid gap-6 p-6 pb-0">
-        <FilterContainer onClearFilters={resetFilters}>
-          <FilterFields>
-            <FilterField label="Search Orders">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by user name, or email..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-10"
-                />
-                {searchTerm && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1 h-8 w-8 p-0"
-                    onClick={() => setSearchTerm('')}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </FilterField>
-
-            <FilterField label="Status">
-              <Select
-                value={statusFilter}
-                onValueChange={value => setStatusFilter(value as OrderStatus | 'ALL')}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Statuses</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </FilterField>
-          </FilterFields>
-        </FilterContainer>
-
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Orders ({orders.length})</CardTitle>
+    <div className="grid gap-6 p-6">
+      <FilterContainer onClearFilters={resetFilters}>
+        <FilterFields>
+          <FilterField label="Search Orders">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by user name, or email..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1 h-8 w-8 p-0"
+                  onClick={() => setSearchTerm('')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              </div>
-            ) : orders.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No orders found matching your criteria.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order: any) => (
-                      <TableRow key={order.id} className="hover:bg-muted/50">
-                        <TableCell>
-                          <Link
-                            to={getEditOrderRoute({ id: order.id })}
-                            className="hover:underline font-medium"
-                          >
-                            {order.user ? (
-                              <div>
-                                <div className="font-medium">
-                                  {order.user.firstName} {order.user.lastName}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {order.user.email}
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">No user</span>
-                            )}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          {order.totals ? formatCurrency(order.totals.finalPrice, 'VND') : 'N/A'}
-                        </TableCell>
-                        <TableCell>{formatDate(order.createdAt)}</TableCell>
-                        <TableCell>
-                          <Badge
-                            className={
-                              statusColors[order.status as keyof typeof statusColors] ||
-                              'bg-gray-100 text-gray-800'
-                            }
-                          >
-                            {order.status.replace('_', ' ').toUpperCase()}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(getEditOrderRoute({ id: order.id }))}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Order</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete this order? This action cannot
-                                    be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteOrder(order.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </FilterField>
 
-        <ClientSearchModal isOpen={isClientSearchOpen} onOpenChange={setIsClientSearchOpen} />
-      </div>
-    </>
+          <FilterField label="Status">
+            <Select
+              value={statusFilter}
+              onValueChange={value => setStatusFilter(value as OrderStatus | 'ALL')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterField>
+        </FilterFields>
+      </FilterContainer>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          No orders found matching your criteria.
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto rounded-md border border-muted">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted hover:bg-gray-800/50">
+                    <TableHead>User</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order: any) => (
+                    <TableRow key={order.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <Link
+                          to={getEditOrderRoute({ id: order.id })}
+                          className="hover:underline font-medium"
+                        >
+                          {order.user ? (
+                            <div>
+                              <div className="font-medium">
+                                {order.user.firstName} {order.user.lastName}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {order.user.email}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">No user</span>
+                          )}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        {order.totals ? formatCurrency(order.totals.finalPrice, 'VND') : 'N/A'}
+                      </TableCell>
+                      <TableCell>{formatDate(order.createdAt)}</TableCell>
+                      <TableCell>
+                        <Badge
+                          className={
+                            statusColors[order.status as keyof typeof statusColors] ||
+                            'bg-gray-100 text-gray-800'
+                          }
+                        >
+                          {order.status.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(getEditOrderRoute({ id: order.id }))}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Order</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this order? This action cannot be
+                                  undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteOrder(order.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {orders.map((order: any) => (
+              <Card key={order.id} className="border border-muted">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <Link
+                      to={getEditOrderRoute({ id: order.id })}
+                      className="hover:underline flex-1"
+                    >
+                      <CardTitle className="text-base">
+                        {order.user ? (
+                          <div>
+                            <div className="font-medium text-foreground">
+                              {order.user.firstName} {order.user.lastName}
+                            </div>
+                            <div className="text-sm text-muted-foreground font-normal">
+                              {order.user.email}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">No user</span>
+                        )}
+                      </CardTitle>
+                    </Link>
+                    <Badge
+                      className={
+                        statusColors[order.status as keyof typeof statusColors] ||
+                        'bg-gray-100 text-gray-800'
+                      }
+                    >
+                      {order.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Total:</span>
+                      <span className="font-medium">
+                        {order.totals ? formatCurrency(order.totals.finalPrice, 'VND') : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Created:</span>
+                      <span className="text-sm">{formatDate(order.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(getEditOrderRoute({ id: order.id }))}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this order? This action cannot be
+                              undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteOrder(order.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
+
+      <ClientSearchModal isOpen={isClientSearchOpen} onOpenChange={setIsClientSearchOpen} />
+    </div>
   );
 }

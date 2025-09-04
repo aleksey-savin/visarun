@@ -197,138 +197,62 @@ const AllTelegramChannelsPage = () => {
         </FilterFields>
       </FilterContainer>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>
-              Telegram Channels ({filteredChannels.length})
-              {filteredChannels.length !== channels.length && (
-                <span className="text-sm font-normal text-muted-foreground">
-                  {' '}
-                  of {channels.length} total
-                </span>
-              )}
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="flex justify-center items-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          )}
+      {isLoading && (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
 
-          {isError && (
-            <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              <h3 className="font-medium text-lg mb-2">Error Loading Telegram channels</h3>
-              <p>{error.message}</p>
-            </div>
-          )}
+      {isError && (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <h3 className="font-medium text-lg mb-2">Error Loading Telegram channels</h3>
+          <p>{error.message}</p>
+        </div>
+      )}
 
-          {filteredChannels.length === 0 && !isLoading && !isError ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {channels.length === 0
-                ? 'No telegram channels found. Channels will appear here when added via the bot.'
-                : 'No channels match your current filters.'}
-            </div>
-          ) : (
-            <>
-              {/* Table view (hidden on mobile) */}
-              <div className="hidden md:block">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[200px]">Title</TableHead>
-                        <TableHead className="w-[100px]">Type</TableHead>
-                        <TableHead className="w-[120px]">Added By</TableHead>
-                        <TableHead className="w-[140px]">Added At</TableHead>
-                        <TableHead className="w-[100px]">Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredChannels.map((channel: TelegramChannel) => (
-                        <TableRow key={channel.id} className="hover:bg-muted/50">
-                          <TableCell>
-                            <Link
-                              to={`/telegram-channels/${channel.id}`}
-                              className="flex items-center space-x-2 font-medium hover:underline"
-                            >
-                              <span>{channel.chatTitle}</span>
-                            </Link>
-                          </TableCell>
-                          <TableCell className="capitalize">{channel.chatType}</TableCell>
-                          <TableCell>{channel.fromUsername}</TableCell>
-                          <TableCell>{new Date(channel.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <Badge className={getStatusBadgeColor(channel.status)}>
-                              {channel.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/telegram-channels/${channel.id}`)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {channel.status === 'active' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setBlockChannelId(channel.chatId)}
-                                >
-                                  <Shield className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {channel.status === 'blocked' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setUnblockChannelId(channel.chatId)}
-                                >
-                                  <ShieldCheck className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {channel.status === 'kicked' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setDeleteChannelId(channel.chatId)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Card view (visible only on mobile) */}
-              <div className="grid grid-cols-1 gap-4 md:hidden">
-                {filteredChannels.map((channel: TelegramChannel) => (
-                  <Card key={channel.id} className="hover:border-primary/50 transition-colors">
-                    <CardContent className="px-4 py-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center space-x-2">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <MessageCircle className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">{channel.chatTitle}</h3>
-                            <div className="text-sm text-muted-foreground">
-                              {channel.chatType} • {channel.fromUsername}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
+      {filteredChannels.length === 0 && !isLoading && !isError ? (
+        <div className="text-center py-8 text-muted-foreground">
+          {channels.length === 0
+            ? 'No telegram channels found. Channels will appear here when added via the bot.'
+            : 'No channels match your current filters.'}
+        </div>
+      ) : (
+        <>
+          {/* Table view (hidden on mobile) */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto rounded-md border border-muted">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted hover:bg-gray-800/50">
+                    <TableHead className="w-[200px]">Title</TableHead>
+                    <TableHead className="w-[100px]">Type</TableHead>
+                    <TableHead className="w-[120px]">Added By</TableHead>
+                    <TableHead className="w-[140px]">Added At</TableHead>
+                    <TableHead className="w-[100px]">Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredChannels.map((channel: TelegramChannel) => (
+                    <TableRow key={channel.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <Link
+                          to={`/telegram-channels/${channel.id}`}
+                          className="flex items-center space-x-2 font-medium hover:underline"
+                        >
+                          <span>{channel.chatTitle}</span>
+                        </Link>
+                      </TableCell>
+                      <TableCell className="capitalize">{channel.chatType}</TableCell>
+                      <TableCell>{channel.fromUsername}</TableCell>
+                      <TableCell>{new Date(channel.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadgeColor(channel.status)}>
+                          {channel.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -364,23 +288,101 @@ const AllTelegramChannelsPage = () => {
                             </Button>
                           )}
                         </div>
-                      </div>
-                      <div className="flex justify-between items-end pt-2">
-                        <div className="text-sm text-muted-foreground">
-                          Added {new Date(channel.createdAt).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {filteredChannels.map((channel: TelegramChannel) => (
+              <Card key={channel.id} className="border border-muted">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <Link
+                      to={`/telegram-channels/${channel.id}`}
+                      className="hover:underline flex-1"
+                    >
+                      <CardTitle className="text-base">
+                        <div className="flex items-center space-x-2">
+                          <MessageCircle className="h-4 w-4 text-primary" />
+                          <span className="font-medium text-foreground">{channel.chatTitle}</span>
                         </div>
-                        <Badge className={getStatusBadgeColor(channel.status)}>
-                          {channel.status}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                      </CardTitle>
+                    </Link>
+                    <Badge className={getStatusBadgeColor(channel.status)}>{channel.status}</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Type:</span>
+                      <span className="text-sm">{channel.chatType}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">From:</span>
+                      <span className="text-sm">{channel.fromUsername}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Added:</span>
+                      <span className="text-sm">
+                        {new Date(channel.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/telegram-channels/${channel.id}`)}
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </Button>
+                      {channel.status === 'active' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setBlockChannelId(channel.chatId)}
+                          className="flex items-center gap-1"
+                        >
+                          <Shield className="h-4 w-4" />
+                          Block
+                        </Button>
+                      )}
+                      {channel.status === 'blocked' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setUnblockChannelId(channel.chatId)}
+                          className="flex items-center gap-1"
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                          Unblock
+                        </Button>
+                      )}
+                      {channel.status === 'kicked' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteChannelId(channel.chatId)}
+                          className="flex items-center gap-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteChannelId} onOpenChange={() => setDeleteChannelId(null)}>

@@ -237,11 +237,11 @@ const ClientCard = ({
         )}
       </div>
       <div className="flex flex-col gap-2">
-        <div key={`${application.id}-visa-data`} className="flex items-center">
-          <Badge variant="accent" className="rounded-r-none">
+        <div key={`${application.id}-visa-data`} className="md:flex flex-col items-center">
+          <Badge variant="accent" className="rounded-b-none md:rounded-r-none  w-full">
             Visa - {application.country.name} - {application.visaType.name}
           </Badge>
-          <Badge variant="secondary" className="rounded-l-none">
+          <Badge variant="secondary" className="rounded-t-none md:rounded-l-none w-full">
             {new Date(application.plannedCountryEntryDate).toLocaleDateString()} -{' '}
             {new Date(application.plannedCountryEntryDate).toLocaleTimeString([], {
               hour: '2-digit',
@@ -254,7 +254,7 @@ const ClientCard = ({
       {client.documents.length > 0 && (
         <>
           <Separator />
-          <div className="grid grid-cols-2 w-full gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-3">
             {client.documents.map((document: any) => (
               <Card key={document.id} className="bg-secondary p-3 rounded-md">
                 {/* Show existing document */}

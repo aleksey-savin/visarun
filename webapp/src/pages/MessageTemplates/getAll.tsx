@@ -5,9 +5,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Search, Eye } from 'lucide-react';
 import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 import { getViewMessageTemplateRoute } from '@/lib/routes';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -71,89 +72,136 @@ const AllMessageTemplatesPage = () => {
         </FilterFields>
       </FilterContainer>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>
-              Message Templates ({filteredMessageTemplates.length})
-              {filteredMessageTemplates.length !== messageTemplates.length && (
-                <span className="text-sm font-normal text-muted-foreground">
-                  {' '}
-                  of {messageTemplates.length} total
-                </span>
-              )}
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="flex justify-center items-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          )}
+      {isLoading && (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
 
-          {isError && (
-            <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              <h3 className="font-medium text-lg mb-2">Error Loading Message Templates</h3>
-              <p>{error.message}</p>
-            </div>
-          )}
+      {isError && (
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <h3 className="font-medium text-lg mb-2">Error Loading Message Templates</h3>
+          <p>{error.message}</p>
+        </div>
+      )}
 
-          {filteredMessageTemplates.length === 0 && !isLoading && !isError ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {messageTemplates.length === 0
-                ? 'No users found. Create one to get started.'
-                : 'No users match your current filters.'}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Title</TableHead>
-                  <TableHead>Body</TableHead>
-                  <TableHead>Telegram Channels</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMessageTemplates.map((messageTemplate: MessageTemplate) => (
-                  <TableRow key={messageTemplate.id} className="hover:bg-muted/50">
-                    <TableCell>
-                      <Link
-                        to={getViewMessageTemplateRoute({ id: messageTemplate.id })}
-                        className="hover:underline font-medium"
-                      >
-                        {messageTemplate.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="whitespace-pre-wrap max-w-lg">
-                      {messageTemplate.body}
-                    </TableCell>
-                    <TableCell className="whitespace-pre-wrap max-w-lg">
-                      {messageTemplate.telegramChannels
-                        .map((channel: { id: string; chatTitle: string }) => channel.chatTitle)
-                        .join(' ')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            navigate(getViewMessageTemplateRoute({ id: messageTemplate.id }))
-                          }
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+      {filteredMessageTemplates.length === 0 && !isLoading && !isError ? (
+        <div className="text-center py-8 text-muted-foreground">
+          {messageTemplates.length === 0
+            ? 'No message templates found. Create one to get started.'
+            : 'No message templates match your current filters.'}
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto rounded-md border border-muted">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted hover:bg-gray-800/50">
+                    <TableHead className="w-[200px]">Title</TableHead>
+                    <TableHead>Body</TableHead>
+                    <TableHead>Telegram Channels</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredMessageTemplates.map((messageTemplate: MessageTemplate) => (
+                    <TableRow key={messageTemplate.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <Link
+                          to={getViewMessageTemplateRoute({ id: messageTemplate.id })}
+                          className="hover:underline font-medium"
+                        >
+                          {messageTemplate.title}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="max-w-md">
+                        <div className="truncate">{messageTemplate.body}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {messageTemplate.telegramChannels.map(channel => (
+                            <Badge key={channel.id} variant="secondary" className="text-xs">
+                              {channel.chatTitle}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              navigate(getViewMessageTemplateRoute({ id: messageTemplate.id }))
+                            }
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {filteredMessageTemplates.map((messageTemplate: MessageTemplate) => (
+              <Card key={messageTemplate.id} className="border border-muted">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <Link
+                      to={getViewMessageTemplateRoute({ id: messageTemplate.id })}
+                      className="hover:underline flex-1"
+                    >
+                      <CardTitle className="text-base">
+                        <span className="font-medium text-foreground">{messageTemplate.title}</span>
+                      </CardTitle>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-muted-foreground">Body:</span>
+                      <p className="text-sm line-clamp-3">{messageTemplate.body}</p>
+                    </div>
+                    {messageTemplate.telegramChannels.length > 0 && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm text-muted-foreground">Telegram Channels:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {messageTemplate.telegramChannels.map(channel => (
+                            <Badge key={channel.id} variant="secondary" className="text-xs">
+                              {channel.chatTitle}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          navigate(getViewMessageTemplateRoute({ id: messageTemplate.id }))
+                        }
+                        className="flex items-center gap-1"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
