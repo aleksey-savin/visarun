@@ -1,6 +1,6 @@
-import { getTransportSeatDistributionTrpcRoute } from './getByTransport';
-import { updateTransportSeatDistributionTrpcRoute } from './update';
-import { deleteTransportSeatDistributionTrpcRoute } from './delete';
+import { getTransportSeatDistributionTrpcRoute } from './getByTransport.js';
+import { updateTransportSeatDistributionTrpcRoute } from './update.js';
+import { deleteTransportSeatDistributionTrpcRoute } from './delete.js';
 
 export const transportSeatDistributionRoutes = {
   getByTransport: getTransportSeatDistributionTrpcRoute,
