@@ -115,6 +115,7 @@ model Client {
   ClientVisa                ClientVisa[]
   clients                   OrderClient[]
   OrderItem                 OrderItem[]
+  VisarunPassenger          VisarunPassenger[]
 
   @@index([userId])
   @@index([citizenshipId])
@@ -303,6 +304,7 @@ model OrderItem {
   discountRule        ClientDiscountRule?  @relation(fields: [discountRuleId], references: [id])
   order               Order                @relation(fields: [orderId], references: [id])
   VisaApplication     VisaApplication[]
+  VisarunPassenger    VisarunPassenger[]
 
   @@index([orderId])
   @@index([clientId])
@@ -587,13 +589,15 @@ model TransportType {
 }
 
 model Transport {
-  id               String                      @id @default(uuid())
-  transportTypeId  String
-  name             String                      @unique
-  description      String?
-  seatCount        Int?
-  transportType    TransportType               @relation(fields: [transportTypeId], references: [id])
-  seatDistribution TransportSeatDistribution[]
+  id                    String                      @id @default(uuid())
+  transportTypeId       String
+  name                  String                      @unique
+  description           String?
+  seatCount             Int?
+  transportType         TransportType               @relation(fields: [transportTypeId], references: [id])
+  seatDistribution      TransportSeatDistribution[]
+  VisarunRouteTransport VisarunRouteTransport[]
+  VisarunTripTransport  VisarunTripTransport[]
 }
 
 model SeatClass {
@@ -629,29 +633,53 @@ model TransportSeatDistribution {
 }
 
 model VisarunRoute {
-  id               String             @id @default(uuid())
-  name             String
-  isActive         Boolean            @default(true)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  routeStops       VisarunRouteStop[]
-  VisarunSeatPrice VisarunSeatPrice[]
+  id   String @id @default(uuid())
+  name String
+
+  stamp   Boolean @default(false)
+  visarun Boolean @default(false)
+
+  isActive        Boolean                 @default(true)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  routeStops      VisarunRouteStop[]
+  prices          VisarunSeatPrice[]
+  transports      VisarunRouteTransport[]
+  VisarunSchedule VisarunSchedule[]
+  VisarunTrip     VisarunTrip[]
+}
+
+model VisarunRouteTransport {
+  id          String   @id @default(uuid())
+  routeId     String
+  transportId String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  route     VisarunRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  transport Transport    @relation(fields: [transportId], references: [id])
+
+  @@unique([routeId, transportId])
+  @@index([routeId])
+  @@index([transportId])
 }
 
 model VisarunRouteStop {
-  id            String        @id @default(uuid())
-  routeId       String
-  cityId        String
-  stopOrder     Int
-  stopType      RouteStopType
-  pickupMode    PickupMode
-  arrivalTime   String?
-  departureTime String?
-  duration      Int?
+  id              String        @id @default(uuid())
+  routeId         String
+  cityId          String
+  stopOrder       Int
+  stopType        RouteStopType
+  pickupMode      PickupMode
+  arrivalTime     String?
+  departureTime   String?
+  arrivalNextDay  Boolean       @default(false)
+  waitingDuration Int?
 
-  route           VisarunRoute                @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  city            City                        @relation("RouteStops", fields: [cityId], references: [id])
-  pickupLocations VisarunStopPickupLocation[]
+  route            VisarunRoute                @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  city             City                        @relation("RouteStops", fields: [cityId], references: [id])
+  pickupLocations  VisarunStopPickupLocation[]
+  VisarunPassenger VisarunPassenger[]
 
   @@unique([routeId, stopOrder])
   @@unique([routeId, cityId])
@@ -668,6 +696,119 @@ model PickupLocation {
 
   city       City                        @relation("PickupLocations", fields: [cityId], references: [id])
   routeStops VisarunStopPickupLocation[]
+}
+
+model VisarunSchedule {
+  id          String  @id @default(uuid())
+  routeId     String
+  name        String
+  description String?
+
+  daysOfWeek Json
+
+  departureTime String
+
+  validFrom DateTime
+  validTo   DateTime?
+
+  autoGeneratePeriodMonths Int @default(12)
+
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  updatedById String?
+
+  route VisarunRoute  @relation(fields: [routeId], references: [id])
+  trips VisarunTrip[]
+
+  @@index([routeId])
+  @@index([validFrom, validTo])
+}
+
+model VisarunTrip {
+  id         String  @id @default(uuid())
+  scheduleId String?
+  routeId    String
+
+  departureDateTime DateTime
+
+  status TripStatus @default(scheduled)
+
+  notes        String?
+  cancelReason String?
+
+  isFromSchedule Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schedule VisarunSchedule? @relation(fields: [scheduleId], references: [id])
+  route    VisarunRoute     @relation(fields: [routeId], references: [id])
+
+  // Связи
+  transports VisarunTripTransport[]
+  passengers VisarunPassenger[]
+
+  @@index([scheduleId])
+  @@index([routeId])
+  @@index([departureDateTime])
+  @@index([status])
+}
+
+model VisarunTripTransport {
+  id          String @id @default(uuid())
+  tripId      String
+  transportId String
+
+  driverName    String?
+  driverPhone   String?
+  vehicleNumber String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  trip      VisarunTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  transport Transport   @relation(fields: [transportId], references: [id])
+
+  passengers VisarunPassenger[]
+
+  @@index([tripId])
+  @@index([transportId])
+}
+
+model VisarunPassenger {
+  id              String  @id @default(uuid())
+  tripId          String
+  tripTransportId String?
+  clientId        String
+  orderItemId     String
+
+  serviceType VisarunServiceType
+
+  // Место и посадка
+  seatNumber    String?
+  seatClass     String?
+  pickupAddress String?
+  pickupTime    String?
+  routeStopId   String?
+
+  // Статус пассажира
+  status PassengerStatus @default(confirmed)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trip          VisarunTrip           @relation(fields: [tripId], references: [id])
+  tripTransport VisarunTripTransport? @relation(fields: [tripTransportId], references: [id])
+  client        Client                @relation(fields: [clientId], references: [id])
+  orderItem     OrderItem             @relation(fields: [orderItemId], references: [id])
+  pickupStop    VisarunRouteStop?     @relation(fields: [routeStopId], references: [id])
+
+  @@index([tripId])
+  @@index([tripTransportId])
+  @@index([clientId])
+  @@index([orderItemId])
 }
 
 model OrderPickupAddress {
@@ -701,6 +842,24 @@ model City {
   country         Country            @relation(fields: [countryId], references: [id])
   routeStops      VisarunRouteStop[] @relation("RouteStops")
   pickupLocations PickupLocation[]   @relation("PickupLocations")
+}
+
+enum VisarunServiceType {
+  stamp
+  visa
+}
+
+enum TripStatus {
+  scheduled
+  in_process
+  completed
+}
+
+enum PassengerStatus {
+  confirmed
+  checked_in
+  no_show
+  cancelled
 }
 
 enum RouteStopType {
