@@ -120,14 +120,14 @@ const ClientCard = ({
   return (
     <Card
       key={client.id}
-      className={`p-6 bg-secondary ${isFirstResult ? 'shadow-[inset_0px_0px_20px_3px_#FAFAFA59] transition-colors' : ''} ${!isSelectable ? 'opacity-50' : ''}`}
+      className={`md:p-6 p-2 bg-secondary ${isFirstResult ? 'shadow-[inset_0px_0px_20px_3px_#FAFAFA59] transition-colors' : ''} ${!isSelectable ? 'opacity-50' : ''}`}
       tabIndex={0}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 space-y-6">
           <div className="flex items-center gap-2 flex-wrap">
             {client.isPrimary && (
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 <Badge
                   variant="primary"
                   className="cursor-pointer"

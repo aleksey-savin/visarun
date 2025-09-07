@@ -303,7 +303,7 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-2xl flex flex-col bg-secondary [&>button]:hidden max-h-[90svh] overflow-hidden">
+      <DialogContent className="md:min-w-2xl flex flex-col bg-secondary [&>button]:hidden max-h-[90svh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between gap-2 text-foreground text-lg">
             <div className="flex gap-2 items-center">
@@ -328,13 +328,13 @@ export function ClientSearchModal({ isOpen, onOpenChange }: ClientSearchModalPro
         <div className="flex flex-col gap-6 flex-1 min-h-0">
           <div className="space-y-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 display-none md:display-block" />
               <Input
                 type="text"
-                placeholder="Telegram / E-mail / WhatsApp / Zalo / Facebook"
+                placeholder="Search by name or contact ..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10 border-border"
+                className="md:pl-10 border-border"
                 autoFocus
                 onKeyDown={e => {
                   if (e.key === 'Escape') {
