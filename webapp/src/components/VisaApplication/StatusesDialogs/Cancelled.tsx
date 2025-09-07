@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { useMobile } from '@/hooks/use-mobile';
 
 import ClientCard from '@/components/VisaApplication/ClientCard';
 import { Button } from '@/components/ui/button';
@@ -7,29 +6,17 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-
-import {
-  Drawer,
-  DrawerClose,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
-
-import { MobileDrawerContent } from '@/components/ui/mobile-drawer-content';
 
 import { Separator } from '@/components/ui/separator';
 import { CircleX } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 
 export const CancelledStatusDialog = ({ application }: { application: any }) => {
-  const isMobile = useMobile();
-
   const status = {
     variant: 'default' as const,
     className: 'bg-transparent text-[#FAFAFA] w-32  hover:bg-gray-800',
@@ -97,82 +84,51 @@ export const CancelledStatusDialog = ({ application }: { application: any }) => 
     </div>
   );
 
-  if (!isMobile) {
-    return (
-      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-        <form onSubmit={handleSubmit}>
-          <DialogTrigger asChild>
-            <Button variant={status.variant} className={status.className}>
-              {status.icon} {status.text}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[825px] bg-secondary gap-6">
-            <DialogHeader>
-              <DialogTitle>
-                {!application.isArchived ? 'Update Status' : 'Archived visa application overview'}
-              </DialogTitle>
-            </DialogHeader>
-            <CancelledContent className="flex flex-col gap-4 px-4" />
-            {!application.isArchived && (
-              <>
-                <Separator />
-                <div className="flex justify-end">
-                  <div className="flex gap-4">
-                    <Button variant="destructive" onClick={handleRefund}>
-                      Refund
-                    </Button>
-                    <Button type="submit" className={status.buttonClassname} onClick={handleSubmit}>
-                      {status.buttonText}
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </form>
-      </Dialog>
-    );
-  }
-
   return (
-    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <form onSubmit={handleSubmit}>
-        <DrawerTrigger asChild>
+        <DialogTrigger asChild>
           <Button variant={status.variant} className={status.className}>
             {status.icon} {status.text}
           </Button>
-        </DrawerTrigger>
-        <MobileDrawerContent>
-          <DrawerHeader className="text-left shrink-0">
-            <DrawerTitle>
+        </DialogTrigger>
+        <DialogContent className="max-h-[100dvh] w-full max-w-full sm:max-w-[825px] bg-secondary gap-2 sm:gap-6 flex flex-col overflow-hidden p-2 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>
               {!application.isArchived ? 'Update Status' : 'Archived visa application overview'}
-            </DrawerTitle>
-          </DrawerHeader>
-          <div className="flex-1 overflow-y-auto">
-            <CancelledContent className="flex flex-col gap-4 px-4" />
+            </DialogTitle>
+            <DialogDescription>
+              {!application.isArchived
+                ? 'Review and update the cancelled application status'
+                : 'View details of this archived cancelled application'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto flex justify-center">
+            <div className="w-full max-w-2xl">
+              <CancelledContent className="flex flex-col gap-4 px-2 sm:px-4" />
+            </div>
           </div>
           {!application.isArchived && (
-            <DrawerFooter className="pt-4 shrink-0">
-              <Button variant="destructive" onClick={handleRefund}>
-                Refund
-              </Button>
-              <Button type="submit" className={status.buttonClassname} onClick={handleSubmit}>
-                {status.buttonText}
-              </Button>
-              <DrawerClose asChild>
-                <Button variant="secondary">Cancel</Button>
-              </DrawerClose>
-            </DrawerFooter>
+            <div className="flex-shrink-0">
+              <Separator />
+              <div className="flex justify-center sm:justify-end p-2 sm:p-4">
+                <div className="flex gap-4 flex-col sm:flex-row w-full sm:w-auto">
+                  <Button variant="destructive" onClick={handleRefund} className="w-full sm:w-auto">
+                    Refund
+                  </Button>
+                  <Button
+                    type="submit"
+                    className={`${status.buttonClassname} w-full sm:w-auto`}
+                    onClick={handleSubmit}
+                  >
+                    {status.buttonText}
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
-          {application.isArchived && (
-            <DrawerFooter className="pt-4 shrink-0">
-              <DrawerClose asChild>
-                <Button variant="secondary">Close</Button>
-              </DrawerClose>
-            </DrawerFooter>
-          )}
-        </MobileDrawerContent>
+        </DialogContent>
       </form>
-    </Drawer>
+    </Dialog>
   );
 };

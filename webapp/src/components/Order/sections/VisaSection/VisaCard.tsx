@@ -767,7 +767,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
               Surcharge {formatCurrency(surchargeAmount, 'VND')} is applied
             </Badge>
           )}
-          <div className="flex gap-2 ps-4 pt-0.5">
+          <div className="flex gap-2 md:ps-4 pt-3 md:pt-0.5">
             <Switch
               checked={clientIsInTheCountry}
               onCheckedChange={() => handleClientIsInTheCountry(!clientIsInTheCountry)}

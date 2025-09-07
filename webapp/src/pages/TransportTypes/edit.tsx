@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { getAllTransportTypesRoute } from '@/lib/routes';
-import FormPageLayout from '@/components/Forms/FormPageLayout';
+import FormPageLayout from '@/components/Layout/Form';
 import TransportTypeForm, { TransportTypeFormData } from '@/components/TransportType/Form';
 
 export default function EditTransportTypePage() {

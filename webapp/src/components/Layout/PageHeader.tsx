@@ -165,7 +165,7 @@ const pageConfigs: Record<string, PageConfig> = {
 };
 
 // Routes that should not show the PageHeader (they have their own custom headers like breadcrumbs)
-const skipHeaderRoutes = ['/order/create', '/order/edit/:id'];
+const skipHeaderRoutes: string[] = [];
 
 interface PageHeaderProps {
   onButtonClick?: () => void;
@@ -251,7 +251,7 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
 
   return (
     <>
-      <CardTitle className="px-4 sticky top-0 z-10 bg-background border-b flex items-center py-1.5 md:px-6 justify-between gap-2 h-[50px] mb-4 md:mb-0">
+      <CardTitle className="px-4 sticky top-0 z-10 bg-background border-b flex items-center py-1.5 md:px-6 justify-between gap-2 h-[50px] md:mb-0">
         <div className="flex gap-3 items-center">
           <Button variant="primary" onClick={toggleSidebar} className="block md:hidden">
             <Menu className="h-4 w-4" />

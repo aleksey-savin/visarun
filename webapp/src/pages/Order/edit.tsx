@@ -448,8 +448,8 @@ const EditOrderPage = () => {
 
   return (
     <>
-      <div className="sticky top-0 z-10 bg-background border-b flex  px-6 justify-between gap-2 items-center h-[45px]">
-        <div className="flex gap-3 items-center text-sm min-h-[45px]">
+      <div className="sticky top-0 z-10 bg-background border-b flex px-6 justify-between gap-2 items-center h-[50px]">
+        <div className="flex gap-1 md:gap-3 items-center text-xs md:text-sm min-h-[50px]">
           <Puzzle />
           {steps.map(step => {
             const currentStepIndex = steps.findIndex(s => s.status === activeStep.status);
@@ -484,7 +484,7 @@ const EditOrderPage = () => {
             );
           })}
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="items-center gap-2 text-sm text-muted-foreground hidden md:flex">
           <span>
             {saveStatus === 'saving'
               ? 'Saving...'
@@ -502,7 +502,7 @@ const EditOrderPage = () => {
           </span>
         </div>
       </div>
-      <div className="p-6">
+      <div className="p-0 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-12">
           <div className="lg:col-span-9">
             {clients
@@ -520,7 +520,10 @@ const EditOrderPage = () => {
                   return acc;
                 }, 0);
                 return (
-                  <Card className="bg-secondary mr-2.5 p-0 mb-2.5" key={client.id}>
+                  <Card
+                    className="bg-secondary my-2 md:my-0 mx-2 md:mx-0 md:mr-2.5 p-0 mb-2.5"
+                    key={client.id}
+                  >
                     <ClientSection
                       totalAmount={totalAmount}
                       client={client}
@@ -532,7 +535,7 @@ const EditOrderPage = () => {
                           'grid grid-col-1 gap-6 ',
                           activeStep.status === 'payment_pending' && !client.isPrimary
                             ? 'p-0'
-                            : 'px-6 pb-5'
+                            : 'px-2 md:px-6 pb-5'
                         )}
                       >
                         {activeStep.status === 'payment_pending' && client.isPrimary && <Payment />}
@@ -586,7 +589,7 @@ const EditOrderPage = () => {
             )}
           </div>
 
-          <div className="grid space-y-2 sticky top-[45px] self-start lg:col-span-3 text-sm">
+          <div className="mx-2 md:mx-0 grid space-y-2 sticky top-[45px] self-start lg:col-span-3 text-sm">
             <SummarySection />
             <OrderSummary />
             <Button

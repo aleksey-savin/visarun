@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { trpc } from '../../lib/trpcProvider';
 import { getAllCountriesRoute } from '../../lib/routes';
 import { toast } from 'sonner';
-import FormPageLayout from '@/components/Forms/FormPageLayout';
+import FormPageLayout from '@/components/Layout/Form';
 import CountryForm, { type CountryFormData } from '@/components/Country/Form';
 
 const CreateCountryPage = () => {

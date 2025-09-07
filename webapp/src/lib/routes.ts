@@ -151,10 +151,10 @@ export const getViewCurrencyRoute = ({ id }: ViewCurrencyRouteParams) => `/curre
 
 // Order routes
 export const getAllOrdersRoute = () => '/orders';
-export const getCreateOrderRoute = () => '/order/create';
+export const getCreateOrderRoute = () => '/orders/create';
 export const editOrderRouteParams = getRouteParams({ id: true });
 export type EditOrderRouteParams = typeof editOrderRouteParams;
-export const getEditOrderRoute = ({ id }: EditOrderRouteParams) => `/order/edit/${id}`;
+export const getEditOrderRoute = ({ id }: EditOrderRouteParams) => `/orders/edit/${id}`;
 export const viewOrderRouteParams = getRouteParams({ id: true });
 export type ViewOrderRouteParams = typeof viewOrderRouteParams;
 export const getViewOrderRoute = ({ id }: ViewOrderRouteParams) => `/orders/view/${id}`;

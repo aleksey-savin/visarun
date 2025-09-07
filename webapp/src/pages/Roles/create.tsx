@@ -5,7 +5,7 @@ import { Shield } from 'lucide-react';
 import { trpc } from '@/lib/trpcProvider';
 import { getAllRolesRoute } from '@/lib/routes';
 import { toast } from 'sonner';
-import RoleForm from '@/components/roles/RoleForm';
+import RoleForm from '@/components/Roles/RoleForm';
 
 export default function CreateRolePage() {
   const navigate = useNavigate();

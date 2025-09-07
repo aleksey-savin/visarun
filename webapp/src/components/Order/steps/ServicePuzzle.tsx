@@ -164,8 +164,8 @@ const ServicePuzzle = ({
         </Button>
       </div>
       <Card className="p-0 bg-muted border-none rounded-md">
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between">
+        <CardContent className="p-2 md:p-3">
+          <div className="flex flex-wrap gap-2 md:gap-0 items-center justify-center md:justify-between">
             <div className="font-medium">Service puzzle</div>
             <Card className="flex items-center gap-1 p-1 bg-secondary rounded-md border-none">
               <div className="flex gap-2">

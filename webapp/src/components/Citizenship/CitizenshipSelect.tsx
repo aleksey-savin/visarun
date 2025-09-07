@@ -99,7 +99,7 @@ const CitizenshipSelect = ({
                       searchInputRef.current?.focus();
                     });
                   }}
-                  className="h-8 pl-8 max-w-52"
+                  className="h-8 md:pl-8 max-w-52"
                   autoFocus
                   onClick={e => e.stopPropagation()}
                   onKeyDown={e => e.stopPropagation()}

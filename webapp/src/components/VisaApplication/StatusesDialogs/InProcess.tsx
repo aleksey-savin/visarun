@@ -1,25 +1,15 @@
 import ClientCard from '@/components/VisaApplication/ClientCard';
 import { Button } from '@/components/ui/button';
-import { useMobile } from '@/hooks/use-mobile';
 
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-import {
-  Drawer,
-  DrawerClose,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
-
-import { MobileDrawerContent } from '@/components/ui/mobile-drawer-content';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { LoaderCircle } from 'lucide-react';
@@ -27,8 +17,6 @@ import React, { useState, useCallback } from 'react';
 import { trpc } from '@/lib/trpc';
 
 export const InProcessStatusDialog = ({ application }: { application: any }) => {
-  const isMobile = useMobile();
-
   const stampRequired =
     !application.stampIsRecieved &&
     application?.plannedCountryExitDate &&
@@ -120,15 +108,6 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
 
   const reasonInputRef = React.useRef<HTMLInputElement>(null);
 
-  const forceViewportUpdate = useCallback(() => {
-    // Force viewport height recalculation on mobile
-    if (window.visualViewport) {
-      window.visualViewport.dispatchEvent(new Event('resize'));
-    } else {
-      window.dispatchEvent(new Event('resize'));
-    }
-  }, []);
-
   const handleReasonChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setReason(e.target.value);
   }, []);
@@ -154,105 +133,63 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
     [application, clientCardBorder, denied, handleReasonChange]
   );
 
-  if (!isMobile) {
-    return (
-      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-        <form onSubmit={handleSubmit}>
-          <DialogTrigger asChild>
-            <Button variant={status.variant} className={status.className}>
-              {status.icon} {status.text}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[825px] bg-secondary gap-6">
-            <DialogHeader>
-              <DialogTitle>Update Status</DialogTitle>
-            </DialogHeader>
-            <InProcessContent className="flex flex-col gap-4 px-4" />
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <form onSubmit={handleSubmit}>
+        <DialogTrigger asChild>
+          <Button variant={status.variant} className={status.className}>
+            {status.icon} {status.text}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-h-[100dvh] w-full max-w-full sm:max-w-[825px] bg-secondary gap-2 sm:gap-6 flex flex-col overflow-hidden p-2 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Update Status</DialogTitle>
+            <DialogDescription>
+              Review and update the visa application processing status
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto flex justify-center">
+            <div className="w-full max-w-2xl">
+              <InProcessContent className="flex flex-col gap-4 px-2 sm:px-4" />
+            </div>
+          </div>
+          <div className="flex-shrink-0">
             <Separator />
-            <div className="flex justify-end">
-              <div className="flex gap-4">
+            <div className="flex justify-center sm:justify-end p-2 sm:p-4">
+              <div className="flex gap-4 flex-col sm:flex-row w-full sm:w-auto">
                 {!denied && (
                   <>
-                    <Button variant="destructive" onClick={handleDenied}>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDenied}
+                      className="w-full sm:w-auto"
+                    >
                       Denied
                     </Button>
-                    <Button type="submit" className={status.buttonClassname} onClick={handleSubmit}>
+                    <Button
+                      type="submit"
+                      className={`${status.buttonClassname} w-full sm:w-auto`}
+                      onClick={handleSubmit}
+                    >
                       {status.buttonText}
                     </Button>
                   </>
                 )}
                 {denied && (
-                  <Button disabled={!reason} variant="destructive" onClick={handleSubmitDenial}>
+                  <Button
+                    disabled={!reason}
+                    variant="destructive"
+                    onClick={handleSubmitDenial}
+                    className="w-full sm:w-auto"
+                  >
                     Visa denied
                   </Button>
                 )}
               </div>
             </div>
-          </DialogContent>
-        </form>
-      </Dialog>
-    );
-  }
-
-  return (
-    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
-      <DrawerTrigger asChild>
-        <Button variant={status.variant} className={status.className}>
-          {status.icon} {status.text}
-        </Button>
-      </DrawerTrigger>
-      <MobileDrawerContent>
-        <DrawerHeader className="text-left shrink-0">
-          <DrawerTitle>Update Status</DrawerTitle>
-        </DrawerHeader>
-        <div className="flex-1 overflow-y-auto">
-          <InProcessContent className="flex flex-col gap-4 px-4" />
-        </div>
-        <DrawerFooter className="pt-4 shrink-0">
-          {!denied && (
-            <>
-              <Button
-                className={status.buttonClassname}
-                onClick={e => {
-                  forceViewportUpdate();
-                  handleSubmit(e);
-                }}
-              >
-                {status.buttonText}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  forceViewportUpdate();
-                  handleDenied();
-                }}
-              >
-                Denied
-              </Button>
-              <DrawerClose asChild>
-                <Button variant="secondary">Cancel</Button>
-              </DrawerClose>
-            </>
-          )}
-          {denied && (
-            <>
-              <Button
-                disabled={!reason}
-                variant="destructive"
-                onClick={() => {
-                  forceViewportUpdate();
-                  handleSubmitDenial();
-                }}
-              >
-                Visa denied
-              </Button>
-              <DrawerClose asChild>
-                <Button variant="secondary">Cancel</Button>
-              </DrawerClose>
-            </>
-          )}
-        </DrawerFooter>
-      </MobileDrawerContent>
-    </Drawer>
+          </div>
+        </DialogContent>
+      </form>
+    </Dialog>
   );
 };

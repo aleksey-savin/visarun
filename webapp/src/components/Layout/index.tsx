@@ -1,12 +1,12 @@
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/AppSidebar';
+import { AppSidebar } from '@/components/Layout/AppSidebar';
 
 import { Outlet } from 'react-router-dom';
 
 import { useAuth } from '@/lib/auth';
 import { useState, useEffect } from 'react';
 import { ForcedPasswordChange } from '@/components/ChangePassword/forced-password-change';
-import { PageHeader } from '@/components/PageHeader';
+import { PageHeader } from '@/components/Layout/PageHeader';
 
 export default function Layout() {
   const { isPasswordChangeRequired, passwordChangeCompleted } = useAuth();

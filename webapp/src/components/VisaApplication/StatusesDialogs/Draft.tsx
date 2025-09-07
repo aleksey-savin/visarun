@@ -1,25 +1,14 @@
 import ClientCard from '@/components/VisaApplication/ClientCard';
 import { Button } from '@/components/ui/button';
-import { useMobile } from '@/hooks/use-mobile';
 
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-
-import {
-  Drawer,
-  DrawerClose,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
-
-import { MobileDrawerContent } from '@/components/ui/mobile-drawer-content';
 
 import { Separator } from '@/components/ui/separator';
 
@@ -29,7 +18,6 @@ import { getEditOrderRoute } from '@/lib/routes';
 
 export const DraftStatusDialog = ({ application }: { application: any }) => {
   const navigate = useNavigate();
-  const isMobile = useMobile();
 
   const status = {
     variant: 'default' as const,
@@ -58,48 +46,29 @@ export const DraftStatusDialog = ({ application }: { application: any }) => {
     </div>
   );
 
-  if (!isMobile) {
-    return (
-      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
-          <Button variant={status.variant} className={status.className}>
-            {status.icon} {status.text}
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[825px] bg-secondary gap-6">
-          <DialogHeader>
-            <DialogTitle>Draft</DialogTitle>
-          </DialogHeader>
-          <DraftContent />
-          <div className="flex justify-end">
-            <Button onClick={handleEditOrderClick}>Edit order</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
-    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
-      <DrawerTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
         <Button variant={status.variant} className={status.className}>
           {status.icon} {status.text}
         </Button>
-      </DrawerTrigger>
-      <MobileDrawerContent>
-        <DrawerHeader className="text-left shrink-0">
-          <DrawerTitle>Draft</DrawerTitle>
-        </DrawerHeader>
-        <div className="flex-1 overflow-y-auto">
-          <DraftContent className="px-4" />
+      </DialogTrigger>
+      <DialogContent className="max-h-[100dvh] w-full max-w-full sm:max-w-[825px] bg-secondary gap-2 sm:gap-6 flex flex-col overflow-hidden p-2 sm:p-6">
+        <DialogHeader>
+          <DialogTitle>Draft</DialogTitle>
+          <DialogDescription>Review and edit this draft visa application</DialogDescription>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto flex justify-center">
+          <div className="w-full max-w-2xl">
+            <DraftContent />
+          </div>
         </div>
-        <DrawerFooter className="pt-4 shrink-0">
-          <Button onClick={handleEditOrderClick}>Edit order</Button>
-          <DrawerClose asChild>
-            <Button variant="secondary">Cancel</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </MobileDrawerContent>
-    </Drawer>
+        <div className="flex justify-center sm:justify-end flex-shrink-0 p-2 sm:p-4">
+          <Button onClick={handleEditOrderClick} className="w-full sm:w-auto">
+            Edit order
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

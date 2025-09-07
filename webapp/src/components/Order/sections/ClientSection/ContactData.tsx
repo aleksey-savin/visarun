@@ -287,7 +287,9 @@ const ContactData = () => {
 
   return (
     <div>
-      <Label className="text-sm mb-2">Contact</Label>
+      <Label className="text-sm mb-2">
+        Contact<span className="text-red-500">*</span>
+      </Label>
       <div className="flex gap-4">
         <Form {...form}>
           <FormField
@@ -295,7 +297,7 @@ const ContactData = () => {
             control={form.control}
             render={({ field }) => (
               <FormItem>
-                <FormControl className="min-w-52">
+                <FormControl className="md:min-w-52">
                   <Select
                     defaultValue={field.value}
                     key={`contact-method-${field.value}`}
@@ -303,7 +305,7 @@ const ContactData = () => {
                     onValueChange={handleContactMethodUpdate}
                     name="contactMethodId"
                   >
-                    <SelectTrigger className="min-w-52">
+                    <SelectTrigger className="md:min-w-52">
                       <SelectValue placeholder="Select contact method" />
                     </SelectTrigger>
                     <SelectContent>
@@ -358,10 +360,6 @@ const ContactData = () => {
                       {...field}
                       onBlur={handleContactValueUpdate}
                     />
-
-                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 pointer-events-none">
-                      *
-                    </span>
                   </div>
                 </FormControl>
                 <FormMessage />

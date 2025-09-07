@@ -253,7 +253,7 @@ export default function RoleForm({
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4">
             <Card className="bg-secondary p-6">
@@ -280,7 +280,7 @@ export default function RoleForm({
   }
 
   return (
-    <div className="p-6">
+    <div className="p-2 md:p-6">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Basic Info Sidebar */}
         <div className="lg:col-span-4">
@@ -385,7 +385,7 @@ export default function RoleForm({
 
         {/* Main Permissions Area */}
         <div className="lg:col-span-8">
-          <Card className="bg-secondary mr-2.5 p-6 mb-2.5">
+          <Card className="bg-secondary md:mr-2.5 md:p-6 p-2 mb-2.5">
             <CardContent className="px-0 pt-0">
               <div className="flex items-center gap-2 mb-6">
                 <Shield className="h-6 w-6 text-primary" />
@@ -471,14 +471,14 @@ export default function RoleForm({
                         ).length;
 
                         return (
-                          <Card key={category} className="border-2 transition-all">
+                          <Card key={category} className="border-2 transition-all p-2">
                             {/* Category Header */}
                             <CardHeader
                               className="cursor-pointer hover:bg-accent/50 transition-colors"
                               onClick={() => toggleCategory(category)}
                             >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
+                              <div className="flex flex-wrap gap-3 md:gap-0 items-center justify-between">
+                                <div className="flex flex-wrap items-center gap-3">
                                   {isExpanded ? (
                                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                   ) : (

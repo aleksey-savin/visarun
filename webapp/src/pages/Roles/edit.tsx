@@ -7,7 +7,7 @@ import { getAllRolesRoute } from '@/lib/routes';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import RoleForm from '@/components/roles/RoleForm';
+import RoleForm from '@/components/Roles/RoleForm';
 
 export default function EditRolePage() {
   const { id } = useParams<{ id: string }>();
@@ -131,7 +131,7 @@ export default function EditRolePage() {
   return (
     <>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b flex px-6 justify-between gap-2 items-center h-[45px]">
+      <div className="sticky top-0 z-10 bg-background border-b flex md:px-6 px-2 justify-between gap-2 items-center h-[45px]">
         <div className="flex gap-3 items-center text-sm min-h-[45px]">
           <Shield className="h-4 w-4" />
           <span className="font-medium">

@@ -39,7 +39,7 @@ const AddClientCard = () => {
   };
 
   return (
-    <Card className=" bg-secondary mr-2.5 p-6 my-2.5">
+    <Card className=" bg-secondary mx-2 md:ml-0 md:mr-2.5 p-6 my-2.5">
       <div className="flex justify-between items-center ">
         <span>Linked Client</span>
         <Button variant="secondary" onClick={handleAddClient}>

@@ -190,11 +190,17 @@ const ClientCard = ({
             {clientOrderItemsWithPrice.length > 0 && (
               <>
                 {clientVisaApplications.map(application => (
-                  <div key={`${application.id}-visa-data`} className="flex items-center">
-                    <Badge variant="accent" className="rounded-r-none">
+                  <div
+                    key={`${application.id}-visa-data`}
+                    className="flex flex-col md:flex-row items-center"
+                  >
+                    <Badge variant="accent" className="rounded-b-none md:rounded-r-none">
                       Visa - {application.country.name} - {application.visaType.name}
                     </Badge>
-                    <Badge variant="secondary" className="rounded-l-none">
+                    <Badge
+                      variant="secondary"
+                      className="rounded-t-none md:rounded-l-none w-full md:w-auto"
+                    >
                       {application.plannedCountryEntryDate?.toLocaleDateString()} -{' '}
                       {application.plannedCountryEntryDate?.toLocaleTimeString([], {
                         hour: '2-digit',

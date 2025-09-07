@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { getAllSeatClassesRoute } from '@/lib/routes';
-import FormPageLayout from '@/components/Forms/FormPageLayout';
+import FormPageLayout from '@/components/Layout/Form';
 import SeatClassForm, { SeatClassFormData } from '@/components/SeatClass/Form';
 
 export default function EditSeatClassPage() {
