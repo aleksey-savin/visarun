@@ -578,7 +578,7 @@ const Payment = () => {
       </div>
       <div className="flex flex-col gap-3">
         <Label>Payment Order</Label>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-3 md:gap-2">
           <Select
             value={selectedCurrencyId || vndCurrency?.id || ''}
             onValueChange={handleCurrencyChange}
