@@ -297,6 +297,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                               onChange={e =>
                                 handleClientInputChange('clientRubles', e.target.value)
                               }
+                              inputMode="numeric"
                               className={cn(
                                 direction === 'clientToUs' && field.value ? 'border-primary' : '',
                                 direction === 'usToClient' ? 'pr-10' : '',
@@ -351,6 +352,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                               placeholder="0"
                               value={field.value}
                               onChange={e => handleClientInputChange('clientDongs', e.target.value)}
+                              inputMode="numeric"
                               className={cn(
                                 direction === 'clientToUs' && field.value ? 'border-primary' : '',
                                 direction === 'usToClient' ? 'pr-10' : '',
@@ -405,6 +407,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                               placeholder="0"
                               value={field.value}
                               onChange={e => handleClientInputChange('clientUsdt', e.target.value)}
+                              inputMode="numeric"
                               className={cn(
                                 direction === 'clientToUs' && field.value ? 'border-primary' : '',
                                 direction === 'usToClient' ? 'pr-10' : '',
@@ -471,6 +474,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                               placeholder="0"
                               value={field.value}
                               onChange={e => handleOurInputChange('ourRubles', e.target.value)}
+                              inputMode="numeric"
                               className={cn(
                                 direction === 'usToClient' && field.value ? 'border-primary' : '',
                                 direction === 'clientToUs' ? 'pr-10' : '',
@@ -533,6 +537,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                               placeholder="0"
                               value={field.value}
                               onChange={e => handleOurInputChange('ourDongs', e.target.value)}
+                              inputMode="numeric"
                               className={cn(
                                 direction === 'usToClient' && field.value ? 'border-primary' : '',
                                 direction === 'clientToUs' ? 'pr-10' : '',
@@ -595,6 +600,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                               placeholder="0"
                               value={field.value}
                               onChange={e => handleOurInputChange('ourUsdt', e.target.value)}
+                              inputMode="numeric"
                               className={cn(
                                 direction === 'usToClient' && field.value ? 'border-primary' : '',
                                 direction === 'clientToUs' ? 'pr-10' : '',
@@ -683,6 +689,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                             placeholder="0"
                             value={field.value}
                             onChange={e => handleClientInputChange('clientRubles', e.target.value)}
+                            inputMode="numeric"
                             className={cn(
                               direction === 'clientToUs' && field.value ? 'border-primary' : '',
                               direction === 'usToClient' ? 'pr-12' : 'pr-10',
@@ -763,6 +770,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                             placeholder="0"
                             value={field.value}
                             onChange={e => handleClientInputChange('clientDongs', e.target.value)}
+                            inputMode="numeric"
                             className={cn(
                               direction === 'clientToUs' && field.value ? 'border-primary' : '',
                               direction === 'usToClient' ? 'pr-12' : 'pr-10',
@@ -843,6 +851,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                             placeholder="0"
                             value={field.value}
                             onChange={e => handleClientInputChange('clientUsdt', e.target.value)}
+                            inputMode="numeric"
                             className={cn(
                               direction === 'clientToUs' && field.value ? 'border-primary' : '',
                               direction === 'usToClient' ? 'pr-16' : 'pr-12',
@@ -929,6 +938,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                             placeholder="0"
                             value={field.value}
                             onChange={e => handleOurInputChange('ourRubles', e.target.value)}
+                            inputMode="numeric"
                             className={cn(
                               direction === 'usToClient' && field.value ? 'border-primary' : '',
                               direction === 'clientToUs' ? 'pr-12' : 'pr-10',
@@ -1025,6 +1035,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                             placeholder="0"
                             value={field.value}
                             onChange={e => handleOurInputChange('ourDongs', e.target.value)}
+                            inputMode="numeric"
                             className={cn(
                               direction === 'usToClient' && field.value ? 'border-primary' : '',
                               direction === 'clientToUs' ? 'pr-12' : 'pr-10',
@@ -1121,6 +1132,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                             placeholder="0"
                             value={field.value}
                             onChange={e => handleOurInputChange('ourUsdt', e.target.value)}
+                            inputMode="numeric"
                             className={cn(
                               direction === 'usToClient' && field.value ? 'border-primary' : '',
                               direction === 'clientToUs' ? 'pr-16' : 'pr-12',
