@@ -662,8 +662,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
                 className={cn('flex items-center', isKeyboardOpen ? 'gap-1' : 'gap-2')}
               >
                 <RefreshCw size={isKeyboardOpen ? 14 : 16} />
-                {!isKeyboardOpen && 'Reset'}
-                {isKeyboardOpen && '↻'}
+                Reset
               </Button>
             </div>
           </div>
