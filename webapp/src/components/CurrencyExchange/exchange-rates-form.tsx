@@ -494,8 +494,8 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                                 type="number"
                                 placeholder=""
                                 {...field}
-                                readOnly={!!exchangeRate}
-                                className={exchangeRate ? 'bg-muted cursor-not-allowed' : ''}
+                                readOnly={false}
+                                className=""
                               />
                             </FormControl>
                             <FormMessage />
@@ -516,8 +516,8 @@ export function ExchangeRatesForm({ onRatesUpdated, initialValues }: ExchangeRat
                                 type="number"
                                 placeholder=""
                                 {...field}
-                                readOnly={!!exchangeRate}
-                                className={exchangeRate ? 'bg-muted cursor-not-allowed' : ''}
+                                readOnly={false}
+                                className=""
                               />
                             </FormControl>
                             <FormMessage />

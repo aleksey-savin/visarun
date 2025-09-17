@@ -125,7 +125,7 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
     toCurrency: string,
     toAmount: string
   ) => {
-    const offerText = `Обмен: за ваши ${formatCurrency(parseFloat(fromAmount.replace(/\s+/g, '').replace(/,/g, '.')), fromCurrency)} с нас будет ${formatCurrency(parseFloat(toAmount.replace(/\s+/g, '').replace(/,/g, '.')), toCurrency)}.`;
+    const offerText = `Обмен: за ваши ${formatCurrency(parseFloat(fromAmount.replace(/\s+/g, '').replace(/,/g, '.')), fromCurrency)} с нас будет ${formatCurrency(parseFloat(toAmount.replace(/\s+/g, '').replace(/,/g, '.')), toCurrency)} (никогда не переводите на старые реквизиты без согласования! Будьте очень внимательны, отправляйте только в тот банк, который указан в реквизитах).`;
     try {
       await navigator.clipboard.writeText(offerText);
     } catch (err) {
