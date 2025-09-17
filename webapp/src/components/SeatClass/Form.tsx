@@ -11,8 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Save } from 'lucide-react';
-import { TRANSPORT_SEAT_ICONS, getIconPath } from '@/utils/icons';
+import { Save, Armchair } from 'lucide-react';
+import { IconDisplay } from '@/components/ui/icon-display';
+import { TRANSPORT_SEAT_ICONS, getIconDisplayName } from '@/utils/icons';
 
 export interface SeatClassFormData {
   name: string;
@@ -118,14 +119,14 @@ export default function SeatClassForm({
                 <SelectValue placeholder="Select seat class icon (optional)">
                   {formData.icon && formData.icon !== 'none' ? (
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center justify-center h-6 w-6">
-                        <img
-                          src={getIconPath('transport-seat', formData.icon)}
-                          alt={formData.icon}
-                          className="h-5 w-5"
-                        />
-                      </div>
-                      <span className="capitalize">{formData.icon.replace('-', ' ')}</span>
+                      <IconDisplay
+                        iconFilename={formData.icon}
+                        iconType="transport-seat"
+                        alt={formData.icon}
+                        size="sm"
+                        fallback={<Armchair className="h-4 w-4 text-muted-foreground" />}
+                      />
+                      <span className="capitalize">{getIconDisplayName(formData.icon)}</span>
                     </div>
                   ) : (
                     <span className="text-muted-foreground">Select seat class icon (optional)</span>
@@ -144,10 +145,14 @@ export default function SeatClassForm({
                 {TRANSPORT_SEAT_ICONS.map(icon => (
                   <SelectItem key={icon.value} value={icon.value}>
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center justify-center h-6 w-6">
-                        <img src={icon.path} alt={icon.value} className="h-5 w-5" />
-                      </div>
-                      <span className="capitalize">{icon.value.replace('-', ' ')}</span>
+                      <IconDisplay
+                        iconFilename={icon.value}
+                        iconType="transport-seat"
+                        alt={icon.value}
+                        size="sm"
+                        fallback={<Armchair className="h-4 w-4 text-muted-foreground" />}
+                      />
+                      <span className="capitalize">{getIconDisplayName(icon.value)}</span>
                     </div>
                   </SelectItem>
                 ))}

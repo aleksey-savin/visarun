@@ -38,7 +38,7 @@ const FormPageLayout = ({ title, onBack, breadcrumbs, children }: FormPageLayout
       ) : (
         title &&
         onBack && (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 px-6">
             <Button variant="ghost" size="sm" onClick={onBack}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back

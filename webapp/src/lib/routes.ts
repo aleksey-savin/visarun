@@ -204,3 +204,15 @@ export const viewSeatClassRouteParams = getRouteParams({ id: true });
 export type ViewSeatClassRouteParams = typeof viewSeatClassRouteParams;
 export const getViewSeatClassRoute = ({ id }: ViewSeatClassRouteParams) =>
   `/seat-classes/view/${id}`;
+
+// VisarunSchedule routes
+export const getAllVisarunSchedulesRoute = () => '/visarun-schedules';
+export const getCreateVisarunScheduleRoute = () => '/visarun-schedules/create';
+export const editVisarunScheduleRouteParams = getRouteParams({ id: true });
+export type EditVisarunScheduleRouteParams = typeof editVisarunScheduleRouteParams;
+export const getEditVisarunScheduleRoute = ({ id }: EditVisarunScheduleRouteParams) =>
+  `/visarun-schedules/${id}/edit`;
+export const viewVisarunScheduleRouteParams = getRouteParams({ id: true });
+export type ViewVisarunScheduleRouteParams = typeof viewVisarunScheduleRouteParams;
+export const getViewVisarunScheduleRoute = ({ id }: ViewVisarunScheduleRouteParams) =>
+  `/visarun-schedules/${id}/view`;

@@ -95,6 +95,11 @@ import ViewOrderPage from './pages/Order/view.js';
 import AllVisaApplicationsPage from './pages/VisaApplications/getAll.js';
 import ViewVisaApplicationPage from './pages/VisaApplications/view.js';
 
+// VisarunSchedule pages
+import AllVisarunSchedulesPage from './pages/VisarunSchedules/index.js';
+import CreateVisarunSchedulePage from './pages/VisarunSchedules/create.js';
+import EditVisarunSchedulePage from './pages/VisarunSchedules/edit.js';
+
 import {
   getAllUsersRoute,
   getCurrencyExchangeRoute,
@@ -146,7 +151,6 @@ import {
   getCreateVisaTypeRoute,
   editTransportTypeRouteParams,
   editTransportRouteParams,
-  editSeatClassRouteParams,
   // Transport Types routes
   getAllTransportTypesRoute,
   getCreateTransportTypeRoute,
@@ -159,9 +163,15 @@ import {
   getAllSeatClassesRoute,
   getCreateSeatClassRoute,
   getEditSeatClassRoute,
+  editSeatClassRouteParams,
   getEditVisaTypeRoute,
   editVisaTypeRouteParams,
   viewVisaTypeRouteParams,
+  // VisarunSchedule routes
+  getAllVisarunSchedulesRoute,
+  getCreateVisarunScheduleRoute,
+  getEditVisarunScheduleRoute,
+  editVisarunScheduleRouteParams,
   // Visa Citizenship Surcharges routes
   getAllVisaCitizenshipSurchargesRoute,
   getCreateVisaCitizenshipSurchargeRoute,
@@ -642,6 +652,32 @@ const App = () => {
                   element={
                     <PermissionRoute requiredPermission="seatClasses.update">
                       <EditSeatClassPage />
+                    </PermissionRoute>
+                  }
+                />
+
+                {/* VisarunSchedule Routes */}
+                <Route
+                  path={getAllVisarunSchedulesRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="visarunSchedules.read">
+                      <AllVisarunSchedulesPage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getCreateVisarunScheduleRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="visarunSchedules.create">
+                      <CreateVisarunSchedulePage />
+                    </PermissionRoute>
+                  }
+                />
+                <Route
+                  path={getEditVisarunScheduleRoute(editVisarunScheduleRouteParams)}
+                  element={
+                    <PermissionRoute requiredPermission="visarunSchedules.update">
+                      <EditVisarunSchedulePage />
                     </PermissionRoute>
                   }
                 />

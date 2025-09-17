@@ -633,11 +633,11 @@ model TransportSeatDistribution {
 }
 
 model VisarunRoute {
-  id   String @id @default(uuid())
-  name String
+  id   String  @id @default(uuid())
+  name String?
 
-  stamp   Boolean @default(false)
-  visarun Boolean @default(false)
+  stamp Boolean @default(false)
+  visa  Boolean @default(false)
 
   isActive        Boolean                 @default(true)
   createdAt       DateTime                @default(now())
@@ -701,7 +701,7 @@ model PickupLocation {
 model VisarunSchedule {
   id          String  @id @default(uuid())
   routeId     String
-  name        String
+  name        String?
   description String?
 
   daysOfWeek Json

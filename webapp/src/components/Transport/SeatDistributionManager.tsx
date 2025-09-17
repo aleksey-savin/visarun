@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Plus, X, Users, Settings, Trash2 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
+import { IconDisplay } from '@/components/ui/icon-display';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -291,9 +292,16 @@ export default function SeatDistributionManager({
                           {availableClasses.map(seatClass => (
                             <SelectItem key={seatClass.id} value={seatClass.id}>
                               <div className="flex items-center gap-2">
-                                {seatClass.icon && (
-                                  <span className="text-lg">{seatClass.icon}</span>
-                                )}
+                                <IconDisplay
+                                  iconFilename={seatClass.icon || undefined}
+                                  iconType="transport-seat"
+                                  className="w-4 h-4"
+                                  fallback={
+                                    <span className="w-4 h-4 flex items-center justify-center text-muted-foreground">
+                                      💺
+                                    </span>
+                                  }
+                                />
                                 <span>{seatClass.name}</span>
                                 {seatClass.description && (
                                   <span className="text-xs text-muted-foreground">

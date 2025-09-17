@@ -24,6 +24,7 @@ import {
   Calculator,
   Search,
   Cog,
+  Calendar,
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -70,6 +71,7 @@ import {
   getAllTransportTypesRoute,
   getAllTransportsRoute,
   getAllSeatClassesRoute,
+  getAllVisarunSchedulesRoute,
   getMessageTemplatesRoute,
   getAllAuditLogsRoute,
   getDashboardRoute,
@@ -187,9 +189,16 @@ export function AppSidebar() {
     hasPermission('seatClasses.update') ||
     hasPermission('seatClasses.delete');
 
+  // VisarunSchedule permissions
+  const canReadVisarunSchedules =
+    hasPermission('visarunSchedules.read') ||
+    hasPermission('visarunSchedules.create') ||
+    hasPermission('visarunSchedules.update') ||
+    hasPermission('visarunSchedules.delete');
+
   // Check if user has any transport management permissions
   const hasAnyTransportPermission =
-    canReadTransportTypes || canReadTransports || canReadSeatClasses;
+    canReadTransportTypes || canReadTransports || canReadSeatClasses || canReadVisarunSchedules;
 
   // Check if user has any admin permissions
   const hasAnyAdminPermission =
@@ -411,8 +420,12 @@ export function AppSidebar() {
                         </SidebarMenu>
                       </SidebarGroupContent>
                       {shouldShowSection(
-                        ['Visa Types', 'Visa Surcharges'],
-                        [canReadVisaTypes, canReadVisaCitizenshipSurcharges]
+                        ['Visa Types', 'Visa Surcharges', 'Visarun Schedules'],
+                        [
+                          canReadVisaTypes,
+                          canReadVisaCitizenshipSurcharges,
+                          canReadVisarunSchedules,
+                        ]
                       ) && <SidebarGroupLabel>Visa Management</SidebarGroupLabel>}
                       <SidebarGroupContent>
                         <SidebarMenu>
@@ -454,6 +467,32 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                               </SidebarMenuSubItem>
                             )}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                      {shouldShowSection(['Visarun Schedules'], [canReadVisarunSchedules]) && (
+                        <SidebarGroupLabel>Visarun Management</SidebarGroupLabel>
+                      )}
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {canReadVisarunSchedules && shouldShowMenuItem('Visarun Schedules') && (
+                            <SidebarMenuSubItem key="VisarunSchedules">
+                              <SidebarMenuButton
+                                asChild
+                                isActive={
+                                  location.pathname === getAllVisarunSchedulesRoute() ||
+                                  location.pathname.startsWith(`${getAllVisarunSchedulesRoute()}/`)
+                                }
+                              >
+                                <Link
+                                  to={getAllVisarunSchedulesRoute()}
+                                  onClick={handleMenuItemClick}
+                                >
+                                  <Calendar className="w-4 h-4" />
+                                  <span>Visarun Schedules</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuSubItem>
+                          )}
                         </SidebarMenu>
                       </SidebarGroupContent>
                       {shouldShowSection(

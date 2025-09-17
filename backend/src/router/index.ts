@@ -40,6 +40,12 @@ import { transportTypeRoutes } from './transportType/index.js';
 import { transportRoutes } from './transport/index.js';
 import { seatClassRoutes } from './seatClass/index.js';
 import { transportSeatDistributionRoutes } from './transportSeatDistribution/index.js';
+import { visarunRouteRoutes } from './visarunRoute/index.js';
+import { visarunRouteTransportRoutes } from './visarunRouteTransport/index.js';
+import { visarunRouteStopRoutes } from './visarunRouteStop/index.js';
+import { pickupLocationRoutes } from './pickupLocation/index.js';
+import { visarunScheduleRoutes } from './visarunSchedule/index.js';
+import { visarunSeatPriceRoutes } from './visarunSeatPrice/index.js';
 
 // Create the main router with all routes
 export const appRouter = trpc.router({
@@ -75,6 +81,12 @@ export const appRouter = trpc.router({
   transport: transportRoutes,
   seatClass: seatClassRoutes,
   transportSeatDistribution: transportSeatDistributionRoutes,
+  visarunRoute: visarunRouteRoutes,
+  visarunRouteTransport: visarunRouteTransportRoutes,
+  visarunRouteStop: visarunRouteStopRoutes,
+  pickupLocation: pickupLocationRoutes,
+  visarunSchedule: visarunScheduleRoutes,
+  visarunSeatPrice: visarunSeatPriceRoutes,
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,
   exchangeRates: exchangeRatesRoute,

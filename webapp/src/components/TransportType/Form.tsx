@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Save } from 'lucide-react';
-import { TRANSPORT_TYPE_ICONS, getIconPath } from '@/utils/icons';
+import { TRANSPORT_TYPE_ICONS, getIconPath, getIconDisplayName } from '@/utils/icons';
 
 export interface TransportTypeFormData {
   name: string;
@@ -111,7 +111,7 @@ export default function TransportTypeForm({
                           className="h-5 w-5"
                         />
                       </div>
-                      <span className="capitalize">{formData.icon}</span>
+                      <span className="capitalize">{getIconDisplayName(formData.icon)}</span>
                     </div>
                   ) : (
                     <span className="text-muted-foreground">
@@ -135,7 +135,7 @@ export default function TransportTypeForm({
                       <div className="flex items-center justify-center h-6 w-6">
                         <img src={icon.path} alt={icon.value} className="h-5 w-5" />
                       </div>
-                      <span className="capitalize">{icon.value.replace('-', ' ')}</span>
+                      <span className="capitalize">{getIconDisplayName(icon.value)}</span>
                     </div>
                   </SelectItem>
                 ))}

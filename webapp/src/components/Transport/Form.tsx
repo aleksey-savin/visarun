@@ -11,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Save } from 'lucide-react';
+import { Save, Truck } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
-import SeatDistributionManager from '@/components/Transport/SeatDistributionManager';
+import { IconDisplay } from '@/components/ui/icon-display';
 
 export interface TransportFormData {
   transportTypeId: string;
@@ -30,20 +30,15 @@ export interface TransportFormProps {
   onCancel: () => void;
   isSubmitting: boolean;
   title: string;
-  showSeatDistribution?: boolean;
-  onSeatDistributionUpdated?: () => void;
 }
 
 export default function TransportForm({
   initialData,
-  transportId,
   isEditing,
   onSubmit,
   onCancel,
   isSubmitting,
   title,
-  showSeatDistribution = false,
-  onSeatDistributionUpdated,
 }: TransportFormProps) {
   const [formData, setFormData] = useState<TransportFormData>({
     transportTypeId: '',
@@ -103,9 +98,6 @@ export default function TransportForm({
     }
   };
 
-  const shouldShowSeatDistribution =
-    showSeatDistribution && transportId && formData.seatCount && Number(formData.seatCount) > 0;
-
   return (
     <div className="space-y-6">
       <Card>
@@ -127,13 +119,13 @@ export default function TransportForm({
                   {transportTypes.map(transportType => (
                     <SelectItem key={transportType.id} value={transportType.id}>
                       <div className="flex items-center gap-2">
-                        {transportType.icon && (
-                          <img
-                            src={`/src/assets/transport-type-icons/${transportType.icon}.svg`}
-                            alt={transportType.name}
-                            className="h-4 w-4"
-                          />
-                        )}
+                        <IconDisplay
+                          iconFilename={transportType.icon || undefined}
+                          iconType="transport-type"
+                          alt={transportType.name}
+                          size="sm"
+                          fallback={<Truck className="h-4 w-4 text-muted-foreground" />}
+                        />
                         {transportType.name}
                       </div>
                     </SelectItem>
@@ -195,31 +187,6 @@ export default function TransportForm({
           </form>
         </CardContent>
       </Card>
-
-      {/* Seat Distribution Section */}
-      {shouldShowSeatDistribution && (
-        <SeatDistributionManager
-          transportId={transportId}
-          totalCapacity={Number(formData.seatCount) || 0}
-          onDistributionUpdated={onSeatDistributionUpdated}
-        />
-      )}
-
-      {/* Seat Distribution Placeholder for Create */}
-      {showSeatDistribution &&
-        !isEditing &&
-        formData.seatCount &&
-        Number(formData.seatCount) > 0 && (
-          <div className="p-6 border-2 border-dashed border-muted rounded-lg text-center">
-            <div className="text-muted-foreground">
-              <p className="font-medium">Seat Distribution</p>
-              <p className="text-sm mt-1">
-                After creating the transport with {formData.seatCount} seats, you'll be able to
-                distribute them across different seat classes.
-              </p>
-            </div>
-          </div>
-        )}
     </div>
   );
 }

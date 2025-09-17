@@ -342,6 +342,102 @@ export const seatClassReadProcedure = baseProcedure.use(requirePermission('seatC
 export const seatClassUpdateProcedure = baseProcedure.use(requirePermission('seatClasses.update'));
 export const seatClassDeleteProcedure = baseProcedure.use(requirePermission('seatClasses.delete'));
 
+// TransportSeatDistribution management procedures
+export const transportSeatDistributionCreateProcedure = baseProcedure.use(
+  requirePermission('transportSeatDistributions.create')
+);
+export const transportSeatDistributionReadProcedure = baseProcedure.use(
+  requirePermission('transportSeatDistributions.read')
+);
+export const transportSeatDistributionUpdateProcedure = baseProcedure.use(
+  requirePermission('transportSeatDistributions.update')
+);
+export const transportSeatDistributionDeleteProcedure = baseProcedure.use(
+  requirePermission('transportSeatDistributions.delete')
+);
+
+// VisarunRoute management procedures
+export const visarunRouteCreateProcedure = baseProcedure.use(
+  requirePermission('visarunRoutes.create')
+);
+export const visarunRouteReadProcedure = baseProcedure.use(requirePermission('visarunRoutes.read'));
+export const visarunRouteUpdateProcedure = baseProcedure.use(
+  requirePermission('visarunRoutes.update')
+);
+export const visarunRouteDeleteProcedure = baseProcedure.use(
+  requirePermission('visarunRoutes.delete')
+);
+
+// VisarunRouteTransport management procedures
+export const visarunRouteTransportCreateProcedure = baseProcedure.use(
+  requirePermission('visarunRouteTransports.create')
+);
+export const visarunRouteTransportReadProcedure = baseProcedure.use(
+  requirePermission('visarunRouteTransports.read')
+);
+export const visarunRouteTransportUpdateProcedure = baseProcedure.use(
+  requirePermission('visarunRouteTransports.update')
+);
+export const visarunRouteTransportDeleteProcedure = baseProcedure.use(
+  requirePermission('visarunRouteTransports.delete')
+);
+
+// VisarunRouteStop management procedures
+export const visarunRouteStopCreateProcedure = baseProcedure.use(
+  requirePermission('visarunRouteStops.create')
+);
+export const visarunRouteStopReadProcedure = baseProcedure.use(
+  requirePermission('visarunRouteStops.read')
+);
+export const visarunRouteStopUpdateProcedure = baseProcedure.use(
+  requirePermission('visarunRouteStops.update')
+);
+export const visarunRouteStopDeleteProcedure = baseProcedure.use(
+  requirePermission('visarunRouteStops.delete')
+);
+
+// PickupLocation management procedures
+export const pickupLocationCreateProcedure = baseProcedure.use(
+  requirePermission('pickupLocations.create')
+);
+export const pickupLocationReadProcedure = baseProcedure.use(
+  requirePermission('pickupLocations.read')
+);
+export const pickupLocationUpdateProcedure = baseProcedure.use(
+  requirePermission('pickupLocations.update')
+);
+export const pickupLocationDeleteProcedure = baseProcedure.use(
+  requirePermission('pickupLocations.delete')
+);
+
+// VisarunSchedule management procedures
+export const visarunScheduleCreateProcedure = baseProcedure.use(
+  requirePermission('visarunSchedules.create')
+);
+export const visarunScheduleReadProcedure = baseProcedure.use(
+  requirePermission('visarunSchedules.read')
+);
+export const visarunScheduleUpdateProcedure = baseProcedure.use(
+  requirePermission('visarunSchedules.update')
+);
+export const visarunScheduleDeleteProcedure = baseProcedure.use(
+  requirePermission('visarunSchedules.delete')
+);
+
+// VisarunSeatPrice management procedures
+export const visarunSeatPriceCreateProcedure = baseProcedure.use(
+  requirePermission('visarunSeatPrices.create')
+);
+export const visarunSeatPriceReadProcedure = baseProcedure.use(
+  requirePermission('visarunSeatPrices.read')
+);
+export const visarunSeatPriceUpdateProcedure = baseProcedure.use(
+  requirePermission('visarunSeatPrices.update')
+);
+export const visarunSeatPriceDeleteProcedure = baseProcedure.use(
+  requirePermission('visarunSeatPrices.delete')
+);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

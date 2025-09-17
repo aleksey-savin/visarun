@@ -21,8 +21,9 @@ import {
 } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { AlertTriangle, Edit, Search, Trash2, X, Users } from 'lucide-react';
+import { AlertTriangle, Edit, Search, Trash2, X, Users, Truck, Settings } from 'lucide-react';
 import { getEditTransportRoute } from '@/lib/routes';
+import { IconDisplay } from '@/components/ui/icon-display';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -36,12 +37,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import SeatDistributionManager from '@/components/Transport/SeatDistributionManager';
 
 export default function TransportsPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [transportTypeFilter, setTransportTypeFilter] = useState<string>('ALL');
+  const [selectedTransportForSeats, setSelectedTransportForSeats] = useState<string | null>(null);
+  const [seatDialogOpen, setSeatDialogOpen] = useState(false);
 
   // Debounce search term
   useEffect(() => {
@@ -69,7 +80,6 @@ export default function TransportsPage() {
 
   const deleteTransportMutation = trpc.transport.delete.useMutation({
     onSuccess: () => {
-      toast.success('Transport deleted successfully');
       refetch();
     },
     onError: error => {
@@ -161,6 +171,7 @@ export default function TransportsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted hover:bg-gray-800/50">
+                      <TableHead className="w-16">Icon</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Description</TableHead>
@@ -172,6 +183,15 @@ export default function TransportsPage() {
                   <TableBody>
                     {transports.map(transport => (
                       <TableRow key={transport.id} className="hover:bg-muted/50">
+                        <TableCell className="w-16">
+                          <IconDisplay
+                            iconFilename={transport.transportType?.icon || undefined}
+                            iconType="transport-type"
+                            alt={transport.transportType?.name}
+                            size="md"
+                            fallback={<Truck className="h-6 w-6 text-muted-foreground" />}
+                          />
+                        </TableCell>
                         <TableCell>
                           <Link
                             to={getEditTransportRoute({ id: transport.id })}
@@ -189,23 +209,35 @@ export default function TransportsPage() {
                         <TableCell>{transport.seatCount || 'N/A'}</TableCell>
                         <TableCell>
                           {transport.seatCount ? (
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2 text-sm">
-                                <Users className="w-3 h-3" />
-                                <span>
-                                  {transport.seatDistributionSummary?.totalAllocatedSeats || 0} /{' '}
-                                  {transport.seatDistributionSummary?.totalCapacity || 0}
-                                </span>
-                                {transport.seatDistributionSummary?.hasDistribution && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    Configured
-                                  </Badge>
-                                )}
-                              </div>
-                              {transport.seatDistributionSummary?.remainingSeats !== undefined && (
-                                <div className="text-xs text-muted-foreground">
-                                  {transport.seatDistributionSummary.remainingSeats} remaining
+                            <div className="space-y-1">
+                              {transport.seatDistribution &&
+                              transport.seatDistribution.length > 0 ? (
+                                <div className="space-y-1">
+                                  {transport.seatDistribution.map(dist => (
+                                    <div key={dist.id} className="flex items-center gap-1 text-sm">
+                                      <IconDisplay
+                                        iconFilename={dist.seatClass?.icon || undefined}
+                                        iconType="transport-seat"
+                                        className="w-3 h-3"
+                                        fallback={<span className="w-3 h-3 text-xs">💺</span>}
+                                      />
+                                      <span className="text-xs">
+                                        {dist.seatClass?.name}: {dist.seatCount}
+                                      </span>
+                                    </div>
+                                  ))}
+                                  <div className="flex items-center gap-2 text-sm pt-1 border-t">
+                                    <Users className="w-3 h-3" />
+                                    <span>
+                                      {transport.seatDistributionSummary?.totalAllocatedSeats || 0}{' '}
+                                      / {transport.seatDistributionSummary?.totalCapacity || 0}
+                                    </span>
+                                  </div>
                                 </div>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">
+                                  Not configured
+                                </span>
                               )}
                             </div>
                           ) : (
@@ -214,6 +246,17 @@ export default function TransportsPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              onClick={() => {
+                                setSelectedTransportForSeats(transport.id);
+                                setSeatDialogOpen(true);
+                              }}
+                            >
+                              <Settings className="w-4 h-4 mr-2" />
+                              Seats
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -266,7 +309,16 @@ export default function TransportsPage() {
                         className="hover:underline flex-1"
                       >
                         <CardTitle className="text-base">
-                          <span className="font-medium text-foreground">{transport.name}</span>
+                          <div className="flex items-center space-x-3">
+                            <IconDisplay
+                              iconFilename={transport.transportType?.icon || undefined}
+                              iconType="transport-type"
+                              alt={transport.transportType?.name}
+                              size="md"
+                              fallback={<Truck className="h-6 w-6 text-muted-foreground" />}
+                            />
+                            <span className="font-medium text-foreground">{transport.name}</span>
+                          </div>
                         </CardTitle>
                       </Link>
                       <Badge variant="outline" className="text-xs">
@@ -287,40 +339,65 @@ export default function TransportsPage() {
                         <div className="flex justify-between items-start">
                           <span className="text-sm text-muted-foreground">Seat Distribution:</span>
                           <div className="text-right">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Users className="w-3 h-3" />
-                              <span>
-                                {transport.seatDistributionSummary?.totalAllocatedSeats || 0} /{' '}
-                                {transport.seatDistributionSummary?.totalCapacity || 0}
-                              </span>
-                            </div>
-                            {transport.seatDistributionSummary?.hasDistribution && (
-                              <Badge variant="secondary" className="text-xs mt-1">
-                                Configured
-                              </Badge>
-                            )}
-                            {transport.seatDistributionSummary?.remainingSeats !== undefined && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {transport.seatDistributionSummary.remainingSeats} remaining
+                            {transport.seatDistribution && transport.seatDistribution.length > 0 ? (
+                              <div className="space-y-1">
+                                {transport.seatDistribution.map(dist => (
+                                  <div key={dist.id} className="flex items-center gap-1 text-sm">
+                                    <IconDisplay
+                                      iconFilename={dist.seatClass?.icon || undefined}
+                                      iconType="transport-seat"
+                                      className="w-3 h-3"
+                                      fallback={<span className="w-3 h-3 text-xs">💺</span>}
+                                    />
+                                    <span className="text-xs text-muted-foreground">
+                                      {dist.seatClass?.name}: {dist.seatCount}
+                                    </span>
+                                  </div>
+                                ))}
+                                <div className="flex items-center gap-2 text-sm mt-2">
+                                  <Users className="w-3 h-3" />
+                                  <span>
+                                    {transport.seatDistributionSummary?.totalAllocatedSeats || 0} /{' '}
+                                    {transport.seatDistributionSummary?.totalCapacity || 0}
+                                  </span>
+                                </div>
+                                {transport.seatDistributionSummary?.remainingSeats !==
+                                  undefined && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {transport.seatDistributionSummary.remainingSeats} remaining
+                                  </div>
+                                )}
                               </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Not configured</span>
                             )}
                           </div>
                         </div>
                       )}
                       <div className="flex items-center justify-end gap-2 pt-2 border-t">
                         <Button
-                          variant="ghost"
                           size="sm"
-                          onClick={() => navigate(getEditTransportRoute({ id: transport.id }))}
-                          className="flex items-center gap-1"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedTransportForSeats(transport.id);
+                            setSeatDialogOpen(true);
+                          }}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Settings className="w-4 h-4 mr-2" />
+                          Seats
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => navigate(getEditTransportRoute({ id: transport.id }))}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                              <Trash2 className="h-4 w-4" />
+                            <Button size="sm" variant="destructive">
+                              <Trash2 className="w-4 h-4 mr-2" />
                               Delete
                             </Button>
                           </AlertDialogTrigger>
@@ -328,8 +405,8 @@ export default function TransportsPage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Transport</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete "{transport.name}"? This action
-                                cannot be undone.
+                                Are you sure you want to delete this transport? This action cannot
+                                be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -352,6 +429,32 @@ export default function TransportsPage() {
           </>
         )}
       </div>
+
+      {/* Seat Distribution Dialog */}
+      <Dialog open={seatDialogOpen} onOpenChange={setSeatDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Seat Distribution Management</DialogTitle>
+            <DialogDescription>
+              Configure how seats are distributed across different seat classes for this transport.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTransportForSeats && (
+            <SeatDistributionManager
+              transportId={selectedTransportForSeats}
+              totalCapacity={
+                transportsData?.transports.find(t => t.id === selectedTransportForSeats)
+                  ?.seatCount || 0
+              }
+              onDistributionUpdated={() => {
+                refetch();
+                setSeatDialogOpen(false);
+                setSelectedTransportForSeats(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -24,6 +24,7 @@ import {
   ShoppingCart,
   Menu,
   FileSearch,
+  CalendarCheck,
 } from 'lucide-react';
 
 interface PageConfig {
@@ -161,6 +162,13 @@ const pageConfigs: Record<string, PageConfig> = {
     entity: 'visa-application',
     createRoute: '',
     showButton: false,
+  },
+  '/visarun-schedules': {
+    title: 'Visarun Schedules',
+    icon: <CalendarCheck />,
+    entity: 'visarun-schedule',
+    createRoute: '/visarun-schedules/create',
+    showButton: true,
   },
 };
 

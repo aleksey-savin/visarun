@@ -19,14 +19,8 @@ export default function EditTransportPage() {
   } = trpc.transport.getOne.useQuery({ id: id! }, { enabled: isEditing });
 
   const createMutation = trpc.transport.create.useMutation({
-    onSuccess: data => {
-      toast.success('Transport created successfully');
-      // Navigate to edit page to allow seat distribution configuration
-      if (data.transport?.id) {
-        navigate(`/transports/${data.transport.id}/edit`);
-      } else {
-        navigate(getAllTransportsRoute());
-      }
+    onSuccess: () => {
+      navigate(getAllTransportsRoute());
     },
     onError: error => {
       toast.error(`Error: ${error.message}`);
@@ -35,7 +29,6 @@ export default function EditTransportPage() {
 
   const editMutation = trpc.transport.edit.useMutation({
     onSuccess: () => {
-      toast.success('Transport updated successfully');
       refetchTransport();
     },
     onError: error => {
@@ -103,8 +96,6 @@ export default function EditTransportPage() {
         onCancel={handleCancel}
         isSubmitting={createMutation.isPending || editMutation.isPending}
         title={isEditing ? 'Edit Transport' : 'Create New Transport'}
-        showSeatDistribution={true}
-        onSeatDistributionUpdated={() => refetchTransport()}
       />
     </FormPageLayout>
   );
