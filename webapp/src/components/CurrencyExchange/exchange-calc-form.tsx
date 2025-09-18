@@ -44,6 +44,7 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const FormSchema = z.object({
   clientRubles: z.string().optional(),
@@ -128,8 +129,10 @@ export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps)
     const offerText = `Обмен: за ваши ${formatCurrency(parseFloat(fromAmount.replace(/\s+/g, '').replace(/,/g, '.')), fromCurrency)} с нас будет ${formatCurrency(parseFloat(toAmount.replace(/\s+/g, '').replace(/,/g, '.')), toCurrency)} (никогда не переводите на старые реквизиты без согласования! Будьте очень внимательны, отправляйте только в тот банк, который указан в реквизитах).`;
     try {
       await navigator.clipboard.writeText(offerText);
+      toast.success('Message copied to clipboard');
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      console.error('Failed to copy message: ', err);
+      toast.error('Failed to copy to clipboard');
     }
   };
 
