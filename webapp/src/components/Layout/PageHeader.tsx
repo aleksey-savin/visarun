@@ -25,6 +25,7 @@ import {
   Menu,
   FileSearch,
   CalendarCheck,
+  ArrowRight,
 } from 'lucide-react';
 
 interface PageConfig {
@@ -227,6 +228,23 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
     return null;
   }
 
+  // Get path info for edit/view pages
+  const getPathInfo = () => {
+    const pathSegments = location.pathname.split('/');
+    if (pathSegments.length >= 3) {
+      const action = pathSegments[2]; // 'edit', 'view', 'create'
+
+      if (action === 'edit' || action === 'view' || action === 'create') {
+        return {
+          action: action.charAt(0).toUpperCase() + action.slice(1),
+        };
+      }
+    }
+    return null;
+  };
+
+  const pathInfo = getPathInfo();
+
   const handleButtonClick = () => {
     if (onButtonClick) {
       onButtonClick();
@@ -265,7 +283,25 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
             <Menu className="h-4 w-4" />
           </Button>
           {config.icon}
-          <span className="font-semibold">{config.title}</span>
+          {pathInfo ? (
+            <button
+              onClick={() => {
+                const basePath = location.pathname.split('/')[1];
+                navigate(`/${basePath}`);
+              }}
+              className="font-semibold hover:text-primary transition-colors cursor-pointer"
+            >
+              {config.title}
+            </button>
+          ) : (
+            <span className="font-semibold">{config.title}</span>
+          )}
+          {pathInfo && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <ArrowRight className="h-4 w-4" />
+              <span className="text-primary font-medium">{pathInfo.action}</span>
+            </div>
+          )}
         </div>
         {shouldShowButton && (
           <Button size="sm" onClick={handleButtonClick} className={`relative whitespace-nowrap `}>

@@ -30,19 +30,8 @@ const CreateCountryPage = () => {
     navigate(getAllCountriesRoute());
   };
 
-  const breadcrumbs = [
-    {
-      label: 'Countries',
-      onClick: () => navigate(getAllCountriesRoute()),
-    },
-    {
-      label: 'Create New Country',
-      onClick: () => {},
-    },
-  ];
-
   return (
-    <FormPageLayout breadcrumbs={breadcrumbs}>
+    <FormPageLayout>
       <CountryForm
         onSubmit={handleSubmit}
         onCancel={handleCancel}

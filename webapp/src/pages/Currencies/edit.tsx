@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Coins } from 'lucide-react';
+import { Coins } from 'lucide-react';
 import { toast } from 'sonner';
 
 const EditCurrencyPage = () => {
@@ -75,18 +75,6 @@ const EditCurrencyPage = () => {
 
   return (
     <div className="grid gap-6 p-6 pb-0">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/currencies')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Currencies
-        </Button>
-      </div>
-
       <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

@@ -57,19 +57,8 @@ const EditVisaCitizenshipSurchargePage = () => {
   };
 
   if (isLoading || !countriesData) {
-    const breadcrumbs = [
-      {
-        label: 'Visa Citizenship Surcharges',
-        onClick: () => navigate(getAllVisaCitizenshipSurchargesRoute()),
-      },
-      {
-        label: 'Loading...',
-        onClick: () => {},
-      },
-    ];
-
     return (
-      <FormPageLayout breadcrumbs={breadcrumbs}>
+      <FormPageLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
@@ -78,19 +67,8 @@ const EditVisaCitizenshipSurchargePage = () => {
   }
 
   if (isError) {
-    const breadcrumbs = [
-      {
-        label: 'Visa Citizenship Surcharges',
-        onClick: () => navigate(getAllVisaCitizenshipSurchargesRoute()),
-      },
-      {
-        label: 'Error',
-        onClick: () => {},
-      },
-    ];
-
     return (
-      <FormPageLayout breadcrumbs={breadcrumbs}>
+      <FormPageLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-lg text-red-600">Error: {error?.message}</div>
         </div>
@@ -99,19 +77,8 @@ const EditVisaCitizenshipSurchargePage = () => {
   }
 
   if (!surchargeData?.visaCitizenshipSurcharge) {
-    const breadcrumbs = [
-      {
-        label: 'Visa Citizenship Surcharges',
-        onClick: () => navigate(getAllVisaCitizenshipSurchargesRoute()),
-      },
-      {
-        label: 'Not Found',
-        onClick: () => {},
-      },
-    ];
-
     return (
-      <FormPageLayout breadcrumbs={breadcrumbs}>
+      <FormPageLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Visa citizenship surcharge not found</div>
         </div>
@@ -121,21 +88,8 @@ const EditVisaCitizenshipSurchargePage = () => {
 
   const surcharge = surchargeData.visaCitizenshipSurcharge;
 
-  const breadcrumbs = [
-    {
-      label: 'Visa Citizenship Surcharges',
-      onClick: () => navigate(getAllVisaCitizenshipSurchargesRoute()),
-    },
-    {
-      label: `Edit Surcharge`,
-      onClick: () => {},
-    },
-  ];
-
-  console.log(surcharge.citizenshipId);
-
   return (
-    <FormPageLayout breadcrumbs={breadcrumbs}>
+    <FormPageLayout>
       <VisaCitizenshipSurchargeForm
         initialData={{
           citizenshipId: surcharge.citizenshipId,

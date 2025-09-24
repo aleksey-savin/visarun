@@ -32,20 +32,9 @@ const CreateVisaTypePage = () => {
     navigate(getAllVisaTypesRoute());
   };
 
-  const breadcrumbs = [
-    {
-      label: 'Visa Types',
-      onClick: () => navigate(getAllVisaTypesRoute()),
-    },
-    {
-      label: 'Create New Visa Type',
-      onClick: () => {},
-    },
-  ];
-
   if (!countriesData) {
     return (
-      <FormPageLayout breadcrumbs={breadcrumbs}>
+      <FormPageLayout>
         <div className="flex justify-center items-center p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
@@ -54,7 +43,7 @@ const CreateVisaTypePage = () => {
   }
 
   return (
-    <FormPageLayout breadcrumbs={breadcrumbs}>
+    <FormPageLayout>
       <VisaTypeForm
         countries={countriesData.countries}
         onSubmit={handleSubmit}

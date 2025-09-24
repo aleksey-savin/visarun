@@ -170,7 +170,7 @@ export default function EditVisarunSchedulePage() {
     : undefined;
 
   return (
-    <FormPageLayout title="Edit Visarun Schedule" onBack={handleCancel}>
+    <FormPageLayout>
       <CombinedVisarunForm
         initialData={initialData}
         onSubmit={handleSubmit}

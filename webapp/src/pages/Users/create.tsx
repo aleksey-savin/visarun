@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { UserPlus, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { trpc } from '@/lib/trpcProvider';
 import { getAllUsersRoute } from '@/lib/routes';
 import { useState } from 'react';
@@ -88,11 +88,6 @@ const CreateUserPage = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-8">
-      <div className="flex items-center gap-3">
-        <UserPlus className="h-8 w-8 text-primary" />
-        <h1 className="text-4xl font-bold">Create New User</h1>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-card border rounded-lg p-6">

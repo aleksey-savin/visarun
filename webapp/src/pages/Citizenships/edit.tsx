@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Users, Save } from 'lucide-react';
+import { Users, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 const EditCitizenshipPage = () => {
@@ -99,18 +99,6 @@ const EditCitizenshipPage = () => {
 
   return (
     <>
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => navigate(getViewCitizenshipRoute({ id: id! }))}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Citizenship
-        </Button>
-        <div className="text-3xl sm:text-5xl font-semibold capitalize">Edit Citizenship</div>
-      </div>
-
       <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

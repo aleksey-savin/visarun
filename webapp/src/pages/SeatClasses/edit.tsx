@@ -86,10 +86,7 @@ export default function EditSeatClassPage() {
     : undefined;
 
   return (
-    <FormPageLayout
-      title={isEditing ? 'Edit Seat Class' : 'Create Seat Class'}
-      onBack={handleCancel}
-    >
+    <FormPageLayout>
       <SeatClassForm
         initialData={initialData}
         isEditing={isEditing}

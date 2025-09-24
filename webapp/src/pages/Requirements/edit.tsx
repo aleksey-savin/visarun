@@ -109,25 +109,6 @@ export default function EditRequirementPage() {
 
   return (
     <>
-      <div className="sticky top-0 z-10 bg-background border-b flex px-6 justify-between gap-2 items-center h-[45px]">
-        <div className="flex gap-3 items-center text-sm min-h-[45px]">
-          <FileText />
-          <div className="flex gap-2 items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(getAllRequirementsRoute())}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              All Requirements
-            </Button>
-            <span className="text-muted-foreground">/</span>
-            <span className="font-medium">Edit Requirement</span>
-          </div>
-        </div>
-      </div>
-
       <RequirementForm
         mode="edit"
         requirement={requirementData as any}

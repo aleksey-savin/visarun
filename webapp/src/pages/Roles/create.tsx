@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield } from 'lucide-react';
 
 import { trpc } from '@/lib/trpcProvider';
 import { getAllRolesRoute } from '@/lib/routes';
@@ -57,14 +56,6 @@ export default function CreateRolePage() {
 
   return (
     <>
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b flex px-6 justify-between gap-2 items-center h-[45px]">
-        <div className="flex gap-3 items-center text-sm min-h-[45px]">
-          <Shield className="h-4 w-4" />
-          <span className="font-medium">Create New Role</span>
-        </div>
-      </div>
-
       {/* Form */}
       <RoleForm
         mode="create"

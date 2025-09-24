@@ -108,7 +108,6 @@ export default function EditContactMethodPage() {
 
   return (
     <ContactMethodForm
-      title={`Edit Contact Method: ${contactMethod.name}`}
       initialData={{
         name: contactMethod.name,
         description: contactMethod.description || '',

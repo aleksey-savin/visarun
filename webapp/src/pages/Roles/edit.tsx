@@ -130,16 +130,6 @@ export default function EditRolePage() {
 
   return (
     <>
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b flex md:px-6 px-2 justify-between gap-2 items-center h-[45px]">
-        <div className="flex gap-3 items-center text-sm min-h-[45px]">
-          <Shield className="h-4 w-4" />
-          <span className="font-medium">
-            {isLoading ? 'Loading role...' : `Edit Role: ${roleData?.role?.name || ''}`}
-          </span>
-        </div>
-      </div>
-
       {/* Form */}
       <RoleForm
         mode="edit"

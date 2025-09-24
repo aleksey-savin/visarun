@@ -38,20 +38,9 @@ const CreateVisaCitizenshipSurchargePage = () => {
     navigate(getAllVisaCitizenshipSurchargesRoute());
   };
 
-  const breadcrumbs = [
-    {
-      label: 'Visa Citizenship Surcharges',
-      onClick: () => navigate(getAllVisaCitizenshipSurchargesRoute()),
-    },
-    {
-      label: 'Create New Surcharge',
-      onClick: () => {},
-    },
-  ];
-
   if (!countriesData) {
     return (
-      <FormPageLayout breadcrumbs={breadcrumbs}>
+      <FormPageLayout>
         <div className="flex justify-center items-center p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
@@ -60,7 +49,7 @@ const CreateVisaCitizenshipSurchargePage = () => {
   }
 
   return (
-    <FormPageLayout breadcrumbs={breadcrumbs}>
+    <FormPageLayout>
       <VisaCitizenshipSurchargeForm
         countries={countriesData.countries}
         onSubmit={handleSubmit}

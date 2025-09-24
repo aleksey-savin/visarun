@@ -49,19 +49,8 @@ const EditVisaTypePage = () => {
   };
 
   if (isLoading || !countriesData) {
-    const breadcrumbs = [
-      {
-        label: 'Visa Types',
-        onClick: () => navigate(getAllVisaTypesRoute()),
-      },
-      {
-        label: 'Loading...',
-        onClick: () => {},
-      },
-    ];
-
     return (
-      <FormPageLayout breadcrumbs={breadcrumbs}>
+      <FormPageLayout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
@@ -70,19 +59,8 @@ const EditVisaTypePage = () => {
   }
 
   if (!visaTypeData?.visaType) {
-    const breadcrumbs = [
-      {
-        label: 'Visa Types',
-        onClick: () => navigate(getAllVisaTypesRoute()),
-      },
-      {
-        label: 'Error',
-        onClick: () => {},
-      },
-    ];
-
     return (
-      <FormPageLayout breadcrumbs={breadcrumbs}>
+      <FormPageLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-lg text-red-600">Visa type not found</div>
         </div>
@@ -92,19 +70,8 @@ const EditVisaTypePage = () => {
 
   const visaType = visaTypeData.visaType;
 
-  const breadcrumbs = [
-    {
-      label: 'Visa Types',
-      onClick: () => navigate(getAllVisaTypesRoute()),
-    },
-    {
-      label: `Edit ${visaType.name}`,
-      onClick: () => {},
-    },
-  ];
-
   return (
-    <FormPageLayout breadcrumbs={breadcrumbs}>
+    <FormPageLayout>
       <VisaTypeForm
         initialData={{
           name: visaType.name,

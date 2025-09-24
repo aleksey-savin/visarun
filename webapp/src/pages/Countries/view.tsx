@@ -370,19 +370,6 @@ const ViewCountryPage = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-7xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="secondary" size="icon" onClick={() => navigate(getAllCountriesRoute())}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold tracking-tight">{country.name}</h1>
-          </div>
-          <p className="text-muted-foreground">Manage country settings and visa requirements</p>
-        </div>
-      </div>
-
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:w-fit">
           <TabsTrigger value="overview" className="gap-2">

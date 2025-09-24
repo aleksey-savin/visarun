@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Edit, Trash2, DollarSign, FileText, Globe, Flag } from 'lucide-react';
+import { Edit, Trash2, DollarSign, FileText, Globe, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 
@@ -53,18 +53,6 @@ const ViewVisaCitizenshipSurchargePage = () => {
   if (isLoading) {
     return (
       <div className="w-full max-w-7xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-3xl font-bold">Visa Citizenship Surcharge Details</h1>
-          </div>
-        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <Card>
@@ -97,18 +85,6 @@ const ViewVisaCitizenshipSurchargePage = () => {
   if (isError) {
     return (
       <div className="w-full max-w-7xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-3xl font-bold">Visa Citizenship Surcharge Details</h1>
-          </div>
-        </div>
         <Card className="border-red-200 bg-red-50">
           <CardHeader>
             <CardTitle className="text-red-700">Error Loading Surcharge</CardTitle>
@@ -124,18 +100,6 @@ const ViewVisaCitizenshipSurchargePage = () => {
   if (!data?.visaCitizenshipSurcharge) {
     return (
       <div className="w-full max-w-7xl mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-3xl font-bold">Visa Citizenship Surcharge Details</h1>
-          </div>
-        </div>
         <Card className="border-amber-200 bg-amber-50">
           <CardHeader>
             <CardTitle className="text-amber-700">Surcharge Not Found</CardTitle>
@@ -152,19 +116,6 @@ const ViewVisaCitizenshipSurchargePage = () => {
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => navigate(getAllVisaCitizenshipSurchargesRoute())}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold">Visa Citizenship Surcharge Details</h1>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">

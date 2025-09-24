@@ -84,10 +84,7 @@ export default function EditTransportTypePage() {
     : undefined;
 
   return (
-    <FormPageLayout
-      title={isEditing ? 'Edit Transport Type' : 'Create Transport Type'}
-      onBack={handleCancel}
-    >
+    <FormPageLayout>
       <TransportTypeForm
         initialData={initialData}
         isEditing={isEditing}

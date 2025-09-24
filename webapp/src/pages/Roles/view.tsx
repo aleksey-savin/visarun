@@ -5,17 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import {
-  ArrowLeft,
-  Edit,
-  Trash2,
-  Shield,
-  Users,
-  Lock,
-  CheckCircle,
-  AlertCircle,
-  Settings,
-} from 'lucide-react';
+import { Edit, Trash2, Users, Lock, CheckCircle, AlertCircle, Settings } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
@@ -80,17 +70,6 @@ const ViewRolePage = () => {
     setIsDeleteDialogOpen(false);
   };
 
-  const getRoleBadgeVariant = (roleName: string) => {
-    switch (roleName.toLowerCase()) {
-      case 'admin':
-        return 'destructive';
-      case 'manager':
-        return 'default';
-      default:
-        return 'secondary';
-    }
-  };
-
   const groupPermissionsByCategory = (permissions: Permission[]) => {
     return permissions.reduce(
       (acc, permission) => {
@@ -152,29 +131,12 @@ const ViewRolePage = () => {
   if (isError || !roleData) {
     return (
       <div className="container mx-auto p-6 max-w-7xl">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="secondary" size="icon" onClick={() => navigate(getAllRolesRoute())}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Role Details</h1>
-            <p className="text-muted-foreground">View and manage role information</p>
-          </div>
-        </div>
-
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {error?.message || `Role with ID ${id} could not be found.`}
           </AlertDescription>
         </Alert>
-
-        <div className="mt-6">
-          <Button variant="secondary" onClick={() => navigate(getAllRolesRoute())}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Roles
-          </Button>
-        </div>
       </div>
     );
   }
@@ -183,29 +145,6 @@ const ViewRolePage = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-7xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="secondary" size="icon" onClick={() => navigate(getAllRolesRoute())}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">Role Details</h1>
-          <p className="text-muted-foreground">View and manage role information</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={getRoleBadgeVariant(roleData.name)} className="h-6">
-            <Shield className="h-3 w-3 mr-1" />
-            {roleData.name.charAt(0).toUpperCase() + roleData.name.slice(1)}
-          </Badge>
-          {roleData.isSystem && (
-            <Badge variant="secondary" className="h-6">
-              <Lock className="h-3 w-3 mr-1" />
-              System Role
-            </Badge>
-          )}
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
@@ -317,7 +256,6 @@ const ViewRolePage = () => {
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Role
               </Button>
-
               {!roleData.isSystem ? (
                 <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                   <AlertDialogTrigger asChild>

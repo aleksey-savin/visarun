@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,8 +12,6 @@ import {
   CheckCircle,
   ToggleLeft,
   Users,
-  ArrowLeft,
-  Edit,
   ExternalLink,
   Flag,
   DollarSign,
@@ -23,10 +21,8 @@ import {
 } from 'lucide-react';
 
 import { useRequirement } from '@/hooks/useRequirements';
-import { getAllRequirementsRoute, getEditRequirementRoute } from '@/lib/routes';
 
 const ViewRequirementPage: React.FC = () => {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { data: requirement, isLoading, error } = useRequirement(id!);
 
@@ -148,16 +144,6 @@ const ViewRequirementPage: React.FC = () => {
   if (error) {
     return (
       <div className="container mx-auto py-8">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate(getAllRequirementsRoute())}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Requirements
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">View Requirement</h1>
-            <p className="text-muted-foreground">Requirement not found</p>
-          </div>
-        </div>
         <Card>
           <CardContent className="p-6">
             <div className="text-center text-red-600">
@@ -175,29 +161,6 @@ const ViewRequirementPage: React.FC = () => {
 
   return (
     <>
-      <div className="sticky top-0 z-10 bg-background border-b flex px-6 justify-between gap-2 items-center h-[45px]">
-        <div className="flex gap-3 items-center text-sm min-h-[45px]">
-          <FileText />
-          <div className="flex gap-2 items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(getAllRequirementsRoute())}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              All Requirements
-            </Button>
-            <span className="text-muted-foreground">/</span>
-            <span className="font-medium">{requirement.title}</span>
-          </div>
-        </div>
-        <Button onClick={() => navigate(getEditRequirementRoute({ id: requirement.id }))}>
-          <Edit className="w-4 h-4 mr-2" />
-          Edit
-        </Button>
-      </div>
-
       <div className="p-6 max-w-4xl mx-auto">
         <div className="space-y-6">
           {/* Basic Information */}

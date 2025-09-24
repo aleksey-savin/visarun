@@ -99,7 +99,7 @@ export default function CreateVisarunSchedulePage() {
   };
 
   return (
-    <FormPageLayout title="Create Visarun Schedule" onBack={handleCancel}>
+    <FormPageLayout>
       <CombinedVisarunForm onSubmit={handleSubmit} onCancel={handleCancel} mode="create" />
     </FormPageLayout>
   );

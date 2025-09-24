@@ -3,7 +3,7 @@ import { trpc } from '../../lib/trpcProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Coins, Edit, Trash2 } from 'lucide-react';
+import { Coins, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -63,16 +63,6 @@ const ViewCurrencyPage = () => {
   return (
     <div className="grid gap-6 p-6 pb-0">
       <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/currencies')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Currencies
-        </Button>
-
         <div className="flex items-center gap-2">
           <Button
             variant="secondary"

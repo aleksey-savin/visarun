@@ -21,7 +21,6 @@ interface ContactMethodFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   submitButtonText?: string;
-  title: string;
 }
 
 export function ContactMethodForm({
@@ -30,7 +29,6 @@ export function ContactMethodForm({
   onCancel,
   isSubmitting = false,
   submitButtonText = 'Save',
-  title,
 }: ContactMethodFormProps) {
   const form = useForm<ContactMethodFormData>({
     resolver: zodResolver(contactMethodSchema),
@@ -47,10 +45,6 @@ export function ContactMethodForm({
 
   return (
     <div className="container p-6 space-y-8">
-      <div className="flex items-center gap-3">
-        <h1 className="text-4xl font-bold">{title}</h1>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <Card className="bg-secondary">

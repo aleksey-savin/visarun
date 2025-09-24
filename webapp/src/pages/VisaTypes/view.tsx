@@ -147,47 +147,8 @@ const ViewVisaTypePage = () => {
     }
   };
 
-  const getEntryTypeBadge = () => {
-    return visaType.isMultientry ? (
-      <Badge variant="default" className="gap-1">
-        <RefreshCw className="h-3 w-3" />
-        Multi-entry
-      </Badge>
-    ) : (
-      <Badge variant="secondary" className="gap-1">
-        <ArrowLeft className="h-3 w-3" />
-        Single-entry
-      </Badge>
-    );
-  };
-
   return (
     <div className="container mx-auto p-6 max-w-7xl space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <Button variant="secondary" size="icon" onClick={() => navigate(getAllVisaTypesRoute())}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight">{visaType.name}</h1>
-            <div className="flex items-center gap-2 mt-2 text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>{visaType.country.name}</span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {getEntryTypeBadge()}
-          {visaType.isMultientry && visaType.multientryExtraCost && (
-            <Badge variant="secondary" className="gap-1">
-              <CreditCard className="h-3 w-3" />+
-              {formatCurrency(visaType.multientryExtraCost, 'USD')}
-            </Badge>
-          )}
-        </div>
-      </div>
-
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3 lg:w-fit">
           <TabsTrigger value="overview" className="gap-2">

@@ -43,7 +43,6 @@ export default function CreateContactMethodPage() {
 
   return (
     <ContactMethodForm
-      title="Create new contact method"
       onSubmit={handleSubmit}
       onCancel={handleCancel}
       isSubmitting={isSubmitting}

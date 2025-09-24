@@ -85,19 +85,8 @@ const EditCountryPage = () => {
   };
 
   if (isLoading) {
-    const breadcrumbs = [
-      {
-        label: 'Countries',
-        onClick: () => navigate(getAllCountriesRoute()),
-      },
-      {
-        label: 'Loading...',
-        onClick: () => {},
-      },
-    ];
-
     return (
-      <FormPageLayout breadcrumbs={breadcrumbs}>
+      <FormPageLayout>
         <div className="flex justify-center items-center p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
@@ -106,19 +95,8 @@ const EditCountryPage = () => {
   }
 
   if (isError || !data?.country) {
-    const breadcrumbs = [
-      {
-        label: 'Countries',
-        onClick: () => navigate(getAllCountriesRoute()),
-      },
-      {
-        label: 'Error',
-        onClick: () => {},
-      },
-    ];
-
     return (
-      <FormPageLayout breadcrumbs={breadcrumbs}>
+      <FormPageLayout>
         <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700">
           <h3 className="font-medium text-lg mb-2">Error Loading Country</h3>
           <p>{error?.message || 'Country not found'}</p>
@@ -135,19 +113,8 @@ const EditCountryPage = () => {
 
   const country = data.country;
 
-  const breadcrumbs = [
-    {
-      label: country.name,
-      onClick: () => navigate(getViewCountryRoute({ id: id! })),
-    },
-    {
-      label: 'Edit Country',
-      onClick: () => {},
-    },
-  ];
-
   return (
-    <FormPageLayout breadcrumbs={breadcrumbs}>
+    <FormPageLayout>
       <CountryForm
         initialData={{
           name: country.name,
