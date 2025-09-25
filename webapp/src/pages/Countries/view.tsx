@@ -406,7 +406,6 @@ const ViewCountryPage = () => {
                         Global Multi-entry Extra Cost
                       </label>
                       <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4" />
                         <span className="font-medium">
                           {formatCurrency(country.multivisaGlobalExtraCost)}
                         </span>
@@ -613,7 +612,7 @@ const ViewCountryPage = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2">
-                        <DollarSign className="h-5 w-5 text-amber-600" />
+                        <DollarSign className="h-5 w-5 text-warning" />
                         Surcharges
                       </CardTitle>
                       <CardDescription>Additional fees based on citizenship</CardDescription>
@@ -659,7 +658,6 @@ const ViewCountryPage = () => {
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <DollarSign className="h-4 w-4" />
                               <span className="font-medium">{surcharge.citizenship.name}</span>
                             </div>
                             <div className="text-sm text-muted-foreground">
