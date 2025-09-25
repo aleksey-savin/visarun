@@ -10,7 +10,6 @@ import { Switch } from '@/components/ui/switch';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -20,13 +19,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
+import VisaCitizenshipSurchargeForm, {
+  type VisaCitizenshipSurchargeFormData,
+} from '@/components/VisaCitizenshipSurcharge/Form';
+import VisaFreeAccessDialog from '@/components/Countries/VisaFreeAccessDialog';
+import BlacklistCitizenshipDialog from '@/components/Countries/BlacklistCitizenshipDialog';
 
 import {
   ArrowLeft,
@@ -54,12 +52,13 @@ import { useAuth } from '@/lib/auth';
 import { getAllCountriesRoute, getEditCountryRoute } from '@/lib/routes';
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCurrency } from '@/utils/currency';
 
 const ViewCountryPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
-  const [selectedTab, setSelectedTab] = useState('overview');
+  const [selectedTab, setSelectedTab] = useState('access');
 
   // Permission checks
   const canCreateCities = hasPermission('cities.create');
@@ -79,28 +78,24 @@ const ViewCountryPage = () => {
     name: string;
     isActive: boolean;
   } | null>(null);
-  const [selectedCitizenshipId, setSelectedCitizenshipId] = useState('');
-  const [stampDuration, setStampDuration] = useState(30);
+
   const [cityName, setCityName] = useState('');
   const [cityIsActive, setCityIsActive] = useState(true);
-  const [surchargeVisaTypeIds, setSurchargeVisaTypeIds] = useState<string[]>([]);
-  const [surchargeAmount, setSurchargeAmount] = useState<number>(0);
-  const [surchargeNote, setSurchargeNote] = useState('');
+  const [isSurchargeFormSubmitting, setIsSurchargeFormSubmitting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data, error, isLoading, isError, refetch } = trpc.country.getOne.useQuery(
     { id: id! },
     { enabled: !!id }
   );
 
-  const { data: citizenshipsData } = trpc.citizenship.getAll.useQuery({});
+  const { data: countriesData } = trpc.country.getAll.useQuery();
 
   const createVisaFreeMutation = trpc.visaFree.create.useMutation({
     onSuccess: () => {
-      toast.success('Visa-free access added successfully');
+      toast.success('Visa-Free added successfully');
       refetch();
       setVisaFreeDialogOpen(false);
-      setSelectedCitizenshipId('');
-      setStampDuration(30);
     },
     onError: error => {
       toast.error(error.message);
@@ -109,7 +104,7 @@ const ViewCountryPage = () => {
 
   const deleteVisaFreeMutation = trpc.visaFree.delete.useMutation({
     onSuccess: () => {
-      toast.success('Visa-free access removed successfully');
+      toast.success('Visa-Free removed successfully');
       refetch();
     },
     onError: error => {
@@ -122,7 +117,6 @@ const ViewCountryPage = () => {
       toast.success('Citizenship blacklisted successfully');
       refetch();
       setBlacklistDialogOpen(false);
-      setSelectedCitizenshipId('');
     },
     onError: error => {
       toast.error(error.message);
@@ -158,7 +152,7 @@ const ViewCountryPage = () => {
       refetch();
       setEditingCity(null);
     },
-    onError: (error: any) => {
+    onError: error => {
       toast.error(error.message);
     },
   });
@@ -174,16 +168,19 @@ const ViewCountryPage = () => {
   });
 
   const createSurchargeMutation = trpc.visaCitizenshipSurcharge.create.useMutation({
-    onSuccess: () => {
-      toast.success('Citizenship surcharge added successfully');
+    onSuccess: data => {
+      const message =
+        data.affectedVisaTypesCount > 0
+          ? `Visa citizenship surcharge created successfully. Applied to ${data.affectedVisaTypesCount} visa types.`
+          : 'Visa citizenship surcharge created successfully';
+      toast.success(message);
       refetch();
       setSurchargeDialogOpen(false);
-      setSurchargeVisaTypeIds([]);
-      setSurchargeAmount(0);
-      setSurchargeNote('');
+      setIsSurchargeFormSubmitting(false);
     },
     onError: error => {
       toast.error(error.message);
+      setIsSurchargeFormSubmitting(false);
     },
   });
 
@@ -197,25 +194,27 @@ const ViewCountryPage = () => {
     },
   });
 
-  const handleAddVisaFree = () => {
-    if (!selectedCitizenshipId || stampDuration <= 0) {
-      toast.error('Please select a citizenship and enter valid duration');
-      return;
-    }
+  const deleteCountryMutation = trpc.country.delete.useMutation({
+    onSuccess: () => {
+      toast.success('Country deleted successfully');
+      navigate(getAllCountriesRoute());
+    },
+    onError: error => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleAddVisaFree = (data: { citizenshipId: string; stampDuration: number }) => {
     createVisaFreeMutation.mutate({
-      citizenshipId: selectedCitizenshipId,
+      citizenshipId: data.citizenshipId,
       countryId: id!,
-      stampDuration,
+      stampDuration: data.stampDuration,
     });
   };
 
-  const handleAddBlacklist = () => {
-    if (!selectedCitizenshipId) {
-      toast.error('Please select a citizenship');
-      return;
-    }
+  const handleAddBlacklist = (data: { citizenshipId: string }) => {
     createBlacklistMutation.mutate({
-      citizenshipId: selectedCitizenshipId,
+      citizenshipId: data.citizenshipId,
       countryId: id!,
     });
   };
@@ -242,18 +241,18 @@ const ViewCountryPage = () => {
     });
   };
 
-  const handleAddSurcharge = () => {
-    if (!selectedCitizenshipId || surchargeVisaTypeIds.length === 0 || surchargeAmount <= 0) {
-      toast.error('Please fill all required fields');
-      return;
-    }
-    createSurchargeMutation.mutate({
-      citizenshipId: selectedCitizenshipId,
-      countryId: id!,
-      visaTypeIds: surchargeVisaTypeIds,
-      surchargeAmount,
-      note: surchargeNote || undefined,
-    });
+  const handleSurchargeFormSubmit = (data: VisaCitizenshipSurchargeFormData) => {
+    setIsSurchargeFormSubmitting(true);
+    createSurchargeMutation.mutate(data);
+  };
+
+  const handleSurchargeFormCancel = () => {
+    setSurchargeDialogOpen(false);
+  };
+
+  const handleDeleteCountry = () => {
+    deleteCountryMutation.mutate({ id: id! });
+    setDeleteDialogOpen(false);
   };
 
   // Loading State
@@ -346,36 +345,136 @@ const ViewCountryPage = () => {
 
   const { country } = data;
 
-  const getAvailableCitizenshipsForVisaFree = () => {
-    if (!citizenshipsData?.citizenships || !country) return [];
-    const visaFreeCitizenshipIds = country.visaFree.map(vf => vf.citizenshipId);
-    const blacklistedCitizenshipIds = country.blacklisted.map(bl => bl.citizenshipId);
-    return citizenshipsData.citizenships.filter(
-      citizenship =>
-        !visaFreeCitizenshipIds.includes(citizenship.id) &&
-        !blacklistedCitizenshipIds.includes(citizenship.id)
-    );
-  };
-
-  const getAvailableCitizenshipsForBlacklist = () => {
-    if (!citizenshipsData?.citizenships || !country) return [];
-    const visaFreeCitizenshipIds = country.visaFree.map(vf => vf.citizenshipId);
-    const blacklistedCitizenshipIds = country.blacklisted.map(bl => bl.citizenshipId);
-    return citizenshipsData.citizenships.filter(
-      citizenship =>
-        !visaFreeCitizenshipIds.includes(citizenship.id) &&
-        !blacklistedCitizenshipIds.includes(citizenship.id)
-    );
-  };
-
   return (
-    <div className="container mx-auto p-6 max-w-7xl space-y-6">
+    <div className="container mx-auto p-6  space-y-6">
+      {/* Country Information - Always Visible */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Country Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                {country.name}{' '}
+                {country.favourite && <Star className="h-4 w-4 text-yellow-600 fill-current" />}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    {country.eVisaAvailable ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        <span className="text-success font-medium">eVisa Available</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground font-medium">
+                          eVisa not Available
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    {country.multivisaAvailable ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        <span className="text-success font-medium">Multi-entry Visa</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground font-medium">
+                          Multi-entry Visa not Available
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {country.multivisaAvailable &&
+                country.multivisaIsGlobal &&
+                country.multivisaGlobalExtraCost && (
+                  <div className="border-t pt-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Global Multi-entry Extra Cost
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        <span className="font-medium">
+                          {formatCurrency(country.multivisaGlobalExtraCost)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Applied to all visa types in this country
+                      </p>
+                    </div>
+                  </div>
+                )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                variant="default"
+                className="w-full justify-start"
+                onClick={() => navigate(getEditCountryRoute({ id: country.id }))}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Country
+              </Button>
+              <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="destructive" className="w-full justify-start">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Country
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete Country</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to delete "{country.name}"? This action cannot be undone
+                      and will remove all associated data including cities, visa access, and
+                      surcharges.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="secondary" onClick={() => setDeleteDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteCountry}
+                      disabled={deleteCountryMutation.isPending}
+                    >
+                      {deleteCountryMutation.isPending ? 'Deleting...' : 'Delete Country'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Tabs Section */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-fit">
-          <TabsTrigger value="overview" className="gap-2">
-            <Globe className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 lg:w-fit">
           <TabsTrigger value="access" className="gap-2">
             <Plane className="h-4 w-4" />
             Visa Access
@@ -384,267 +483,40 @@ const ViewCountryPage = () => {
             <Building2 className="h-4 w-4" />
             Cities
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
+          <TabsTrigger value="statistics" className="gap-2">
             <BarChart3 className="h-4 w-4" />
-            Analytics
+            Statistics
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Main Content */}
-            <div className="lg:col-span-3 space-y-6">
-              {/* Country Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5" />
-                    Country Information
-                  </CardTitle>
-                  <CardDescription>Basic details and configuration</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">Name</label>
-                      <p className="text-lg font-semibold">{country.name}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Abbreviation
-                      </label>
-                      <Badge variant="secondary" className="w-fit font-mono text-lg">
-                        {country.name?.substring(0, 3).toUpperCase() || 'N/A'}
-                      </Badge>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">Status</label>
-                      <div className="flex items-center gap-2">
-                        {country.favourite ? (
-                          <>
-                            <Star className="h-4 w-4 text-yellow-600 fill-current" />
-                            <span className="text-yellow-600 font-medium">Featured</span>
-                          </>
-                        ) : (
-                          <>
-                            <Globe className="h-4 w-4 text-gray-600" />
-                            <span className="text-gray-600 font-medium">Standard</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Statistics Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Statistics Summary
-                  </CardTitle>
-                  <CardDescription>Overview of visa access and country data</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                    <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <span className="font-semibold text-green-900 dark:text-green-100">
-                          Visa-Free Access
-                        </span>
-                      </div>
-                      <div className="text-3xl font-bold text-green-600">
-                        {country.visaFree?.length || 0}
-                      </div>
-                      <p className="text-sm text-green-700 dark:text-green-200">citizenships</p>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <Ban className="h-5 w-5 text-red-600" />
-                        <span className="font-semibold text-red-900 dark:text-red-100">
-                          Blacklisted
-                        </span>
-                      </div>
-                      <div className="text-3xl font-bold text-red-600">
-                        {country.blacklisted?.length || 0}
-                      </div>
-                      <p className="text-sm text-red-700 dark:text-red-200">citizenships</p>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <Building2 className="h-5 w-5 text-blue-600" />
-                        <span className="font-semibold text-blue-900 dark:text-blue-100">
-                          Cities
-                        </span>
-                      </div>
-                      <div className="text-3xl font-bold text-blue-600">
-                        {country.cities?.length || 0}
-                      </div>
-                      <p className="text-sm text-blue-700 dark:text-blue-200">registered</p>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <FileText className="h-5 w-5 text-purple-600" />
-                        <span className="font-semibold text-purple-900 dark:text-purple-100">
-                          Visa Types
-                        </span>
-                      </div>
-                      <div className="text-3xl font-bold text-purple-600">0</div>
-                      <p className="text-sm text-purple-700 dark:text-purple-200">available</p>
-                    </div>
-                    <div className="text-center p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        <DollarSign className="h-5 w-5 text-amber-600" />
-                        <span className="font-semibold text-amber-900 dark:text-amber-100">
-                          Surcharges
-                        </span>
-                      </div>
-                      <div className="text-3xl font-bold text-amber-600">
-                        {country.surcharges?.length || 0}
-                      </div>
-                      <p className="text-sm text-amber-700 dark:text-amber-200">active</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button
-                    variant="default"
-                    className="w-full justify-start"
-                    onClick={() => navigate(getEditCountryRoute({ id: country.id }))}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Country
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="w-full justify-start"
-                    onClick={() => setSelectedTab('access')}
-                  >
-                    <Plane className="h-4 w-4 mr-2" />
-                    Manage Visa Access
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="w-full justify-start"
-                    onClick={() => setSelectedTab('cities')}
-                  >
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Manage Cities
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Quick Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Quick Info</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">Country ID</span>
-                    <code className="block text-xs bg-muted p-2 rounded font-mono">
-                      {country.id}
-                    </code>
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">Status</span>
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-3 w-3" />
-                      <span className="text-sm font-medium">Active</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-
         <TabsContent value="access" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Visa-Free Access */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Visa-Free */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5 text-green-600" />
-                      Visa-Free Access
+                      Visa-Free
                     </CardTitle>
                     <CardDescription>Citizenships with visa-free entry</CardDescription>
                   </div>
-                  <Dialog open={visaFreeDialogOpen} onOpenChange={setVisaFreeDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="secondary">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add Visa-Free Access</DialogTitle>
-                        <DialogDescription>
-                          Grant visa-free access to a citizenship for this country.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="citizenship">Citizenship</Label>
-                          <Select
-                            value={selectedCitizenshipId}
-                            onValueChange={setSelectedCitizenshipId}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a citizenship" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getAvailableCitizenshipsForVisaFree().map(citizenship => (
-                                <SelectItem key={citizenship.id} value={citizenship.id}>
-                                  {citizenship.emoji} {citizenship.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="duration">Stamp Duration (days)</Label>
-                          <Input
-                            id="duration"
-                            type="number"
-                            value={stampDuration}
-                            onChange={e => setStampDuration(parseInt(e.target.value) || 0)}
-                            min={1}
-                            max={365}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="secondary" onClick={() => setVisaFreeDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={handleAddVisaFree}>Add Access</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <VisaFreeAccessDialog
+                    open={visaFreeDialogOpen}
+                    onOpenChange={setVisaFreeDialogOpen}
+                    onSubmit={handleAddVisaFree}
+                    isSubmitting={createVisaFreeMutation.isPending}
+                  />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {country.visaFree?.length ? (
                     country.visaFree.map(visaFree => (
-                      <div
+                      <Card
                         key={visaFree.citizenshipId}
-                        className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800"
+                        className="flex flex-row items-center justify-between p-3 bg-secondary"
                       >
                         <div>
                           <div className="font-medium flex items-center gap-2">
@@ -667,79 +539,44 @@ const ViewCountryPage = () => {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                      </div>
+                      </Card>
                     ))
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <CheckCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>No visa-free access granted</p>
+                      <p>No Visa-Free granted</p>
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Blacklisted Citizenships */}
+            {/* Blacklisted */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Ban className="h-5 w-5 text-red-600" />
-                      Blacklisted Citizenships
+                      Blacklisted
                     </CardTitle>
                     <CardDescription>Citizenships with restricted access</CardDescription>
                   </div>
-                  <Dialog open={blacklistDialogOpen} onOpenChange={setBlacklistDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="secondary">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add Blacklisted Citizenship</DialogTitle>
-                        <DialogDescription>
-                          Restrict access for a citizenship to this country.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div>
-                        <Label htmlFor="citizenship">Citizenship</Label>
-                        <Select
-                          value={selectedCitizenshipId}
-                          onValueChange={setSelectedCitizenshipId}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a citizenship" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getAvailableCitizenshipsForBlacklist().map(citizenship => (
-                              <SelectItem key={citizenship.id} value={citizenship.id}>
-                                {citizenship.emoji} {citizenship.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="secondary" onClick={() => setBlacklistDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button variant="destructive" onClick={handleAddBlacklist}>
-                          Add to Blacklist
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <BlacklistCitizenshipDialog
+                    open={blacklistDialogOpen}
+                    onOpenChange={setBlacklistDialogOpen}
+                    onSubmit={handleAddBlacklist}
+                    isSubmitting={createBlacklistMutation.isPending}
+                  />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {country.blacklisted?.length ? (
                     country.blacklisted.map(blacklisted => (
-                      <div
+                      <Card
                         key={blacklisted.citizenshipId}
-                        className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800"
+                        className="flex flex-row items-center justify-between p-3 bg-secondary"
                       >
                         <div className="font-medium flex items-center gap-2">
                           <MapPin className="h-4 w-4" />
@@ -757,7 +594,7 @@ const ViewCountryPage = () => {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                      </div>
+                      </Card>
                     ))
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
@@ -769,7 +606,7 @@ const ViewCountryPage = () => {
               </CardContent>
             </Card>
 
-            {/* Citizenship Surcharges */}
+            {/* Surcharges */}
             {canCreateSurcharges && (
               <Card>
                 <CardHeader>
@@ -777,7 +614,7 @@ const ViewCountryPage = () => {
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <DollarSign className="h-5 w-5 text-amber-600" />
-                        Citizenship Surcharges
+                        Surcharges
                       </CardTitle>
                       <CardDescription>Additional fees based on citizenship</CardDescription>
                     </div>
@@ -787,76 +624,27 @@ const ViewCountryPage = () => {
                           <Plus className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className=" max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>Add Citizenship Surcharge</DialogTitle>
                           <DialogDescription>
-                            Add additional fees for specific visa types based on citizenship.
+                            Add additional fees for specific visa types based on citizenship for{' '}
+                            {country.name}.
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="citizenship">Citizenship</Label>
-                            <Select
-                              value={selectedCitizenshipId}
-                              onValueChange={setSelectedCitizenshipId}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a citizenship" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {citizenshipsData?.citizenships?.map(citizenship => (
-                                  <SelectItem key={citizenship.id} value={citizenship.id}>
-                                    {citizenship.emoji} {citizenship.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="visa-types">Visa Type IDs</Label>
-                            <Input
-                              id="visa-types"
-                              value={surchargeVisaTypeIds.join(', ')}
-                              onChange={(e: any) =>
-                                setSurchargeVisaTypeIds(
-                                  e.target.value
-                                    .split(',')
-                                    .map((s: string) => s.trim())
-                                    .filter(Boolean)
-                                )
-                              }
-                              placeholder="Enter visa type IDs separated by commas"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="amount">Surcharge Amount (VND)</Label>
-                            <Input
-                              id="amount"
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={surchargeAmount}
-                              onChange={e => setSurchargeAmount(parseFloat(e.target.value) || 0)}
-                              placeholder="0"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="note">Note (optional)</Label>
-                            <Input
-                              id="note"
-                              value={surchargeNote}
-                              onChange={(e: any) => setSurchargeNote(e.target.value)}
-                              placeholder="Optional note or description"
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button variant="secondary" onClick={() => setSurchargeDialogOpen(false)}>
-                            Cancel
-                          </Button>
-                          <Button onClick={handleAddSurcharge}>Add Surcharge</Button>
-                        </DialogFooter>
+                        {countriesData && (
+                          <VisaCitizenshipSurchargeForm
+                            countries={countriesData.countries}
+                            initialData={{
+                              countryId: country.id,
+                            }}
+                            onSubmit={handleSurchargeFormSubmit}
+                            onCancel={handleSurchargeFormCancel}
+                            isSubmitting={isSurchargeFormSubmitting}
+                            submitText="Add Surcharge"
+                            title={`Citizenship Surcharge for ${country.name}`}
+                          />
+                        )}
                       </DialogContent>
                     </Dialog>
                   </div>
@@ -865,9 +653,9 @@ const ViewCountryPage = () => {
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {country.surcharges?.length ? (
                       country.surcharges.map(surcharge => (
-                        <div
+                        <Card
                           key={surcharge.id}
-                          className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800"
+                          className="flex flex-row items-center justify-between p-3 bg-secondary"
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
@@ -885,7 +673,7 @@ const ViewCountryPage = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="font-mono">
-                              {surcharge.surchargeAmount.toLocaleString()} VND
+                              {formatCurrency(surcharge.surchargeAmount)}
                             </Badge>
                             {canDeleteSurcharges && (
                               <Button
@@ -897,7 +685,7 @@ const ViewCountryPage = () => {
                               </Button>
                             )}
                           </div>
-                        </div>
+                        </Card>
                       ))
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
@@ -921,7 +709,6 @@ const ViewCountryPage = () => {
                     <Building2 className="h-5 w-5" />
                     Cities ({country.cities?.length || 0})
                   </CardTitle>
-                  <CardDescription>Manage cities in this country</CardDescription>
                 </div>
                 {canCreateCities && (
                   <Dialog open={cityDialogOpen} onOpenChange={setCityDialogOpen}>
@@ -933,11 +720,9 @@ const ViewCountryPage = () => {
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Add New City</DialogTitle>
-                        <DialogDescription>Add a new city to {country.name}.</DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="city-name">City Name</Label>
+                        <div className="space-y-2">
                           <Input
                             id="city-name"
                             value={cityName}
@@ -958,7 +743,7 @@ const ViewCountryPage = () => {
                         <Button variant="secondary" onClick={() => setCityDialogOpen(false)}>
                           Cancel
                         </Button>
-                        <Button onClick={handleAddCity}>Add City</Button>
+                        <Button onClick={handleAddCity}>Add</Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -969,12 +754,12 @@ const ViewCountryPage = () => {
               <div className="space-y-2">
                 {country.cities?.length ? (
                   country.cities.map(city => (
-                    <div
+                    <Card
                       key={city.id}
-                      className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                      className="flex flex-row justify-between items-center bg-secondary p-6"
                     >
                       <div className="flex items-center gap-3">
-                        <Building2 className="h-4 w-4 text-blue-600" />
+                        <Building2 className="h-6 w-6" />
                         <span className="font-medium">{city.name}</span>
                         <Badge variant={city.isActive ? 'default' : 'secondary'}>
                           {city.isActive ? 'Active' : 'Inactive'}
@@ -1019,7 +804,7 @@ const ViewCountryPage = () => {
                           </>
                         )}
                       </div>
-                    </div>
+                    </Card>
                   ))
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
@@ -1039,164 +824,59 @@ const ViewCountryPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Visa-Free Access</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {country.visaFree?.length || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">citizenships granted</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Restrictions</CardTitle>
-                <Ban className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">
-                  {country.blacklisted?.length || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">blacklisted citizenships</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Cities</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {country.cities?.length || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">registered cities</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Visa Types</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-600">0</div>
-                <p className="text-xs text-muted-foreground">available types</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Surcharges</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-amber-600">
-                  {country.surcharges?.length || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">active surcharges</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Access Analysis */}
+        <TabsContent value="statistics" className="space-y-6">
+          {/* Statistics Summary */}
           <Card>
             <CardHeader>
-              <CardTitle>Access Analysis</CardTitle>
-              <CardDescription>Detailed breakdown of visa access for this country</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Statistics Summary
+              </CardTitle>
+              <CardDescription>Overview of visa access and country data</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Visa-Free Access</span>
-                    <span className="text-sm text-muted-foreground">
-                      {country.visaFree?.length || 0} citizenships
-                    </span>
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                <Card className="text-center p-4 bg-secondary gap-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span className="font-semibold text-success">Visa-Free</span>
                   </div>
-                  <Progress
-                    value={
-                      citizenshipsData?.citizenships?.length
-                        ? ((country.visaFree?.length || 0) / citizenshipsData.citizenships.length) *
-                          100
-                        : 0
-                    }
-                    className="h-2"
-                  />
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Restricted Access</span>
-                    <span className="text-sm text-muted-foreground">
-                      {country.blacklisted?.length || 0} citizenships
-                    </span>
+                  <div className="text-3xl font-bold">{country.visaFree?.length || 0}</div>
+                  <p className="text-sm">citizenships</p>
+                </Card>
+                <Card className="text-center p-4 bg-secondary gap-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Ban className="h-5 w-5 text-destructive" />
+                    <span className="font-semibold text-destructive">Blacklisted</span>
                   </div>
-                  <Progress
-                    value={
-                      citizenshipsData?.citizenships?.length
-                        ? ((country.blacklisted?.length || 0) /
-                            citizenshipsData.citizenships.length) *
-                          100
-                        : 0
-                    }
-                    className="h-2"
-                  />
-                </div>
+                  <div className="text-3xl font-bold ">{country.blacklisted?.length || 0}</div>
+                  <p className="text-sm ">citizenships</p>
+                </Card>
+                <Card className="text-center p-4 bg-secondary gap-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <DollarSign className="h-5 w-5 text-warning" />
+                    <span className="font-semibold text-warning">Surcharges</span>
+                  </div>
+                  <div className="text-3xl font-bold">{country.surcharges?.length || 0}</div>
+                  <p className="text-sm ">active</p>
+                </Card>
+                <Card className="text-center p-4 bg-secondary gap-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Building2 className="h-5 w-5" />
+                    <span className="font-semibold ">Cities</span>
+                  </div>
+                  <div className="text-3xl font-bold">{country.cities?.length || 0}</div>
+                  <p className="text-sm">registered</p>
+                </Card>
+                <Card className="text-center p-4 bg-secondary gap-2">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <FileText className="h-5 w-5 " />
+                    <span className="font-semibold ">Visa Types</span>
+                  </div>
+                  <div className="text-3xl font-bold ">{country.VisaType?.length || 0}</div>
+                  <p className="text-sm ">available</p>
+                </Card>
               </div>
-
-              {/* City Breakdown */}
-              <div className="space-y-4">
-                <h4 className="font-medium">City Breakdown</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">Total Cities</span>
-                    <div className="text-lg font-semibold">{country.cities?.length || 0}</div>
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">Active Cities</span>
-                    <div className="text-lg font-semibold">
-                      {country.cities?.filter(city => city.isActive).length || 0}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Surcharge Analysis */}
-              {country.surcharges && country.surcharges.length > 0 && (
-                <div className="space-y-4">
-                  <h4 className="font-medium">Surcharge Analysis</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <span className="text-sm text-muted-foreground">Total Surcharges</span>
-                      <div className="text-lg font-semibold">
-                        {country.surcharges
-                          .reduce((sum, surcharge) => sum + surcharge.surchargeAmount, 0)
-                          .toLocaleString()}{' '}
-                        VND
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <span className="text-sm text-muted-foreground">Average Surcharge</span>
-                      <div className="text-lg font-semibold">
-                        {(country.surcharges.length > 0
-                          ? country.surcharges.reduce(
-                              (sum, surcharge) => sum + surcharge.surchargeAmount,
-                              0
-                            ) / country.surcharges.length
-                          : 0
-                        ).toLocaleString()}{' '}
-                        VND
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>

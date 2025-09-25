@@ -21,6 +21,8 @@ const buttonVariants = cva(
           'bg-secondary text-secondary-foreground shadow-xs hover:bg-muted hover:shadow-md transition-all duration-200',
         accent:
           'bg-[#172554] text-primary-foreground shadow-xs hover:bg-[#172554]/90 hover:shadow-md border-[#172554] text-[#FAFAFA]',
+        'accent-pink':
+          'bg-pink-800 text-primary-foreground shadow-xs hover:bg-pink-800/90 hover:shadow-md border-pink-800 text-[#FAFAFA]',
         ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
       },

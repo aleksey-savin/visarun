@@ -15,7 +15,11 @@ export const deleteVisarunScheduleTrpcRoute = visarunScheduleDeleteProcedure
       where: { id },
       include: {
         trips: true,
-        route: true,
+        route: {
+          include: {
+            routeStops: true,
+          },
+        },
       },
     });
 
@@ -34,10 +38,40 @@ export const deleteVisarunScheduleTrpcRoute = visarunScheduleDeleteProcedure
       }
     }
 
-    // Delete the schedule
+    const routeId = existingSchedule.routeId;
+
+    // Delete the schedule first
     await ctx.prisma.visarunSchedule.delete({
       where: { id },
     });
+
+    // Check if this route is used by other schedules
+    const otherSchedules = await ctx.prisma.visarunSchedule.findMany({
+      where: { routeId },
+    });
+
+    // If no other schedules use this route, delete the route and its stops
+    if (otherSchedules.length === 0) {
+      // Delete route stops first (they cascade delete, but being explicit)
+      await ctx.prisma.visarunRouteStop.deleteMany({
+        where: { routeId },
+      });
+
+      // Delete route transports
+      await ctx.prisma.visarunRouteTransport.deleteMany({
+        where: { routeId },
+      });
+
+      // Delete seat prices
+      await ctx.prisma.visarunSeatPrice.deleteMany({
+        where: { routeId },
+      });
+
+      // Delete the route
+      await ctx.prisma.visarunRoute.delete({
+        where: { id: routeId },
+      });
+    }
 
     return {
       success: true,

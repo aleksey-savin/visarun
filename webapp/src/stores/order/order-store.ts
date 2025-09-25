@@ -15,6 +15,8 @@ import type {
   Requirement,
   ClientRequirement,
   PaymentMethod,
+  City,
+  Country,
 } from '@visarun/backend/node_modules/@prisma/client';
 
 // Frontend-compatible Decimal type that works without Prisma runtime dependency
@@ -188,6 +190,11 @@ interface OrderStore {
   orderItems: StoreOrderItem[];
   visaApplications: StoreVisaApplication[];
   orderPayments: StoreOrderPayment[];
+  // visarun
+  preferredDepartureCity: City | null;
+  preferredVisarunCountry: Country | null;
+  preferredDepartureDate: Date;
+  // ---
   setSaveStatus: (saveStatus: SaveStatus) => void;
   setActiveClientId: (activeClientId: string) => void;
   setOrder: (orderData: Order) => void;
@@ -195,6 +202,11 @@ interface OrderStore {
   setUser: (userData: StoreUser) => void;
   setClients: (clients: StoreClient[]) => void;
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => void;
+  //visarun
+  setPreferredDepartureCity: (preferredDepartureCity: City | null) => void;
+  setPreferredVisarunCountry: (preferredVisarunCountry: Country | null) => void;
+  setPreferredDepartureDate: (preferredDepartureDate: Date) => void;
+  // ----
   setOrderItems: (orderItems: StoreOrderItem[]) => void;
   setVisaApplications: (visaApplications: StoreVisaApplication[]) => void;
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => void;
@@ -224,6 +236,11 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   },
   clients: [],
   contactMethods: [],
+  // visarun
+  preferredDepartureCity: null,
+  preferredVisarunCountry: null,
+  preferredDepartureDate: new Date(),
+  // ---
   orderItems: [],
   visaApplications: [],
   orderPayments: [],
@@ -302,6 +319,10 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   setVisaApplications: (visaApplications: StoreVisaApplication[]) =>
     set(() => ({ visaApplications })),
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),
+  setPreferredDepartureDate: (date: Date) => set(() => ({ preferredDepartureDate: date })),
+  setPreferredDepartureCity: (city: City | null) => set(() => ({ preferredDepartureCity: city })),
+  setPreferredVisarunCountry: (country: Country | null) =>
+    set(() => ({ preferredVisarunCountry: country })),
   reset: () => {
     set(store.getInitialState());
   },

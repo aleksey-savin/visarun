@@ -24,6 +24,7 @@
     "@radix-ui/react-navigation-menu": "^1.2.6",
     "@radix-ui/react-popover": "^1.1.10",
     "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-scroll-area": "^1.2.10",
     "@radix-ui/react-select": "^2.2.2",
     "@radix-ui/react-separator": "^1.1.3",
     "@radix-ui/react-slot": "^1.2.0",
@@ -52,6 +53,7 @@
     "@visarun/backend": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.488.0",
@@ -86,6 +88,7 @@
     "sass-embedded": "^1.89.2",
     "tailwindcss-animate": "^1.0.7",
     "typescript-eslint": "^8.24.1",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vite-plugin-svgr": "^4.5.0"
   }
 }

@@ -1,16 +1,12 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { trpc } from '@/lib/trpc';
-import { Search, Star } from 'lucide-react';
+import { Check, ChevronDown, Search, Star } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 interface CitizenshipSelectProps {
@@ -31,20 +27,9 @@ const CitizenshipSelect = ({
   className = 'min-w-52',
 }: CitizenshipSelectProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  const handleSelectOpenChange = (open: boolean) => {
-    setIsSelectOpen(open);
-    if (open) {
-      // Multiple strategies to ensure focus
-      requestAnimationFrame(() => {
-        searchInputRef.current?.focus();
-      });
-    } else {
-      setSearchTerm('');
-    }
-  };
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -57,79 +42,153 @@ const CitizenshipSelect = ({
       offset: 0,
       favourite: searchTerm ? undefined : true,
       search: debouncedSearchTerm,
-      citizenshipId: currentCitizenship,
+      citizenshipId: value || currentCitizenship,
     },
     {
-      enabled: isSelectOpen || !!value,
+      enabled: isOpen || !!value,
     }
   );
 
   const citizenships = useMemo(() => citizenshipsData?.citizenships || [], [citizenshipsData]);
 
-  // Maintain focus on search input when options update
+  // Find selected citizenship for display
+  const selectedCitizenship = useMemo(() => {
+    return citizenships.find(c => c.id === value);
+  }, [citizenships, value]);
+
+  // Close dropdown when clicking outside
   useEffect(() => {
-    if (isSelectOpen && searchInputRef.current) {
-      requestAnimationFrame(() => {
-        searchInputRef.current?.focus();
-      });
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [citizenships, isSelectOpen]);
+  }, [isOpen]);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 0);
+    }
+  }, [isOpen]);
+
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setSearchTerm('');
+    }
+  };
+
+  const handleSelect = (citizenshipId: string) => {
+    onValueChange(citizenshipId === value ? '' : citizenshipId);
+    setIsOpen(false);
+    setSearchTerm('');
+  };
 
   return (
     <FormItem>
       <FormLabel>{label}</FormLabel>
       <FormControl>
-        <Select value={value} onValueChange={onValueChange} onOpenChange={handleSelectOpenChange}>
-          <SelectTrigger className={className}>
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            <div className="p-2">
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  ref={searchInputRef}
-                  key="citizenship-search"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={e => {
-                    setSearchTerm(e.target.value);
-                    // Maintain focus after state update
-                    requestAnimationFrame(() => {
-                      searchInputRef.current?.focus();
-                    });
-                  }}
-                  className="h-8 md:pl-8 max-w-52"
-                  autoFocus
-                  onClick={e => e.stopPropagation()}
-                  onKeyDown={e => e.stopPropagation()}
-                />
-              </div>
-            </div>
+        <div className="relative" ref={containerRef}>
+          <Button
+            type="button"
+            variant="secondary"
+            role="combobox"
+            aria-expanded={isOpen}
+            className={cn('justify-between', className, !value && 'text-muted-foreground')}
+            onClick={handleToggle}
+          >
+            <span className="truncate">
+              {selectedCitizenship
+                ? `${selectedCitizenship.name} (${selectedCitizenship.abbreviation})`
+                : placeholder}
+            </span>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
 
-            {citizenshipsLoading ? (
-              <div className="px-2 py-1.5 text-sm text-muted-foreground">Loading...</div>
-            ) : citizenshipsError ? (
-              <div className="px-2 py-1.5 text-sm text-destructive">Error loading citizenships</div>
-            ) : citizenships.length === 0 ? (
-              <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                {searchTerm ? 'No results found' : 'No citizenships available'}
+          {isOpen && (
+            <div
+              className={cn(
+                'absolute top-full left-0 right-0 z-50 mt-1 rounded-md border bg-popover shadow-md animate-in fade-in-0 zoom-in-95'
+              )}
+            >
+              <div className="p-2 border-b">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="Search citizenships..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="h-8 pl-8"
+                    onKeyDown={e => {
+                      if (e.key === 'Escape') {
+                        setIsOpen(false);
+                      }
+                    }}
+                  />
+                </div>
               </div>
-            ) : (
-              citizenships.map(c => (
-                <SelectItem key={c.id} value={c.id}>
-                  <div className="flex items-center gap-2">
-                    {c.name} ({c.abbreviation}){' '}
-                    {c.favourite && <Star className="h-4 w-4 fill-current" />}
-                  </div>
-                </SelectItem>
-              ))
-            )}
-            <div className="text-sm text-muted-foreground text-center m-2">
-              Search to get more results{' '}
+
+              <ScrollArea>
+                <div className="p-1">
+                  {citizenshipsLoading ? (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">Loading...</div>
+                  ) : citizenshipsError ? (
+                    <div className="px-2 py-1.5 text-sm text-destructive">
+                      Error loading citizenships
+                    </div>
+                  ) : citizenships.length === 0 ? (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      {searchTerm ? 'No results found' : 'No citizenships available'}
+                    </div>
+                  ) : (
+                    citizenships.map(citizenship => (
+                      <button
+                        key={citizenship.id}
+                        type="button"
+                        className={cn(
+                          'w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm transition-colors text-left',
+                          'hover:bg-accent hover:text-accent-foreground',
+                          'focus:bg-accent focus:text-accent-foreground focus:outline-none',
+                          value === citizenship.id && 'bg-secondary'
+                        )}
+                        onClick={() => handleSelect(citizenship.id)}
+                        onMouseDown={e => e.preventDefault()} // Prevent focus loss
+                      >
+                        <Check
+                          className={cn(
+                            'h-4 w-4 shrink-0',
+                            value === citizenship.id ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        <span className="flex-1 truncate">
+                          {citizenship.name} ({citizenship.abbreviation})
+                        </span>
+                        {citizenship.favourite && (
+                          <Star className="h-4 w-4 fill-current shrink-0" />
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+
+              {!citizenshipsLoading && !citizenshipsError && (
+                <div className="text-xs text-muted-foreground text-center border-t p-2">
+                  Search to get more results
+                </div>
+              )}
             </div>
-          </SelectContent>
-        </Select>
+          )}
+        </div>
       </FormControl>
       <FormMessage />
     </FormItem>

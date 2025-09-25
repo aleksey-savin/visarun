@@ -6,7 +6,6 @@ import { getAllOrdersRoute } from '@/lib/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
-import AddVisarun from '@/components/Order/sections/VisarunSection/AddVisarun';
 import AddVisa from '@/components/Order/sections/VisaSection/AddVisa';
 
 import {
@@ -28,6 +27,7 @@ import useOrderStore from '@/stores/order/order-store.js';
 
 import ClientName from '../sections/ClientSection/ClientName';
 import Comments from '../Comments';
+import VisarunSection from '../sections/VisarunSection/VisarunSection';
 
 const ServicePuzzle = ({
   client,
@@ -49,9 +49,9 @@ const ServicePuzzle = ({
     setClients,
   } = useOrderStore();
 
-  const [activeService, setActiveService] = useState('visa');
+  const [activeService, setActiveService] = useState('visarun');
 
-  const isDisabled = !client.citizenshipId || !client.passportExpirationDate;
+  const isDisabled = !client.citizenship?.id || !client.preConfirmPassportIsValid;
 
   const handleServiceButtonClick = (service: string) => {
     setActiveService(service);
@@ -124,8 +124,8 @@ const ServicePuzzle = ({
       {servicePuzzleIsActive && (
         <>
           {activeService === 'visa' && <AddVisa client={client} />}
-          {activeService === 'visarun' && <AddVisarun />}
           <ClientName client={client} />
+          {activeService === 'visarun' && <VisarunSection />}
           <Comments />
           <hr />
         </>
@@ -171,21 +171,21 @@ const ServicePuzzle = ({
               <div className="flex gap-2">
                 <Button
                   disabled={isDisabled}
+                  variant={activeService === 'visarun' ? 'accent-pink' : 'secondary'}
+                  size="sm"
+                  className="border-none"
+                  onClick={() => handleServiceButtonClick('visarun')}
+                >
+                  Visarun
+                </Button>
+                <Button
+                  disabled={isDisabled}
                   variant={activeService === 'visa' ? 'accent' : 'secondary'}
                   size="sm"
                   className="border-none"
                   onClick={() => handleServiceButtonClick('visa')}
                 >
                   Visa
-                </Button>
-                <Button
-                  disabled={isDisabled}
-                  variant={activeService === 'visarun' ? 'accent' : 'secondary'}
-                  size="sm"
-                  className="border-none"
-                  onClick={() => handleServiceButtonClick('visarun')}
-                >
-                  Visarun
                 </Button>
                 <Button disabled variant="secondary" size="sm" className="border-none">
                   Acceleration

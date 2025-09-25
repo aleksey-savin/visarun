@@ -81,6 +81,13 @@ export const getOneCountryTrpcRoute = countryReadProcedure
             },
           ],
         },
+        VisaType: {
+          select: {
+            id: true,
+            name: true,
+          },
+          orderBy: { name: 'asc' },
+        },
       },
     });
 
