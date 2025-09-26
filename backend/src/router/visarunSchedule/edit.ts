@@ -1,6 +1,57 @@
 import { visarunScheduleUpdateProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
+// Helper function to generate trips based on schedule
+function generateTripsFromSchedule(
+  scheduleId: string,
+  routeId: string,
+  daysOfWeek: number[],
+  departureTime: string,
+  validFrom: Date,
+  validTo: Date | null,
+  periodMonths: number
+) {
+  const trips: Array<{
+    scheduleId: string;
+    routeId: string;
+    departureDateTime: Date;
+    status: 'scheduled';
+    isFromSchedule: boolean;
+  }> = [];
+
+  // Calculate end date - either validTo or validFrom + autoGeneratePeriodMonths
+  const endDate =
+    validTo ||
+    new Date(validFrom.getFullYear(), validFrom.getMonth() + periodMonths, validFrom.getDate());
+
+  // Parse departure time
+  const [hours, minutes] = departureTime.split(':').map(Number);
+
+  // Start from validFrom date
+  const currentDate = new Date(validFrom);
+  currentDate.setHours(hours, minutes, 0, 0);
+
+  // Generate trips for each matching day within the date range
+  while (currentDate <= endDate) {
+    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+
+    if (daysOfWeek.includes(dayOfWeek)) {
+      trips.push({
+        scheduleId,
+        routeId,
+        departureDateTime: new Date(currentDate),
+        status: 'scheduled',
+        isFromSchedule: true,
+      });
+    }
+
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return trips;
+}
+
 export const zEditVisarunScheduleTrpcInput = z.object({
   id: z.string().uuid('Invalid schedule ID'),
   name: z.string().min(1, 'Name is required').optional(),
@@ -13,8 +64,15 @@ export const zEditVisarunScheduleTrpcInput = z.object({
     .string()
     .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Departure time must be in HH:MM format')
     .optional(),
-  validFrom: z.date().optional(),
-  validTo: z.date().optional(),
+  validFrom: z
+    .string()
+    .optional()
+    .transform(str => (str ? new Date(str) : undefined)),
+  validTo: z
+    .string()
+    .nullable()
+    .optional()
+    .transform(str => (str ? new Date(str) : null)),
   autoGeneratePeriodMonths: z.number().int().min(1).max(24).optional(),
   isActive: z.boolean().optional(),
 });
@@ -44,32 +102,12 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
       throw new Error('Schedule not found');
     }
 
-    // Check if schedule has upcoming trips - restrict certain changes
-    const hasUpcomingTrips = existingSchedule.trips.length > 0;
-
     // Validate date range if being updated
     const finalValidFrom = updateData.validFrom ?? existingSchedule.validFrom;
     const finalValidTo = updateData.validTo ?? existingSchedule.validTo;
 
     if (finalValidTo && finalValidFrom >= finalValidTo) {
       throw new Error('Valid from date must be before valid to date');
-    }
-
-    // Don't allow changing fundamental properties if there are upcoming trips
-    if (hasUpcomingTrips) {
-      if (updateData.daysOfWeek) {
-        throw new Error(
-          'Cannot change operating days when there are upcoming trips. Cancel or reschedule trips first.'
-        );
-      }
-      if (updateData.departureTime) {
-        throw new Error(
-          'Cannot change departure time when there are upcoming trips. Cancel or reschedule trips first.'
-        );
-      }
-      if (updateData.validFrom) {
-        throw new Error('Cannot change valid from date when there are upcoming trips.');
-      }
     }
 
     // Validate days of week if being updated
@@ -138,53 +176,118 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
       }
     }
 
-    // Update the schedule
-    const updatedSchedule = await ctx.prisma.visarunSchedule.update({
-      where: { id },
-      data: {
-        ...updateData,
-        updatedById: ctx.user?.id,
-      },
-      include: {
-        route: {
-          include: {
-            routeStops: {
-              include: {
-                city: true,
-              },
-              orderBy: {
-                stopOrder: 'asc',
-              },
-            },
-            transports: {
-              include: {
-                transport: {
-                  include: {
-                    transportType: true,
-                  },
-                },
-              },
-              where: {
-                isActive: true,
-              },
-            },
-          },
-        },
-        trips: {
-          take: 5,
-          orderBy: {
-            departureDateTime: 'asc',
-          },
+    // If schedule parameters that affect trip generation are being updated,
+    // we need to regenerate scheduled trips without passengers
+    const needsToRegenerateTrips =
+      updateData.daysOfWeek ||
+      updateData.departureTime ||
+      updateData.validFrom ||
+      updateData.validTo !== undefined ||
+      updateData.autoGeneratePeriodMonths;
+
+    // Use Prisma transaction to ensure atomicity
+    const result = await ctx.prisma.$transaction(async tx => {
+      if (needsToRegenerateTrips) {
+        // Delete only scheduled trips without passengers (from the future)
+        await tx.visarunTrip.deleteMany({
           where: {
+            scheduleId: id,
+            status: 'scheduled',
+            isFromSchedule: true,
             departureDateTime: {
               gte: new Date(),
             },
+            // Only delete trips without passengers
+            passengers: {
+              none: {},
+            },
+          },
+        });
+      }
+
+      // Update the schedule
+      await tx.visarunSchedule.update({
+        where: { id },
+        data: {
+          ...updateData,
+          updatedById: ctx.user?.id,
+        },
+      });
+
+      // Generate new trips if needed
+      if (needsToRegenerateTrips) {
+        const finalDaysOfWeek = updateData.daysOfWeek ?? existingSchedule.daysOfWeek;
+        const finalDepartureTime = updateData.departureTime ?? existingSchedule.departureTime;
+        const finalAutoGeneratePeriodMonths =
+          updateData.autoGeneratePeriodMonths ?? existingSchedule.autoGeneratePeriodMonths;
+
+        // Generate new trips starting from today or validFrom, whichever is later
+        const today = new Date();
+        const startDate = finalValidFrom > today ? finalValidFrom : today;
+
+        const tripsData = generateTripsFromSchedule(
+          id,
+          existingSchedule.routeId,
+          Array.isArray(finalDaysOfWeek) ? (finalDaysOfWeek as number[]) : [],
+          finalDepartureTime,
+          startDate,
+          finalValidTo,
+          finalAutoGeneratePeriodMonths
+        );
+
+        // Create all trips in bulk
+        if (tripsData.length > 0) {
+          await tx.visarunTrip.createMany({
+            data: tripsData,
+          });
+        }
+      }
+
+      // Return the schedule with related data
+      return await tx.visarunSchedule.findUnique({
+        where: { id },
+        include: {
+          route: {
+            include: {
+              routeStops: {
+                include: {
+                  city: true,
+                },
+                orderBy: {
+                  stopOrder: 'asc',
+                },
+              },
+              transports: {
+                include: {
+                  transport: {
+                    include: {
+                      transportType: true,
+                    },
+                  },
+                },
+                where: {
+                  isActive: true,
+                },
+              },
+            },
+          },
+          trips: {
+            take: 5,
+            orderBy: {
+              departureDateTime: 'asc',
+            },
+            where: {
+              departureDateTime: {
+                gte: new Date(),
+              },
+            },
           },
         },
-      },
+      });
     });
 
     return {
-      schedule: updatedSchedule,
+      schedule: result,
+      tripsRegenerated: needsToRegenerateTrips,
     };
   });

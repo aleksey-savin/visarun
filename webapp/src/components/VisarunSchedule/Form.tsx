@@ -29,11 +29,12 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon, Plus, Trash2, Timer } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
-import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+
 import { IconDisplay } from '../ui/icon-display';
 import { Separator } from '../ui/separator';
 
 const routeStopSchema = z.object({
+  id: z.string().optional(),
   cityId: z.string().min(1, 'City is required'),
   stopType: z.enum(['departure', 'arrival', 'intermediate']),
   pickupMode: z.enum(['location', 'address', 'none']).default('location'),
@@ -41,14 +42,17 @@ const routeStopSchema = z.object({
   departureTime: z.string().optional(),
   arrivalNextDay: z.boolean().default(false),
   waitingDuration: z.number().min(0).optional(),
+  stopOrder: z.number().optional(),
 });
 
 const routeTransportSchema = z.object({
+  id: z.string().optional(),
   transportId: z.string().min(1, 'Transport is required'),
   isActive: z.boolean().default(true),
 });
 
 const seatPriceSchema = z.object({
+  id: z.string().optional(),
   seatClassId: z.string().min(1, 'Seat class is required'),
   price: z.number().min(0, 'Price must be non-negative'),
 });
@@ -82,11 +86,19 @@ const formSchema = z.object({
 const editFormSchema = z.object({
   stamp: z.boolean().default(false),
   visa: z.boolean().default(false),
-  routeStops: z.array(routeStopSchema).optional(),
-  transports: z.array(routeTransportSchema).optional(),
+  routeStops: z
+    .array(routeStopSchema)
+    .min(2, 'At least 2 stops are required (origin and destination)')
+    .refine(
+      stops =>
+        stops[0]?.departureTime &&
+        stops[0].departureTime.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      'Departure time is required for the first stop'
+    ),
+  transports: z.array(routeTransportSchema).min(1, 'At least one transport is required'),
   seatPrices: z.array(seatPriceSchema).optional(),
 
-  // Schedule fields - these are the only ones we actually validate in edit mode
+  // Schedule fields
   daysOfWeek: z.array(z.number()).min(1, 'At least one day must be selected'),
   departureTime: z.string().optional(),
   validFrom: z.date({
@@ -438,46 +450,30 @@ export default function CombinedVisarunForm({
           <Card className="bg-secondary mb-4">
             <CardContent className="space-y-5">
               <div className="md:ms-6">
-                <ToggleGroup
-                  type="multiple"
-                  className="mt-2 justify-start"
-                  value={[
-                    ...(form.watch('stamp') ? ['stamp'] : []),
-                    ...(form.watch('visa') ? ['visa'] : []),
-                  ]}
-                  onValueChange={values => {
-                    form.setValue('stamp', values.includes('stamp'));
-                    form.setValue('visa', values.includes('visa'));
-                  }}
-                  disabled={mode === 'edit'}
-                >
-                  <ToggleGroupItem
-                    value="stamp"
-                    size="lg"
-                    aria-label="Toggle stamp"
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    type="button"
                     variant={form.watch('stamp') ? 'accent' : 'secondary'}
+                    onClick={() => form.setValue('stamp', !form.watch('stamp'))}
                     className={cn(form.watch('stamp') ? 'border border-transparent' : 'border')}
                   >
                     Stamp
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value="visa"
-                    size="lg"
-                    aria-label="Toggle visa"
+                  </Button>
+                  <Button
+                    type="button"
                     variant={form.watch('visa') ? 'accent' : 'secondary'}
-                    className={cn(
-                      form.watch('visa') ? 'border border-transparent' : 'border border-l-0'
-                    )}
+                    onClick={() => form.setValue('visa', !form.watch('visa'))}
+                    className={cn(form.watch('visa') ? 'border border-transparent' : 'border')}
                   >
                     Visa
-                  </ToggleGroupItem>
-                </ToggleGroup>
+                  </Button>
+                </div>
               </div>
               <div className="flex flex-col gap-3">
                 {stopFields.map((field, index) => (
                   <div key={field.id} className="space-y-3">
                     {/* Add button above Border row */}
-                    {index === stopFields.length - 1 && mode === 'create' && (
+                    {index === stopFields.length - 1 && (
                       <div className="flex start gap-2 items-center">
                         <ColorIndication color="" />
                         <Button
@@ -515,18 +511,14 @@ export default function CombinedVisarunForm({
                             return (
                               <FormItem>
                                 <FormControl>
-                                  <Select
-                                    onValueChange={field.onChange}
-                                    value={field.value}
-                                    disabled={mode === 'edit'}
-                                  >
+                                  <Select onValueChange={field.onChange} value={field.value}>
                                     <SelectTrigger className="min-w-52">
                                       <SelectValue placeholder={getPlaceholder()} />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {cities.map(city => (
                                         <SelectItem key={city.id} value={city.id}>
-                                          <div className="flex flex-col items-start">
+                                          <div className="flex gap-2 items-center">
                                             <span className="font-medium">{city.name}</span>
                                             <span className="text-xs text-muted-foreground">
                                               {city.country?.name}
@@ -554,7 +546,6 @@ export default function CombinedVisarunForm({
                                   <Input
                                     type="time"
                                     className="bg-secondary appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                                    disabled={mode === 'edit'}
                                     {...field}
                                   />
                                 </FormControl>
@@ -574,7 +565,6 @@ export default function CombinedVisarunForm({
                                   <Input
                                     type="time"
                                     className="bg-secondary appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                                    disabled={mode === 'edit'}
                                     {...field}
                                   />
                                 </FormControl>
@@ -585,7 +575,7 @@ export default function CombinedVisarunForm({
 
                         <div className="flex items-center gap-2">
                           {/* Remove button only for intermediate stops */}
-                          {index > 0 && index < stopFields.length - 1 && mode === 'create' && (
+                          {index > 0 && index < stopFields.length - 1 && (
                             <Button
                               type="button"
                               variant="secondary"
@@ -605,11 +595,7 @@ export default function CombinedVisarunForm({
                             render={({ field }) => (
                               <FormItem className="flex items-center gap-2">
                                 <FormControl>
-                                  <Switch
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    disabled={mode === 'edit'}
-                                  />
+                                  <Switch checked={field.value} onCheckedChange={field.onChange} />
                                 </FormControl>
                                 <FormLabel>Next day</FormLabel>
                               </FormItem>
@@ -636,7 +622,6 @@ export default function CombinedVisarunForm({
                           value={field.value}
                           onChange={field.onChange}
                           className="md:ms-6 max-w-[92px] bg-secondary"
-                          disabled={mode === 'edit'}
                         />
                       </FormControl>
                     </FormItem>
@@ -660,9 +645,7 @@ export default function CombinedVisarunForm({
                           variant={isSelected ? 'accent' : 'secondary'}
                           size="sm"
                           className="flex items-center gap-2 h-10"
-                          disabled={mode === 'edit'}
                           onClick={() => {
-                            if (mode === 'edit') return;
                             if (isSelected) {
                               // Remove transport
                               const fieldIndex = transportFields.findIndex(
@@ -713,11 +696,26 @@ export default function CombinedVisarunForm({
                             min="0"
                             placeholder={seatClass.name}
                             className="pl-10 max-w-52"
-                            disabled={mode === 'edit'}
-                            value={existingPrice?.price || ''}
+                            value={existingPrice?.price?.toString() || ''}
                             onChange={e => {
-                              if (mode === 'edit') return;
-                              const price = parseFloat(e.target.value) || 0;
+                              const value = e.target.value;
+
+                              // If empty value, remove the seat price entry
+                              if (value === '') {
+                                const currentSeatPrices = form.getValues('seatPrices') || [];
+                                const filteredSeatPrices = currentSeatPrices.filter(
+                                  sp => sp.seatClassId !== seatClass.id
+                                );
+                                form.setValue('seatPrices', filteredSeatPrices);
+                                return;
+                              }
+
+                              const price = parseFloat(value);
+
+                              if (isNaN(price) || price < 0) {
+                                return;
+                              }
+
                               const currentSeatPrices = form.getValues('seatPrices') || [];
                               const seatClassIndex = currentSeatPrices.findIndex(
                                 sp => sp.seatClassId === seatClass.id
