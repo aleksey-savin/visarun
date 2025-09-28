@@ -29,7 +29,7 @@ const PersonalData = ({ client }: { client: StoreClient }) => {
     <>
       <DocumentsUpload requirements={visaRequirementsDocuments} client={client} />
       <PassportExpiry client={client} />
-      {client.isPrimary && <UserContacts />}
+      <UserContacts client={client} />
       {client.isPrimary && <ClientName client={client} />}
       <Separator />
       <OtherRequirements client={client} requirements={otherVisaRequirements} />

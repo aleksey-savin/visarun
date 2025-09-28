@@ -118,24 +118,6 @@ const ClientName = ({ client }: { client: StoreClient | undefined }) => {
         <Form {...form}>
           <FormField
             control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    placeholder="First Name"
-                    value={field.value || ''}
-                    onChange={e => handleChange(field, e.target.value)}
-                    onBlur={() => handleBlur('firstName')}
-                    name={field.name}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
             name="lastName"
             render={({ field }) => (
               <FormItem>
@@ -145,6 +127,24 @@ const ClientName = ({ client }: { client: StoreClient | undefined }) => {
                     value={field.value || ''}
                     onChange={e => handleChange(field, e.target.value)}
                     onBlur={() => handleBlur('lastName')}
+                    name={field.name}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    placeholder="First Name"
+                    value={field.value || ''}
+                    onChange={e => handleChange(field, e.target.value)}
+                    onBlur={() => handleBlur('firstName')}
                     name={field.name}
                   />
                 </FormControl>

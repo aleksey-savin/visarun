@@ -124,6 +124,7 @@ const EditOrderPage = () => {
             ...client,
             firstName: client.firstName ?? undefined,
             lastName: client.lastName ?? undefined,
+            email: client.email ?? undefined,
             preConfirmPassportIsValid: client.preConfirmPassportIsValid ?? undefined,
             passportExpirationDate: client.passportExpirationDate
               ? new Date(client.passportExpirationDate)
@@ -440,11 +441,20 @@ const EditOrderPage = () => {
     if (activeStep.status === 'payment_pending') {
       // Only set to first client if no active client is currently selected
       if (!activeClientId && clients.length > 0) {
-        console.log('hello');
         setActiveClientId(clients[0].id);
       }
     }
-  }, [activeStep, setActiveClientId, clients, activeClientId]);
+
+    if (activeStep.status === 'personal_data_verification' && clientsHavePersonalDataErrors) {
+      if (!activeClientId && clients.length > 0) {
+        const clientWithErrors = clients.find(client => {
+          const errors = Array.from(clientHasPersonalDataErrors(client, user) || []);
+          return errors.length > 0;
+        });
+        setActiveClientId(clientWithErrors?.id || clients[0].id);
+      }
+    }
+  }, [activeStep, setActiveClientId, clients]);
 
   return (
     <>
@@ -504,7 +514,7 @@ const EditOrderPage = () => {
       </div>
       <div className="p-0 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-12">
-          <div className="lg:col-span-9">
+          <div className="flex flex-col lg:col-span-9 gap-2.5">
             {clients
               ?.sort((a, b) => {
                 // Primary client first
@@ -521,7 +531,7 @@ const EditOrderPage = () => {
                 }, 0);
                 return (
                   <Card
-                    className="bg-secondary my-2 md:my-0 mx-2 md:mx-0 md:mr-2.5 p-0 mb-2.5"
+                    className="bg-secondary my-2 md:my-0 mx-2 md:mx-0 md:mr-2.5 p-0"
                     key={client.id}
                   >
                     <ClientSection

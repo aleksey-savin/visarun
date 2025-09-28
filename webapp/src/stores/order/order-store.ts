@@ -65,6 +65,7 @@ export interface StoreClient extends Partial<Client> {
   isOutsideTheCountryAt?: Date;
   firstName?: string;
   lastName?: string;
+  email?: string | null;
   citizenship?: Citizenship & {
     blacklisted?: {
       citizenshipId: string;

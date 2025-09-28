@@ -15,7 +15,7 @@ import {
 
 import type { OrderItem, VisaType } from '@visarun/backend/node_modules/@prisma/client';
 
-const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
+const VisaTypeSelector = ({ item, isReadOnly }: { item: OrderItem; isReadOnly: boolean }) => {
   const {
     clients,
     orderItems,
@@ -359,7 +359,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
                   variant={isSelected ? 'accent' : 'secondary'}
                   size="sm"
                   type="button"
-                  disabled={isDisabled}
+                  disabled={isDisabled || isReadOnly}
                   onClick={event => {
                     event?.preventDefault();
                     event?.stopPropagation();
@@ -402,7 +402,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
             <Switch
               checked={isMulti}
               onCheckedChange={() => handleMulti(!isMulti)}
-              disabled={!selectedVisaTypeObject?.isMultientry}
+              disabled={!selectedVisaTypeObject?.isMultientry || isReadOnly}
               className="ml-2"
             />
             <Label>Multi</Label>

@@ -76,7 +76,12 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
   };
 
   const visaApplication = visaApplications.find(va => va.orderItemId === item.id);
+
   const client = clients.find(c => c.id === item.clientId);
+
+  const isReadOnly = visaApplication
+    ? !['draft', 'pending_submit'].includes(visaApplication.status)
+    : false;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -770,6 +775,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           <div className="flex gap-2 md:ps-4 pt-3 md:pt-0.5">
             <Switch
               checked={clientIsInTheCountry}
+              disabled={isReadOnly}
               onCheckedChange={() => handleClientIsInTheCountry(!clientIsInTheCountry)}
             />
             <Label>Client in {visaApplication?.country?.name}</Label>
@@ -782,6 +788,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           type="button"
           onClick={() => setShowDeleteModal(true)}
           className="h-8 w-8 p-0"
+          disabled={isReadOnly}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -808,6 +815,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                 <Popover open={exitDateOpen} onOpenChange={setExitDateOpen}>
                                   <PopoverTrigger asChild>
                                     <Button
+                                      disabled={isReadOnly}
                                       variant="secondary"
                                       id="date-picker"
                                       className={cn(
@@ -847,6 +855,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                         <Input
                           type="time"
                           value={exitTime}
+                          disabled={isReadOnly}
                           onChange={e => {
                             handleExitTimeUpdate(e.target.value);
                           }}
@@ -877,6 +886,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                 >
                                   <PopoverTrigger asChild>
                                     <Button
+                                      disabled={isReadOnly}
                                       variant="secondary"
                                       id="date-picker"
                                       className={cn(
@@ -916,6 +926,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                       </div>
                       <div className="flex flex-col gap-3">
                         <Input
+                          disabled={isReadOnly}
                           type="time"
                           value={stampUntilTime}
                           onChange={e => {
@@ -949,6 +960,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                             <Popover open={entryDateOpen} onOpenChange={setEntryDateOpen}>
                               <PopoverTrigger asChild>
                                 <Button
+                                  disabled={isReadOnly}
                                   variant="secondary"
                                   id="date-picker"
                                   className={cn(
@@ -983,6 +995,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                   </div>
                   <div className="flex flex-col gap-3">
                     <Input
+                      disabled={isReadOnly}
                       type="time"
                       value={entryTime}
                       onChange={e => {
@@ -1015,7 +1028,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
               </div>
             </div>
             <div>
-              <VisaTypeSelector item={item} />
+              <VisaTypeSelector item={item} isReadOnly={isReadOnly} />
             </div>
 
             <div className="flex flex-wrap gap-6 justify-between items-end">
@@ -1054,6 +1067,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                               >
                                 <PopoverTrigger asChild>
                                   <Button
+                                    disabled={isReadOnly}
                                     variant="secondary"
                                     id="date-picker"
                                     className={cn(
@@ -1093,6 +1107,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                     </div>
                     <div className="flex flex-col gap-3">
                       <Input
+                        disabled={isReadOnly}
                         type="time"
                         value={completionTime}
                         onChange={e => {
