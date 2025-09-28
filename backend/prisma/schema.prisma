@@ -92,6 +92,10 @@ model User {
   contactMethods           UserContactMethod[]
   roleAssignments          UserRoleAssignment[]
   OrderPayment             OrderPayment[]
+  currencyExchangesCreated CurrencyExchange[]         @relation("CurrencyExchangeCreatedBy")
+  currencyExchangesUpdated CurrencyExchange[]         @relation("CurrencyExchangeUpdatedBy")
+  transactionsCreated      Transaction[]              @relation("TransactionCreatedBy")
+  transactionsUpdated      Transaction[]              @relation("TransactionUpdatedBy")
 }
 
 model Client {
@@ -109,6 +113,7 @@ model Client {
   preConfirmPassportIsValid Boolean                    @default(false)
   citizenship               Citizenship?               @relation(fields: [citizenshipId], references: [id])
   user                      User?                      @relation(fields: [userId], references: [id])
+  bankingDetails            BankingDetails?
   ClientDiscountAssignment  ClientDiscountAssignment[]
   documents                 ClientDocument[]
   requirements              ClientRequirement[]
@@ -116,6 +121,7 @@ model Client {
   clients                   OrderClient[]
   OrderItem                 OrderItem[]
   VisarunPassenger          VisarunPassenger[]
+  transactionsSent          Transaction[]
 
   @@index([userId])
   @@index([citizenshipId])
@@ -305,6 +311,7 @@ model OrderItem {
   order               Order                @relation(fields: [orderId], references: [id])
   VisaApplication     VisaApplication[]
   VisarunPassenger    VisarunPassenger[]
+  currencyExchange    CurrencyExchange?
 
   @@index([orderId])
   @@index([clientId])
@@ -550,10 +557,12 @@ model AuditLog {
 }
 
 model Currency {
-  id            String         @id @default(uuid())
-  name          String         @unique
-  exchangeRates ExchangeRate[]
-  orderPayments OrderPayment[]
+  id                    String             @id @default(uuid())
+  name                  String             @unique
+  exchangeRates         ExchangeRate[]
+  orderPayments         OrderPayment[]
+  currencyExchangesFrom CurrencyExchange[] @relation("FromCurrency")
+  currencyExchangesTo   CurrencyExchange[] @relation("ToCurrency")
 
   @@map("currencies")
 }
@@ -576,6 +585,60 @@ model OrderPayment {
   @@index([orderId])
   @@index([currencyId])
   @@index([acceptedById])
+}
+
+// CURRENCY EXCHANGE
+
+model CurrencyExchange {
+  id                           String                 @id @default(uuid())
+  amount                       Decimal
+  amountInSelectedCurrencyFrom Decimal
+  amountInSelectedCurrencyTo   Decimal
+  status                       CurrencyExchangeStatus @default(draft)
+  deadline                     DateTime?
+  minTransactionAmount         Decimal?
+  orderItemId                  String                 @unique
+  fromCurrencyId               String
+  toCurrencyId                 String
+  createdById                  String
+  updatedById                  String
+  orderItem                    OrderItem              @relation(fields: [orderItemId], references: [id])
+  fromCurrency                 Currency               @relation("FromCurrency", fields: [fromCurrencyId], references: [id])
+  toCurrency                   Currency               @relation("ToCurrency", fields: [toCurrencyId], references: [id])
+  transactions                 Transaction[]
+  createdBy                    User                   @relation("CurrencyExchangeCreatedBy", fields: [createdById], references: [id])
+  updatedBy                    User                   @relation("CurrencyExchangeUpdatedBy", fields: [updatedById], references: [id])
+  createdAt                    DateTime               @default(now())
+  updatedAt                    DateTime               @default(now())
+}
+
+model Transaction {
+  id                       String            @id @default(uuid())
+  amount                   Decimal
+  amountInSelectedCurrency Decimal
+  customExchangeRate       Boolean
+  checkUrl                 String?
+  status                   TransactionStatus @default(draft)
+  currencyExchangeId       String
+  senderId                 String
+  createdById              String
+  updatedById              String
+  currencyExchange         CurrencyExchange  @relation(fields: [currencyExchangeId], references: [id])
+  sender                   Client            @relation(fields: [senderId], references: [id])
+  createdBy                User              @relation("TransactionCreatedBy", fields: [createdById], references: [id])
+  updatedBy                User              @relation("TransactionUpdatedBy", fields: [updatedById], references: [id])
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @default(now())
+}
+
+model BankingDetails {
+  id          String   @id @default(uuid())
+  content     String?
+  documentUrl String?
+  clientId    String   @unique
+  client      Client   @relation(fields: [clientId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
 }
 
 // VISARUN
@@ -859,6 +922,20 @@ enum PassengerStatus {
   confirmed
   checked_in
   no_show
+  cancelled
+}
+
+enum CurrencyExchangeStatus {
+  draft
+  in_progress
+  finished
+  cancelled
+}
+
+enum TransactionStatus {
+  draft
+  in_progress
+  finished
   cancelled
 }
 
