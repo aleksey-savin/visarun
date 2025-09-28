@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 
 export const zGetAllVisaApplicationsTrpcInput = z.object({
-  limit: z.number().int().min(1).max(100).default(50),
+  limit: z.number().int().min(1).max(200).optional(),
   offset: z.number().int().min(0).default(0),
   orderItemId: z.string().uuid().optional(),
   countryId: z.string().uuid().optional(),
@@ -22,13 +22,14 @@ export const zGetAllVisaApplicationsTrpcInput = z.object({
   submittedByAgent: z.boolean().optional(),
   isArchived: z.boolean().optional(),
   search: z.string().optional(),
+  statusGroup: z.enum(['active', 'drafts', 'archived']).optional(),
 });
 
 export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
   .input(zGetAllVisaApplicationsTrpcInput)
   .query(async ({ input, ctx }) => {
     const {
-      limit,
+      limit: inputLimit,
       offset,
       orderItemId,
       countryId,
@@ -37,10 +38,33 @@ export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
       submittedByAgent,
       isArchived,
       search,
+      statusGroup,
     } = input;
+
+    // Set different default limits based on status group
+    const limit = inputLimit ? inputLimit : 200;
 
     // Build where clause
     const where: Prisma.VisaApplicationWhereInput = {};
+
+    // Handle status group filter
+    if (statusGroup === 'active') {
+      where.status = {
+        in: [
+          'pending_submit',
+          'awaiting_approval',
+          'approved',
+          'denied',
+          'cancelled',
+          'pending_refund',
+        ],
+      };
+      where.isArchived = false;
+    } else if (statusGroup === 'drafts') {
+      where.status = 'draft';
+    } else if (statusGroup === 'archived') {
+      where.isArchived = true;
+    }
 
     if (orderItemId) {
       where.orderItemId = orderItemId;
@@ -54,7 +78,8 @@ export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
       where.visaTypeId = visaTypeId;
     }
 
-    if (status) {
+    // Only apply individual status filter if no statusGroup is specified
+    if (status && !statusGroup) {
       where.status = status;
     }
 
@@ -62,7 +87,8 @@ export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
       where.submittedByAgent = submittedByAgent;
     }
 
-    if (isArchived !== undefined) {
+    // Only apply individual isArchived filter if no statusGroup is specified
+    if (isArchived !== undefined && !statusGroup) {
       where.isArchived = isArchived;
     }
 
@@ -209,7 +235,7 @@ export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
           },
         },
       },
-      orderBy: [{ applicationCode: 'asc' }],
+      orderBy: statusGroup === 'archived' ? [{ updatedAt: 'desc' }] : [{ applicationCode: 'asc' }],
       take: limit,
       skip: offset,
     });

@@ -1,6 +1,7 @@
 import { createVisaApplicationTrpcRoute } from './create.js';
 import { getVisaApplicationTrpcRoute } from './getOne.js';
 import { getAllVisaApplicationsTrpcRoute } from './getAll.js';
+
 import { getVisaApplicationsByOrderItemTrpcRoute } from './getByOrderItem.js';
 import { getVisaApplicationsByOrderIdTrpcRoute } from './getByOrderId.js';
 import { getVisaApplicationsByStatusTrpcRoute } from './getByStatus.js';
@@ -13,6 +14,7 @@ export const visaApplicationRoutes = {
   create: createVisaApplicationTrpcRoute,
   getOne: getVisaApplicationTrpcRoute,
   getAll: getAllVisaApplicationsTrpcRoute,
+
   getByOrderItem: getVisaApplicationsByOrderItemTrpcRoute,
   getByOrderId: getVisaApplicationsByOrderIdTrpcRoute,
   getByStatus: getVisaApplicationsByStatusTrpcRoute,

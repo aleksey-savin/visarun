@@ -56,6 +56,7 @@ export const getOrderTrpcRoute = orderReadProcedure
                 isOutsideTheCountryAt: true,
                 firstName: true,
                 lastName: true,
+                email: true,
                 requirements: true,
                 documents: true,
                 citizenship: {
