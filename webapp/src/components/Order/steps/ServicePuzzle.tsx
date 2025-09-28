@@ -49,7 +49,7 @@ const ServicePuzzle = ({
     setClients,
   } = useOrderStore();
 
-  const [activeService, setActiveService] = useState('visarun');
+  const [activeService, setActiveService] = useState('visa');
 
   const isDisabled = !client.citizenship?.id || !client.preConfirmPassportIsValid;
 
