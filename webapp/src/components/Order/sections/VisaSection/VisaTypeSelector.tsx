@@ -199,8 +199,7 @@ const VisaTypeSelector = ({ item, isReadOnly }: { item: OrderItem; isReadOnly: b
       visaApplication?.plannedCountryExitDate
         ? new Date(visaApplication.plannedCountryExitDate)
         : null,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedVisaApplications = visaApplications.map(application =>

@@ -454,6 +454,18 @@ const EditOrderPage = () => {
         setActiveClientId(clientWithErrors?.id || clients[0].id);
       }
     }
+
+    if (activeStep.status === 'draft' && clientsHaveServicePuzzleErrors) {
+      if (!activeClientId && clients.length > 0) {
+        const clientWithErrors = clients.find(client => {
+          const errors = Array.from(
+            clientHasServicePuzzleErrors(client, orderItems, visaApplications) || []
+          );
+          return errors.length > 0;
+        });
+        setActiveClientId(clientWithErrors?.id || clients[0].id);
+      }
+    }
   }, [activeStep, setActiveClientId, clients]);
 
   return (

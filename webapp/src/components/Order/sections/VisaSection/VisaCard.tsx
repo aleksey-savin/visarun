@@ -233,8 +233,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           }
         : null,
       combinedDate,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedApplication: any = {
@@ -311,8 +310,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           }
         : null,
       combinedDate,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedApplication: any = {
@@ -466,8 +464,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           }
         : null,
       combinedDate,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedApplication: any = {
@@ -533,8 +530,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           }
         : null,
       combinedDate,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedApplication: any = {
@@ -603,8 +599,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
       visaApplication?.plannedCountryExitDate
         ? new Date(visaApplication.plannedCountryExitDate)
         : null,
-      clientIsInTheCountry,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      clientIsInTheCountry
     );
 
     const updatedApplication: any = {
