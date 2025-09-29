@@ -2,10 +2,11 @@ import React, { useState, useCallback, useRef } from 'react';
 import { trpc } from '@/lib/trpc';
 import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 import { FileUpload } from '@/components/ui/file-upload';
+import { ImageViewer } from '@/components/ui/image-viewer';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Eye, Trash2, Replace, File } from 'lucide-react';
+import { FileText, Eye, Trash2, Replace, File, Image } from 'lucide-react';
 
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
@@ -167,13 +168,13 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
 
   const getExistingDocument = (requirementId: string) => {
     const doc = existingDocuments?.clientDocuments?.find(
-      doc => doc.requirementId === requirementId
+      (doc: any) => doc.requirementId === requirementId
     );
     return doc;
   };
 
   const isImageFile = (fileName: string) => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic'];
     return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
   };
 
@@ -215,10 +216,10 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
       return;
     }
 
-    const acceptedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+    const acceptedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.heic'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     if (!acceptedTypes.includes(fileExtension)) {
-      toast.error('File type not supported. Accepted types: PDF, DOC, DOCX, JPG, PNG');
+      toast.error('File type not supported. Accepted types: PDF, DOC, DOCX, JPG, PNG, HEIC');
       return;
     }
 
@@ -330,7 +331,12 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
                 <Card className="bg-secondary p-3 rounded-md">
                   {/* Show existing document */}
                   <div className="flex items-center justify-between gap-2">
-                    {isImageFile(existingDoc.originalName) ? (
+                    {existingDoc.originalName.toLowerCase().includes('.heic') ||
+                    existingDoc.originalName.toLowerCase().includes('.heif') ? (
+                      <div className="flex items-center justify-center border-dashed rounded-md p-2">
+                        <Image className="w-4 h-4 text-gray-400" />
+                      </div>
+                    ) : isImageFile(existingDoc.originalName) ? (
                       <div className="flex items-center justify-center border-dashed rounded-md">
                         <img
                           src={getFullFileUrl(existingDoc.fileUrl)}
@@ -378,7 +384,7 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
                       replaceInputRefs.current[requirement.id] = el;
                     }}
                     type="file"
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
                     onChange={e => handleReplaceFileSelect(requirement.id, e.target.files)}
                     className="hidden"
                     disabled={isUploading || createDocumentMutation.isPending}
@@ -390,7 +396,7 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
                   onChange={handlers.onChange}
                   uploadEndpoint="/upload/client-document"
                   fileFieldName="document"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
                   maxSize={10 * 1024 * 1024} // 10MB
                   placeholder={`Drag or click to browse`}
                   customFileName={`${requirement.title.replace(/[^a-zA-Z0-9]/g, '-')}-${client.lastName}-${client.firstName}-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}`.toLowerCase()}
@@ -418,7 +424,7 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
             {viewingDocument && (
               <>
                 {isImageFile(viewingDocument.originalName) ? (
-                  <img
+                  <ImageViewer
                     src={getFullFileUrl(viewingDocument.fileUrl)}
                     alt={viewingDocument.originalName}
                     className="max-w-full max-h-[70vh] object-contain rounded"

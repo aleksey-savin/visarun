@@ -42,7 +42,7 @@ interface UploadResponse {
 export const FileUpload: React.FC<FileUploadProps> = ({
   value,
   onChange,
-  accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png',
+  accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.heic',
   maxSize = 10 * 1024 * 1024, // 10MB
   label,
   description,

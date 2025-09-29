@@ -391,7 +391,7 @@ export const RequirementForm: React.FC<RequirementFormProps> = ({
                           <FileUpload
                             value={field.value || ''}
                             onChange={field.onChange}
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
                             maxSize={10 * 1024 * 1024} // 10MB
                             uploadEndpoint="/upload/requirement-document"
                             fileFieldName="document"

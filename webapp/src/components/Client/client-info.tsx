@@ -318,10 +318,10 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
                   onChange={handleFileUpload}
                   uploadEndpoint="/upload/client-document"
                   fileFieldName="document"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
                   maxSize={10 * 1024 * 1024} // 10MB
                   label="Document File"
-                  description="Upload PDF, DOC, DOCX, JPG, JPEG, or PNG files up to 10MB"
+                  description="Upload PDF, DOC, DOCX, JPG, JPEG, PNG, or HEIC files up to 10MB"
                   onUploadSuccess={fileInfo => {
                     setUploadedFileInfo({
                       fileName: fileInfo.fileName || fileInfo.originalName,

@@ -21,7 +21,7 @@ export const clientHasServicePuzzleErrors = (
   }
 
   // 2. No order items
-  if (clientOrderItems.length === 0) {
+  if (!client.isPrimary && clientOrderItems.length === 0) {
     errors.add('No order items added');
   }
 

@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { ImageViewer } from '@/components/ui/image-viewer';
 
 import {
   Select,
@@ -24,7 +25,7 @@ import { trpc } from '@/lib/trpc';
 import useOrderStore, { StoreOrderPayment } from '@/stores/order/order-store';
 
 import { formatCurrency } from '@/utils/currency';
-import { Eye, Replace, Trash2, File } from 'lucide-react';
+import { Eye, Replace, Trash2, File, Image } from 'lucide-react';
 import { FileUpload } from '@/components/ui/file-upload';
 import { toast } from 'sonner';
 import Comments from '../Comments';
@@ -397,7 +398,7 @@ const Payment = () => {
   const hasDocument = !!existingDoc;
 
   const isImageFile = (fileName: string) => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic'];
     return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
   };
 
@@ -426,10 +427,10 @@ const Payment = () => {
       return;
     }
 
-    const acceptedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+    const acceptedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.heic'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     if (!acceptedTypes.includes(fileExtension)) {
-      toast.error('File type not supported. Accepted types: PDF, DOC, DOCX, JPG, PNG');
+      toast.error('File type not supported. Accepted types: PDF, DOC, DOCX, JPG, PNG, HEIC');
       return;
     }
 
@@ -639,7 +640,13 @@ const Payment = () => {
             <Card className="bg-secondary p-3 rounded-md">
               {/* Show existing document */}
               <div className="flex items-center justify-between gap-2">
-                {existingDoc && isImageFile(existingDoc.originalName) ? (
+                {existingDoc &&
+                (existingDoc.originalName.toLowerCase().includes('.heic') ||
+                  existingDoc.originalName.toLowerCase().includes('.heif')) ? (
+                  <div className="flex items-center justify-center border-dashed rounded-md p-2">
+                    <Image className="w-4 h-4 text-gray-400" />
+                  </div>
+                ) : existingDoc && isImageFile(existingDoc.originalName) ? (
                   <div className="flex items-center justify-center border-dashed rounded-md">
                     <img
                       src={existingDoc.fileUrl}
@@ -675,7 +682,7 @@ const Payment = () => {
               <input
                 ref={replaceInputRef}
                 type="file"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
                 onChange={e => handleReplaceFileSelect(e.target.files)}
                 className="hidden"
               />
@@ -694,7 +701,7 @@ const Payment = () => {
               }}
               uploadEndpoint="/upload/payment-document"
               fileFieldName="document"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
               maxSize={10 * 1024 * 1024} // 10MB
               placeholder="Drag or click to browse payment receipt"
               className="bg-secondary"
@@ -713,7 +720,7 @@ const Payment = () => {
             {viewingDocument && (
               <>
                 {isImageFile(viewingDocument.originalName) ? (
-                  <img
+                  <ImageViewer
                     src={viewingDocument.fileUrl}
                     alt={viewingDocument.originalName}
                     className="max-w-full max-h-[70vh] object-contain rounded"

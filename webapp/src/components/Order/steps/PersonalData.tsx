@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 
 const PersonalData = ({ client }: { client: StoreClient }) => {
-  const { setActiveClientId } = useOrderStore();
+  const { setActiveClientId, orderItems } = useOrderStore();
 
   const visaRequirementsDocuments = client.visaRequirements
     ? client.visaRequirements.filter((item: any) => item.inputType === 'document')
@@ -27,13 +27,17 @@ const PersonalData = ({ client }: { client: StoreClient }) => {
 
   return (
     <>
-      <DocumentsUpload requirements={visaRequirementsDocuments} client={client} />
-      <PassportExpiry client={client} />
-      <UserContacts client={client} />
-      {client.isPrimary && <ClientName client={client} />}
-      <Separator />
-      <OtherRequirements client={client} requirements={otherVisaRequirements} />
-      <Separator />
+      {orderItems.filter(item => item.clientId === client.id).length > 0 && (
+        <>
+          <DocumentsUpload requirements={visaRequirementsDocuments} client={client} />
+          <PassportExpiry client={client} />
+          <UserContacts client={client} />
+          {client.isPrimary && <ClientName client={client} />}
+          <Separator />
+          <OtherRequirements client={client} requirements={otherVisaRequirements} />
+          <Separator />
+        </>
+      )}
       <div className="flex flex-wrap justify-between align-center">
         <Comments />
         <Button type="button" onClick={handleConfirm}>

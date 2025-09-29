@@ -72,7 +72,7 @@ const ClientBadge = ({
                 <Badge variant="destructive">
                   <Crown />
                   <span>
-                    {client.firstName || ''} {client.lastName || ''}
+                    {client.lastName || ''} {client.firstName || ''}
                   </span>
                 </Badge>
                 <Tooltip>
@@ -101,7 +101,7 @@ const ClientBadge = ({
               <Badge variant="primary">
                 <Crown />
                 <span>
-                  {client.firstName || ''} {client.lastName || ''}
+                  {client.lastName || ''} {client.firstName || ''}
                 </span>
               </Badge>
               {showLinkedClients && (
@@ -125,7 +125,7 @@ const ClientBadge = ({
                 </Badge>
                 <Badge variant="destructive">
                   <User />
-                  {client.firstName || ''} {client.lastName || ''}
+                  {client.lastName || ''} {client.firstName || ''}
                 </Badge>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -151,7 +151,7 @@ const ClientBadge = ({
               </Badge>
               <Badge variant="secondary" className="bg-emerald-900">
                 <User />
-                {client.firstName || ''} {client.lastName || ''}
+                {client.lastName || ''} {client.firstName || ''}
               </Badge>
             </div>
           )}

@@ -385,9 +385,9 @@ const AllVisaApplicationsPage = () => {
       switch (sortField) {
         case 'client':
           aValue =
-            `${a.orderItem.client.firstName || ''} ${a.orderItem.client.lastName || ''}`.trim();
+            `${a.orderItem.client.lastName || ''} ${a.orderItem.client.firstName || ''}`.trim();
           bValue =
-            `${b.orderItem.client.firstName || ''} ${b.orderItem.client.lastName || ''}`.trim();
+            `${b.orderItem.client.lastName || ''} ${b.orderItem.client.firstName || ''}`.trim();
           break;
         case 'country':
           aValue = a.country.name;
@@ -642,9 +642,9 @@ const AllVisaApplicationsPage = () => {
 
                           // If both are primary or both are not primary, sort by name
                           const nameA =
-                            `${clientA.firstName || ''} ${clientA.lastName || ''}`.trim();
+                            `${clientA.lastName || ''} ${clientA.firstName || ''}`.trim();
                           const nameB =
-                            `${clientB.firstName || ''} ${clientB.lastName || ''}`.trim();
+                            `${clientB.lastName || ''} ${clientB.firstName || ''}`.trim();
                           return nameA.localeCompare(nameB);
                         });
 
@@ -784,8 +784,8 @@ const AllVisaApplicationsPage = () => {
                   if (!clientA.isPrimary && clientB.isPrimary) return 1;
 
                   // If both are primary or both are not primary, sort by name
-                  const nameA = `${clientA.firstName || ''} ${clientA.lastName || ''}`.trim();
-                  const nameB = `${clientB.firstName || ''} ${clientB.lastName || ''}`.trim();
+                  const nameA = `${clientA.lastName || ''} ${clientA.firstName || ''}`.trim();
+                  const nameB = `${clientB.lastName || ''} ${clientB.firstName || ''}`.trim();
                   return nameA.localeCompare(nameB);
                 });
 

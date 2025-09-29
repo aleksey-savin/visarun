@@ -46,14 +46,24 @@ const requirementDocumentUpload = multer({
       'image/jpeg',
       'image/jpg',
       'image/png',
+      'image/heic',
+      'image/heif',
+      'image/heic-sequence',
+      'image/heif-sequence',
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.pdf', '.doc', '.docx'];
+    const fileExtension = '.' + file.originalname.split('.').pop()?.toLowerCase();
+
+    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only JPG, PNG, PDF, DOC, and DOCX files are allowed.'));
+      cb(
+        new Error('Invalid file type. Only JPG, PNG, HEIC, PDF, DOC, and DOCX files are allowed.')
+      );
     }
   },
 });
@@ -95,14 +105,24 @@ const clientDocumentUpload = multer({
       'image/jpeg',
       'image/jpg',
       'image/png',
+      'image/heic',
+      'image/heif',
+      'image/heic-sequence',
+      'image/heif-sequence',
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.pdf', '.doc', '.docx'];
+    const fileExtension = '.' + file.originalname.split('.').pop()?.toLowerCase();
+
+    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only JPG, PNG, PDF, DOC, and DOCX files are allowed.'));
+      cb(
+        new Error('Invalid file type. Only JPG, PNG, HEIC, PDF, DOC, and DOCX files are allowed.')
+      );
     }
   },
 });
@@ -144,14 +164,24 @@ const paymentDocumentUpload = multer({
       'image/jpeg',
       'image/jpg',
       'image/png',
+      'image/heic',
+      'image/heif',
+      'image/heic-sequence',
+      'image/heif-sequence',
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
-    if (allowedTypes.includes(file.mimetype)) {
+
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.pdf', '.doc', '.docx'];
+    const fileExtension = '.' + file.originalname.split('.').pop()?.toLowerCase();
+
+    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only JPG, PNG, PDF, DOC, and DOCX files are allowed.'));
+      cb(
+        new Error('Invalid file type. Only JPG, PNG, HEIC, PDF, DOC, and DOCX files are allowed.')
+      );
     }
   },
 });
@@ -267,7 +297,6 @@ export const createUploadRoutes = () => {
         res.json({
           success: true,
           filePath,
-          fileName: req.file.filename,
           originalName: req.file.originalname,
           size: req.file.size,
           mimetype: req.file.mimetype,

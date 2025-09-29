@@ -5,8 +5,9 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent } from '../ui/dialog';
+import { ImageViewer } from '../ui/image-viewer';
 
-import { Crown, User, Mail, Check, Copy, Phone, File, Eye, Download } from 'lucide-react';
+import { Crown, User, Mail, Check, Copy, Phone, File, Eye, Download, Image } from 'lucide-react';
 
 import { ContactMethodIcon } from '../ContactMethod';
 
@@ -46,7 +47,7 @@ const ClientCard = ({
   }, [copiedContact]);
 
   const isImageFile = (fileName: string) => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic'];
     return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
   };
 
@@ -141,7 +142,7 @@ const ClientCard = ({
               <Badge variant="primary">
                 <Crown />
                 <span>
-                  {client.firstName || ''} {client.lastName || ''}
+                  {client.lastName || ''} {client.firstName || ''}
                 </span>
               </Badge>
             </div>
@@ -153,7 +154,7 @@ const ClientCard = ({
               </Badge>
               <Badge variant="secondary">
                 <User />
-                {client.firstName || ''} {client.lastName || ''}
+                {client.lastName || ''} {client.firstName || ''}
               </Badge>
             </div>
           )}
@@ -259,7 +260,12 @@ const ClientCard = ({
               <Card key={document.id} className="bg-secondary p-3 rounded-md">
                 {/* Show existing document */}
                 <div className="flex items-center gap-2">
-                  {isImageFile(document.originalName) ? (
+                  {document.originalName.toLowerCase().includes('.heic') ||
+                  document.originalName.toLowerCase().includes('.heif') ? (
+                    <div className="flex items-center justify-center border-dashed rounded-md p-2">
+                      <Image className="w-4 h-4 text-gray-400" />
+                    </div>
+                  ) : isImageFile(document.originalName) ? (
                     <div className="flex items-center justify-center border-dashed rounded-md">
                       <img
                         src={getFullFileUrl(document.fileUrl)}
@@ -301,7 +307,7 @@ const ClientCard = ({
                 {viewingDocument && (
                   <>
                     {isImageFile(viewingDocument.originalName) ? (
-                      <img
+                      <ImageViewer
                         src={getFullFileUrl(viewingDocument.fileUrl)}
                         alt={viewingDocument.originalName}
                         className="max-w-full max-h-[70vh] object-contain rounded"
