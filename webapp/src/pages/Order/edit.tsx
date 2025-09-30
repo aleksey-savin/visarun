@@ -202,6 +202,7 @@ const EditOrderPage = () => {
           id: i.id,
           orderItemId: i.orderItemId,
           applicationCode: i.applicationCode,
+          type: i.type,
           submittedByAgent: i.submittedByAgent,
           country: {
             id: i.country?.id,
@@ -210,6 +211,8 @@ const EditOrderPage = () => {
           visaType: {
             id: i.visaType?.id,
             name: i.visaType?.name,
+            accelerationCost: i.visaType?.accelerationCost ?? undefined,
+            accelerationAvailable: i.visaType?.accelerationAvailable ?? null,
             serviceCost: i.visaType?.serviceCost ?? undefined,
             isMultientry: i.visaType?.isMultientry,
             multientryExtraCost: i.visaType?.multientryExtraCost ?? undefined,
@@ -293,7 +296,7 @@ const EditOrderPage = () => {
   const clientsHavePersonalDataErrors = useMemo(() => {
     return (
       clients.filter(client => {
-        const errors = Array.from(clientHasPersonalDataErrors(client, user) || []);
+        const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
         return errors.length > 0;
       }).length > 0
     );
@@ -448,7 +451,7 @@ const EditOrderPage = () => {
     if (activeStep.status === 'personal_data_verification' && clientsHavePersonalDataErrors) {
       if (!activeClientId && clients.length > 0) {
         const clientWithErrors = clients.find(client => {
-          const errors = Array.from(clientHasPersonalDataErrors(client, user) || []);
+          const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
           return errors.length > 0;
         });
         setActiveClientId(clientWithErrors?.id || clients[0].id);

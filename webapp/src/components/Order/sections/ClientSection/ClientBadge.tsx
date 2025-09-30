@@ -41,7 +41,7 @@ const ClientBadge = ({
     if (clients.length === 0) return [];
 
     const servicePuzzleErrors = clientHasServicePuzzleErrors(client, orderItems, visaApplications);
-    const personalDataErrors = clientHasPersonalDataErrors(client, user);
+    const personalDataErrors = clientHasPersonalDataErrors(client, orderItems, user);
 
     // Show appropriate errors based on step status
     if (stepStatus === 'personal_data_verification') {

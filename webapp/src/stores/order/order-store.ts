@@ -103,6 +103,7 @@ export interface StoreVisaApplication {
   id: string;
   orderItemId: string;
   applicationCode: string | null;
+  type: string;
   submittedByAgent: boolean;
   status: VisaApplicationStatus;
   note: string | null;
@@ -130,6 +131,8 @@ export interface StoreVisaApplication {
     id: string | undefined;
     name: string | undefined;
     serviceCost: number | undefined;
+    accelerationCost: number | null | undefined;
+    accelerationAvailable: boolean | null;
     isMultientry: boolean | undefined;
     multientryExtraCost: number | null | undefined;
     processingMode: 'fixed' | 'approximate' | undefined;

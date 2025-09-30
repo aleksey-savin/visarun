@@ -48,7 +48,7 @@ const formSchema = z.object({
   clientIsInTheCountry: z.boolean().optional(),
 });
 
-const VisaCard = ({ item }: { item: OrderItem }) => {
+const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: string }) => {
   const {
     clients,
     orderItems,
@@ -570,8 +570,47 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
     }
   };
 
-  const [clientIsInTheCountry, setClientIsInTheCountry] = useState(
-    visaApplication?.clientIsInTheCountry || false
+  // Visa code (application code)
+  const [visaCode, setVisaCode] = useState<string>(visaApplication?.applicationCode || '');
+  const [visaCodeError, setVisaCodeError] = useState<string>('');
+
+  const handleVisaCodeUpdate = async (newCode: string) => {
+    setVisaCode(newCode);
+    setVisaCodeError('');
+    setSaveStatus('saving');
+
+    setVisaApplications(
+      visaApplications.map(va =>
+        va.orderItemId === item.id ? { ...va, applicationCode: newCode } : va
+      )
+    );
+
+    try {
+      await editVisaApplicationMutation.mutateAsync({
+        id: visaApplication?.id || '',
+        applicationCode: newCode,
+      });
+      setSaveStatus('saved');
+    } catch (error: any) {
+      setSaveStatus('error');
+      // Parse validation error array format
+
+      if (error?.message) {
+        const array = JSON.parse(error.message);
+        if (Array.isArray(array)) {
+          const messages = array.map((err: any) => err.message).join(', ');
+          setVisaCodeError(messages);
+        } else {
+          setVisaCodeError(error.message);
+        }
+      } else {
+        setVisaCodeError(error?.message || 'Failed to save visa code');
+      }
+    }
+  };
+
+  const [clientIsInTheCountry, setClientIsInTheCountry] = useState<boolean>(
+    visaApplication?.clientIsInTheCountry || true
   );
 
   const handleClientIsInTheCountry = async (clientIsInTheCountry: boolean) => {
@@ -747,11 +786,16 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
       form.setValue('stampUntilDate', undefined);
       form.setValue('stampUntilTime', '00:00');
     }
+
+    // Sync visa code
+    setVisaCode(visaApplication?.applicationCode || '');
+    setVisaCodeError('');
   }, [
     visaApplication?.plannedCountryEntryDate,
     visaApplication?.plannedCountryExitDate,
     visaApplication?.plannedCompletionDate,
     visaApplication?.stampUntilDate,
+    visaApplication?.applicationCode,
     form,
   ]);
 
@@ -769,11 +813,11 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           )}
           <div className="flex gap-2 md:ps-4 pt-3 md:pt-0.5">
             <Switch
-              checked={clientIsInTheCountry}
+              checked={!clientIsInTheCountry}
               disabled={isReadOnly}
               onCheckedChange={() => handleClientIsInTheCountry(!clientIsInTheCountry)}
             />
-            <Label>Client in {visaApplication?.country?.name}</Label>
+            <Label>Client is not in {visaApplication?.country?.name}</Label>
           </div>
         </div>
 
@@ -791,6 +835,21 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
       {!isBlacklisted && (
         <>
           <Form {...form}>
+            {activeService === 'acceleration' && (
+              <div className="space-y-2">
+                <Label>Visa code</Label>
+                <Input
+                  className={cn('max-w-52', visaCodeError && 'border-destructive')}
+                  disabled={isReadOnly}
+                  placeholder="Enter visa code"
+                  value={visaCode}
+                  onChange={e => setVisaCode(e.target.value)}
+                  onBlur={e => handleVisaCodeUpdate(e.target.value)}
+                />
+                {visaCodeError && <p className="text-sm text-destructive mt-1">{visaCodeError}</p>}
+              </div>
+            )}
+
             {clientIsInTheCountry && (
               <>
                 {/* Leaving country row */}
@@ -1023,7 +1082,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
               </div>
             </div>
             <div>
-              <VisaTypeSelector item={item} isReadOnly={isReadOnly} />
+              <VisaTypeSelector item={item} isReadOnly={isReadOnly} activeService={activeService} />
             </div>
 
             <div className="flex flex-wrap gap-6 justify-between items-end">

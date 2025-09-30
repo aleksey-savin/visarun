@@ -50,17 +50,23 @@ export const clientHasServicePuzzleErrors = (
   return errors;
 };
 
-export const clientHasPersonalDataErrors = (client: StoreClient, user?: StoreUser) => {
+export const clientHasPersonalDataErrors = (
+  client: StoreClient,
+  orderItems: StoreOrderItem[],
+  user?: StoreUser
+) => {
   const errors = new Set(client.errors || []);
 
   const docRequirements =
     client.visaRequirements?.filter(req => req.inputType === 'document') || [];
 
+  const needsToComply = orderItems.filter(item => item.clientId === client.id).length > 0;
+
   // 1. Required documents not uploaded
   for (const req of docRequirements || []) {
     const uploadedDocument = client?.documents?.find(doc => doc.requirementId === req.id);
 
-    if (!uploadedDocument && !req.isOptional) {
+    if (!uploadedDocument && !req.isOptional && needsToComply) {
       errors.add(`Document ${req.title} is not uploaded`);
     }
   }
@@ -95,14 +101,16 @@ export const clientHasPersonalDataErrors = (client: StoreClient, user?: StoreUse
     if (
       req.thresholdBool === false &&
       existingClientRequirement &&
-      existingClientRequirement.booleanValue === true
+      existingClientRequirement.booleanValue === true &&
+      needsToComply
     ) {
       errors.add(`Switch ${req.title} must be unchecked to continue`);
     }
 
     if (
       req.thresholdBool === true &&
-      (!existingClientRequirement || existingClientRequirement.booleanValue === false)
+      (!existingClientRequirement ||
+        (existingClientRequirement.booleanValue === false && needsToComply))
     ) {
       errors.add(`Switch ${req.title} must be checked to continue`);
     }

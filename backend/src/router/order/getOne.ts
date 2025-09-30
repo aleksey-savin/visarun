@@ -146,6 +146,7 @@ export const getOrderTrpcRoute = orderReadProcedure
               select: {
                 id: true,
                 orderItemId: true,
+                type: true,
                 plannedCountryEntryDate: true,
                 plannedCountryExitDate: true,
                 plannedCompletionDate: true,
@@ -171,8 +172,9 @@ export const getOrderTrpcRoute = orderReadProcedure
                     id: true,
                     name: true,
                     serviceCost: true,
+                    accelerationCost: true,
+                    accelerationAvailable: true,
                     isMultientry: true,
-
                     multientryExtraCost: true,
                     processingMode: true,
                     processingUnit: true,

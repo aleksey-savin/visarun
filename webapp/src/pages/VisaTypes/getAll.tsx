@@ -212,6 +212,7 @@ const AllVisaTypesPage = () => {
                     <TableHead>Name</TableHead>
                     <TableHead>Country</TableHead>
                     <TableHead>Service Cost</TableHead>
+                    <TableHead>Acceleration</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Processing</TableHead>
                     <TableHead>Usage</TableHead>
@@ -241,6 +242,17 @@ const AllVisaTypesPage = () => {
                             {formatCurrency(visaType.serviceCost, 'VND')}
                           </span>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {visaType.accelerationAvailable ? (
+                          <div className="flex flex-col gap-1">
+                            {formatCurrency(visaType.accelerationCost || 0, 'VND')}
+                          </div>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            Not Available
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant={visaType.isMultientry ? 'default' : 'secondary'}>
@@ -359,7 +371,28 @@ const AllVisaTypesPage = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Service Cost:</span>
-                  <span className="text-sm font-mono">{visaType.serviceCost.toFixed(2)}</span>
+                  <span className="text-sm font-mono">
+                    {formatCurrency(visaType.serviceCost, 'VND')}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Acceleration:</span>
+                  <div className="flex items-center gap-2">
+                    {visaType.accelerationAvailable ? (
+                      <>
+                        <Badge variant="default" className="text-xs">
+                          Available
+                        </Badge>
+                        <span className="text-xs font-mono">
+                          {formatCurrency(visaType.accelerationCost || 0, 'VND')}
+                        </span>
+                      </>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        Not Available
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Processing Time:</span>

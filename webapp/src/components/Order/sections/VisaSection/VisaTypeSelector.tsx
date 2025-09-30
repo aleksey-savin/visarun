@@ -15,7 +15,15 @@ import {
 
 import type { OrderItem, VisaType } from '@visarun/backend/node_modules/@prisma/client';
 
-const VisaTypeSelector = ({ item, isReadOnly }: { item: OrderItem; isReadOnly: boolean }) => {
+const VisaTypeSelector = ({
+  item,
+  isReadOnly,
+  activeService,
+}: {
+  item: OrderItem;
+  isReadOnly: boolean;
+  activeService: string;
+}) => {
   const {
     clients,
     orderItems,
@@ -41,7 +49,11 @@ const VisaTypeSelector = ({ item, isReadOnly }: { item: OrderItem; isReadOnly: b
 
   useEffect(() => {
     if (data) {
-      setVisaTypes(data.visaTypes);
+      setVisaTypes(
+        data.visaTypes.filter(type =>
+          activeService === 'acceleration' ? type.accelerationAvailable : true
+        )
+      );
     }
   }, [data]);
 
@@ -99,7 +111,13 @@ const VisaTypeSelector = ({ item, isReadOnly }: { item: OrderItem; isReadOnly: b
         const extraCost = visaApplication.isMultientry
           ? visaApplication.visaType.multientryExtraCost || 0
           : 0;
-        itemPrice = basePrice + extraCost + surchargeAmount;
+        if (item.serviceType === 'visa') {
+          itemPrice = basePrice + extraCost + surchargeAmount;
+        }
+
+        if (item.serviceType === 'acceleration') {
+          itemPrice = visaApplication.visaType.accelerationCost || 0;
+        }
       }
 
       // Only update if the price has actually changed
@@ -340,17 +358,7 @@ const VisaTypeSelector = ({ item, isReadOnly }: { item: OrderItem; isReadOnly: b
             const renderVisaTypeButton = (visaType: VisaType, isLastInGroup: boolean = false) => {
               const isSelected = visaType.id === selected;
               const isDisabled =
-                visaType.processingMode && visaType.processingUnit
-                  ? isVisaTypeDisabled(
-                      {
-                        processingMode: visaType.processingMode,
-                        processingUnit: visaType.processingUnit,
-                        processingValueFixed: visaType.processingValueFixed,
-                        processingValueMax: visaType.processingValueMax,
-                      },
-                      visaApplication?.clientIsInTheCountry || false
-                    )
-                  : false;
+                visaType.processingMode && visaType.processingUnit ? isVisaTypeDisabled() : false;
 
               return (
                 <Button

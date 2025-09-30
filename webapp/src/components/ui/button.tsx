@@ -23,6 +23,8 @@ const buttonVariants = cva(
           'bg-[#172554] text-primary-foreground shadow-xs hover:bg-[#172554]/90 hover:shadow-md border-[#172554] text-[#FAFAFA]',
         'accent-pink':
           'bg-pink-800 text-primary-foreground shadow-xs hover:bg-pink-800/90 hover:shadow-md border-pink-800 text-[#FAFAFA]',
+        'accent-green':
+          'bg-emerald-900 text-primary-foreground shadow-xs hover:bg-emerald-900/90 hover:shadow-md border-accent-green text-[#FAFAFA]',
         ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
       },

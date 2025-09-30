@@ -49,7 +49,10 @@ const ServicePuzzle = ({
     setClients,
   } = useOrderStore();
 
-  const [activeService, setActiveService] = useState('visa');
+  const detectActiveService =
+    orderItems.filter(i => i.serviceType === 'acceleration').length > 0 ? 'acceleration' : 'visa';
+
+  const [activeService, setActiveService] = useState(detectActiveService);
 
   const isDisabled = !client.citizenship?.id || !client.preConfirmPassportIsValid;
 
@@ -123,7 +126,9 @@ const ServicePuzzle = ({
     <>
       {servicePuzzleIsActive && (
         <>
-          {activeService === 'visa' && <AddVisa client={client} />}
+          {['visa', 'acceleration'].includes(activeService) && (
+            <AddVisa activeService={activeService} client={client} />
+          )}
           <ClientName client={client} />
           {activeService === 'visarun' && <VisarunSection />}
           <Comments />
@@ -170,7 +175,7 @@ const ServicePuzzle = ({
             <Card className="flex items-center gap-1 p-1 bg-secondary rounded-md border-none">
               <div className="flex gap-2">
                 <Button
-                  disabled={isDisabled}
+                  disabled={true}
                   variant={activeService === 'visarun' ? 'accent-pink' : 'secondary'}
                   size="sm"
                   className="border-none"
@@ -187,7 +192,13 @@ const ServicePuzzle = ({
                 >
                   Visa
                 </Button>
-                <Button disabled variant="secondary" size="sm" className="border-none">
+                <Button
+                  disabled={true}
+                  variant={activeService === 'acceleration' ? 'accent-green' : 'secondary'}
+                  size="sm"
+                  className="border-none"
+                  onClick={() => handleServiceButtonClick('acceleration')}
+                >
                   Acceleration
                 </Button>
               </div>

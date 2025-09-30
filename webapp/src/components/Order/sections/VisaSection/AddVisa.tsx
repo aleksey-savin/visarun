@@ -14,7 +14,7 @@ import { CircleAlert } from 'lucide-react';
 
 import { StoreVisaApplication } from '@/stores/order/order-store';
 
-const AddVisa = ({ client }: { client: StoreClient }) => {
+const AddVisa = ({ client, activeService }: { client: StoreClient; activeService: string }) => {
   const { order, orderItems, visaApplications, setOrderItems, setVisaApplications, setSaveStatus } =
     useOrderStore();
   const clientOrderItems = (orderItems?.filter(item => item.clientId === client.id) || []).sort(
@@ -47,15 +47,13 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
       return;
     }
 
-    console.log(countryId);
-
     setSaveStatus('saving');
 
     const newData = await createOrderItemMutation.mutateAsync({
       orderId: order.id || '',
       countryId,
       clientId: client.id,
-      serviceType: 'visa',
+      serviceType: activeService === 'visa' ? 'visa' : 'acceleration',
       basePrice: 0,
       finalPrice: 0,
     });
@@ -87,6 +85,7 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
       {
         ...newData.visaApplication,
         id: newData.visaApplication.id,
+        type: newData.visaApplication.type,
         orderItemId: newData.visaApplication.orderItemId,
         status: newData.visaApplication.status,
         createdAt: newData.visaApplication.createdAt
@@ -106,8 +105,15 @@ const AddVisa = ({ client }: { client: StoreClient }) => {
     <Card className="border-none p-4">
       <div>Add Visa</div>
       {clientOrderItems
-        ?.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        .map((item, index) => <VisaCard item={item} key={index} />)}
+        ?.filter((item: any) =>
+          activeService === 'visa'
+            ? item.serviceType === 'visa'
+            : item.serviceType === 'acceleration'
+        )
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        .map((item, index) => (
+          <VisaCard item={item} key={index} activeService={activeService} />
+        ))}
       <div className="flex justify-start gap-3">
         {countries
           .filter(country => !clientVisaApplications.some(item => item.country?.id === country.id))

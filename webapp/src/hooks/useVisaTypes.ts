@@ -15,6 +15,8 @@ export interface CreateVisaTypeData {
   name: string;
   countryId: string;
   serviceCost: number;
+  accelerationCost: number;
+  accelerationAvailable?: boolean;
   isMultientry?: boolean;
   multientryExtraCost?: number;
   processingMode: 'fixed' | 'approximate';

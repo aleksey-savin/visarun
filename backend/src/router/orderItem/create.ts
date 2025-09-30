@@ -5,7 +5,7 @@ import { VisaApplicationStatus } from '@prisma/client';
 export const zCreateOrderItemTrpcInput = z.object({
   orderId: z.string().uuid(),
   clientId: z.string().uuid(),
-  serviceType: z.enum(['visa', 'visarun']),
+  serviceType: z.enum(['visa', 'visarun', 'acceleration']),
   countryId: z.string().uuid().optional(),
   discountAppliedType: z.enum(['manual', 'rule']).optional(),
   discountRuleId: z.string().uuid().optional(),
@@ -90,7 +90,7 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
     }
 
     // Validate visa-specific fields
-    if (input.serviceType === 'visa') {
+    if (input.serviceType === 'visa' || input.serviceType === 'acceleration') {
       if (!input.countryId) {
         throw new Error('Country ID is required for visa service type');
       }
@@ -124,7 +124,7 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
 
     // If service type is visa, create a visa application
     let visaApplication = null;
-    if (input.serviceType === 'visa') {
+    if (input.serviceType === 'visa' || input.serviceType === 'acceleration') {
       try {
         // Always create visa application for visa order items
         const visaTypeId = input.visaTypeId;
@@ -167,6 +167,8 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
                 id: true,
                 name: true,
                 serviceCost: true,
+                accelerationCost: true,
+                accelerationAvailable: true,
                 isMultientry: true,
                 multientryExtraCost: true,
                 processingMode: true,

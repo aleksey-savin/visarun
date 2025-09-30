@@ -76,6 +76,8 @@ const EditVisaTypePage = () => {
         initialData={{
           name: visaType.name,
           serviceCost: visaType.serviceCost,
+          accelerationCost: visaType.accelerationCost || 0,
+          accelerationAvailable: visaType.accelerationAvailable || false,
           countryId: visaType.countryId,
           isMultientry: visaType.isMultientry,
           favourite: visaType.favourite,

@@ -348,6 +348,8 @@ model VisaType {
   id                    String                             @id @default(uuid())
   name                  String
   serviceCost           Float
+  accelerationCost      Float?
+  accelerationAvailable Boolean                            @default(false)
   countryId             String
   isMultientry          Boolean
   multientryExtraCost   Float?
@@ -370,6 +372,7 @@ model VisaApplication {
   id                      String                @id @default(uuid())
   orderItemId             String
   applicationCode         String?
+  type                    VisaApplicationType   @default(visa)
   submittedByAgent        Boolean
   countryId               String
   visaTypeId              String?
@@ -398,6 +401,7 @@ model VisaApplication {
 model ClientVisa {
   id                String          @id @default(uuid())
   clientId          String
+  code              String?
   countryId         String
   visaTypeId        String
   visaApplicationId String
@@ -845,6 +849,11 @@ model City {
   pickupLocations PickupLocation[]   @relation("PickupLocations")
 }
 
+enum VisaApplicationType {
+  visa
+  acceleration
+}
+
 enum VisarunServiceType {
   stamp
   visa
@@ -900,6 +909,7 @@ enum OrderStatus {
 enum ServiceType {
   visa
   visarun
+  acceleration
 }
 
 enum DiscountAppliedType {
