@@ -95,12 +95,16 @@ function calculateHourBasedCompletion(startDate: Date, processingHours: number):
 
   // 4 hour visa logic
   if (processingHours === 4) {
-    if (currentHour < 8) {
+    if (currentHour <= 8) {
       // Before 8 AM -> ready at 12:00 same day
       result.setHours(12, 0, 0, 0);
       return result;
+    } else if (currentHour <= 13) {
+      // At or after 8 AM but before 13:00 (1 PM) -> ready at 17:00 same day (4 hours left)
+      result.setHours(17, 0, 0, 0);
+      return result;
     } else {
-      // At or after 8 AM -> ready at 17:00 next day
+      // After 13:00 -> ready at 17:00 next day (not enough time left)
       result.setDate(result.getDate() + 1);
       const nextDay = getNextBusinessDay(result);
       nextDay.setHours(17, 0, 0, 0);
@@ -110,27 +114,27 @@ function calculateHourBasedCompletion(startDate: Date, processingHours: number):
 
   // 2 hour visa logic
   if (processingHours === 2) {
-    if (currentHour < 8) {
+    if (currentHour <= 8) {
       // Before 8 AM -> ready at 10:00
       result.setHours(10, 0, 0, 0);
       return result;
-    } else if (currentHour < 9) {
+    } else if (currentHour <= 9) {
       // Before 9 AM -> ready at 11:00
       result.setHours(11, 0, 0, 0);
       return result;
-    } else if (currentHour < 10) {
+    } else if (currentHour <= 10) {
       // Before 10 AM -> ready at 12:00
       result.setHours(12, 0, 0, 0);
       return result;
-    } else if (currentHour < 13.5) {
+    } else if (currentHour <= 13.5) {
       // After 10 AM (considering lunch) -> ready at 15:30
       result.setHours(15, 30, 0, 0);
       return result;
-    } else if (currentHour < 14) {
+    } else if (currentHour <= 14) {
       // Before 14:00 -> ready at 16:00
       result.setHours(16, 0, 0, 0);
       return result;
-    } else if (currentHour < 15) {
+    } else if (currentHour <= 15) {
       // Before 15:00 -> ready at 17:00
       result.setHours(17, 0, 0, 0);
       return result;
@@ -145,35 +149,35 @@ function calculateHourBasedCompletion(startDate: Date, processingHours: number):
 
   // 1 hour visa logic
   if (processingHours === 1) {
-    if (currentHour < 8) {
+    if (currentHour <= 8) {
       // Before 8 AM -> ready at 9:00
       result.setHours(9, 0, 0, 0);
       return result;
-    } else if (currentHour < 9) {
+    } else if (currentHour <= 9) {
       // Before 9 AM -> ready at 10:00
       result.setHours(10, 0, 0, 0);
       return result;
-    } else if (currentHour < 10) {
+    } else if (currentHour <= 10) {
       // Before 10 AM -> ready at 11:00
       result.setHours(11, 0, 0, 0);
       return result;
-    } else if (currentHour < 10.5) {
+    } else if (currentHour <= 10.5) {
       // Before 10:30 AM -> ready at 11:30
       result.setHours(11, 30, 0, 0);
       return result;
-    } else if (currentHour < 13.5) {
+    } else if (currentHour <= 13.5) {
       // After 11 AM (considering lunch) -> ready at 14:30
       result.setHours(14, 30, 0, 0);
       return result;
-    } else if (currentHour < 14) {
+    } else if (currentHour <= 14) {
       // Before 14:00 -> ready at 15:00
       result.setHours(15, 0, 0, 0);
       return result;
-    } else if (currentHour < 15) {
+    } else if (currentHour <= 15) {
       // Before 15:00 -> ready at 16:00
       result.setHours(16, 0, 0, 0);
       return result;
-    } else if (currentHour < 16) {
+    } else if (currentHour <= 16) {
       // Before 16:00 -> ready at 17:00
       result.setHours(17, 0, 0, 0);
       return result;
@@ -268,21 +272,22 @@ export function calculatePlannedCompletionDate(
       // For 1 day processing: if process time < 9:00, ready same day at 17:00, otherwise next business day at 17:00
       let completionDate: Date;
 
-      if (processTime < 9) {
+      if (processTime <= 9) {
+        // Same day completion
         completionDate = new Date(processDate);
+        completionDate.setHours(17, 0, 0, 0);
+        return completionDate;
       } else {
+        // Next business day completion
         completionDate = addBusinessDays(processDate, 1);
+        completionDate.setHours(17, 0, 0, 0);
+        return completionDate;
       }
-
-      // Ensure completion date is a business day (should already be, but double-check)
-      completionDate = getNextBusinessDay(completionDate);
-      completionDate.setHours(17, 0, 0, 0);
-      return completionDate;
     } else if (processingDays > 1) {
       // For >1 day processing (including approximate mode): if submitted before 16:00, first day counts
       let completionDate: Date;
 
-      if (processTime < 16) {
+      if (processTime <= 16) {
         // First day counts, so we add (processingDays - 1) business days
         completionDate = addBusinessDays(processDate, processingDays - 1);
       } else {
