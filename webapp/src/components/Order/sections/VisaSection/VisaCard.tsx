@@ -206,11 +206,18 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
   const handleExitDateUpdate = async (selectedDate: Date | undefined) => {
     if (!selectedDate) return;
 
-    setExitDate(selectedDate);
+    // Normalize the selected date to avoid timezone issues
+    const normalizedDate = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate()
+    );
+
+    setExitDate(normalizedDate);
     setSaveStatus('saving');
 
     const [hours, minutes] = exitTime.split(':').map(Number);
-    const combinedDate = new Date(selectedDate);
+    const combinedDate = new Date(normalizedDate);
     combinedDate.setHours(hours, minutes, 0, 0);
     const dateString = combinedDate.toISOString();
 
@@ -877,7 +884,9 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                         !field.value && 'text-muted-foreground'
                                       )}
                                     >
-                                      {exitDate ? exitDate.toLocaleDateString() : 'Select date'}
+                                      {exitDate
+                                        ? `${exitDate.getDate().toString().padStart(2, '0')}.${(exitDate.getMonth() + 1).toString().padStart(2, '0')}.${exitDate.getFullYear()}`
+                                        : 'Select date'}
                                       <CalendarIcon />
                                     </Button>
                                   </PopoverTrigger>
@@ -895,8 +904,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                         yesterday.setDate(yesterday.getDate() - 1);
                                         return date < yesterday;
                                       }}
-                                      startMonth={new Date()}
-                                      endMonth={new Date(2100, 11)}
+                                      defaultMonth={exitDate || new Date()}
                                     />
                                   </PopoverContent>
                                 </Popover>
@@ -968,8 +976,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                         yesterday.setDate(yesterday.getDate() - 1);
                                         return date < yesterday;
                                       }}
-                                      startMonth={new Date()}
-                                      endMonth={new Date(2100, 11)}
+                                      defaultMonth={stampUntilDate || new Date()}
                                     />
                                   </PopoverContent>
                                 </Popover>
@@ -1037,8 +1044,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                     yesterday.setDate(yesterday.getDate() - 1);
                                     return date < yesterday;
                                   }}
-                                  startMonth={new Date()}
-                                  endMonth={new Date(2100, 11)}
+                                  defaultMonth={entryDate || new Date()}
                                 />
                               </PopoverContent>
                             </Popover>
@@ -1149,8 +1155,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                       yesterday.setDate(yesterday.getDate() - 1);
                                       return date < yesterday;
                                     }}
-                                    startMonth={new Date()}
-                                    endMonth={new Date(2100, 11)}
+                                    defaultMonth={completionDate || new Date()}
                                   />
                                 </PopoverContent>
                               </Popover>
