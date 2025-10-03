@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import express, { Request, Response } from 'express';
+import { processImageFile } from '../../utils/imageConverter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -194,7 +195,7 @@ export const createUploadRoutes = () => {
   router.post(
     '/requirement-document',
     requirementDocumentUpload.single('document'),
-    (req: Request & { file?: Express.Multer.File }, res: Response) => {
+    async (req: Request & { file?: Express.Multer.File }, res: Response) => {
       try {
         if (!req.file) {
           res.status(400).json({
@@ -204,14 +205,37 @@ export const createUploadRoutes = () => {
           return;
         }
 
-        // Return the file path
-        const filePath = `/uploads/requirement-documents/${req.file.filename}`;
+        console.log('=== REQUIREMENT DOCUMENT UPLOAD DEBUG ===');
+        console.log('Original file:', req.file.originalname);
+        console.log('Original mimetype:', req.file.mimetype);
+        console.log('File path:', req.file.path);
+
+        // Process image file (convert HEIC to PNG if needed)
+        const processResult = await processImageFile(
+          req.file.path,
+          req.file.originalname,
+          req.file.mimetype
+        );
+
+        console.log('Process result:', processResult);
+        if (processResult.error) {
+          console.warn('Image processing failed:', processResult.error);
+        }
+
+        // Use the processed file path (converted if HEIC, original otherwise)
+        const finalFileName = path.basename(processResult.filePath);
+        const filePath = `/uploads/requirement-documents/${finalFileName}`;
+
         res.json({
           success: true,
           filePath,
           originalName: req.file.originalname,
           size: req.file.size,
-          mimetype: req.file.mimetype,
+          mimetype: processResult.wasConverted ? 'image/png' : req.file.mimetype,
+          converted: processResult.wasConverted,
+          ...(processResult.originalExtension && {
+            originalFormat: processResult.originalExtension,
+          }),
         });
       } catch (error) {
         res.status(500).json({
@@ -240,18 +264,37 @@ export const createUploadRoutes = () => {
           return;
         }
 
-        let finalFileName = req.file.filename;
+        console.log('=== CLIENT DOCUMENT UPLOAD DEBUG ===');
+        console.log('Original file:', req.file.originalname);
+        console.log('Original mimetype:', req.file.mimetype);
+        console.log('File path:', req.file.path);
+        console.log('Custom filename from frontend:', req.body?.customFileName);
+
+        // Process image file (convert HEIC to PNG if needed)
+        const processResult = await processImageFile(
+          req.file.path,
+          req.file.originalname,
+          req.file.mimetype
+        );
+
+        console.log('Process result:', processResult);
+        if (processResult.error) {
+          console.warn('Image processing failed:', processResult.error);
+        }
+
+        let finalFileName = path.basename(processResult.filePath);
+        const workingFilePath = processResult.filePath;
 
         // If customFileName is provided, rename the file
         if (req.body?.customFileName) {
-          const ext = path.extname(req.file.originalname);
+          const ext = processResult.wasConverted ? '.png' : path.extname(req.file.originalname);
           const customName = req.body.customFileName;
           const finalCustomName = customName.endsWith(ext) ? customName : `${customName}${ext}`;
 
-          const newFilePath = path.join(path.dirname(req.file.path), finalCustomName);
+          const newFilePath = path.join(path.dirname(workingFilePath), finalCustomName);
 
           try {
-            await fs.rename(req.file.path, newFilePath);
+            await fs.rename(workingFilePath, newFilePath);
             finalFileName = finalCustomName;
           } catch (renameError) {
             console.warn('Failed to rename file, using original name:', renameError);
@@ -266,7 +309,11 @@ export const createUploadRoutes = () => {
           fileName: finalFileName,
           originalName: req.file.originalname,
           size: req.file.size,
-          mimetype: req.file.mimetype,
+          mimetype: processResult.wasConverted ? 'image/png' : req.file.mimetype,
+          converted: processResult.wasConverted,
+          ...(processResult.originalExtension && {
+            originalFormat: processResult.originalExtension,
+          }),
         });
       } catch (error) {
         res.status(500).json({
@@ -282,7 +329,7 @@ export const createUploadRoutes = () => {
   router.post(
     '/payment-document',
     paymentDocumentUpload.single('document'),
-    (req: Request & { file?: Express.Multer.File }, res: Response) => {
+    async (req: Request & { file?: Express.Multer.File }, res: Response) => {
       try {
         if (!req.file) {
           res.status(400).json({
@@ -292,14 +339,37 @@ export const createUploadRoutes = () => {
           return;
         }
 
-        // Return the file path
-        const filePath = `/uploads/payment-documents/${req.file.filename}`;
+        console.log('=== PAYMENT DOCUMENT UPLOAD DEBUG ===');
+        console.log('Original file:', req.file.originalname);
+        console.log('Original mimetype:', req.file.mimetype);
+        console.log('File path:', req.file.path);
+
+        // Process image file (convert HEIC to PNG if needed)
+        const processResult = await processImageFile(
+          req.file.path,
+          req.file.originalname,
+          req.file.mimetype
+        );
+
+        console.log('Process result:', processResult);
+        if (processResult.error) {
+          console.warn('Image processing failed:', processResult.error);
+        }
+
+        // Use the processed file path (converted if HEIC, original otherwise)
+        const finalFileName = path.basename(processResult.filePath);
+        const filePath = `/uploads/payment-documents/${finalFileName}`;
+
         res.json({
           success: true,
           filePath,
           originalName: req.file.originalname,
           size: req.file.size,
-          mimetype: req.file.mimetype,
+          mimetype: processResult.wasConverted ? 'image/png' : req.file.mimetype,
+          converted: processResult.wasConverted,
+          ...(processResult.originalExtension && {
+            originalFormat: processResult.originalExtension,
+          }),
         });
       } catch (error) {
         res.status(500).json({

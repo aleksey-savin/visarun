@@ -32,7 +32,7 @@ services:
       - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     volumes:
-      - uploads:/app/backend/uploads
+      - uploads:/app/uploads
     depends_on:
       - db
     restart: always

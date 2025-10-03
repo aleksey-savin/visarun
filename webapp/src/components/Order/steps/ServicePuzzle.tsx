@@ -119,7 +119,7 @@ const ServicePuzzle = ({
   };
 
   const handleConfirm = () => {
-    setActiveClientId('');
+    setActiveClientId('-');
   };
 
   return (
@@ -193,7 +193,7 @@ const ServicePuzzle = ({
                   Visa
                 </Button>
                 <Button
-                  disabled={true}
+                  disabled={isDisabled}
                   variant={activeService === 'acceleration' ? 'accent-green' : 'secondary'}
                   size="sm"
                   className="border-none"

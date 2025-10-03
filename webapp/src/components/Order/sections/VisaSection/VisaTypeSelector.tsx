@@ -214,9 +214,7 @@ const VisaTypeSelector = ({
             processingValueMax: visaTypeObject.processingValueMax,
           }
         : null,
-      visaApplication?.plannedCountryExitDate
-        ? new Date(visaApplication.plannedCountryExitDate)
-        : null,
+      visaApplication?.stampUntilDate ? new Date(visaApplication.stampUntilDate) : null,
       visaApplication?.clientIsInTheCountry || false
     );
 

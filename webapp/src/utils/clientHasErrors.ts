@@ -25,8 +25,18 @@ export const clientHasServicePuzzleErrors = (
     errors.add('No order items added');
   }
 
+  const accelerationItems = clientOrderItems.filter(item => item.serviceType === 'acceleration');
+  for (const item of accelerationItems) {
+    const visaApp = visaApplications.find(app => app.orderItemId === item.id);
+    if (!visaApp || !visaApp.applicationCode) {
+      errors.add('Visa acceleration info is not complete');
+    }
+  }
+
   // 3. Visa info incomplete
-  const visaOrderItems = clientOrderItems.filter(item => item.serviceType === 'visa');
+  const visaOrderItems = clientOrderItems.filter(item =>
+    ['visa', 'acceleration'].includes(item.serviceType)
+  );
   for (const visaItem of visaOrderItems) {
     const visaApp = visaApplications.find(app => app.orderItemId === visaItem.id);
     if (!visaApp || !visaApp.visaType?.id || !visaApp.plannedCountryEntryDate) {

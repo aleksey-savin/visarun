@@ -203,6 +203,7 @@ export const getAllVisaApplicationsTrpcRoute = visaApplicationReadProcedure
                     id: true,
                     name: true,
                     abbreviation: true,
+                    emoji: true,
                   },
                 },
               },

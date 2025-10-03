@@ -104,6 +104,7 @@ const ClientBadge = ({
                   {client.lastName || ''} {client.firstName || ''}
                 </span>
               </Badge>
+              <div className="flex ps-2 items-center text-xl">{client.citizenship.emoji}</div>
               {showLinkedClients && (
                 <Badge variant="secondary" className="bg-emerald-900">
                   <User />
@@ -153,6 +154,7 @@ const ClientBadge = ({
                 <User />
                 {client.lastName || ''} {client.firstName || ''}
               </Badge>
+              <div className="flex ps-2 items-center text-xl">{client.citizenship.emoji}</div>
             </div>
           )}
         </>

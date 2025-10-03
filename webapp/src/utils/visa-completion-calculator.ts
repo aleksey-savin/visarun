@@ -196,25 +196,27 @@ function calculateHourBasedCompletion(startDate: Date, processingHours: number):
 /**
  * Calculates the planned completion date for a visa application
  * @param visaType - The visa type with processing information
- * @param plannedCountryExitDate - The date when client plans to exit the country (used when clientIsInTheCountry === true)
+ * @param stampUntilDate - The date when client plans to exit the country (used when clientIsInTheCountry === true)
  * @param clientIsInTheCountry - Whether the client is currently in the country
  * @param createdAt - The date when the visa application was created (used when clientIsInTheCountry === false)
  * @returns The calculated completion date or null if cannot be calculated
  */
 export function calculatePlannedCompletionDate(
   visaType: VisaTypeForCalculation | null,
-  plannedCountryExitDate: Date | null,
+  stampUntilDate: Date | null,
   clientIsInTheCountry: boolean
 ): Date | null {
   if (!visaType) {
     return null;
   }
 
+  console.log(clientIsInTheCountry);
+
   // Determine the base date based on client location
   let baseDate: Date | null = null;
   if (clientIsInTheCountry) {
-    // For clients in the country, use plannedCountryExitDate
-    baseDate = plannedCountryExitDate;
+    // For clients in the country, use stampUntilDate
+    baseDate = stampUntilDate;
   } else {
     // For clients not in the country, use createdAt
     baseDate = convertToAppTimezone(new Date());

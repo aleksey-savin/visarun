@@ -283,6 +283,12 @@ const EditOrderPage = () => {
     setActiveClientId,
   ]);
 
+  // Check if order contains only acceleration services
+  const hasOnlyAccelerationServices = useMemo(() => {
+    if (orderItems.length === 0) return false;
+    return orderItems.every(item => item.serviceType === 'acceleration');
+  }, [orderItems]);
+
   const clientsHaveServicePuzzleErrors = useMemo(
     () =>
       clients.filter(
@@ -290,17 +296,27 @@ const EditOrderPage = () => {
           Array.from(clientHasServicePuzzleErrors(client, orderItems, visaApplications) || [])
             .length > 0
       ).length > 0,
-    [clients, orderItems, visaApplications, user]
+    [clients, orderItems, visaApplications]
   );
 
   const clientsHavePersonalDataErrors = useMemo(() => {
+    // Skip personal data validation for acceleration-only orders
+    if (hasOnlyAccelerationServices) return false;
+
+    console.log(
+      clients.filter(client => {
+        const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
+        return errors.length > 0;
+      }).length > 0
+    );
+
     return (
       clients.filter(client => {
         const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
         return errors.length > 0;
       }).length > 0
     );
-  }, [clients, user]);
+  }, [clients, user, hasOnlyAccelerationServices]);
 
   const orderHasPaymentErrors = useMemo(() => {
     return (
@@ -310,7 +326,7 @@ const EditOrderPage = () => {
         return errors.length > 0;
       }).length > 0
     );
-  }, [orderPayments]);
+  }, [orderPayments, orderItems]);
 
   const servicePuzzleIsActive: boolean = useMemo(() => {
     // Basic requirements
@@ -333,8 +349,8 @@ const EditOrderPage = () => {
     );
   }, [contactMethods, clients, activeClientId]);
 
-  const steps = useMemo(
-    () => [
+  const steps = useMemo(() => {
+    const allSteps = [
       {
         name: 'Service Puzzle',
         status: 'draft',
@@ -358,26 +374,47 @@ const EditOrderPage = () => {
           order.status
         ),
       },
-    ],
-    [
-      clientsHaveServicePuzzleErrors,
-      clientsHavePersonalDataErrors,
-      orderHasPaymentErrors,
-      order.status,
-    ]
-  );
+    ];
 
-  const [activeStep, setActiveStep] = useState(order.status === 'draft' ? steps[0] : steps[1]);
+    // If order has only acceleration services, skip Personal Data step
+    if (hasOnlyAccelerationServices) {
+      return allSteps.filter(step => step.status !== 'personal_data_verification');
+    }
+
+    return allSteps;
+  }, [
+    clientsHaveServicePuzzleErrors,
+    clientsHavePersonalDataErrors,
+    orderHasPaymentErrors,
+    order.status,
+    hasOnlyAccelerationServices,
+  ]);
+
+  const [activeStep, setActiveStep] = useState(() => {
+    if (order.status === 'draft') return steps[0];
+    if (hasOnlyAccelerationServices) {
+      return order.status === 'payment_pending' ? steps[1] : steps[0];
+    }
+    return steps[1];
+  });
 
   useEffect(() => {
-    setActiveStep(
-      order.status === 'draft'
-        ? steps[0]
-        : order.status === 'personal_data_verification'
+    if (order.status === 'draft') {
+      setActiveStep(steps[0]);
+    } else if (hasOnlyAccelerationServices) {
+      // For acceleration-only orders, skip personal data step
+      setActiveStep(order.status === 'payment_pending' ? steps[1] : steps[0]);
+    } else {
+      // Regular flow with all steps
+      setActiveStep(
+        order.status === 'personal_data_verification'
           ? steps[1]
-          : steps[2]
-    );
-  }, [order, steps]);
+          : order.status === 'payment_pending'
+            ? steps[2]
+            : steps[0]
+      );
+    }
+  }, [order, steps, hasOnlyAccelerationServices]);
 
   const editOrderMutation = trpc.order.edit.useMutation();
 
@@ -396,14 +433,21 @@ const EditOrderPage = () => {
     try {
       setActiveStep(clickedStep);
 
+      // Determine the correct status to set based on whether we're skipping personal data
+      let statusToSet = clickedStep.status as StepStatus;
+      if (hasOnlyAccelerationServices && clickedStep.status === 'payment_pending') {
+        // For acceleration-only orders, when clicking on payment step, set status directly to payment_pending
+        statusToSet = 'payment_pending';
+      }
+
       // Update order status in backend
       await editOrderMutation.mutateAsync({
         id: order.id,
-        status: clickedStep.status as StepStatus,
+        status: statusToSet,
       });
 
       // Update order status in store
-      await updateOrderStatus(clickedStep.status as StepStatus);
+      await updateOrderStatus(statusToSet);
     } catch (error) {
       console.error('Failed to update order status:', error);
       // Revert on error
@@ -413,7 +457,12 @@ const EditOrderPage = () => {
 
   const handleNext = async () => {
     if (activeStep.status === 'draft') {
-      await handleStepClick(steps[1]);
+      if (hasOnlyAccelerationServices) {
+        // Skip personal data step for acceleration-only orders
+        await handleStepClick(steps[1]); // This will be Payment step
+      } else {
+        await handleStepClick(steps[1]); // This will be Personal Data step
+      }
     }
     if (activeStep.status === 'personal_data_verification') {
       await handleStepClick(steps[2]);
@@ -429,6 +478,8 @@ const EditOrderPage = () => {
 
         // Update order status in store
         await updateOrderStatus('submitted');
+
+        // Navigate to the visa applications table
         navigate(getAllVisaApplicationsRoute());
       } catch (error) {
         console.error('Failed to update order status:', error);
@@ -448,7 +499,11 @@ const EditOrderPage = () => {
       }
     }
 
-    if (activeStep.status === 'personal_data_verification' && clientsHavePersonalDataErrors) {
+    if (
+      activeStep.status === 'personal_data_verification' &&
+      clientsHavePersonalDataErrors &&
+      !hasOnlyAccelerationServices
+    ) {
       if (!activeClientId && clients.length > 0) {
         const clientWithErrors = clients.find(client => {
           const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
@@ -620,13 +675,13 @@ const EditOrderPage = () => {
             <Button
               variant={
                 activeStep.canProceed &&
-                (activeClientId === '' || order.status === 'payment_pending')
+                (['', '-'].includes(activeClientId) || order.status === 'payment_pending')
                   ? 'default'
                   : 'secondary'
               }
               disabled={
                 activeStep.canProceed &&
-                (activeClientId === '' || order.status === 'payment_pending')
+                (['', '-'].includes(activeClientId) || order.status === 'payment_pending')
                   ? false
                   : true
               }

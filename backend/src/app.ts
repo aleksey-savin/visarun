@@ -4,6 +4,7 @@ import { appRouter } from './router/index.js';
 import { applyTrpcToExpressApp } from './lib/trpc.js';
 import { createAppContext } from './lib/ctx.js';
 import { createUploadRoutes } from './router/upload/index.js';
+import { startAutoCompleteOrdersJob, setupGracefulShutdown } from './jobs/autoCompleteOrders.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -35,6 +36,12 @@ const __dirname = path.dirname(__filename);
 
     // Apply tRPC to Express app
     await applyTrpcToExpressApp(app, appRouter);
+
+    // Start cron jobs
+    startAutoCompleteOrdersJob();
+
+    // Setup graceful shutdown
+    setupGracefulShutdown();
 
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {

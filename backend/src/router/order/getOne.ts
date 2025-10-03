@@ -134,7 +134,9 @@ export const getOrderTrpcRoute = orderReadProcedure
         }); **/
 
       // Fetch visa applications for items with serviceType = 'visa'
-      const visaItems = order.items.filter(item => item.serviceType === 'visa');
+      const visaItems = order.items.filter(item =>
+        ['visa', 'acceleration'].includes(item.serviceType)
+      );
       const visaItemIds = visaItems.map(item => item.id);
 
       const visaApplications =

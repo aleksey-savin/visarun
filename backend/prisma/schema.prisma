@@ -387,7 +387,7 @@ model VisaApplication {
   plannedCompletionDate   DateTime?
   stampUntilDate          DateTime?
   stampIsRecieved         Boolean               @default(false)
-  clientIsInTheCountry    Boolean               @default(false)
+  clientIsInTheCountry    Boolean               @default(true)
   isMultientry            Boolean               @default(false)
   isArchived              Boolean               @default(false)
   createdAt               DateTime              @default(now())
@@ -862,6 +862,7 @@ enum VisarunServiceType {
 enum TripStatus {
   scheduled
   in_process
+  cancelled
   completed
 }
 

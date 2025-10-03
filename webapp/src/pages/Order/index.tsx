@@ -37,6 +37,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 type OrderStatus =
   | 'draft'
@@ -48,9 +56,12 @@ type OrderStatus =
 
 const statusColors = {
   draft: 'bg-gray-100 text-gray-800',
+  personal_data_verification: 'bg-blue-100 text-blue-800',
+  payment_pending: 'bg-orange-100 text-orange-800',
   submitted: 'bg-yellow-100 text-yellow-800',
-  paid: 'bg-green-100 text-green-800',
+  completed: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
+  paid: 'bg-green-100 text-green-800',
 };
 
 export default function AllOrdersPage() {
@@ -59,6 +70,11 @@ export default function AllOrdersPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [workStatusFilter, setWorkStatusFilter] = useState<'in-work' | 'archived'>('in-work');
+
+  const offset = (currentPage - 1) * pageSize;
 
   // Debounce search term
   useEffect(() => {
@@ -76,10 +92,15 @@ export default function AllOrdersPage() {
     refetch,
   } = trpc.order.getAll.useQuery({
     status: statusFilter !== 'ALL' ? statusFilter : undefined,
+    workStatus: workStatusFilter,
     search: debouncedSearchTerm || undefined,
+    limit: pageSize,
+    offset,
   });
 
   const orders = ordersData?.orders || [];
+  const pagination = ordersData?.pagination;
+  const totalPages = pagination ? pagination.totalPages : 0;
 
   const deleteOrderMutation = trpc.order.delete.useMutation({
     onSuccess: () => {
@@ -105,9 +126,27 @@ export default function AllOrdersPage() {
     }).format(new Date(date));
   };
 
+  // Reset to first page when filters change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (value: OrderStatus | 'ALL') => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleWorkStatusFilterChange = (value: 'in-work' | 'archived') => {
+    setWorkStatusFilter(value);
+    setCurrentPage(1);
+  };
+
   const resetFilters = () => {
     setSearchTerm('');
     setStatusFilter('ALL');
+    setWorkStatusFilter('in-work');
+    setCurrentPage(1);
   };
 
   if (error) {
@@ -125,13 +164,29 @@ export default function AllOrdersPage() {
     <div className="grid gap-6 p-6">
       <FilterContainer onClearFilters={resetFilters}>
         <FilterFields>
+          <FilterField label="Work Status">
+            <div className="flex items-center gap-2">
+              <Button
+                variant={workStatusFilter === 'in-work' ? 'default' : 'ghost'}
+                onClick={() => handleWorkStatusFilterChange('in-work')}
+              >
+                In work
+              </Button>
+              <Button
+                variant={workStatusFilter === 'archived' ? 'default' : 'ghost'}
+                onClick={() => handleWorkStatusFilterChange('archived')}
+              >
+                Archived
+              </Button>
+            </div>
+          </FilterField>
           <FilterField label="Search Orders">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search by user name, or email..."
                 value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={e => handleSearchChange(e.target.value)}
                 className="pl-10 pr-10"
               />
               {searchTerm && (
@@ -139,7 +194,7 @@ export default function AllOrdersPage() {
                   variant="ghost"
                   size="sm"
                   className="absolute right-1 top-1 h-8 w-8 p-0"
-                  onClick={() => setSearchTerm('')}
+                  onClick={() => handleSearchChange('')}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -147,23 +202,45 @@ export default function AllOrdersPage() {
             </div>
           </FilterField>
 
-          <FilterField label="Status">
-            <Select
-              value={statusFilter}
-              onValueChange={value => setStatusFilter(value as OrderStatus | 'ALL')}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="submitted">Submitted</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </FilterField>
+          {workStatusFilter === 'in-work' && (
+            <FilterField label="Status">
+              <Select
+                value={statusFilter}
+                onValueChange={value => handleStatusFilterChange(value as OrderStatus | 'ALL')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="personal_data_verification">
+                    Personal Data Verification
+                  </SelectItem>
+                  <SelectItem value="payment_pending">Payment Pending</SelectItem>
+                  <SelectItem value="submitted">Submitted</SelectItem>
+                </SelectContent>
+              </Select>
+            </FilterField>
+          )}
+
+          {workStatusFilter === 'archived' && (
+            <FilterField label="Status">
+              <Select
+                value={statusFilter}
+                onValueChange={value => handleStatusFilterChange(value as OrderStatus | 'ALL')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Statuses</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </FilterField>
+          )}
         </FilterFields>
       </FilterContainer>
 
@@ -359,6 +436,61 @@ export default function AllOrdersPage() {
             ))}
           </div>
         </>
+      )}
+
+      {/* Pagination */}
+      {pagination && totalPages > 1 && (
+        <div className="mt-6 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
+          <div className="text-sm text-muted-foreground text-center sm:text-left">
+            Showing {offset + 1} to {Math.min(offset + pageSize, ordersData?.totalCount || 0)} of{' '}
+            {ordersData?.totalCount || 0} results
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  className={`w-auto ${
+                    currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'
+                  }`}
+                />
+              </PaginationItem>
+
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(pageNum)}
+                      isActive={currentPage === pageNum}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  className={`w-auto ${
+                    currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'
+                  }`}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       )}
 
       <ClientSearchModal isOpen={isClientSearchOpen} onOpenChange={setIsClientSearchOpen} />

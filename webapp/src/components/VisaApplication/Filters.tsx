@@ -21,6 +21,8 @@ export interface VisaApplicationFiltersProps {
   onCountryFilterChange: (value: string) => void;
   selectedVisaTypeFilter: string;
   onVisaTypeFilterChange: (value: string) => void;
+  selectedApplicationTypeFilter: string;
+  onApplicationTypeFilterChange: (value: string) => void;
   selectedStatusGroupFilter: string;
   onStatusGroupFilterChange: (value: string) => void;
   visasToApplyTimeFilter: 'today' | 'later' | 'all';
@@ -39,6 +41,8 @@ export const VisaApplicationFilters: React.FC<VisaApplicationFiltersProps> = ({
   onCountryFilterChange,
   selectedVisaTypeFilter,
   onVisaTypeFilterChange,
+  selectedApplicationTypeFilter,
+  onApplicationTypeFilterChange,
   selectedStatusGroupFilter,
   onStatusGroupFilterChange,
   visasToApplyTimeFilter,
@@ -74,6 +78,13 @@ export const VisaApplicationFilters: React.FC<VisaApplicationFiltersProps> = ({
     { value: 'cancelled', label: 'Cancelled' },
     { value: 'pending_refund', label: 'Refund' },
     { value: 'refunded', label: 'Refunded' },
+  ];
+
+  // Define application type options for filtering
+  const applicationTypeOptions = [
+    { value: 'all', label: 'All types' },
+    { value: 'visa', label: 'Visa' },
+    { value: 'acceleration', label: 'Acceleration' },
   ];
 
   return (
@@ -158,6 +169,24 @@ export const VisaApplicationFilters: React.FC<VisaApplicationFiltersProps> = ({
                     <span>{visaType.name}</span>
                     <span className="text-muted-foreground ml-2">{visaType.country?.name}</span>
                   </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterField>
+
+        <FilterField label="Service">
+          <Select
+            value={selectedApplicationTypeFilter}
+            onValueChange={onApplicationTypeFilterChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              {applicationTypeOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
                 </SelectItem>
               ))}
             </SelectContent>

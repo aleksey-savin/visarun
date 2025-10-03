@@ -135,12 +135,16 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
           submittedByAgent: boolean;
           countryId: string;
           plannedCountryEntryDate?: Date;
+          clientIsInTheCountry?: boolean;
           status: VisaApplicationStatus;
           visaTypeId?: string;
+          type?: 'visa' | 'acceleration';
         } = {
           orderItemId: orderItem.id,
           submittedByAgent: false,
-          countryId: input.countryId!, // Safe to use ! because we validated above
+          clientIsInTheCountry: true,
+          type: input.serviceType,
+          countryId: input.countryId!,
           plannedCountryEntryDate: input.plannedCountryEntryDate,
           status: VisaApplicationStatus.draft,
         };
@@ -153,8 +157,16 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
           visaApplicationData.applicationCode = input.applicationCode;
         }
 
+        const country = await ctx.prisma.country.findUnique({
+          where: { id: input.countryId! },
+          select: { name: true },
+        });
+
         visaApplication = await ctx.prisma.visaApplication.create({
-          data: visaApplicationData,
+          data: {
+            ...visaApplicationData,
+            clientIsInTheCountry: country?.name === 'Cambodia' ? false : true,
+          },
           include: {
             country: {
               select: {

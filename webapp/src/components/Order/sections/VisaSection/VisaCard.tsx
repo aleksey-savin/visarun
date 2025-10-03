@@ -288,7 +288,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
     }
   };
 
-  const handleExitTimeUpdate = async (newTime: string) => {
+  /* const handleExitTimeUpdate = async (newTime: string) => {
     setExitTime(newTime);
 
     if (!exitDate) return;
@@ -359,7 +359,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
     } catch {
       setSaveStatus('error');
     }
-  };
+  }; */
 
   // Visa completion date and time
   const [completionDateOpen, setCompletionDateOpen] = useState(false);
@@ -617,7 +617,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
   };
 
   const [clientIsInTheCountry, setClientIsInTheCountry] = useState<boolean>(
-    visaApplication?.clientIsInTheCountry || true
+    visaApplication?.clientIsInTheCountry !== false
   );
 
   const handleClientIsInTheCountry = async (clientIsInTheCountry: boolean) => {
@@ -820,11 +820,11 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
           )}
           <div className="flex gap-2 md:ps-4 pt-3 md:pt-0.5">
             <Switch
-              checked={!clientIsInTheCountry}
+              checked={clientIsInTheCountry}
               disabled={isReadOnly}
               onCheckedChange={() => handleClientIsInTheCountry(!clientIsInTheCountry)}
             />
-            <Label>Client is not in {visaApplication?.country?.name}</Label>
+            <Label>Client is in {visaApplication?.country?.name}</Label>
           </div>
         </div>
 
@@ -842,20 +842,19 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
       {!isBlacklisted && (
         <>
           <Form {...form}>
-            {activeService === 'acceleration' && (
-              <div className="space-y-2">
-                <Label>Visa code</Label>
-                <Input
-                  className={cn('max-w-52', visaCodeError && 'border-destructive')}
-                  disabled={isReadOnly}
-                  placeholder="Enter visa code"
-                  value={visaCode}
-                  onChange={e => setVisaCode(e.target.value)}
-                  onBlur={e => handleVisaCodeUpdate(e.target.value)}
-                />
-                {visaCodeError && <p className="text-sm text-destructive mt-1">{visaCodeError}</p>}
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label>Visa code</Label>
+              <Input
+                className={cn('max-w-52', visaCodeError && 'border-destructive')}
+                required={activeService === 'acceleration'}
+                disabled={isReadOnly}
+                placeholder="Enter visa code"
+                value={visaCode}
+                onChange={e => setVisaCode(e.target.value)}
+                onBlur={e => handleVisaCodeUpdate(e.target.value)}
+              />
+              {visaCodeError && <p className="text-sm text-destructive mt-1">{visaCodeError}</p>}
+            </div>
 
             {clientIsInTheCountry && (
               <>
@@ -913,7 +912,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                           )}
                         />
                       </div>
-                      <div className="flex flex-col gap-3">
+                      {/* <div className="flex flex-col gap-3">
                         <Input
                           type="time"
                           value={exitTime}
@@ -926,7 +925,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                             'bg-secondary appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none'
                           )}
                         />
-                      </div>
+                      </div>*/}
                     </div>
                   </div>
                   {/* Stamp until */}
@@ -957,7 +956,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                       )}
                                     >
                                       {stampUntilDate
-                                        ? stampUntilDate.toLocaleDateString()
+                                        ? `${stampUntilDate.getDate().toString().padStart(2, '0')}.${(stampUntilDate.getMonth() + 1).toString().padStart(2, '0')}.${stampUntilDate.getFullYear()}`
                                         : 'Select date'}
                                       <CalendarIcon />
                                     </Button>
@@ -1029,7 +1028,9 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                     !field.value && 'text-muted-foreground'
                                   )}
                                 >
-                                  {entryDate ? entryDate.toLocaleDateString() : 'Select date'}
+                                  {entryDate
+                                    ? `${entryDate.getDate().toString().padStart(2, '0')}.${(entryDate.getMonth() + 1).toString().padStart(2, '0')}.${entryDate.getFullYear()}`
+                                    : 'Select date'}
                                   <CalendarIcon />
                                 </Button>
                               </PopoverTrigger>
@@ -1077,9 +1078,13 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                       {entryDate && visaFreeStampDuration && (
                         <Badge variant="destructive" className="text-xs text-secondary">
                           exit by{' '}
-                          {new Date(
-                            entryDate.getTime() + (visaFreeStampDuration - 1) * 24 * 60 * 60 * 1000
-                          ).toLocaleDateString()}
+                          {(() => {
+                            const visaFreeDate = new Date(
+                              entryDate.getTime() +
+                                (visaFreeStampDuration - 1) * 24 * 60 * 60 * 1000
+                            );
+                            return `${visaFreeDate.getDate().toString().padStart(2, '0')}.${(visaFreeDate.getMonth() + 1).toString().padStart(2, '0')}.${visaFreeDate.getFullYear()}`;
+                          })()}
                         </Badge>
                       )}
                     </div>
@@ -1136,7 +1141,7 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                     )}
                                   >
                                     {completionDate
-                                      ? completionDate.toLocaleDateString()
+                                      ? `${completionDate.getDate().toString().padStart(2, '0')}.${(completionDate.getMonth() + 1).toString().padStart(2, '0')}.${completionDate.getFullYear()}`
                                       : 'Select date'}
                                     <CalendarIcon />
                                   </Button>

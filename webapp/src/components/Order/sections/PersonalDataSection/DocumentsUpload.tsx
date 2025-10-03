@@ -242,6 +242,9 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
       const result = await response.json();
 
       if (result.success) {
+        // Use the filename returned by backend (handles conversion automatically)
+        const finalFileName = result.fileName || newFileName;
+
         // First delete the old document
         await new Promise<void>((resolve, reject) => {
           deleteDocumentMutation.mutate(
@@ -257,11 +260,11 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
         createDocumentMutation.mutate({
           clientId: client.id,
           requirementId: requirementId,
-          fileName: newFileName,
-          originalName: newFileName,
-          fileUrl: `/uploads/client-documents/${newFileName}`,
-          fileType: file.type.split('/')[1] || 'unknown',
-          fileSize: file.size,
+          fileName: finalFileName,
+          originalName: finalFileName,
+          fileUrl: `/uploads/client-documents/${finalFileName}`,
+          fileType: result.mimetype?.split('/')[1] || file.type.split('/')[1] || 'unknown',
+          fileSize: result.size || file.size,
         });
       } else {
         toast.error(result.error || 'Upload failed');

@@ -97,6 +97,7 @@ const AllVisaApplicationsPage = () => {
     searchTerm: '',
     selectedCountryFilter: 'all',
     selectedVisaTypeFilter: 'all',
+    selectedApplicationTypeFilter: 'all',
     selectedStatusGroupFilter: 'visas-to-apply',
     visasToApplyTimeFilter: 'all' as 'today' | 'later' | 'all',
     selectedStatusFilter: 'all',
@@ -128,6 +129,9 @@ const AllVisaApplicationsPage = () => {
   );
   const [selectedVisaTypeFilter, setSelectedVisaTypeFilter] = useState(
     initialState.selectedVisaTypeFilter
+  );
+  const [selectedApplicationTypeFilter, setSelectedApplicationTypeFilter] = useState(
+    initialState.selectedApplicationTypeFilter
   );
   const [selectedStatusGroupFilter, setSelectedStatusGroupFilter] = useState(
     initialState.selectedStatusGroupFilter
@@ -162,6 +166,7 @@ const AllVisaApplicationsPage = () => {
       searchTerm,
       selectedCountryFilter,
       selectedVisaTypeFilter,
+      selectedApplicationTypeFilter,
       selectedStatusGroupFilter,
       visasToApplyTimeFilter,
       selectedStatusFilter,
@@ -180,6 +185,7 @@ const AllVisaApplicationsPage = () => {
     searchTerm,
     selectedCountryFilter,
     selectedVisaTypeFilter,
+    selectedApplicationTypeFilter,
     selectedStatusGroupFilter,
     visasToApplyTimeFilter,
     selectedStatusFilter,
@@ -194,6 +200,7 @@ const AllVisaApplicationsPage = () => {
     setSearchTerm(defaultFilters.searchTerm);
     setSelectedCountryFilter(defaultFilters.selectedCountryFilter);
     setSelectedVisaTypeFilter(defaultFilters.selectedVisaTypeFilter);
+    setSelectedApplicationTypeFilter(defaultFilters.selectedApplicationTypeFilter);
     setSelectedStatusGroupFilter(defaultFilters.selectedStatusGroupFilter);
     setVisasToApplyTimeFilter(defaultFilters.visasToApplyTimeFilter);
     setSelectedStatusFilter(defaultFilters.selectedStatusFilter);
@@ -216,6 +223,11 @@ const AllVisaApplicationsPage = () => {
 
   const handleVisaTypeFilterChange = (value: string) => {
     setSelectedVisaTypeFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleApplicationTypeFilterChange = (value: string) => {
+    setSelectedApplicationTypeFilter(value);
     setCurrentPage(1);
   };
 
@@ -366,12 +378,18 @@ const AllVisaApplicationsPage = () => {
       filtered = filtered.filter(va => va.status === selectedStatusFilter);
     }
 
+    // Apply application type filter
+    if (selectedApplicationTypeFilter !== 'all') {
+      filtered = filtered.filter(va => va.type === selectedApplicationTypeFilter.toLowerCase());
+    }
+
     return filtered;
   }, [
     allVisaApplications,
     selectedStatusGroupFilter,
     visasToApplyTimeFilter,
     selectedStatusFilter,
+    selectedApplicationTypeFilter,
   ]);
 
   // Sort visa applications
@@ -396,6 +414,10 @@ const AllVisaApplicationsPage = () => {
         case 'type':
           aValue = a.visaType?.name || '';
           bValue = b.visaType?.name || '';
+          break;
+        case 'applicationType':
+          aValue = a.type || '';
+          bValue = b.type || '';
           break;
         case 'readinessDate':
           aValue = a.plannedCompletionDate ? new Date(a.plannedCompletionDate) : new Date(0);
@@ -510,6 +532,8 @@ const AllVisaApplicationsPage = () => {
           onCountryFilterChange={handleCountryFilterChange}
           selectedVisaTypeFilter={selectedVisaTypeFilter}
           onVisaTypeFilterChange={handleVisaTypeFilterChange}
+          selectedApplicationTypeFilter={selectedApplicationTypeFilter}
+          onApplicationTypeFilterChange={handleApplicationTypeFilterChange}
           selectedStatusGroupFilter={selectedStatusGroupFilter}
           onStatusGroupFilterChange={handleStatusGroupFilterChange}
           visasToApplyTimeFilter={visasToApplyTimeFilter}
@@ -582,10 +606,19 @@ const AllVisaApplicationsPage = () => {
                         </TableHead>
                         <TableHead
                           className="text-gray-300 cursor-pointer hover:text-white select-none"
+                          onClick={() => handleSort('applicationType')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Service
+                            {getSortIcon('applicationType')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none"
                           onClick={() => handleSort('type')}
                         >
                           <div className="flex items-center gap-2">
-                            Type
+                            Visa Type
                             {getSortIcon('type')}
                           </div>
                         </TableHead>
@@ -688,6 +721,7 @@ const AllVisaApplicationsPage = () => {
                                 />
                               </TableCell>
                               <TableCell>{application.country.name}</TableCell>
+                              <TableCell>{application.type}</TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   {application.visaType && application.visaType.name}
@@ -838,7 +872,7 @@ const AllVisaApplicationsPage = () => {
                               </div>
                             )}
 
-                            {/* Country and Type */}
+                            {/* Country, Type and Application Type */}
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
                                 <div>
@@ -850,6 +884,9 @@ const AllVisaApplicationsPage = () => {
                                     {application.isMultientry && (
                                       <Badge variant="accent">Multi</Badge>
                                     )}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    <span className="font-medium">Type:</span> {application.type}
                                   </div>
                                 </div>
                               </div>
