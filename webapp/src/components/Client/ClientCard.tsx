@@ -9,8 +9,6 @@ import { getViewClientRoute } from '@/lib/routes';
 import { Card } from '../ui/card';
 import { ContactMethodIcon } from '../ContactMethod';
 
-import { trpc } from '@/lib/trpc';
-
 interface RelatedClient {
   id: string;
   firstName: string | null;
@@ -75,17 +73,8 @@ const ClientCard = ({
   onSelectionChange,
   isSelectable = true,
   showLinkedClients = false,
-  showLatestOrderItems = false,
 }: ClientCardProps) => {
   const navigate = useNavigate();
-
-  const { data: orderItemsData } = trpc.orderItem.getLatestByClientId.useQuery({
-    clientId: client.id,
-  });
-
-  if (showLatestOrderItems) {
-    console.log(orderItemsData);
-  }
 
   const [copiedContact, setCopiedContact] = useState<string | null>(null);
 

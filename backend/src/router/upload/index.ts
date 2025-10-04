@@ -1,249 +1,274 @@
 import { userCreateProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs/promises';
-import express, { Request, Response } from 'express';
+import express from 'express';
+import type { Request, Response } from 'express';
 import { processImageFile } from '../../utils/imageConverter.js';
+import { uploadFile, validateS3Config, getPresignedUrl } from '../../services/s3.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Configure multer for memory storage (files will be uploaded to S3)
+const memoryStorage = multer.memoryStorage();
+
+// File filter for all document types
+const documentFileFilter = (
+  _req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
+  const allowedTypes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/heic',
+    'image/heif',
+    'image/heic-sequence',
+    'image/heif-sequence',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.pdf', '.doc', '.docx'];
+  const fileExtension = '.' + file.originalname.split('.').pop()?.toLowerCase();
+
+  if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only JPG, PNG, HEIC, PDF, DOC, and DOCX files are allowed.'));
+  }
+};
 
 // Configure multer for requirement document uploads
-const requirementDocumentStorage = multer.diskStorage({
-  destination: async (
-    _req: Request,
-    _file: Express.Multer.File,
-    cb: (error: Error | null, destination: string) => void
-  ) => {
-    const uploadPath = path.join(__dirname, '../../../uploads/requirement-documents');
-    try {
-      await fs.access(uploadPath);
-    } catch {
-      await fs.mkdir(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (
-    _req: Request,
-    file: Express.Multer.File,
-    cb: (error: Error | null, filename: string) => void
-  ) => {
-    // Generate unique filename with timestamp and random string
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `requirement-doc-${uniqueSuffix}${ext}`);
-  },
-});
-
 const requirementDocumentUpload = multer({
-  storage: requirementDocumentStorage,
+  storage: memoryStorage,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
-  fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const allowedTypes = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/heic',
-      'image/heif',
-      'image/heic-sequence',
-      'image/heif-sequence',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
-
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.pdf', '.doc', '.docx'];
-    const fileExtension = '.' + file.originalname.split('.').pop()?.toLowerCase();
-
-    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error('Invalid file type. Only JPG, PNG, HEIC, PDF, DOC, and DOCX files are allowed.')
-      );
-    }
-  },
+  fileFilter: documentFileFilter,
 });
 
 // Configure multer for client document uploads
-const clientDocumentStorage = multer.diskStorage({
-  destination: async (
-    _req: Request,
-    _file: Express.Multer.File,
-    cb: (error: Error | null, destination: string) => void
-  ) => {
-    const uploadPath = path.join(__dirname, '../../../uploads/client-documents');
-    try {
-      await fs.access(uploadPath);
-    } catch {
-      await fs.mkdir(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (
-    _req: Request,
-    file: Express.Multer.File,
-    cb: (error: Error | null, filename: string) => void
-  ) => {
-    // Generate unique filename with timestamp and random string
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `client-doc-${uniqueSuffix}${ext}`);
-  },
-});
-
 const clientDocumentUpload = multer({
-  storage: clientDocumentStorage,
+  storage: memoryStorage,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
-  fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const allowedTypes = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/heic',
-      'image/heif',
-      'image/heic-sequence',
-      'image/heif-sequence',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
-
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.pdf', '.doc', '.docx'];
-    const fileExtension = '.' + file.originalname.split('.').pop()?.toLowerCase();
-
-    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error('Invalid file type. Only JPG, PNG, HEIC, PDF, DOC, and DOCX files are allowed.')
-      );
-    }
-  },
+  fileFilter: documentFileFilter,
 });
 
 // Configure multer for payment document uploads
-const paymentDocumentStorage = multer.diskStorage({
-  destination: async (
-    _req: Request,
-    _file: Express.Multer.File,
-    cb: (error: Error | null, destination: string) => void
-  ) => {
-    const uploadPath = path.join(__dirname, '../../../uploads/payment-documents');
-    try {
-      await fs.access(uploadPath);
-    } catch {
-      await fs.mkdir(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (
-    _req: Request,
-    file: Express.Multer.File,
-    cb: (error: Error | null, filename: string) => void
-  ) => {
-    // Generate unique filename with timestamp and random string
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `payment-doc-${uniqueSuffix}${ext}`);
-  },
-});
-
 const paymentDocumentUpload = multer({
-  storage: paymentDocumentStorage,
+  storage: memoryStorage,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
-  fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const allowedTypes = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/heic',
-      'image/heif',
-      'image/heic-sequence',
-      'image/heif-sequence',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
-
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.heic', '.pdf', '.doc', '.docx'];
-    const fileExtension = '.' + file.originalname.split('.').pop()?.toLowerCase();
-
-    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error('Invalid file type. Only JPG, PNG, HEIC, PDF, DOC, and DOCX files are allowed.')
-      );
-    }
-  },
+  fileFilter: documentFileFilter,
 });
 
-// Express routes for file upload
+// Common upload handler
+async function handleFileUpload(
+  req: Request & {
+    file?: Express.Multer.File;
+    body?: {
+      orderId?: string;
+      clientId?: string;
+      requirementId?: string;
+    };
+  },
+  res: Response,
+  folder: 'requirement-documents' | 'client-documents' | 'payment-documents'
+) {
+  try {
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        error: 'No file uploaded',
+      });
+      return;
+    }
+
+    let fileBuffer = req.file.buffer;
+    let mimeType = req.file.mimetype;
+
+    // Generate filename based on database data
+    let originalName = req.file.originalname;
+    let customFileName = await generateServerFileName(req.body, originalName, folder);
+
+    // Process image files (convert HEIC to PNG if needed)
+    if (req.file.mimetype.includes('heic') || req.file.mimetype.includes('heif')) {
+      try {
+        const processedImage = await processImageFile(req.file.buffer, req.file.mimetype);
+        fileBuffer = processedImage.buffer;
+        mimeType = processedImage.mimeType;
+        // Update filename extension if conversion happened
+        if (processedImage.wasConverted) {
+          originalName = originalName.replace(/\.(heic|heif)$/i, '.png');
+          // Also update customFileName if it exists
+          if (customFileName) {
+            customFileName = customFileName.replace(/\.(heic|heif)$/i, '.png');
+          }
+        }
+        console.log(`Converted HEIC image to ${processedImage.mimeType}`);
+      } catch (error) {
+        console.error('Error processing HEIC image:', error);
+        res.status(400).json({
+          success: false,
+          error: 'Failed to process HEIC image',
+        });
+        return;
+      }
+    }
+
+    // Upload to S3
+    const uploadResult = await uploadFile({
+      buffer: fileBuffer,
+      originalName: originalName,
+      mimeType,
+      folder,
+      customFileName: customFileName,
+    });
+
+    if (!uploadResult.success) {
+      res.status(500).json({
+        success: false,
+        error: uploadResult.error || 'Upload failed',
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      filePath: uploadResult.fileUrl, // S3 URL
+      fileName: uploadResult.fileName,
+      originalName: originalName,
+      size: uploadResult.fileSize,
+      mimetype: uploadResult.fileType,
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Upload failed',
+    });
+  }
+}
+
+// Generate filename on server-side based on database data
+async function generateServerFileName(
+  metadata:
+    | {
+        orderId?: string;
+        clientId?: string;
+        requirementId?: string;
+      }
+    | undefined,
+  originalName: string,
+  folder: 'requirement-documents' | 'client-documents' | 'payment-documents'
+): Promise<string | undefined> {
+  if (!metadata) return undefined;
+
+  try {
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 19).replace(/[T:]/g, '-');
+    const extension = originalName.split('.').pop() || '';
+
+    // Import Prisma client (assuming it's available)
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+
+    switch (folder) {
+      case 'client-documents':
+        if (metadata.clientId && metadata.requirementId) {
+          const client = await prisma.client.findUnique({
+            where: { id: metadata.clientId },
+            select: { firstName: true, lastName: true },
+          });
+
+          const requirement = await prisma.requirement.findUnique({
+            where: { id: metadata.requirementId },
+            select: { title: true },
+          });
+
+          if (client && requirement) {
+            const requirementName = requirement.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            return `${requirementName}-${client.lastName}-${client.firstName}-${dateStr}.${extension}`.toLowerCase();
+          }
+        }
+        break;
+
+      case 'payment-documents':
+        if (metadata.clientId || metadata.orderId) {
+          let client;
+          if (metadata.clientId) {
+            client = await prisma.client.findUnique({
+              where: { id: metadata.clientId },
+              select: { firstName: true, lastName: true },
+            });
+          } else if (metadata.orderId) {
+            const order = await prisma.order.findUnique({
+              where: { id: metadata.orderId },
+              include: { user: { select: { firstName: true, lastName: true } } },
+            });
+
+            if (order?.user) {
+              client = order.user;
+            }
+          }
+
+          if (client) {
+            return `payment-doc-${client.lastName}-${client.firstName}-${dateStr}.${extension}`.toLowerCase();
+          }
+        }
+        break;
+
+      case 'requirement-documents':
+        if (metadata.requirementId) {
+          const requirement = await prisma.requirement.findUnique({
+            where: { id: metadata.requirementId },
+            select: { title: true },
+          });
+
+          if (requirement) {
+            const requirementName = requirement.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            return `${requirementName}-${dateStr}.${extension}`.toLowerCase();
+          }
+        }
+        break;
+    }
+
+    await prisma.$disconnect();
+  } catch (error) {
+    console.error('Error generating server filename:', error);
+  }
+
+  return undefined;
+}
+
 export const createUploadRoutes = () => {
   const router = express.Router();
+
+  // Validate S3 configuration on startup
+  const s3Config = validateS3Config();
+  if (!s3Config.valid) {
+    console.error('S3 configuration errors:', s3Config.errors);
+    throw new Error(`S3 configuration invalid: ${s3Config.errors.join(', ')}`);
+  }
+  console.log('S3 configuration validated successfully');
 
   // Upload requirement document file
   router.post(
     '/requirement-document',
     requirementDocumentUpload.single('document'),
-    async (req: Request & { file?: Express.Multer.File }, res: Response) => {
-      try {
-        if (!req.file) {
-          res.status(400).json({
-            success: false,
-            error: 'No file uploaded',
-          });
-          return;
-        }
-
-        console.log('=== REQUIREMENT DOCUMENT UPLOAD DEBUG ===');
-        console.log('Original file:', req.file.originalname);
-        console.log('Original mimetype:', req.file.mimetype);
-        console.log('File path:', req.file.path);
-
-        // Process image file (convert HEIC to PNG if needed)
-        const processResult = await processImageFile(
-          req.file.path,
-          req.file.originalname,
-          req.file.mimetype
-        );
-
-        console.log('Process result:', processResult);
-        if (processResult.error) {
-          console.warn('Image processing failed:', processResult.error);
-        }
-
-        // Use the processed file path (converted if HEIC, original otherwise)
-        const finalFileName = path.basename(processResult.filePath);
-        const filePath = `/uploads/requirement-documents/${finalFileName}`;
-
-        res.json({
-          success: true,
-          filePath,
-          originalName: req.file.originalname,
-          size: req.file.size,
-          mimetype: processResult.wasConverted ? 'image/png' : req.file.mimetype,
-          converted: processResult.wasConverted,
-          ...(processResult.originalExtension && {
-            originalFormat: processResult.originalExtension,
-          }),
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: 'File upload failed',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
+    async (
+      req: Request & {
+        file?: Express.Multer.File;
+        body?: {
+          requirementId?: string;
+        };
+      },
+      res: Response
+    ) => {
+      await handleFileUpload(req, res, 'requirement-documents');
     }
   );
 
@@ -252,76 +277,16 @@ export const createUploadRoutes = () => {
     '/client-document',
     clientDocumentUpload.single('document'),
     async (
-      req: Request & { file?: Express.Multer.File; body?: { customFileName?: string } },
+      req: Request & {
+        file?: Express.Multer.File;
+        body?: {
+          clientId?: string;
+          requirementId?: string;
+        };
+      },
       res: Response
     ) => {
-      try {
-        if (!req.file) {
-          res.status(400).json({
-            success: false,
-            error: 'No file uploaded',
-          });
-          return;
-        }
-
-        console.log('=== CLIENT DOCUMENT UPLOAD DEBUG ===');
-        console.log('Original file:', req.file.originalname);
-        console.log('Original mimetype:', req.file.mimetype);
-        console.log('File path:', req.file.path);
-        console.log('Custom filename from frontend:', req.body?.customFileName);
-
-        // Process image file (convert HEIC to PNG if needed)
-        const processResult = await processImageFile(
-          req.file.path,
-          req.file.originalname,
-          req.file.mimetype
-        );
-
-        console.log('Process result:', processResult);
-        if (processResult.error) {
-          console.warn('Image processing failed:', processResult.error);
-        }
-
-        let finalFileName = path.basename(processResult.filePath);
-        const workingFilePath = processResult.filePath;
-
-        // If customFileName is provided, rename the file
-        if (req.body?.customFileName) {
-          const ext = processResult.wasConverted ? '.png' : path.extname(req.file.originalname);
-          const customName = req.body.customFileName;
-          const finalCustomName = customName.endsWith(ext) ? customName : `${customName}${ext}`;
-
-          const newFilePath = path.join(path.dirname(workingFilePath), finalCustomName);
-
-          try {
-            await fs.rename(workingFilePath, newFilePath);
-            finalFileName = finalCustomName;
-          } catch (renameError) {
-            console.warn('Failed to rename file, using original name:', renameError);
-          }
-        }
-
-        // Return the file path
-        const filePath = `/uploads/client-documents/${finalFileName}`;
-        res.json({
-          success: true,
-          filePath,
-          fileName: finalFileName,
-          originalName: req.file.originalname,
-          size: req.file.size,
-          mimetype: processResult.wasConverted ? 'image/png' : req.file.mimetype,
-          converted: processResult.wasConverted,
-          ...(processResult.originalExtension && {
-            originalFormat: processResult.originalExtension,
-          }),
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: 'File upload failed',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
+      await handleFileUpload(req, res, 'client-documents');
     }
   );
 
@@ -329,121 +294,73 @@ export const createUploadRoutes = () => {
   router.post(
     '/payment-document',
     paymentDocumentUpload.single('document'),
-    async (req: Request & { file?: Express.Multer.File }, res: Response) => {
-      try {
-        if (!req.file) {
-          res.status(400).json({
-            success: false,
-            error: 'No file uploaded',
-          });
-          return;
-        }
-
-        console.log('=== PAYMENT DOCUMENT UPLOAD DEBUG ===');
-        console.log('Original file:', req.file.originalname);
-        console.log('Original mimetype:', req.file.mimetype);
-        console.log('File path:', req.file.path);
-
-        // Process image file (convert HEIC to PNG if needed)
-        const processResult = await processImageFile(
-          req.file.path,
-          req.file.originalname,
-          req.file.mimetype
-        );
-
-        console.log('Process result:', processResult);
-        if (processResult.error) {
-          console.warn('Image processing failed:', processResult.error);
-        }
-
-        // Use the processed file path (converted if HEIC, original otherwise)
-        const finalFileName = path.basename(processResult.filePath);
-        const filePath = `/uploads/payment-documents/${finalFileName}`;
-
-        res.json({
-          success: true,
-          filePath,
-          originalName: req.file.originalname,
-          size: req.file.size,
-          mimetype: processResult.wasConverted ? 'image/png' : req.file.mimetype,
-          converted: processResult.wasConverted,
-          ...(processResult.originalExtension && {
-            originalFormat: processResult.originalExtension,
-          }),
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          error: 'File upload failed',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
+    async (
+      req: Request & {
+        file?: Express.Multer.File;
+        body?: {
+          orderId?: string;
+          clientId?: string;
+        };
+      },
+      res: Response
+    ) => {
+      await handleFileUpload(req, res, 'payment-documents');
     }
   );
 
-  // Serve uploaded requirement document files
-  router.get('/requirement-documents/:filename', async (req: Request, res: Response) => {
+  // File access endpoint - serves files via presigned URLs or proxy
+  router.get(/^\/file\/(.*)$/, async (req: Request, res: Response) => {
     try {
-      const filename = req.params.filename;
-      const filePath = path.join(__dirname, '../../../uploads/requirement-documents', filename);
+      // Extract the file path from the URL
+      const filePath = req.params[0];
+      if (!filePath) {
+        res.status(400).json({ error: 'File path is required' });
+        return;
+      }
 
-      // Check if file exists
-      await fs.access(filePath);
+      // TODO: Add authentication/authorization checks here
+      // Example: if (!req.user) { return res.status(401).json({ error: 'Unauthorized' }); }
 
-      // Send file
-      res.sendFile(filePath);
-    } catch {
-      res.status(404).json({
-        success: false,
-        error: 'File not found',
-      });
+      // Reconstruct the full S3 URL
+      const s3Url = `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET_NAME}/${filePath}`;
+
+      // Generate presigned URL for temporary access
+      const presignedUrl = await getPresignedUrl(s3Url, 3600); // 1 hour expiry
+
+      if (!presignedUrl) {
+        res.status(404).json({ error: 'File not found or access denied' });
+        return;
+      }
+
+      // Redirect to the presigned URL
+      res.redirect(presignedUrl);
+    } catch (error) {
+      console.error('File access error:', error);
+      res.status(500).json({ error: 'Failed to access file' });
     }
   });
 
-  // Serve uploaded client document files
-  router.get('/client-documents/:filename', async (req: Request, res: Response) => {
-    try {
-      const filename = req.params.filename;
-      const filePath = path.join(__dirname, '../../../uploads/client-documents', filename);
-
-      // Check if file exists
-      await fs.access(filePath);
-
-      // Send file
-      res.sendFile(filePath);
-    } catch {
-      res.status(404).json({
-        success: false,
-        error: 'File not found',
-      });
-    }
-  });
-
-  // Serve uploaded payment document files
-  router.get('/payment-documents/:filename', async (req: Request, res: Response) => {
-    try {
-      const filename = req.params.filename;
-      const filePath = path.join(__dirname, '../../../uploads/payment-documents', filename);
-
-      // Check if file exists
-      await fs.access(filePath);
-
-      // Send file
-      res.sendFile(filePath);
-    } catch {
-      res.status(404).json({
-        success: false,
-        error: 'File not found',
-      });
-    }
+  // Health check endpoint
+  router.get('/health', (_req: Request, res: Response) => {
+    const s3Config = validateS3Config();
+    res.json({
+      status: 'ok',
+      s3Config: s3Config.valid,
+      timestamp: new Date().toISOString(),
+    });
   });
 
   return router;
 };
 
-// tRPC route for requirement document validation
-export const zUploadRequirementDocumentTrpcInput = z.object({
-  filePath: z.string().min(1),
+// TRPC routes for validation and metadata
+
+const zUploadRequirementDocumentTrpcInput = z.object({
+  filePath: z.string().min(1, 'File path is required'),
+});
+
+const zUploadClientDocumentTrpcInput = z.object({
+  filePath: z.string().min(1, 'File path is required'),
 });
 
 export const validateRequirementDocumentUploadTrpcRoute = userCreateProcedure
@@ -451,61 +368,45 @@ export const validateRequirementDocumentUploadTrpcRoute = userCreateProcedure
   .mutation(async ({ input }) => {
     const { filePath } = input;
 
-    // Validate file path format
-    if (!filePath.startsWith('/uploads/requirement-documents/')) {
-      throw new Error('Invalid file path');
+    // Validate file URL format (S3 URLs or legacy local URLs)
+    const s3Endpoint = process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net';
+    const isS3Url = filePath.includes(s3Endpoint);
+    const isLegacyUrl = filePath.startsWith('/uploads/requirement-documents/');
+
+    if (!isS3Url && !isLegacyUrl) {
+      throw new Error('Invalid file path format');
     }
 
     return {
       success: true,
       filePath,
+      isS3: isS3Url,
     };
   });
-
-// tRPC route for client document validation
-export const zUploadClientDocumentTrpcInput = z.object({
-  filePath: z.string().min(1),
-});
 
 export const validateClientDocumentUploadTrpcRoute = userCreateProcedure
   .input(zUploadClientDocumentTrpcInput)
   .mutation(async ({ input }) => {
     const { filePath } = input;
 
-    // Validate file path format
-    if (!filePath.startsWith('/uploads/client-documents/')) {
-      throw new Error('Invalid file path');
+    // Validate file URL format (S3 URLs or legacy local URLs)
+    const s3Endpoint = process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net';
+    const isS3Url = filePath.includes(s3Endpoint);
+    const isLegacyUrl = filePath.startsWith('/uploads/client-documents/');
+
+    if (!isS3Url && !isLegacyUrl) {
+      throw new Error('Invalid file path format');
     }
 
     return {
       success: true,
       filePath,
+      isS3: isS3Url,
     };
   });
 
-// tRPC route for payment document validation
-export const zUploadPaymentDocumentTrpcInput = z.object({
-  filePath: z.string().min(1),
-});
-
-export const validatePaymentDocumentUploadTrpcRoute = userCreateProcedure
-  .input(zUploadPaymentDocumentTrpcInput)
-  .mutation(async ({ input }) => {
-    const { filePath } = input;
-
-    // Validate file path format
-    if (!filePath.startsWith('/uploads/payment-documents/')) {
-      throw new Error('Invalid file path');
-    }
-
-    return {
-      success: true,
-      filePath,
-    };
-  });
-
+// Upload routes for TRPC
 export const uploadRoutes = {
   validateRequirementDocumentUpload: validateRequirementDocumentUploadTrpcRoute,
   validateClientDocumentUpload: validateClientDocumentUploadTrpcRoute,
-  validatePaymentDocumentUpload: validatePaymentDocumentUploadTrpcRoute,
 };

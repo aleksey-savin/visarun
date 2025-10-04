@@ -210,8 +210,6 @@ export function calculatePlannedCompletionDate(
     return null;
   }
 
-  console.log(clientIsInTheCountry);
-
   // Determine the base date based on client location
   let baseDate: Date | null = null;
   if (clientIsInTheCountry) {

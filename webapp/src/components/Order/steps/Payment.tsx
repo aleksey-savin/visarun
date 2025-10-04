@@ -1,13 +1,13 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { ImageViewer } from '@/components/ui/image-viewer';
+
+import { createDocumentFromFileUrl } from '@/utils/fileUtils';
+import { useUploadPaymentDocument } from '@/hooks/useDocumentUpload';
 
 import {
   Select,
@@ -25,7 +25,7 @@ import { trpc } from '@/lib/trpc';
 import useOrderStore, { StoreOrderPayment } from '@/stores/order/order-store';
 
 import { formatCurrency } from '@/utils/currency';
-import { Eye, Replace, Trash2, File, Image } from 'lucide-react';
+
 import { FileUpload } from '@/components/ui/file-upload';
 import { toast } from 'sonner';
 import Comments from '../Comments';
@@ -33,13 +33,8 @@ import Comments from '../Comments';
 const Payment = () => {
   const { order, orderItems, orderPayments = [], setOrderPayments } = useOrderStore();
 
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [viewingDocument, setViewingDocument] = useState<{
-    id: string;
-    originalName: string;
-    fileUrl: string;
-  } | null>(null);
-  const replaceInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
 
   const { data: currencyData } = trpc.currency.getAll.useQuery({
     search: '',
@@ -388,35 +383,19 @@ const Payment = () => {
   }, [total, selectedCurrency, vndCurrency]);
 
   // file upload
+  const uploadPaymentDocumentMutation = useUploadPaymentDocument();
+
   const existingDoc = orderPayments[0]?.documentUrl
-    ? {
-        id: orderPayments[0].id,
-        originalName: orderPayments[0].documentUrl,
-        fileUrl: `${import.meta.env.VITE_API_URL}/upload/payment-documents/${orderPayments[0].documentUrl}`,
-      }
+    ? createDocumentFromFileUrl(
+        orderPayments[0].id,
+        orderPayments[0].documentUrl,
+        'payment-documents'
+      )
     : null;
+
   const hasDocument = !!existingDoc;
 
-  const isImageFile = (fileName: string) => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic'];
-    return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
-  };
-
-  const handleViewDocument = (document: { id: string; originalName: string; fileUrl: string }) => {
-    setViewingDocument(document);
-    setViewModalOpen(true);
-  };
-
-  const handleReplaceClick = () => {
-    if (replaceInputRef.current) {
-      replaceInputRef.current.click();
-    }
-  };
-
-  const handleReplaceFileSelect = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-
-    const file = files[0];
+  const handleReplaceFileSelect = async (file: File) => {
     const existingPayment = orderPayments[0];
     if (!existingPayment) return;
 
@@ -434,46 +413,42 @@ const Payment = () => {
       return;
     }
 
-    try {
-      // Upload new file
-      const formData = new FormData();
-      formData.append('document', file);
+    if (!orderPayments[0]) return;
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${baseUrl}/upload/payment-document`, {
-        method: 'POST',
-        body: formData,
+    setIsUploading(true);
+    try {
+      // Upload new file using shared hook with server-side filename generation
+      const result = await uploadPaymentDocumentMutation.mutateAsync({
+        file,
+        orderId: order.id,
       });
 
-      const result = await response.json();
+      console.log('Upload result:', result);
+      const fileUrl = result.filePath;
+      console.log('FileUrl to save:', fileUrl);
 
-      if (result.success) {
-        // Extract just the filename from the response
-        const fileUrl = result.filePath || result.fileUrl;
-        const filename = fileUrl.split('/').pop() || fileUrl;
+      // Update payment with new document URL
+      await editOrderPaymentMutation.mutateAsync({
+        id: orderPayments[0].id,
+        documentUrl: fileUrl,
+      });
 
-        // Update payment with new document filename
-        await editOrderPaymentMutation.mutateAsync({
-          id: existingPayment.id,
-          documentUrl: filename,
-        });
-
-        // Update store
-        const updatedPayments = orderPayments.map((payment, index) =>
-          index === 0 ? { ...payment, documentUrl: filename } : payment
-        );
-        setOrderPayments(updatedPayments);
-        toast.success('Document replaced successfully');
-      } else {
-        toast.error(result.error || 'Upload failed');
-      }
+      // Update store
+      const updatedPayments = orderPayments.map((payment, index) =>
+        index === 0 ? { ...payment, documentUrl: fileUrl } : payment
+      );
+      setOrderPayments(updatedPayments);
+      toast.success('Document replaced successfully');
     } catch (error) {
       toast.error('Failed to replace document. Please try again.');
       console.error('Failed to replace document:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleDeleteDocument = async () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleDeleteDocument = async (_documentId: string) => {
     const existingPayment = orderPayments[0];
     if (!existingPayment) return;
 
@@ -502,22 +477,22 @@ const Payment = () => {
       return;
     }
 
-    // Extract filename from the full path/URL
-    const filename = response.fileUrl.split('/').pop() || response.fileUrl;
+    // Use the full URL instead of just filename
+    const fileUrl = response.fileUrl;
 
     try {
       const existingPayment = orderPayments[0];
 
       if (existingPayment) {
-        // Update existing OrderPayment with just filename
+        // Update existing OrderPayment with full URL
         await editOrderPaymentMutation.mutateAsync({
           id: existingPayment.id,
-          documentUrl: filename,
+          documentUrl: fileUrl,
         });
 
-        // Update store with updated payment
+        // Update store
         const updatedPayments = orderPayments.map((payment, index) =>
-          index === 0 ? { ...payment, documentUrl: filename || null } : payment
+          index === 0 ? { ...payment, documentUrl: fileUrl } : payment
         );
         setOrderPayments(updatedPayments);
       } else {
@@ -534,10 +509,8 @@ const Payment = () => {
           amountInSelectedCurrency: total,
           currencyId: currency.id,
           paidAt: new Date().toISOString(),
-          paymentMethod: paymentMethod,
-          documentUrl: filename,
-          acceptedById: selectedPaymentAcceptorId || undefined,
-          confirmPaymentWithoutDocument: paid,
+          paymentMethod: 'transfer',
+          documentUrl: fileUrl,
         });
 
         // Add new payment to store
@@ -564,6 +537,9 @@ const Payment = () => {
         ] as StoreOrderPayment[];
         setOrderPayments(updatedPayments);
       }
+
+      // Clear any previous image load errors since we have a new file
+      setImageLoadErrors(new Set());
     } catch (error) {
       console.error('Failed to create/update OrderPayment:', error);
     }
@@ -636,76 +612,31 @@ const Payment = () => {
           </div>
         </div>
         <div>
-          {hasDocument ? (
-            <Card className="bg-secondary p-3 rounded-md">
-              {/* Show existing document */}
-              <div className="flex items-center justify-between gap-2">
-                {existingDoc &&
-                (existingDoc.originalName.toLowerCase().includes('.heic') ||
-                  existingDoc.originalName.toLowerCase().includes('.heif')) ? (
-                  <div className="flex items-center justify-center border-dashed rounded-md p-2">
-                    <Image className="w-4 h-4 text-gray-400" />
-                  </div>
-                ) : existingDoc && isImageFile(existingDoc.originalName) ? (
-                  <div className="flex items-center justify-center border-dashed rounded-md">
-                    <img
-                      src={existingDoc.fileUrl}
-                      alt={existingDoc.originalName}
-                      className="max-w-full max-h-8 object-contain rounded"
-                      onError={() => {
-                        console.error('Image failed to load:', existingDoc.fileUrl);
-                        console.error('Full URL:', existingDoc.fileUrl);
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <File className="w-6 h-6" />
-                )}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => existingDoc && handleViewDocument(existingDoc)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-
-                  <Button variant="secondary" size="sm" onClick={handleReplaceClick}>
-                    <Replace className="w-4 h-4" />
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={handleDeleteDocument}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              {/* Hidden file input for replace functionality */}
-              <input
-                ref={replaceInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
-                onChange={e => handleReplaceFileSelect(e.target.files)}
-                className="hidden"
-              />
-            </Card>
-          ) : (
-            /* Upload new document */
-            <FileUpload
-              onChange={filePath => {
-                if (filePath) {
-                  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                  const response = {
-                    fileUrl: filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`,
-                  };
-                  void handleUploadSuccess(response);
-                }
-              }}
-              uploadEndpoint="/upload/payment-document"
-              fileFieldName="document"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
-              maxSize={10 * 1024 * 1024} // 10MB
-              placeholder="Drag or click to browse payment receipt"
-              className="bg-secondary"
-            />
+          <FileUpload
+            onChange={filePath => {
+              if (filePath) {
+                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const response = {
+                  fileUrl: filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`,
+                };
+                void handleUploadSuccess(response);
+              }
+            }}
+            value={existingDoc || ''}
+            imageLoadErrors={imageLoadErrors}
+            setImageLoadErrors={setImageLoadErrors}
+            handleReplaceFileSelect={handleReplaceFileSelect}
+            handleDeleteDocument={handleDeleteDocument}
+            uploadEndpoint="/upload/payment-document"
+            fileFieldName="document"
+            placeholder="Drag or click to browse payment receipt"
+            disabled={isUploading}
+          />
+          {isUploading && (
+            <div className="flex items-center justify-center gap-2 text-sm mt-2">
+              <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin"></div>
+              <span>Uploading document...</span>
+            </div>
           )}
         </div>
       </div>
@@ -713,39 +644,6 @@ const Payment = () => {
       <div className="flex flex-wrap justify-between align-center">
         <Comments />
       </div>
-      {/* View Document Modal */}
-      <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
-        <DialogContent className="overflow-auto">
-          <div className="flex items-center justify-center p-4">
-            {viewingDocument && (
-              <>
-                {isImageFile(viewingDocument.originalName) ? (
-                  <ImageViewer
-                    src={viewingDocument.fileUrl}
-                    alt={viewingDocument.originalName}
-                    className="max-w-full max-h-[70vh] object-contain rounded"
-                    onError={() => {
-                      console.error('Modal image failed to load:', viewingDocument.fileUrl);
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-[70vh]">
-                    <iframe
-                      src={viewingDocument.fileUrl}
-                      className="w-full h-full border rounded"
-                      title={viewingDocument.originalName}
-                      onError={() => {
-                        console.error('Failed to load:', viewingDocument.fileUrl);
-                        console.error('Full URL:', viewingDocument.fileUrl);
-                      }}
-                    />
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

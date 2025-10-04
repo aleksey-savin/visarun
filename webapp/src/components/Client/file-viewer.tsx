@@ -17,7 +17,10 @@ export const FileViewer = ({ filePath, fileName, isOpen, onClose }: FileViewerPr
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fileUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${filePath}`;
+  // Handle S3 URLs vs legacy local URLs
+  const fileUrl = filePath.includes('storage.yandexcloud.net/')
+    ? filePath // S3 URL - use directly
+    : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${filePath}`; // Legacy local URL
   const isPDF = filePath.toLowerCase().endsWith('.pdf');
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filePath);
 

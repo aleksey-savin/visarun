@@ -5,24 +5,26 @@ import { applyTrpcToExpressApp } from './lib/trpc.js';
 import { createAppContext } from './lib/ctx.js';
 import { createUploadRoutes } from './router/upload/index.js';
 import { startAutoCompleteOrdersJob, setupGracefulShutdown } from './jobs/autoCompleteOrders.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { validateS3Config } from './services/s3.js';
 
 (async () => {
   try {
+    // Validate S3 configuration on startup
+    const s3Config = validateS3Config();
+    if (!s3Config.valid) {
+      console.error('❌ S3 configuration errors:', s3Config.errors);
+      console.error('Please check your .env file and ensure all S3 variables are set');
+      process.exit(1);
+    }
+    console.log('✅ S3 configuration validated');
+
     const app = express();
 
     app.use(cors());
     app.use(express.json({ limit: '50mb' }));
     app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-    // Serve static files from uploads directory
-    app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-    // Upload routes
+    // Upload routes (files now stored in S3)
     app.use('/upload', createUploadRoutes());
 
     // System initialization note
@@ -45,8 +47,9 @@ const __dirname = path.dirname(__filename);
 
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Health endpoint available at http://localhost:${PORT}/trpc/health`);
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`📁 Files are stored in S3 bucket: ${process.env.S3_BUCKET_NAME}`);
+      console.log(`🏥 Health endpoint available at http://localhost:${PORT}/trpc/health`);
     });
   } catch (error) {
     console.error(error);

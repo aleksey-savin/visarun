@@ -31,12 +31,17 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - S3_REGION=${S3_REGION}
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_KMS_KEY_ID=${S3_KMS_KEY_ID}
     volumes:
       - ./backend:/app/backend
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
       - ./package.json:/app/package.json
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
-      - ./backend/uploads:/app/backend/uploads
       - backend_node_modules:/app/backend/node_modules
       - root_node_modules:/app/node_modules
     command: ["pnpm", "--filter", "@visarun/backend", "run", "dev"]

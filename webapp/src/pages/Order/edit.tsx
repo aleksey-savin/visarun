@@ -303,13 +303,6 @@ const EditOrderPage = () => {
     // Skip personal data validation for acceleration-only orders
     if (hasOnlyAccelerationServices) return false;
 
-    console.log(
-      clients.filter(client => {
-        const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
-        return errors.length > 0;
-      }).length > 0
-    );
-
     return (
       clients.filter(client => {
         const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
@@ -494,7 +487,7 @@ const EditOrderPage = () => {
   useEffect(() => {
     if (activeStep.status === 'payment_pending') {
       // Only set to first client if no active client is currently selected
-      if (!activeClientId && clients.length > 0) {
+      if ((!activeClientId || activeClientId === '-') && clients.length > 0) {
         setActiveClientId(clients[0].id);
       }
     }

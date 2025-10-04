@@ -67,6 +67,10 @@ export const clientHasPersonalDataErrors = (
 ) => {
   const errors = new Set(client.errors || []);
 
+  const hasOnlyAccelerationServices = orderItems.every(item => item.serviceType === 'acceleration');
+
+  if (hasOnlyAccelerationServices) return [];
+
   const docRequirements =
     client.visaRequirements?.filter(req => req.inputType === 'document') || [];
 

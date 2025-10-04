@@ -53,7 +53,25 @@ const ClientCard = ({
 
   const getFullFileUrl = (fileUrl: string) => {
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    return fileUrl.startsWith('/') ? `${baseUrl}${fileUrl}` : fileUrl;
+
+    // If it's an S3 URL, convert it to use backend file endpoint
+    if (fileUrl.includes('storage.yandexcloud.net/')) {
+      // Extract the file path after bucket name
+      const parts = fileUrl.split('storage.yandexcloud.net/')[1];
+      if (parts) {
+        // Remove bucket name from path: bucket/folder/file -> folder/file
+        const filePath = parts.split('/').slice(1).join('/');
+        return `${baseUrl}/upload/file/${filePath}`;
+      }
+    }
+
+    // For legacy local paths, prepend the API base URL
+    if (fileUrl.startsWith('/')) {
+      return `${baseUrl}${fileUrl}`;
+    }
+
+    // Return as-is for other cases
+    return fileUrl;
   };
 
   const handleViewDocument = (document: any) => {

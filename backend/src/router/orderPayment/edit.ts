@@ -1,5 +1,6 @@
 import { orderPaymentUpdateProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
+import { deleteFile } from '../../services/s3.js';
 
 const zEditOrderPaymentInput = z.object({
   id: z.string().uuid(),
@@ -75,6 +76,30 @@ export const editOrderPaymentTrpcRoute = orderPaymentUpdateProcedure
       updateData.paymentMethod = input.paymentMethod;
     }
     if (input.documentUrl !== undefined) {
+      // If clearing document URL, delete the old file from S3
+      if (input.documentUrl === '' && existingOrderPayment.documentUrl) {
+        try {
+          console.log(
+            `Attempting to delete payment document file: ${existingOrderPayment.documentUrl}`
+          );
+          const deleteSuccess = await deleteFile(existingOrderPayment.documentUrl);
+          if (deleteSuccess) {
+            console.log(
+              `Successfully deleted payment document file: ${existingOrderPayment.documentUrl}`
+            );
+          } else {
+            console.warn(
+              `Failed to delete payment document file: ${existingOrderPayment.documentUrl}`
+            );
+          }
+        } catch (error) {
+          console.error(
+            `Error deleting payment document file: ${existingOrderPayment.documentUrl}`,
+            error
+          );
+          // Continue with database update even if file deletion fails
+        }
+      }
       updateData.documentUrl = input.documentUrl === '' ? null : input.documentUrl;
     }
     if (input.acceptedById !== undefined) {

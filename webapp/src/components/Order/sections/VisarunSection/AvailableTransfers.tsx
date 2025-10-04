@@ -83,8 +83,6 @@ const AvailableTransfers = () => {
     }));
   });
 
-  console.log(trips);
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {tripSeatCards.map(
