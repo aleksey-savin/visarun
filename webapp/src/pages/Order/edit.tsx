@@ -626,8 +626,10 @@ const EditOrderPage = () => {
                   </Card>
                 );
               })}
-            {activeClientId === '' && activeStep.status === 'draft' && <AddClientCard />}
-            {activeClientId === '' && activeStep.status === 'draft' && (
+            {['', '-'].includes(activeClientId) && activeStep.status === 'draft' && (
+              <AddClientCard />
+            )}
+            {['', '-'].includes(activeClientId) && activeStep.status === 'draft' && (
               <>
                 {notIncludedClients
                   ?.filter(
