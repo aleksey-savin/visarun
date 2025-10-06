@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 const s3Client = new S3Client({
   region: process.env.S3_REGION || 'ru-central1',
   endpoint: process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net',
-  forcePathStyle: false, // Yandex Cloud uses virtual-hosted-style
+  forcePathStyle: true, // Try path-style URLs first for Yandex Cloud compatibility
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY_ID!,
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
@@ -85,6 +85,15 @@ export async function uploadFile(params: FileUploadParams): Promise<UploadResult
   try {
     const fileName = generateFileName(params.originalName, params.folder, params.customFileName);
 
+    // Debug logging
+    console.log('🔧 S3 Upload Debug Info:');
+    console.log('  Bucket:', BUCKET_NAME);
+    console.log('  Region:', process.env.S3_REGION || 'ru-central1');
+    console.log('  Endpoint:', process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net');
+    console.log('  File Key:', fileName);
+    console.log('  Content Type:', params.mimeType);
+    console.log('  File Size:', params.buffer.length, 'bytes');
+
     const uploadParams: PutObjectCommandInput = {
       Bucket: BUCKET_NAME,
       Key: fileName,
@@ -104,7 +113,9 @@ export async function uploadFile(params: FileUploadParams): Promise<UploadResult
     // }
 
     const command = new PutObjectCommand(uploadParams);
+    console.log('📤 Attempting S3 upload...');
     await s3Client.send(command);
+    console.log('✅ S3 upload successful');
 
     if (!BUCKET_NAME) {
       throw new Error('S3_BUCKET_NAME environment variable is not configured');
@@ -121,7 +132,30 @@ export async function uploadFile(params: FileUploadParams): Promise<UploadResult
       fileType: params.mimeType,
     };
   } catch (error) {
-    console.error('S3 upload error:', error);
+    console.error('❌ S3 upload error details:');
+    console.error('  Error type:', error?.constructor?.name);
+    console.error('  Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('  Full error:', error);
+
+    // Log specific 405 error debugging info
+    if (
+      error instanceof Error &&
+      (error.message.includes('405') || error.message.includes('Method Not Allowed'))
+    ) {
+      console.error('🔍 405 Error Debugging:');
+      console.error('  This usually indicates:');
+      console.error('  1. Incorrect endpoint URL');
+      console.error('  2. Wrong forcePathStyle setting');
+      console.error('  3. Bucket does not exist');
+      console.error('  4. Insufficient permissions');
+      console.error('  5. Wrong region configuration');
+      console.error('  Current config:');
+      console.error('    Endpoint:', process.env.S3_ENDPOINT);
+      console.error('    Region:', process.env.S3_REGION);
+      console.error('    Bucket:', BUCKET_NAME);
+      console.error('    ForcePathStyle:', false);
+    }
+
     return {
       success: false,
       fileUrl: '',
