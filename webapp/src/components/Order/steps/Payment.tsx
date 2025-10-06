@@ -34,7 +34,6 @@ const Payment = () => {
   const { order, orderItems, orderPayments = [], setOrderPayments } = useOrderStore();
 
   const [isUploading, setIsUploading] = useState(false);
-  const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
 
   const { data: currencyData } = trpc.currency.getAll.useQuery({
     search: '',
@@ -537,9 +536,6 @@ const Payment = () => {
         ] as StoreOrderPayment[];
         setOrderPayments(updatedPayments);
       }
-
-      // Clear any previous image load errors since we have a new file
-      setImageLoadErrors(new Set());
     } catch (error) {
       console.error('Failed to create/update OrderPayment:', error);
     }
@@ -623,8 +619,6 @@ const Payment = () => {
               }
             }}
             value={existingDoc || ''}
-            imageLoadErrors={imageLoadErrors}
-            setImageLoadErrors={setImageLoadErrors}
             handleReplaceFileSelect={handleReplaceFileSelect}
             handleDeleteDocument={handleDeleteDocument}
             uploadEndpoint="/upload/payment-document"

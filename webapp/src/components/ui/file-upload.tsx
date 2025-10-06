@@ -12,8 +12,6 @@ import { getFullFileUrl, isImageFile } from '@/utils/fileUtils';
 
 interface FileUploadProps {
   value?: string | { id: string; originalName: string; fileUrl: string };
-  imageLoadErrors?: Set<string>;
-  setImageLoadErrors?: (errors: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
   handleReplaceFileSelect?:
     | ((requirementId: string, files: FileList | null) => Promise<void>)
     | ((file: File) => Promise<void>);
@@ -54,8 +52,6 @@ interface UploadResponse {
 
 export const FileUpload: React.FC<FileUploadProps> = ({
   value,
-  imageLoadErrors,
-  setImageLoadErrors,
   handleReplaceFileSelect,
   handleDeleteDocument,
   onChange,
@@ -80,6 +76,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     type: string;
   } | null>(null);
 
+  const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
+
   // Extract file info from existing path
   const getFileInfoFromPath = (path: string) => {
     const filename = path.split('/').pop() || '';
@@ -103,7 +101,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   // Check if we have an existing file path (S3 URL or legacy local URL)
   React.useEffect(() => {
-    console.log(value);
     if (
       value &&
       typeof value === 'object' &&

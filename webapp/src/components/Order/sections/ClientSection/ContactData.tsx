@@ -22,29 +22,10 @@ import { z } from 'zod';
 
 import useOrderStore from '@/stores/order/order-store.js';
 
-const formSchema = z
-  .object({
-    contactMethodId: z.string(),
-    contactValue: z.string().min(1, {
-      message: 'Contact value must be at least 1 character.',
-    }),
-  })
-  .refine(
-    data => {
-      if (data.contactMethodId === 'email') {
-        return z.string().email().safeParse(data.contactValue).success;
-      }
-      if (data.contactMethodId === 'phone') {
-        return /^[+]?[(]?[\s\d\-()]{7,}$/.test(data.contactValue);
-      }
-      return true;
-    },
-    {
-      message: 'Please enter a valid email address or phone number.',
-      path: ['contactValue'],
-    }
-  );
-
+const formSchema = z.object({
+  contactMethodId: z.string(),
+  contactValue: z.string().optional(),
+});
 const ContactData = () => {
   const {
     user,

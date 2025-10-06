@@ -41,7 +41,12 @@ export const DraftStatusDialog = ({ application }: { application: any }) => {
 
   const DraftContent = ({ className }: { className?: string }) => (
     <div className={className}>
-      <ClientCard application={application} order={application.orderItem?.order} />
+      <ClientCard
+        client={application.orderItem?.client}
+        order={application.orderItem?.order}
+        orderItem={application.orderItem}
+        application={application}
+      />
       <Separator />
     </div>
   );

@@ -580,7 +580,7 @@ const AllVisaApplicationsPage = () => {
         {/* Desktop Table View */}
         {visaApplications.length > 0 && !isLoading && !isError && (
           <>
-            <Card className="rounded-md py-0 hidden md:block">
+            <Card className="rounded-md py-0 hidden lg:block">
               <CardContent className="p-0">
                 <div className="overflow-x-auto rounded-md border border-muted">
                   <Table className="text-gray-400">
@@ -611,6 +611,15 @@ const AllVisaApplicationsPage = () => {
                           <div className="flex items-center gap-2">
                             Service
                             {getSortIcon('applicationType')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none"
+                          onClick={() => handleSort('applicationCode')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Code
+                            {getSortIcon('applicationCode')}
                           </div>
                         </TableHead>
                         <TableHead
@@ -694,7 +703,7 @@ const AllVisaApplicationsPage = () => {
 
                           rows.push(
                             <TableRow
-                              key={application.id}
+                              key={`table-${application.id}`}
                               className={cn(
                                 'border-gray-700 hover:bg-gray-800/50 relative',
                                 hasMultipleInGroup ? 'border-dashed' : '',
@@ -722,6 +731,7 @@ const AllVisaApplicationsPage = () => {
                               </TableCell>
                               <TableCell>{application.country.name}</TableCell>
                               <TableCell>{application.type}</TableCell>
+                              <TableCell>{application.applicationCode}</TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   {application.visaType && application.visaType.name}
@@ -841,7 +851,7 @@ const AllVisaApplicationsPage = () => {
 
                       return (
                         <Card
-                          key={application.id}
+                          key={`mobile-${application.id}`}
                           className={cn(
                             'p-4 relative',
                             hasMultipleInGroup && !isLastInGroup ? 'mb-2' : ''

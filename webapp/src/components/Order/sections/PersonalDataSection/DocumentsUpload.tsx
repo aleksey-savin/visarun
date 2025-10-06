@@ -26,7 +26,6 @@ interface PendingUpload {
 
 const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client }) => {
   const [uploadingRequirements, setUploadingRequirements] = useState<Set<string>>(new Set());
-  const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
 
   const { setClients } = useOrderStore();
 
@@ -294,8 +293,6 @@ const DocumentsUpload: React.FC<DocumentsUploadProps> = ({ requirements, client 
               </span>
               <FileUpload
                 value={existingDoc}
-                imageLoadErrors={imageLoadErrors}
-                setImageLoadErrors={setImageLoadErrors}
                 handleReplaceFileSelect={handleReplaceFileSelect}
                 handleDeleteDocument={handleDeleteDocument}
                 onChange={handlers.onChange}

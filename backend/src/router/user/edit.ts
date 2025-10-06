@@ -5,8 +5,8 @@ import { Prisma } from '@prisma/client';
 
 export const zEditUserTrpcInput = z.object({
   id: z.string().uuid(),
-  email: z.string().email().optional(),
-  phoneNumber: z.string().max(20).optional(),
+  email: z.string().email().optional().nullable(),
+  phoneNumber: z.string().max(20).optional().nullable(),
   firstName: z.string().max(100).optional(),
   lastName: z.string().max(100).optional(),
   middleName: z.string().max(100).optional(),

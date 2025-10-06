@@ -284,10 +284,7 @@ const EditOrderPage = () => {
   ]);
 
   // Check if order contains only acceleration services
-  const hasOnlyAccelerationServices = useMemo(() => {
-    if (orderItems.length === 0) return false;
-    return orderItems.every(item => item.serviceType === 'acceleration');
-  }, [orderItems]);
+  const hasOnlyAccelerationServices = false;
 
   const clientsHaveServicePuzzleErrors = useMemo(
     () =>
@@ -323,7 +320,10 @@ const EditOrderPage = () => {
 
   const servicePuzzleIsActive: boolean = useMemo(() => {
     // Basic requirements
-    const hasContactMethod = !!(contactMethods?.length > 0 && contactMethods[0]?.value);
+    const hasContactMethod =
+      !!(contactMethods?.length > 0 && contactMethods[0]?.value) ||
+      user?.email ||
+      user?.phoneNumber;
     const hasClients = clients.length > 0;
 
     if (!hasContactMethod || !hasClients) return false;
@@ -497,7 +497,7 @@ const EditOrderPage = () => {
       clientsHavePersonalDataErrors &&
       !hasOnlyAccelerationServices
     ) {
-      if (!activeClientId && clients.length > 0) {
+      if (['', '-'].includes(activeClientId) && clients.length > 0) {
         const clientWithErrors = clients.find(client => {
           const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
           return errors.length > 0;
@@ -507,7 +507,7 @@ const EditOrderPage = () => {
     }
 
     if (activeStep.status === 'draft' && clientsHaveServicePuzzleErrors) {
-      if (!activeClientId && clients.length > 0) {
+      if (['', '-'].includes(activeClientId) && clients.length > 0) {
         const clientWithErrors = clients.find(client => {
           const errors = Array.from(
             clientHasServicePuzzleErrors(client, orderItems, visaApplications) || []

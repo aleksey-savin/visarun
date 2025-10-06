@@ -116,6 +116,7 @@ const VisaTypeSelector = ({
         }
 
         if (item.serviceType === 'acceleration') {
+          console.log('Acceleration cost:', visaApplication.visaType.accelerationCost);
           itemPrice = visaApplication.visaType.accelerationCost || 0;
         }
       }
@@ -189,7 +190,13 @@ const VisaTypeSelector = ({
     if (!isCountryBlacklisted) {
       const basePrice = visaTypeObject.serviceCost || 0;
       const extraCost = visaApplication?.isMultientry ? visaTypeObject.multientryExtraCost || 0 : 0;
-      itemPrice = basePrice + extraCost + surchargeAmount;
+      if (item.serviceType === 'visa') {
+        itemPrice = basePrice + extraCost + surchargeAmount;
+      }
+
+      if (item.serviceType === 'acceleration') {
+        itemPrice = visaTypeObject?.accelerationCost || 0;
+      }
     }
 
     const updatedOrderItems = orderItems.map(i =>
@@ -271,7 +278,14 @@ const VisaTypeSelector = ({
     if (!isCountryBlacklisted) {
       const basePrice = selectedVisaTypeObject.serviceCost || 0;
       const extraCost = isMultientry ? selectedVisaTypeObject.multientryExtraCost || 0 : 0;
-      itemPrice = basePrice + extraCost + surchargeAmount;
+      if (item.serviceType === 'visa') {
+        itemPrice = basePrice + extraCost + surchargeAmount;
+      }
+
+      if (item.serviceType === 'acceleration') {
+        console.log('Acceleration cost:', visaApplication.visaType.accelerationCost);
+        itemPrice = visaApplication.visaType.accelerationCost || 0;
+      }
     }
 
     const updatedOrderItems = orderItems.map(i =>

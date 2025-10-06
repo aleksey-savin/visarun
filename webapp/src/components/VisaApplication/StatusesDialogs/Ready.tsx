@@ -69,7 +69,12 @@ export const ReadyStatusDialog = ({ application }: { application: any }) => {
 
   const ReadyContent = ({ className }: { className?: string }) => (
     <div className={className}>
-      <ClientCard application={application} order={application.orderItem?.order} />
+      <ClientCard
+        client={application.orderItem?.client}
+        order={application.orderItem?.order}
+        orderItem={application.orderItem}
+        application={application}
+      />
     </div>
   );
 

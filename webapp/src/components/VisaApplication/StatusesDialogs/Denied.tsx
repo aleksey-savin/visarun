@@ -71,8 +71,10 @@ export const DeniedStatusDialog = ({ application }: { application: any }) => {
   const DeniedContent = ({ className }: { className?: string }) => (
     <div className={className}>
       <ClientCard
-        application={application}
+        client={application.orderItem?.client}
         order={application.orderItem?.order}
+        orderItem={application.orderItem}
+        application={application}
         border={'border-destructive'}
       />
       <div className="border border-destructive rounded-lg p-4">{application.denialReason}</div>

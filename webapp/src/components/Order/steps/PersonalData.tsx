@@ -25,7 +25,10 @@ const PersonalData = ({ client }: { client: StoreClient }) => {
     setActiveClientId('');
   };
 
-  const showComponent = orderItems.filter(item => item.clientId === client.id).length > 0;
+  const clientOrderItems = orderItems.filter(item => item.clientId === client.id);
+
+  const showComponent =
+    clientOrderItems.filter(item => item.serviceType !== 'acceleration').length > 0;
 
   return (
     <>
