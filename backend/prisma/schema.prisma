@@ -92,6 +92,7 @@ model User {
   contactMethods           UserContactMethod[]
   roleAssignments          UserRoleAssignment[]
   OrderPayment             OrderPayment[]
+  Comment                  Comment[]
 }
 
 model Client {
@@ -848,6 +849,21 @@ model City {
   country         Country            @relation(fields: [countryId], references: [id])
   routeStops      VisarunRouteStop[] @relation("RouteStops")
   pickupLocations PickupLocation[]   @relation("PickupLocations")
+}
+
+model Comment {
+  id          String     @id @default(uuid())
+  entityType  EntityType
+  entityId    String
+  content     String
+  documentUrl String?
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id])
+}
+
+enum EntityType {
+  order
+  visaApplication
 }
 
 enum VisaApplicationType {
