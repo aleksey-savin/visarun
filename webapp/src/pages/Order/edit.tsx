@@ -43,6 +43,7 @@ const EditOrderPage = () => {
     ...client,
     firstName: client.firstName ?? undefined,
     lastName: client.lastName ?? undefined,
+    birthDate: client.birthDate ? new Date(client.birthDate) : undefined,
     passportExpirationDate: client.passportExpirationDate
       ? new Date(client.passportExpirationDate)
       : undefined,
@@ -116,7 +117,7 @@ const EditOrderPage = () => {
 
       const currentClients = useOrderStore.getState().clients;
       setClients(
-        orderData.clients.map(client => {
+        orderData.clients.map((client: any) => {
           // Find existing client to preserve visa requirements
           const existingClient = currentClients.find(c => c.id === client.id);
 
@@ -126,6 +127,7 @@ const EditOrderPage = () => {
             lastName: client.lastName ?? undefined,
             email: client.email ?? undefined,
             preConfirmPassportIsValid: client.preConfirmPassportIsValid ?? undefined,
+            birthDate: client.birthDate ? new Date(client.birthDate) : undefined,
             passportExpirationDate: client.passportExpirationDate
               ? new Date(client.passportExpirationDate)
               : undefined,

@@ -116,7 +116,6 @@ const VisaTypeSelector = ({
         }
 
         if (item.serviceType === 'acceleration') {
-          console.log('Acceleration cost:', visaApplication.visaType.accelerationCost);
           itemPrice = visaApplication.visaType.accelerationCost || 0;
         }
       }
@@ -283,7 +282,6 @@ const VisaTypeSelector = ({
       }
 
       if (item.serviceType === 'acceleration') {
-        console.log('Acceleration cost:', visaApplication.visaType.accelerationCost);
         itemPrice = visaApplication.visaType.accelerationCost || 0;
       }
     }

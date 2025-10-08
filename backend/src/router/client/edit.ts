@@ -8,6 +8,11 @@ export const zEditClientTrpcInput = z.object({
   email: z.string().email().optional().nullable(),
   citizenshipId: z.string().uuid().optional().nullable(),
   preConfirmPassportIsValid: z.boolean().optional(),
+  birthDate: z
+    .string()
+    .optional()
+    .nullable()
+    .transform(val => (val ? new Date(val) : null)),
   passportExpirationDate: z
     .string()
     .optional()

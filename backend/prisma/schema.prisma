@@ -106,6 +106,7 @@ model Client {
   lastName                  String?
   email                     String?
   isPrimary                 Boolean                    @default(false)
+  birthDate                 DateTime?
   passportExpirationDate    DateTime?
   preConfirmPassportIsValid Boolean                    @default(false)
   citizenship               Citizenship?               @relation(fields: [citizenshipId], references: [id])

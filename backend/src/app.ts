@@ -4,7 +4,7 @@ import { appRouter } from './router/index.js';
 import { applyTrpcToExpressApp } from './lib/trpc.js';
 import { createAppContext } from './lib/ctx.js';
 import { createUploadRoutes } from './router/upload/index.js';
-import { startAutoCompleteOrdersJob, setupGracefulShutdown } from './jobs/autoCompleteOrders.js';
+import { startAllJobs, setupAllGracefulShutdowns } from './jobs/index.js';
 import { validateS3Config } from './services/s3.js';
 
 (async () => {
@@ -39,11 +39,11 @@ import { validateS3Config } from './services/s3.js';
     // Apply tRPC to Express app
     await applyTrpcToExpressApp(app, appRouter);
 
-    // Start cron jobs
-    startAutoCompleteOrdersJob();
+    // Start all cron jobs
+    startAllJobs();
 
-    // Setup graceful shutdown
-    setupGracefulShutdown();
+    // Setup graceful shutdown for all jobs
+    setupAllGracefulShutdowns();
 
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {

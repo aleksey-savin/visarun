@@ -19,6 +19,11 @@ import useOrderStore from '@/stores/order/order-store';
 import { Copy, Check, Mail, Pencil, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
+const applicationTypes = {
+  visa: 'Visa',
+  acceleration: 'Acceleration',
+} as const;
+
 const ClientCard = ({
   client,
   totalAmount,
@@ -137,37 +142,39 @@ const ClientCard = ({
             )}
 
             {client.isPrimary &&
-              contactMethods?.map(contact => (
-                <Badge
-                  key={contact.id}
-                  variant="secondary"
-                  className={`cursor-pointer transition-all duration-300 ${
-                    copiedContact === contact.id
-                      ? 'bg-green-500/20 text-green-300'
-                      : 'bg-muted hover:bg-muted/80'
-                  }`}
-                  onClick={e =>
-                    contact.value &&
-                    contact.id &&
-                    handleCopyToClipboard(contact.value, e, contact.id)
-                  }
-                >
-                  <ContactMethodIcon
-                    method={
-                      contact.method
-                        ? { name: contact.method.name, icon: contact.method.icon }
-                        : { name: 'unknown', icon: null }
+              contactMethods
+                ?.filter(contact => contact.method)
+                .map(contact => (
+                  <Badge
+                    key={contact.id}
+                    variant="secondary"
+                    className={`cursor-pointer transition-all duration-300 ${
+                      copiedContact === contact.id
+                        ? 'bg-green-500/20 text-green-300'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                    onClick={e =>
+                      contact.value &&
+                      contact.id &&
+                      handleCopyToClipboard(contact.value, e, contact.id)
                     }
-                    className="w-3 h-3"
-                  />
-                  {` ${contact.value}`}
-                  {copiedContact === contact.id ? (
-                    <Check className="w-3 h-3 ml-1 animate-pulse" />
-                  ) : (
-                    <Copy className="w-3 h-3 ml-1" />
-                  )}
-                </Badge>
-              ))}
+                  >
+                    <ContactMethodIcon
+                      method={
+                        contact.method
+                          ? { name: contact.method.name, icon: contact.method.icon }
+                          : { name: 'unknown', icon: null }
+                      }
+                      className="w-3 h-3"
+                    />
+                    {` ${contact.value}`}
+                    {copiedContact === contact.id ? (
+                      <Check className="w-3 h-3 ml-1 animate-pulse" />
+                    ) : (
+                      <Copy className="w-3 h-3 ml-1" />
+                    )}
+                  </Badge>
+                ))}
             {client.isPrimary && user?.email && (
               <Badge
                 variant="secondary"
@@ -194,8 +201,13 @@ const ClientCard = ({
                     key={`${application.id}-visa-data`}
                     className="flex flex-col md:flex-row items-center"
                   >
-                    <Badge variant="accent" className="rounded-b-none md:rounded-r-none">
-                      Visa - {application.country.name} - {application.visaType.name}
+                    <Badge
+                      variant={application.type === 'visa' ? 'accent' : 'accent-green'}
+                      className="rounded-r-none"
+                    >
+                      {applicationTypes[application.type as keyof typeof applicationTypes] ||
+                        application.type}{' '}
+                      - {application.country.name} - {application.visaType.name}
                     </Badge>
                     <Badge
                       variant="secondary"

@@ -806,6 +806,8 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
     form,
   ]);
 
+  const visaCodeIsRequired = visaApplication?.type === 'acceleration';
+
   return (
     <Card className="p-3 bg-secondary gap-5">
       <div className="flex justify-between">
@@ -843,7 +845,9 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
         <>
           <Form {...form}>
             <div className="space-y-2">
-              <Label>Visa code</Label>
+              <Label>
+                Visa code {visaCodeIsRequired ? <span className="text-red-500">*</span> : ''}
+              </Label>
               <Input
                 className={cn('max-w-52', visaCodeError && 'border-destructive')}
                 required={activeService === 'acceleration'}

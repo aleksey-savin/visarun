@@ -49,6 +49,7 @@ export const getOrderTrpcRoute = orderReadProcedure
                 userId: true,
                 isPrimary: true,
                 preConfirmPassportIsValid: true,
+                birthDate: true,
                 passportExpirationDate: true,
                 prevViolations: true,
                 prevViolationsDesc: true,

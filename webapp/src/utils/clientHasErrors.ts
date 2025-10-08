@@ -25,14 +25,6 @@ export const clientHasServicePuzzleErrors = (
     errors.add('No order items added');
   }
 
-  const accelerationItems = clientOrderItems.filter(item => item.serviceType === 'acceleration');
-  for (const item of accelerationItems) {
-    const visaApp = visaApplications.find(app => app.orderItemId === item.id);
-    if (!visaApp || !visaApp.applicationCode) {
-      errors.add('Visa acceleration info is not complete');
-    }
-  }
-
   // 3. Visa info incomplete
   const visaOrderItems = clientOrderItems.filter(item =>
     ['visa', 'acceleration'].includes(item.serviceType)
@@ -57,6 +49,15 @@ export const clientHasServicePuzzleErrors = (
     errors.add('Client is blacklisted for countries they are applying visas for');
   }
 
+  // 5. Check application code for acceleration services
+  const accelerationServices = orderItems.filter(item => item.serviceType === 'acceleration');
+  for (const service of accelerationServices) {
+    const va = visaApplications.find(app => app.orderItemId === service.id);
+    if (!va?.applicationCode) {
+      errors.add('Missing visa application code for acceleration service');
+    }
+  }
+
   return errors;
 };
 
@@ -67,9 +68,8 @@ export const clientHasPersonalDataErrors = (
 ) => {
   const errors = new Set(client.errors || []);
 
+  const hasAccelerationServices = orderItems.some(item => item.serviceType === 'acceleration');
   const hasOnlyAccelerationServices = orderItems.every(item => item.serviceType === 'acceleration');
-
-  if (hasOnlyAccelerationServices) return [];
 
   const docRequirements =
     client.visaRequirements?.filter(req => req.inputType === 'document') || [];
@@ -80,7 +80,7 @@ export const clientHasPersonalDataErrors = (
   for (const req of docRequirements || []) {
     const uploadedDocument = client?.documents?.find(doc => doc.requirementId === req.id);
 
-    if (!uploadedDocument && !req.isOptional && needsToComply) {
+    if (!uploadedDocument && !req.isOptional && needsToComply && !hasOnlyAccelerationServices) {
       errors.add(`Document ${req.title} is not uploaded`);
     }
   }
@@ -98,7 +98,7 @@ export const clientHasPersonalDataErrors = (
     if (!user.email || user.email.trim() === '') {
       errors.add('Email is required');
     }
-    if (!user.phoneNumber || user.phoneNumber.trim() === '') {
+    if (!user.phoneNumber || (user.phoneNumber.trim() === '' && !hasAccelerationServices)) {
       errors.add('Phone number is required');
     }
   }
@@ -137,6 +137,13 @@ export const clientHasPersonalDataErrors = (
     }
     if (!user.phoneNumber || user.phoneNumber.trim() === '') {
       errors.add('Phone number is required');
+    }
+  }
+
+  if (hasAccelerationServices) {
+    // Birth date is required
+    if (!client.birthDate) {
+      errors.add('Birth date is required');
     }
   }
 

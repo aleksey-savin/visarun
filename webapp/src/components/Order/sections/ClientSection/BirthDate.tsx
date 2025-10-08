@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-import { isPassportExpiringWithin6Months } from '@/utils/passportExpirationDate';
-
 import {
   Form,
   FormControl,
@@ -27,50 +25,46 @@ import useOrderStore from '@/stores/order/order-store.js';
 
 import { StoreClient } from '@/stores/order/order-store';
 
-import { Badge } from '@/components/ui/badge';
-
 const formSchema = z.object({
-  passportExpirationDate: z.date().min(new Date(), {
-    message: 'Passport expiration date must be not less than 6 months from now.',
-  }),
+  birthDate: z.date(),
 });
 
-const PassportExpiry = ({ client }: { client: StoreClient }) => {
-  const { setSaveStatus, clients, setClients, order } = useOrderStore();
+const BirthDate = ({ client }: { client: StoreClient }) => {
+  const { setSaveStatus, clients, setClients, orderItems } = useOrderStore();
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      passportExpirationDate: client?.passportExpirationDate
-        ? client.passportExpirationDate instanceof Date
-          ? client.passportExpirationDate
-          : new Date(client.passportExpirationDate)
+      birthDate: client?.birthDate
+        ? client.birthDate instanceof Date
+          ? client.birthDate
+          : new Date(client.birthDate)
         : undefined,
     },
   });
 
   const editClientMutation = trpc.clientData.edit.useMutation();
 
-  const handlePassportDateUpdate = async (date: Date) => {
+  const handleBirthDateUpdate = async (date: Date) => {
     setSaveStatus('saving');
 
-    setClients(clients.map(c => (c.id === client.id ? { ...c, passportExpirationDate: date } : c)));
+    setClients(clients.map(c => (c.id === client.id ? { ...c, birthDate: date } : c)));
 
-    form.setValue('passportExpirationDate', date);
+    form.setValue('birthDate', date);
 
     setIsCalendarOpen(false);
 
     try {
       await editClientMutation.mutateAsync({
         id: client.id,
-        passportExpirationDate: date.toISOString(),
-        birthDate: client.birthDate
-          ? client.birthDate instanceof Date
-            ? client.birthDate.toISOString()
-            : client.birthDate
+        passportExpirationDate: client.passportExpirationDate
+          ? client.passportExpirationDate instanceof Date
+            ? client.passportExpirationDate.toISOString()
+            : client.passportExpirationDate
           : null,
+        birthDate: date.toISOString(),
       });
       setSaveStatus('saved');
     } catch {
@@ -78,25 +72,19 @@ const PassportExpiry = ({ client }: { client: StoreClient }) => {
     }
   };
 
-  const passportExpires = client.passportExpirationDate
-    ? isPassportExpiringWithin6Months(
-        client.passportExpirationDate instanceof Date
-          ? client.passportExpirationDate.toISOString()
-          : client.passportExpirationDate
-      )
-    : false;
+  const isRequired = orderItems.filter(item => item.serviceType === 'acceleration').length > 0;
 
   return (
     <div className="flex flex-wrap items-center gap-4">
       <Form {...form}>
         <FormField
           control={form.control}
-          name="passportExpirationDate"
+          name="birthDate"
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Passport expiration date
-                {order.status === 'draft' ? '' : <span className="text-red-500">*</span>}
+                Birth date
+                {isRequired ? <span className="text-red-500">*</span> : ''}
               </FormLabel>
               <FormControl>
                 <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
@@ -112,11 +100,6 @@ const PassportExpiry = ({ client }: { client: StoreClient }) => {
                         {field.value ? format(field.value, 'PPP') : <span>Select date</span>}
                         <CalendarIcon />
                       </Button>
-                      {passportExpires && (
-                        <Badge variant="destructive" className="max-h-[20px]">
-                          Passport expires in less than 6 months
-                        </Badge>
-                      )}
                     </div>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -125,17 +108,11 @@ const PassportExpiry = ({ client }: { client: StoreClient }) => {
                       selected={field.value}
                       onSelect={date => {
                         if (date) {
-                          handlePassportDateUpdate(date);
+                          handleBirthDateUpdate(date);
                         }
                       }}
-                      disabled={date => {
-                        const yesterday = new Date();
-                        yesterday.setDate(yesterday.getDate() - 1);
-                        return date < yesterday;
-                      }}
                       captionLayout="dropdown"
-                      startMonth={new Date()}
-                      endMonth={new Date(2100, 11)}
+                      endMonth={new Date()}
                     />
                   </PopoverContent>
                 </Popover>
@@ -149,4 +126,4 @@ const PassportExpiry = ({ client }: { client: StoreClient }) => {
   );
 };
 
-export default PassportExpiry;
+export default BirthDate;

@@ -6,6 +6,7 @@ import UserContacts from '../sections/UserSection/UserContacts';
 import Comments from '../Comments';
 import OtherRequirements from '../sections/PersonalDataSection/OtherRequirements';
 import PassportExpiry from '../sections/ClientSection/PassportExpiry';
+import BirthDate from '../sections/ClientSection/BirthDate';
 
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ const PersonalData = ({ client }: { client: StoreClient }) => {
           <PassportExpiry client={client} />
         </>
       )}
+      <BirthDate client={client} />
       <UserContacts client={client} />
       {client.isPrimary && <ClientName client={client} />}
       <Separator />

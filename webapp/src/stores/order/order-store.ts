@@ -58,6 +58,7 @@ export interface StoreClient extends Partial<Client> {
   userId: string | null;
   isPrimary: boolean;
   preConfirmPassportIsValid: boolean;
+  birthDate?: Date;
   passportExpirationDate?: Date;
   prevViolations?: boolean;
   prevViolationsDesc?: string | null;

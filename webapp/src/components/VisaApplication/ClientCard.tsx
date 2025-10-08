@@ -75,11 +75,11 @@ interface User {
 }
 
 interface Client {
-  lastName: string;
-  firstName: string;
+  lastName: string | null;
+  firstName: string | null;
   isPrimary: boolean;
-  citizenship: Citizenship;
-  user: User;
+  citizenship: Citizenship | null;
+  user: User | null;
   documents: Document[];
 }
 
@@ -282,26 +282,28 @@ const ClientCard = ({
           </Badge>
         )}
 
-        {client.user?.contactMethods?.map((contact: ContactMethod) => (
-          <Badge
-            key={contact.id}
-            variant="secondary"
-            className={`flex gap-1 items-center cursor-pointer transition-all duration-300 ${
-              copiedContact === contact.id
-                ? 'bg-green-500/20 text-green-300'
-                : 'bg-muted hover:bg-muted/80'
-            }`}
-            onClick={e => handleCopyToClipboard(contact.value, e, contact.id)}
-          >
-            <ContactMethodIcon method={contact.method} className="w-4 h-4" />
-            {` ${contact.value}`}
-            {copiedContact === contact.id ? (
-              <Check className="w-4 h-4 animate-pulse" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
-          </Badge>
-        ))}
+        {client.user?.contactMethods
+          .filter(contact => contact.method)
+          .map((contact: ContactMethod) => (
+            <Badge
+              key={contact.id}
+              variant="secondary"
+              className={`flex gap-1 items-center cursor-pointer transition-all duration-300 ${
+                copiedContact === contact.id
+                  ? 'bg-green-500/20 text-green-300'
+                  : 'bg-muted hover:bg-muted/80'
+              }`}
+              onClick={e => handleCopyToClipboard(contact.value, e, contact.id)}
+            >
+              <ContactMethodIcon method={contact.method} className="w-4 h-4" />
+              {` ${contact.value}`}
+              {copiedContact === contact.id ? (
+                <Check className="w-4 h-4 animate-pulse" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+            </Badge>
+          ))}
         {client.user?.phoneNumber && (
           <Badge
             variant="secondary"
