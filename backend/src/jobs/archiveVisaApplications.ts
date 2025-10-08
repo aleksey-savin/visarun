@@ -14,7 +14,7 @@ let cronJob: cron.ScheduledTask | null = null;
 export const startArchiveVisaApplicationsJob = () => {
   // Run daily at 07:00 UTC: '0 7 * * *'
   cronJob = cron.schedule(
-    '22 5 * * *',
+    '30 5 * * *',
     async () => {
       // Prevent overlapping job executions
       if (isJobRunning) {
