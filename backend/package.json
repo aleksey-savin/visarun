@@ -16,10 +16,6 @@
     "prisma:seed": "tsx src/utils/seed.ts",
     "prisma:seed-prod": "node dist/src/utils/seed.js",
     "migrate:s3": "tsx src/utils/migrateToS3.ts",
-    "migrate:s3:dry-run": "tsx src/utils/migrateToS3.ts --dry-run",
-    "job:archive": "tsx src/scripts/runArchiveJob.ts",
-    "job:run": "tsx src/scripts/runJob.ts",
-    "prepare": "",
     "build": "prisma generate && rm -rf dist && swc src -d dist --extensions '.ts,.tsx' && cp -r prisma dist/ && echo '{\"type\":\"module\"}' > dist/package.json"
   },
   "keywords": [],
