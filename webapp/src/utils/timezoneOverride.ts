@@ -12,8 +12,34 @@ const originalDateTimeFormat = Intl.DateTimeFormat;
 // Флаг для управления переопределением
 let isOverrideActive = true;
 
+// Флаг для отключения переопределения для календарных компонентов
+let isCalendarExempt = false;
+
 // Список библиотек/компонентов, которые должны быть исключены из переопределения
-const exemptPatterns = ['react-day-picker', 'calendar', 'datepicker', 'DayPicker', 'Calendar'];
+const exemptPatterns = [
+  'react-day-picker',
+  'calendar',
+  'datepicker',
+  'DayPicker',
+  'Calendar',
+  'CalendarDayButton',
+  'formatMonthDropdown',
+  'toLocaleDateString',
+  'toLocaleString',
+  'getDefaultClassNames',
+  'rdp-',
+  'day-picker',
+  'data-day=',
+  'data-selected',
+  'data-range',
+  'weekday',
+  'month_caption',
+  'button_previous',
+  'button_next',
+  'ChevronLeft',
+  'ChevronRight',
+  'ChevronDown',
+];
 
 // Получаем часовой пояс приложения
 const getAppTimezone = (): string => {
@@ -24,7 +50,25 @@ const getAppTimezone = (): string => {
  * Проверяет, нужно ли применять переопределение часового пояса
  */
 const shouldApplyOverride = (): boolean => {
-  if (!isOverrideActive) return false;
+  if (!isOverrideActive || isCalendarExempt) return false;
+
+  // Автоматическая проверка DOM контекста для календарных компонентов
+  if (typeof document !== 'undefined') {
+    const activeElement = document.activeElement;
+    if (activeElement) {
+      // Проверяем, находится ли активный элемент внутри календаря
+      const calendarContainer = activeElement.closest('[data-slot="calendar"]');
+      if (calendarContainer) {
+        return false;
+      }
+
+      // Проверяем классы элемента на наличие календарных паттернов
+      const elementClasses = activeElement.className || '';
+      if (exemptPatterns.some(pattern => elementClasses.includes(pattern))) {
+        return false;
+      }
+    }
+  }
 
   // Проверяем стек вызовов на наличие исключенных компонентов
   const stack = new Error().stack || '';
@@ -37,7 +81,7 @@ const shouldApplyOverride = (): boolean => {
 const applyTimezoneToOptions = (
   options?: Intl.DateTimeFormatOptions
 ): Intl.DateTimeFormatOptions => {
-  if (!shouldApplyOverride()) {
+  if (!shouldApplyOverride() || isCalendarExempt) {
     return options || {};
   }
 
@@ -177,6 +221,35 @@ export const withoutTimezoneOverride = <T>(fn: () => T): T => {
   } finally {
     if (wasActive) {
       enableTimezoneOverride();
+    }
+  }
+};
+
+/**
+ * Включает режим исключения для календарных компонентов
+ */
+export const enableCalendarExemption = (): void => {
+  isCalendarExempt = true;
+};
+
+/**
+ * Отключает режим исключения для календарных компонентов
+ */
+export const disableCalendarExemption = (): void => {
+  isCalendarExempt = false;
+};
+
+/**
+ * Выполняет функцию с отключенным переопределением для календарей
+ */
+export const withCalendarExemption = <T>(fn: () => T): T => {
+  const wasExempt = isCalendarExempt;
+  enableCalendarExemption();
+  try {
+    return fn();
+  } finally {
+    if (!wasExempt) {
+      disableCalendarExemption();
     }
   }
 };
