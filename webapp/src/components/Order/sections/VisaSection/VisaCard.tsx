@@ -901,6 +901,8 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                       mode="single"
                                       selected={exitDate}
                                       captionLayout="dropdown"
+                                      startMonth={new Date()}
+                                      endMonth={new Date(2050, 11)}
                                       onSelect={handleExitDateUpdate}
                                       disabled={date => {
                                         const yesterday = new Date();
@@ -973,6 +975,8 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                       mode="single"
                                       selected={stampUntilDate}
                                       captionLayout="dropdown"
+                                      startMonth={new Date()}
+                                      endMonth={new Date(2050, 11)}
                                       onSelect={handleStampUntilDateUpdate}
                                       disabled={date => {
                                         const yesterday = new Date();
@@ -1043,6 +1047,8 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                   mode="single"
                                   selected={entryDate}
                                   captionLayout="dropdown"
+                                  startMonth={new Date()}
+                                  endMonth={new Date(2050, 11)}
                                   onSelect={handleEntryDateUpdate}
                                   disabled={date => {
                                     const yesterday = new Date();
@@ -1158,6 +1164,8 @@ const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: str
                                     mode="single"
                                     selected={completionDate}
                                     captionLayout="dropdown"
+                                    startMonth={new Date()}
+                                    endMonth={new Date(2050, 11)}
                                     onSelect={handleCompletionDateUpdate}
                                     disabled={date => {
                                       const yesterday = new Date();
