@@ -17,6 +17,8 @@ export const getOneCurrencyTrpcRoute = currencyReadProcedure
           select: {
             orderPayments: true,
             exchangeRates: true,
+              currencyExchangesFrom: true,
+              currencyExchangesTo: true,
           },
         },
       },

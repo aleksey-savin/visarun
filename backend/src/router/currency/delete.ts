@@ -16,6 +16,8 @@ export const deleteCurrencyTrpcRoute = currencyDeleteProcedure
           select: {
             orderPayments: true,
             exchangeRates: true,
+              currencyExchangesFrom: true,
+              currencyExchangesTo: true,
           },
         },
       },
@@ -33,6 +35,14 @@ export const deleteCurrencyTrpcRoute = currencyDeleteProcedure
     if (existingCurrency._count.exchangeRates > 0) {
       throw new Error('Cannot delete currency: it is being used in exchange rates');
     }
+
+    if (existingCurrency._count.currencyExchangesFrom > 0) {
+        throw new Error('Cannot delete currency: it is being used in currency exchanges (as "from" currency)');
+    }
+
+      if (existingCurrency._count.currencyExchangesTo > 0) {
+          throw new Error('Cannot delete currency: it is being used in currency exchanges (as "to" currency)');
+      }
 
     await ctx.prisma.currency.delete({
       where: { id: input.id },

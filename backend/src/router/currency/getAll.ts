@@ -34,6 +34,8 @@ export const getAllCurrenciesTrpcRoute = currencyReadProcedure
             select: {
               orderPayments: true,
               exchangeRates: true,
+                currencyExchangesFrom: true,
+                currencyExchangesTo: true,
             },
           },
         },

@@ -166,6 +166,24 @@ export const orderItemReadProcedure = baseProcedure.use(requirePermission('order
 export const orderItemUpdateProcedure = baseProcedure.use(requirePermission('orderItems.update'));
 export const orderItemDeleteProcedure = baseProcedure.use(requirePermission('orderItems.delete'));
 
+// CurrencyExchange management procedures
+export const currencyExchangeCreateProcedure = baseProcedure;
+export const currencyExchangeDeleteProcedure = baseProcedure;
+export const currencyExchangeReadProcedure = baseProcedure;
+export const currencyExchangeUpdateProcedure = baseProcedure;
+
+// Transaction management procedures
+export const transactionCreateProcedure = baseProcedure;
+export const transactionDeleteProcedure = baseProcedure;
+export const transactionReadProcedure = baseProcedure;
+export const transactionUpdateProcedure = baseProcedure;
+
+// Banking details procedures
+export const bankingDetailsCreateProcedure = baseProcedure;
+export const bankingDetailsDeleteProcedure = baseProcedure;
+export const bankingDetailsReadProcedure = baseProcedure;
+export const bankingDetailsUpdateProcedure = baseProcedure;
+
 // ClientDiscountRule management procedures
 export const clientDiscountRuleCreateProcedure = baseProcedure.use(
   requirePermission('clientDiscountRules.create')

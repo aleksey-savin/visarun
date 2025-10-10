@@ -591,10 +591,14 @@ model OrderPayment {
 
 model CurrencyExchange {
   id                           String                 @id @default(uuid())
+  position                     Int
+  exchangeRate                 Decimal
   amount                       Decimal
   amountInSelectedCurrencyFrom Decimal
   amountInSelectedCurrencyTo   Decimal
   status                       CurrencyExchangeStatus @default(draft)
+  cancelReason                 String?
+  canceledByClient             Boolean?
   deadline                     DateTime?
   minTransactionAmount         Decimal?
   orderItemId                  String                 @unique
@@ -609,7 +613,7 @@ model CurrencyExchange {
   createdBy                    User                   @relation("CurrencyExchangeCreatedBy", fields: [createdById], references: [id])
   updatedBy                    User                   @relation("CurrencyExchangeUpdatedBy", fields: [updatedById], references: [id])
   createdAt                    DateTime               @default(now())
-  updatedAt                    DateTime               @default(now())
+  updatedAt                    DateTime               @default(now()) @updatedAt
 }
 
 model Transaction {
@@ -628,7 +632,7 @@ model Transaction {
   createdBy                User              @relation("TransactionCreatedBy", fields: [createdById], references: [id])
   updatedBy                User              @relation("TransactionUpdatedBy", fields: [updatedById], references: [id])
   createdAt                DateTime          @default(now())
-  updatedAt                DateTime          @default(now())
+  updatedAt                DateTime          @default(now()) @updatedAt
 }
 
 model BankingDetails {
@@ -636,9 +640,9 @@ model BankingDetails {
   content     String?
   documentUrl String?
   clientId    String   @unique
-  client      Client   @relation(fields: [clientId], references: [id])
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 // VISARUN
@@ -976,6 +980,7 @@ enum OrderStatus {
 enum ServiceType {
   visa
   visarun
+  currencyExchange
 }
 
 enum DiscountAppliedType {
