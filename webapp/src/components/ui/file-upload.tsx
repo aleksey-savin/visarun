@@ -180,7 +180,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       }
 
       const result: UploadResponse = await response.json();
-      console.log('Upload response:', result);
 
       if (result.success && result.filePath) {
         const uploadedFileInfo = {

@@ -135,6 +135,20 @@ export const getAllOrdersTrpcRoute = orderReadProcedure
               email: true,
             },
           },
+          createdBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          updatedBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
           items: {
             include: {
               client: {

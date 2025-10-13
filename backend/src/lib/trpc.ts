@@ -450,6 +450,20 @@ export const visarunTripDeleteProcedure = baseProcedure.use(
   requirePermission('visarunTrips.delete')
 );
 
+// VisarunPassenger management procedures
+export const visarunPassengerCreateProcedure = baseProcedure.use(
+  requirePermission('visarunPassengers.create')
+);
+export const visarunPassengerReadProcedure = baseProcedure.use(
+  requirePermission('visarunPassengers.read')
+);
+export const visarunPassengerUpdateProcedure = baseProcedure.use(
+  requirePermission('visarunPassengers.update')
+);
+export const visarunPassengerDeleteProcedure = baseProcedure.use(
+  requirePermission('visarunPassengers.delete')
+);
+
 export const applyTrpcToExpressApp = async <TRouter extends ReturnType<typeof trpc.router>>(
   app: Express,
   router: TRouter

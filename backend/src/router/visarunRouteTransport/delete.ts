@@ -31,17 +31,67 @@ export const deleteVisarunRouteTransportTrpcRoute = visarunRouteTransportDeleteP
       throw new Error('Route transport assignment not found');
     }
 
-    // Check if route has active schedules
+    // If route has active schedules, clean up scheduled trips without passengers first
     if (existingRouteTransport.route.VisarunSchedule.length > 0) {
-      throw new Error(
-        'Cannot remove transport from route with active schedules. Please deactivate all schedules first.'
-      );
+      // Delete scheduled trips without passengers that are in the future
+      await ctx.prisma.visarunTrip.deleteMany({
+        where: {
+          schedule: {
+            route: {
+              id: existingRouteTransport.route.id,
+            },
+          },
+          status: 'scheduled',
+          isFromSchedule: true,
+          departureDateTime: {
+            gte: new Date(),
+          },
+          // Only delete trips without passengers
+          passengers: {
+            none: {},
+          },
+          // Only delete trips without transport assignments
+          transports: {
+            none: {},
+          },
+        },
+      });
     }
 
-    // Check if route has any trips using this transport
-    if (existingRouteTransport.route.VisarunTrip.length > 0) {
+    // Check if route has any trips with actual data (passengers or transport assignments) that must be preserved
+    const tripsWithData = await ctx.prisma.visarunTrip.findMany({
+      where: {
+        schedule: {
+          route: {
+            id: existingRouteTransport.route.id,
+          },
+        },
+        OR: [
+          // Trips with passengers
+          {
+            passengers: {
+              some: {},
+            },
+          },
+          // Trips with transport assignments
+          {
+            transports: {
+              some: {},
+            },
+          },
+          // Completed or in-progress trips
+          {
+            status: {
+              in: ['in_process', 'completed'],
+            },
+          },
+        ],
+      },
+    });
+
+    if (tripsWithData.length > 0) {
       throw new Error(
-        'Cannot remove transport from route with existing trips. This assignment has historical data that must be preserved.'
+        'Cannot remove transport from route with existing trips that have passengers, transport assignments, or are completed. This assignment has historical data that must be preserved.'
       );
     }
 

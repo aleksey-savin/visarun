@@ -53,7 +53,8 @@ const AddVisa = ({ client, activeService }: { client: StoreClient; activeService
       orderId: order.id || '',
       countryId,
       clientId: client.id,
-      serviceType: activeService === 'visa' ? 'visa' : 'acceleration',
+      serviceType:
+        activeService === 'visa' || activeService === 'visarun' ? 'visa' : 'acceleration',
       basePrice: 0,
       finalPrice: 0,
     });
@@ -106,7 +107,7 @@ const AddVisa = ({ client, activeService }: { client: StoreClient; activeService
       <div>Add Visa</div>
       {clientOrderItems
         ?.filter((item: any) =>
-          activeService === 'visa'
+          activeService === 'visa' || activeService === 'visarun'
             ? item.serviceType === 'visa'
             : item.serviceType === 'acceleration'
         )

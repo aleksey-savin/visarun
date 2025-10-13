@@ -1,15 +1,24 @@
+import { useState, useEffect } from 'react';
 import { useVisarunTrips } from '@/hooks/useVisarunTrips';
-import useOrderStore from '@/stores/order/order-store';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { MapPinIcon, Armchair } from 'lucide-react';
+import useOrderStore, { type StoreClient } from '@/stores/order/order-store';
+import { CircleCheck, MapPinIcon } from 'lucide-react';
+import { trpc } from '@/lib/trpc';
+import TripCard from './TripCard';
+import CancelBookingDialog from './CancelBookingDialog';
+import SeatSelectionDialog from './SeatSelectionDialog';
 
-import { IconDisplay } from '@/components/ui/icon-display';
-
-const AvailableTransfers = () => {
-  const { preferredDepartureCity, preferredVisarunCountry, preferredDepartureDate } =
-    useOrderStore();
+const AvailableTransfers = ({ client }: { client: StoreClient }) => {
+  const {
+    preferredDepartureCity,
+    preferredVisarunCountry,
+    preferredDepartureDate,
+    order,
+    orderItems,
+    visarunPassengers,
+    setOrderItems,
+    setVisarunPassengers,
+    setSaveStatus,
+  } = useOrderStore();
 
   const {
     data: trips,
@@ -20,6 +29,214 @@ const AvailableTransfers = () => {
     preferredVisarunCountryId: preferredVisarunCountry?.id,
     preferredDepartureDate,
   });
+
+  const createOrderItemMutation = trpc.orderItem.create.useMutation();
+  const createVisarunPassengerMutation = trpc.visarunPassenger.create.useMutation();
+  const createTripTransportMutation = trpc.visarunTripTransport.create.useMutation();
+  const deleteOrderItemMutation = trpc.orderItem.delete.useMutation();
+  const deleteVisarunPassengerMutation = trpc.visarunPassenger.delete.useMutation();
+
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [passengerToCancel, setPassengerToCancel] = useState<any>(null);
+  const [seatSelectionDialogOpen, setSeatSelectionDialogOpen] = useState(false);
+  const [selectedTripForSeat, setSelectedTripForSeat] = useState<any>(null);
+  const [selectedTransportForSeat, setSelectedTransportForSeat] = useState<any>(null);
+  const [selectedSeatClassForSeat, setSelectedSeatClassForSeat] = useState<any>(null);
+  const [tripTransports, setTripTransports] = useState<any[]>([]);
+
+  // Get all trip transports for the current trips
+  const tripIds = trips?.map((trip: any) => trip.id) || [];
+
+  // Filter passengers for this specific client
+  const clientVisarunPassengers = visarunPassengers.filter(
+    passenger => passenger.clientId === client.id
+  );
+
+  // Filter order items for this specific client
+  const { data: allTripTransports } = trpc.visarunTripTransport.getByTripIds.useQuery(
+    { tripIds },
+    { enabled: tripIds.length > 0 }
+  );
+
+  // Update local state when trip transports are fetched
+  useEffect(() => {
+    if (allTripTransports) {
+      setTripTransports(allTripTransports);
+    }
+  }, [allTripTransports]);
+
+  const handleSelectTrip = async (trip: any, seatClass: any, price: any) => {
+    // Check if client already has this trip booked
+    const existingBooking = clientVisarunPassengers.find(passenger => passenger.tripId === trip.id);
+
+    if (existingBooking) {
+      console.error('Client already has this trip booked');
+      return;
+    }
+
+    // Check if any transport has seating chart
+    const hasTransportWithSeatingChart = trip.route?.transports?.some(
+      (routeTransport: any) => routeTransport.transport.seatingChart?.id
+    );
+
+    if (hasTransportWithSeatingChart) {
+      // Open seat selection dialog
+      const transportWithSeatingChart = trip.route.transports.find(
+        (routeTransport: any) => routeTransport.transport.seatingChart?.id
+      );
+
+      setSelectedTripForSeat(trip);
+      setSelectedTransportForSeat(transportWithSeatingChart.transport);
+      setSelectedSeatClassForSeat(seatClass);
+      setSeatSelectionDialogOpen(true);
+      return;
+    }
+
+    // Proceed with regular booking (no seat selection)
+    await createBooking(trip, seatClass, price, null, null);
+  };
+
+  const createBooking = async (
+    trip: any,
+    seatClass: any,
+    price: any,
+    selectedSeat: any,
+    tripTransport: any
+  ) => {
+    setSaveStatus('saving');
+
+    try {
+      let tripTransportId = tripTransport?.id;
+
+      // Create trip transport if needed and seat is selected
+      if (selectedSeat && !tripTransport) {
+        const transportWithSeatingChart = trip.route.transports.find(
+          (routeTransport: any) => routeTransport.transport.seatingChart?.id
+        );
+
+        if (transportWithSeatingChart) {
+          const tripTransportData = await createTripTransportMutation.mutateAsync({
+            tripId: trip.id,
+            transportId: transportWithSeatingChart.transport.id,
+          });
+
+          tripTransportId = tripTransportData.tripTransport.id;
+          setTripTransports(prev => [...prev, tripTransportData.tripTransport]);
+        }
+      }
+
+      // First create OrderItem
+      const orderItemData = await createOrderItemMutation.mutateAsync({
+        orderId: order.id || '',
+        clientId: client.id,
+        serviceType: 'visarun',
+        basePrice: Number(price) || 0,
+        finalPrice: Number(price) || 0,
+      });
+
+      if (!orderItemData.orderItem) {
+        console.error('Order item was not created');
+        setSaveStatus('error');
+        return;
+      }
+
+      // Add OrderItem to store
+      setOrderItems([
+        ...orderItems,
+        {
+          ...orderItemData.orderItem,
+          createdAt: new Date(orderItemData.orderItem.createdAt),
+          updatedAt: new Date(orderItemData.orderItem.updatedAt),
+        },
+      ]);
+
+      // Then create VisarunPassenger
+      const visarunPassengerData = await createVisarunPassengerMutation.mutateAsync({
+        orderItemId: orderItemData.orderItem.id,
+        tripId: trip.id,
+        tripTransportId: tripTransportId,
+        seatClassId: seatClass?.id,
+        seatNumber: selectedSeat?.seatLabel,
+        serviceType: 'visa',
+      });
+
+      if (!visarunPassengerData.visarunPassenger) {
+        console.error('Visarun passenger was not created');
+        setSaveStatus('error');
+        return;
+      }
+
+      // Add VisarunPassenger to store
+      setVisarunPassengers([
+        ...visarunPassengers,
+        {
+          ...visarunPassengerData.visarunPassenger,
+          createdAt: new Date(visarunPassengerData.visarunPassenger.createdAt),
+          updatedAt: new Date(visarunPassengerData.visarunPassenger.updatedAt),
+          trip: {
+            ...visarunPassengerData.visarunPassenger.trip,
+            departureDateTime: new Date(
+              visarunPassengerData.visarunPassenger.trip.departureDateTime
+            ),
+          },
+        },
+      ]);
+
+      setSaveStatus('saved');
+    } catch (error) {
+      console.error('Error creating visarun booking:', error);
+      setSaveStatus('error');
+    }
+  };
+
+  const handleSeatSelect = async (seat: any, tripTransport: any) => {
+    // Find the original price from the trip data
+    const originalPrice =
+      selectedTripForSeat?.route?.prices?.find(
+        (p: any) => p.seatClass?.id === selectedSeatClassForSeat?.id
+      )?.price || 0;
+
+    await createBooking(
+      selectedTripForSeat,
+      selectedSeatClassForSeat,
+      originalPrice,
+      seat,
+      tripTransport
+    );
+
+    // Update tripTransports if new one was created
+    if (tripTransport && !tripTransports.find(tt => tt.id === tripTransport.id)) {
+      setTripTransports(prev => [...prev, tripTransport]);
+    }
+  };
+
+  const handleCancelClick = (passenger: any) => {
+    setPassengerToCancel(passenger);
+    setCancelDialogOpen(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!passengerToCancel) return;
+
+    setSaveStatus('saving');
+
+    try {
+      // Delete visarun passenger
+      await deleteVisarunPassengerMutation.mutateAsync({ id: passengerToCancel.id });
+
+      // Delete order item
+      await deleteOrderItemMutation.mutateAsync({ id: passengerToCancel.orderItemId });
+
+      // Remove from store
+      setVisarunPassengers(visarunPassengers.filter(p => p.id !== passengerToCancel.id));
+      setOrderItems(orderItems.filter(item => item.id !== passengerToCancel.orderItemId));
+
+      setSaveStatus('saved');
+    } catch (error) {
+      console.error('Error canceling booking:', error);
+      setSaveStatus('error');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -48,147 +265,272 @@ const AvailableTransfers = () => {
     );
   }
 
-  const formatPrice = (price: any) => {
-    if (typeof price === 'number') {
-      return price.toLocaleString('ru-RU');
+  const AvailableTripCard = ({
+    trip,
+    seatClass,
+    price,
+  }: {
+    trip: any;
+    seatClass: any;
+    price: any;
+  }) => {
+    // Check if this specific trip + seatClass is already booked by the active client
+    const isAlreadyBooked = clientVisarunPassengers.some(
+      passenger => passenger.tripId === trip.id && passenger.seatClassId === seatClass?.id
+    );
+
+    const hasAnyBookingAtAll = clientVisarunPassengers.length > 0;
+
+    const bookedPassenger = clientVisarunPassengers.find(
+      passenger => passenger.tripId === trip.id && passenger.seatClassId === seatClass?.id
+    );
+
+    // Check if any transport has seating chart
+    const hasTransportWithSeatingChart = trip.route?.transports?.some(
+      (routeTransport: any) => routeTransport.transport.seatingChart?.id
+    );
+
+    // Count passengers for trip transports if seating chart exists
+    let badgeContent: string | number = 0;
+    if (hasTransportWithSeatingChart) {
+      const transportWithSeatingChart = trip.route.transports.find(
+        (routeTransport: any) => routeTransport.transport.seatingChart?.id
+      );
+
+      // Get all trip transports for this specific transport
+      const currentTripTransports = tripTransports.filter(
+        tt => tt.tripId === trip.id && tt.transportId === transportWithSeatingChart.transport.id
+      );
+
+      // Count total occupied seats across all trip transports for this transport type
+      const passengersInTransport = visarunPassengers.filter(
+        passenger =>
+          passenger.tripId === trip.id &&
+          passenger.seatNumber &&
+          passenger.seatClassId === seatClass?.id &&
+          currentTripTransports.some(tt => tt.id === passenger.tripTransportId)
+      ).length;
+
+      // Calculate total available seats (transport capacity * number of trip transports)
+      const singleTransportSeats = transportWithSeatingChart?.transport?.seatCount || 0;
+      const totalAvailableSeats = singleTransportSeats * Math.max(1, currentTripTransports.length);
+
+      badgeContent =
+        totalAvailableSeats > 0
+          ? `${passengersInTransport} / ${totalAvailableSeats}`
+          : passengersInTransport;
+    } else {
+      // Count total passengers for this trip (old behavior)
+      badgeContent = visarunPassengers.filter(passenger => passenger.tripId === trip.id).length;
     }
-    if (typeof price === 'string') {
-      return parseFloat(price).toLocaleString('ru-RU');
-    }
-    return '0';
+
+    return (
+      <TripCard
+        trip={trip}
+        seatClass={seatClass}
+        price={price}
+        badgeContent={badgeContent}
+        buttonText={
+          isAlreadyBooked ? 'Booked' : hasTransportWithSeatingChart ? 'Choose seat' : 'Book'
+        }
+        buttonIcon={isAlreadyBooked ? <CircleCheck className="h-4 w-4" /> : undefined}
+        buttonVariant={isAlreadyBooked ? 'warning' : 'secondary'}
+        onButtonClick={() => handleSelectTrip(trip, seatClass, price)}
+        isButtonDisabled={hasAnyBookingAtAll}
+        showCancelButton={isAlreadyBooked}
+        onCancelClick={bookedPassenger ? () => handleCancelClick(bookedPassenger) : undefined}
+      />
+    );
   };
 
-  // Создаем массив карточек для каждой комбинации поездка + класс места
-  const tripSeatCards = trips.flatMap((trip: any) => {
-    // Если у маршрута нет цен, показываем одну карточку без класса места
-    if (!trip.route.prices || trip.route.prices.length === 0) {
-      return [
-        {
-          tripId: trip.id,
-          trip,
-          seatClass: null,
-          price: null,
-          key: `${trip.id}-no-class`,
-        },
-      ];
-    }
+  // Check if there are trips on the selected date
+  const selectedDate = preferredDepartureDate ? new Date(preferredDepartureDate) : null;
+  const tripsOnSelectedDate = selectedDate
+    ? trips.filter((trip: any) => {
+        const tripDate = new Date(trip.departureDateTime);
+        return (
+          tripDate.getFullYear() === selectedDate.getFullYear() &&
+          tripDate.getMonth() === selectedDate.getMonth() &&
+          tripDate.getDate() === selectedDate.getDate()
+        );
+      })
+    : [];
 
-    // Создаем карточку для каждого класса места
-    return trip.route.prices.map((priceInfo: any) => ({
-      tripId: trip.id,
-      trip,
-      seatClass: priceInfo.seatClass,
-      price: priceInfo.price,
-      key: `${trip.id}-${priceInfo.seatClass.id}`,
-    }));
-  });
+  // If there are trips on selected date, show them normally
+  if (tripsOnSelectedDate.length > 0) {
+    const tripSeatCards = tripsOnSelectedDate.flatMap((trip: any) => {
+      if (!trip.route.prices || trip.route.prices.length === 0) {
+        return [
+          {
+            tripId: trip.id,
+            trip,
+            seatClass: null,
+            price: null,
+            key: `${trip.id}-no-class`,
+          },
+        ];
+      }
+
+      return trip.route.prices.map((priceInfo: any) => ({
+        tripId: trip.id,
+        trip,
+        seatClass: priceInfo.seatClass,
+        price: priceInfo.price,
+        key: `${trip.id}-${priceInfo.seatClass.id}`,
+      }));
+    });
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {tripSeatCards.map(
+          ({
+            trip,
+            seatClass,
+            price,
+            key,
+          }: {
+            trip: any;
+            seatClass: any;
+            price: any;
+            key: any;
+          }) => (
+            <AvailableTripCard key={key} trip={trip} seatClass={seatClass} price={price} />
+          )
+        )}
+      </div>
+    );
+  }
+
+  // No trips on selected date, show recommended trips (1 before, 2 after)
+  const tripsBefore = selectedDate
+    ? trips
+        .filter((trip: any) => new Date(trip.departureDateTime) < selectedDate)
+        .sort(
+          (a: any, b: any) =>
+            new Date(b.departureDateTime).getTime() - new Date(a.departureDateTime).getTime()
+        )
+        .slice(0, 1)
+    : [];
+
+  const tripsAfter = selectedDate
+    ? trips
+        .filter((trip: any) => new Date(trip.departureDateTime) > selectedDate)
+        .sort(
+          (a: any, b: any) =>
+            new Date(a.departureDateTime).getTime() - new Date(b.departureDateTime).getTime()
+        )
+        .slice(0, 2)
+    : [];
+
+  const createTripSeatCards = (trips: any[]) => {
+    return trips.flatMap((trip: any) => {
+      if (!trip.route.prices || trip.route.prices.length === 0) {
+        return [
+          {
+            tripId: trip.id,
+            trip,
+            seatClass: null,
+            price: null,
+            key: `${trip.id}-no-class`,
+          },
+        ];
+      }
+
+      return trip.route.prices.map((priceInfo: any) => ({
+        tripId: trip.id,
+        trip,
+        seatClass: priceInfo.seatClass,
+        price: priceInfo.price,
+        key: `${trip.id}-${priceInfo.seatClass.id}`,
+      }));
+    });
+  };
+
+  const beforeSeatCards = createTripSeatCards(tripsBefore);
+  const afterSeatCards = createTripSeatCards(tripsAfter);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {tripSeatCards.map(
-        ({ trip, seatClass, price, key }: { trip: any; seatClass: any; price: any; key: any }) => (
-          <Card key={key} className="bg-secondary p-3">
-            <div className="flex flex-col space-y-3">
-              <div className="flex justify-between items-start gap-3">
-                <IconDisplay
-                  iconFilename={seatClass.icon}
-                  iconType="transport-seat"
-                  alt={seatClass.name}
-                  fallback={<Armchair className="h-6 w-6" />}
-                />
+    <div className="space-y-6">
+      {/* No exact matches message */}
+      <div className="text-center text-muted-foreground p-4 bg-secondary/50 rounded-lg">
+        <p className="text-sm">No transfers available on your selected date.</p>
+        <p className="text-xs mt-1">Here are recommended alternatives:</p>
+      </div>
 
-                {/* Route stops badges */}
-                <div className="flex flex-wrap gap-1 flex-1 justify-end">
-                  {trip.route.routeStops?.map((stop: any, index: any) => {
-                    const isFirst = index === 0;
-                    const isLast = index === trip.route.routeStops.length - 1;
-
-                    // Format time
-                    const formatTime = (timeString: string) => {
-                      if (!timeString) return '';
-                      return timeString.slice(0, 5); // HH:MM format
-                    };
-
-                    // Format date
-                    const formatDate = (date: Date) => {
-                      return date.toLocaleDateString('ru-RU', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: '2-digit',
-                      });
-                    };
-
-                    // Calculate actual date/time for this stop
-                    const departureDateTime = new Date(trip.departureDateTime);
-                    // Show departure time for all stops except the last one, arrival time for the last stop
-                    const stopTime = isLast ? stop.arrivalTime : stop.departureTime;
-                    const displayTime = formatTime(stopTime);
-                    const displayDate = formatDate(departureDateTime);
-
-                    const badgeVariant = isFirst
-                      ? 'default' // Green for departure
-                      : isLast
-                        ? 'secondary' // Pink for arrival
-                        : 'outline'; // Blue for intermediate
-
-                    const badgeClass = isFirst
-                      ? 'bg-green-500 text-white hover:bg-green-600'
-                      : isLast
-                        ? 'bg-pink-500 text-white hover:bg-pink-600'
-                        : 'bg-blue-500 text-white hover:bg-blue-600';
-
-                    return (
-                      <Badge
-                        key={stop.id}
-                        variant={badgeVariant}
-                        className={`text-xs px-2 py-1 ${badgeClass}`}
-                      >
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">
-                            {displayDate} • {displayTime}
-                          </span>
-                          <span>{stop.city.name}</span>
-                          {isLast && stop.waitingDuration && (
-                            <span className="ml-1 opacity-90">
-                              {Math.round(stop.waitingDuration / 60)}ч.
-                            </span>
-                          )}
-                        </div>
-                      </Badge>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Информация о классе места и цене */}
-              {seatClass && (
-                <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                  {price && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Стоимость:</span>
-                      <span className="font-semibold text-primary">{formatPrice(price)} ₽</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Примечания если есть */}
-              {trip.notes && (
-                <div className="text-xs bg-muted/30 p-2 rounded">
-                  <strong>Примечания:</strong> {trip.notes}
-                </div>
-              )}
-
-              {/* Кнопка выбора */}
-              <div className="pt-2">
-                <Button size="sm" variant="outline" className="w-full text-xs">
-                  Выбрать{seatClass ? ` ${seatClass.name}` : ''}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )
+      {/* Available Before Section */}
+      {beforeSeatCards.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Available Before</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {beforeSeatCards.map(
+              ({
+                trip,
+                seatClass,
+                price,
+                key,
+              }: {
+                trip: any;
+                seatClass: any;
+                price: any;
+                key: any;
+              }) => (
+                <AvailableTripCard key={key} trip={trip} seatClass={seatClass} price={price} />
+              )
+            )}
+          </div>
+        </div>
       )}
+
+      {/* Available After Section */}
+      {afterSeatCards.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Available After</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {afterSeatCards.map(
+              ({
+                trip,
+                seatClass,
+                price,
+                key,
+              }: {
+                trip: any;
+                seatClass: any;
+                price: any;
+                key: any;
+              }) => (
+                <AvailableTripCard key={key} trip={trip} seatClass={seatClass} price={price} />
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* No alternatives available */}
+      {beforeSeatCards.length === 0 && afterSeatCards.length === 0 && (
+        <div className="text-center text-muted-foreground p-8">
+          <MapPinIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p className="text-lg font-medium mb-2">No alternative trips found</p>
+          <p className="text-sm">
+            Try changing the departure city, destination country, or date range.
+          </p>
+        </div>
+      )}
+
+      <CancelBookingDialog
+        isOpen={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        onConfirm={handleConfirmCancel}
+      />
+
+      <SeatSelectionDialog
+        open={seatSelectionDialogOpen}
+        onOpenChange={setSeatSelectionDialogOpen}
+        trip={selectedTripForSeat}
+        transport={selectedTransportForSeat}
+        seatClass={selectedSeatClassForSeat}
+        onSeatSelect={handleSeatSelect}
+        tripTransports={tripTransports.filter(tt => tt.tripId === selectedTripForSeat?.id)}
+      />
     </div>
   );
 };

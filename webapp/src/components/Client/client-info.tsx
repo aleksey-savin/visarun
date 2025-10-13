@@ -327,7 +327,6 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
                   label="Document File"
                   description="Upload PDF, DOC, DOCX, JPG, JPEG, PNG, or HEIC files up to 10MB"
                   onUploadSuccess={fileInfo => {
-                    console.log('File uploaded successfully to S3:', fileInfo);
                     setUploadedFileInfo({
                       fileName: fileInfo.fileName || fileInfo.originalName,
                       originalName: fileInfo.originalName,

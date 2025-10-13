@@ -46,6 +46,7 @@ export const createOrderTrpcRoute = orderCreateProcedure
       data: {
         userId: input.userId,
         status: input.status,
+        createdById: ctx.user?.id,
         // Create OrderClient relationships
         clients: {
           create: input.clients.map(clientId => ({
@@ -61,6 +62,20 @@ export const createOrderTrpcRoute = orderCreateProcedure
             middleName: true,
             lastName: true,
             email: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        updatedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
           },
         },
         clients: {

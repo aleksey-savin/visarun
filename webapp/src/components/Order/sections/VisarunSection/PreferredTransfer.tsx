@@ -79,7 +79,7 @@ const PreferredTransfer = () => {
   return (
     <>
       <Separator />
-      <div className="flex gap-8">
+      <div className="flex flex-wrap gap-8">
         <div className="flex flex-col gap-2">
           <Label>Visarun trip</Label>
           <div className="flex start gap-2 items-center">

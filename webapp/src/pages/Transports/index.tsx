@@ -45,6 +45,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import SeatDistributionManager from '@/components/Transport/SeatDistributionManager';
+import SeatingChartVisualization from '@/components/Transport/SeatingChartVisualization';
+import SeatingChartEditor from '@/components/Transport/SeatingChartEditor';
+import SeatingChartPresets from '@/components/Transport/SeatingChartPresets';
 
 export default function TransportsPage() {
   const navigate = useNavigate();
@@ -53,6 +56,10 @@ export default function TransportsPage() {
   const [transportTypeFilter, setTransportTypeFilter] = useState<string>('ALL');
   const [selectedTransportForSeats, setSelectedTransportForSeats] = useState<string | null>(null);
   const [seatDialogOpen, setSeatDialogOpen] = useState(false);
+  const [selectedTransportForChart, setSelectedTransportForChart] = useState<string | null>(null);
+  const [chartDialogOpen, setChartDialogOpen] = useState(false);
+  const [chartViewMode, setChartViewMode] = useState<'view' | 'edit' | 'presets'>('view');
+  const [presetData, setPresetData] = useState<{ floors: any[] } | null>(null);
 
   // Debounce search term
   useEffect(() => {
@@ -65,6 +72,8 @@ export default function TransportsPage() {
 
   const { data: transportTypesData } = trpc.transportType.getAll.useQuery({});
   const transportTypes = transportTypesData?.transportTypes || [];
+
+  const { data: seatClassesData } = trpc.seatClass.getAll.useQuery({});
 
   const {
     data: transportsData,
@@ -258,6 +267,18 @@ export default function TransportsPage() {
                               Seats
                             </Button>
                             <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedTransportForChart(transport.id);
+                                setChartViewMode(transport.seatingChart ? 'view' : 'presets');
+                                setChartDialogOpen(true);
+                              }}
+                            >
+                              <Users className="w-4 h-4 mr-2" />
+                              {transport.seatingChart ? 'Chart' : 'Create Chart'}
+                            </Button>
+                            <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => navigate(getEditTransportRoute({ id: transport.id }))}
@@ -388,6 +409,18 @@ export default function TransportsPage() {
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedTransportForChart(transport.id);
+                            setChartViewMode(transport.seatingChart ? 'view' : 'presets');
+                            setChartDialogOpen(true);
+                          }}
+                        >
+                          <Users className="w-4 h-4 mr-2" />
+                          {transport.seatingChart ? 'Chart' : 'Create Chart'}
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="secondary"
                           onClick={() => navigate(getEditTransportRoute({ id: transport.id }))}
                         >
@@ -452,6 +485,93 @@ export default function TransportsPage() {
                 setSelectedTransportForSeats(null);
               }}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Seating Chart Dialog */}
+      <Dialog open={chartDialogOpen} onOpenChange={setChartDialogOpen}>
+        <DialogContent className="min-w-5xl overflow-y-auto ">
+          <DialogHeader>
+            <DialogTitle>
+              {chartViewMode === 'view'
+                ? 'Seating Chart'
+                : chartViewMode === 'edit'
+                  ? 'Edit Seating Chart'
+                  : 'Create Seating Chart'}
+            </DialogTitle>
+            <DialogDescription>
+              {chartViewMode === 'view'
+                ? 'View the seating layout for this transport'
+                : chartViewMode === 'edit'
+                  ? 'Modify the seating chart configuration'
+                  : 'Choose a template or create a custom seating chart'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedTransportForChart && (
+            <>
+              {chartViewMode === 'presets' && (
+                <div className="space-y-4">
+                  <SeatingChartPresets
+                    seatClasses={seatClassesData?.seatClasses || []}
+                    onSelectPreset={preset => {
+                      setPresetData(preset);
+                      setChartViewMode('edit');
+                    }}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setChartDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => setChartViewMode('edit')}>Create Custom Chart</Button>
+                  </div>
+                </div>
+              )}
+
+              {chartViewMode === 'edit' && (
+                <SeatingChartEditor
+                  transportId={selectedTransportForChart}
+                  presetData={presetData}
+                  onSave={() => {
+                    refetch();
+                    setChartDialogOpen(false);
+                    setSelectedTransportForChart(null);
+                    setChartViewMode('view');
+                    setPresetData(null);
+                  }}
+                  onCancel={() => {
+                    setChartDialogOpen(false);
+                    setSelectedTransportForChart(null);
+                    setChartViewMode('view');
+                    setPresetData(null);
+                  }}
+                />
+              )}
+
+              {chartViewMode === 'view' && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-muted-foreground">
+                      Transport:{' '}
+                      {
+                        transportsData?.transports.find(t => t.id === selectedTransportForChart)
+                          ?.name
+                      }
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setChartViewMode('edit')}>
+                      Edit Chart
+                    </Button>
+                  </div>
+                  <SeatingChartVisualization
+                    seatingChart={
+                      transportsData?.transports.find(t => t.id === selectedTransportForChart)
+                        ?.seatingChart
+                    }
+                  />
+                </div>
+              )}
+            </>
           )}
         </DialogContent>
       </Dialog>

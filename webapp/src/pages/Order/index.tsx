@@ -263,6 +263,8 @@ export default function AllOrdersPage() {
                     <TableHead>User</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead>Created By</TableHead>
+                    <TableHead>Updated By</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -293,6 +295,16 @@ export default function AllOrdersPage() {
                         {order.totals ? formatCurrency(order.totals.finalPrice, 'VND') : 'N/A'}
                       </TableCell>
                       <TableCell>{formatDate(order.createdAt)}</TableCell>
+                      <TableCell>
+                        {order.createdBy
+                          ? `${order.createdBy.firstName} ${order.createdBy.lastName}`
+                          : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        {order.updatedBy
+                          ? `${order.updatedBy.firstName} ${order.updatedBy.lastName}`
+                          : 'N/A'}
+                      </TableCell>
                       <TableCell>
                         <Badge
                           className={
@@ -392,6 +404,22 @@ export default function AllOrdersPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Created:</span>
                       <span className="text-sm">{formatDate(order.createdAt)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Created By:</span>
+                      <span className="text-sm">
+                        {order.createdBy
+                          ? `${order.createdBy.firstName} ${order.createdBy.lastName}`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Updated By:</span>
+                      <span className="text-sm">
+                        {order.updatedBy
+                          ? `${order.updatedBy.firstName} ${order.updatedBy.lastName}`
+                          : 'N/A'}
+                      </span>
                     </div>
                     <div className="flex items-center justify-end gap-2 pt-2 border-t">
                       <Button

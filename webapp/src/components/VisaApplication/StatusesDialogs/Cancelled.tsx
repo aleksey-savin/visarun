@@ -73,8 +73,6 @@ export const CancelledStatusDialog = ({ application }: { application: any }) => 
     }
   };
 
-  console.log(application);
-
   const CancelledContent = ({ className }: { className?: string }) => (
     <div className={className}>
       <ClientCard

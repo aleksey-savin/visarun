@@ -84,6 +84,33 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
                 },
               },
             },
+            transports: {
+              where: {
+                isActive: true,
+              },
+              select: {
+                id: true,
+                transport: {
+                  select: {
+                    id: true,
+                    name: true,
+                    seatCount: true,
+                    transportType: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                    seatingChart: {
+                      select: {
+                        id: true,
+                        transportId: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
             routeStops: {
               select: {
                 id: true,
@@ -209,6 +236,33 @@ async function getSmartVisarunTrips(params: {
               },
             },
           },
+          transports: {
+            where: {
+              isActive: true,
+            },
+            select: {
+              id: true,
+              transport: {
+                select: {
+                  id: true,
+                  name: true,
+                  seatCount: true,
+                  transportType: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                  seatingChart: {
+                    select: {
+                      id: true,
+                      transportId: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
           routeStops: {
             select: {
               id: true,
@@ -282,6 +336,33 @@ async function getSmartVisarunTrips(params: {
               },
             },
           },
+          transports: {
+            where: {
+              isActive: true,
+            },
+            select: {
+              id: true,
+              transport: {
+                select: {
+                  id: true,
+                  name: true,
+                  seatCount: true,
+                  transportType: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                  seatingChart: {
+                    select: {
+                      id: true,
+                      transportId: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
           routeStops: {
             select: {
               id: true,
@@ -346,6 +427,33 @@ async function getSmartVisarunTrips(params: {
                   id: true,
                   name: true,
                   icon: true,
+                },
+              },
+            },
+          },
+          transports: {
+            where: {
+              isActive: true,
+            },
+            select: {
+              id: true,
+              transport: {
+                select: {
+                  id: true,
+                  name: true,
+                  seatCount: true,
+                  transportType: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                  seatingChart: {
+                    select: {
+                      id: true,
+                      transportId: true,
+                    },
+                  },
                 },
               },
             },

@@ -82,6 +82,7 @@ const EditOrderPage = () => {
     setContactMethods,
     setOrderItems,
     setVisaApplications,
+    setVisarunPassengers,
     setOrderPayments,
     setActiveServicePuzzleSection,
   } = useOrderStore();
@@ -95,6 +96,8 @@ const EditOrderPage = () => {
       createdAt: new Date(orderData.createdAt),
       updatedAt: new Date(orderData.updatedAt),
       comment: orderData.comment || '',
+      createdById: orderData.createdById || null,
+      updatedById: orderData.updatedById || null,
     });
 
     if (orderData.user) {
@@ -251,6 +254,82 @@ const EditOrderPage = () => {
       );
     }
 
+    if (orderData.visarunPassengers) {
+      const { visarunPassengers } = orderData;
+
+      setVisarunPassengers(
+        visarunPassengers.map(p => ({
+          id: p.id,
+          orderItemId: p.orderItemId,
+          tripId: p.tripId,
+          tripTransportId: p.tripTransportId,
+          clientId: p.clientId,
+          serviceType: p.serviceType,
+          seatNumber: p.seatNumber,
+          seatClassId: p.seatClassId,
+          pickupAddress: p.pickupAddress,
+          pickupTime: p.pickupTime,
+          routeStopId: p.routeStopId,
+          status: p.status,
+          createdAt: new Date(p.createdAt),
+          updatedAt: new Date(p.updatedAt),
+          trip: {
+            id: p.trip.id,
+            departureDateTime: new Date(p.trip.departureDateTime),
+            route: {
+              id: p.trip.route.id,
+              name: p.trip.route.name,
+              routeStops: p.trip.route.routeStops.map(stop => ({
+                id: stop.id,
+                stopType: stop.stopType,
+                departureTime: stop.departureTime,
+                arrivalTime: stop.arrivalTime,
+                waitingDuration: stop.waitingDuration,
+                city: {
+                  id: stop.city.id,
+                  name: stop.city.name,
+                },
+              })),
+              prices: p.trip.route.prices.map(price => ({
+                id: price.id,
+                price: price.price,
+                seatClass: {
+                  id: price.seatClass.id,
+                  name: price.seatClass.name,
+                  icon: price.seatClass.icon,
+                },
+              })),
+            },
+          },
+          seatClass: p.seatClass
+            ? {
+                id: p.seatClass.id,
+                name: p.seatClass.name,
+                icon: p.seatClass.icon,
+              }
+            : null,
+          tripTransport: p.tripTransport
+            ? {
+                id: p.tripTransport.id,
+                transport: {
+                  id: p.tripTransport.transport.id,
+                  name: p.tripTransport.transport.name,
+                },
+              }
+            : null,
+          pickupStop: p.pickupStop
+            ? {
+                id: p.pickupStop.id,
+                city: {
+                  id: p.pickupStop.city.id,
+                  name: p.pickupStop.city.name,
+                },
+              }
+            : null,
+        }))
+      );
+    }
+
     if (orderData.orderPayments) {
       setOrderPayments(
         orderData.orderPayments.map(p => ({
@@ -282,6 +361,7 @@ const EditOrderPage = () => {
     setClients,
     setActiveServicePuzzleSection,
     setVisaApplications,
+    setVisarunPassengers,
     setActiveClientId,
   ]);
 
@@ -435,11 +515,13 @@ const EditOrderPage = () => {
         statusToSet = 'payment_pending';
       }
 
-      // Update order status in backend
-      await editOrderMutation.mutateAsync({
-        id: order.id,
-        status: statusToSet,
-      });
+      if (!['submitted', 'completed', 'cancelled'].includes(order.status)) {
+        // Update order status in backend
+        await editOrderMutation.mutateAsync({
+          id: order.id,
+          status: statusToSet,
+        });
+      }
 
       // Update order status in store
       await updateOrderStatus(statusToSet);

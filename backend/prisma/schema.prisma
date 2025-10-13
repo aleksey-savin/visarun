@@ -93,6 +93,8 @@ model User {
   roleAssignments          UserRoleAssignment[]
   OrderPayment             OrderPayment[]
   Comment                  Comment[]
+  createdOrders            Order[]                    @relation("OrderCreatedBy")
+  updatedOrders            Order[]                    @relation("OrderUpdatedBy")
 }
 
 model Client {
@@ -266,9 +268,13 @@ model Order {
   id                 String               @id @default(uuid())
   userId             String
   createdAt          DateTime             @default(now())
+  createdById        String?
+  updatedById        String?
   status             OrderStatus          @default(draft)
   comment            String?
   updatedAt          DateTime             @default(now()) @updatedAt
+  createdBy          User?                @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  updatedBy          User?                @relation("OrderUpdatedBy", fields: [updatedById], references: [id])
   user               User                 @relation(fields: [userId], references: [id])
   clients            OrderClient[]
   items              OrderItem[]
@@ -605,6 +611,54 @@ model Transport {
   seatDistribution      TransportSeatDistribution[]
   VisarunRouteTransport VisarunRouteTransport[]
   VisarunTripTransport  VisarunTripTransport[]
+  seatingChart          TransportSeatingChart?
+}
+
+model TransportSeatingChart {
+  id          String                  @id @default(uuid())
+  transportId String                  @unique
+  floors      TransportSeatingFloor[]
+  transport   Transport               @relation(fields: [transportId], references: [id], onDelete: Cascade)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+}
+
+model TransportSeatingFloor {
+  id          String                @id @default(uuid())
+  chartId     String
+  floorNumber Int // 1 = ground floor, 2 = upper deck, etc.
+  name        String? // Optional name like "Downstairs", "Upstairs"
+  rows        TransportSeatingRow[]
+  chart       TransportSeatingChart @relation(fields: [chartId], references: [id], onDelete: Cascade)
+
+  @@unique([chartId, floorNumber])
+}
+
+model TransportSeatingRow {
+  id        String                @id @default(uuid())
+  floorId   String
+  rowNumber Int // Row number within the floor
+  rowLabel  String? // Optional label like "A", "B", "1", "2"
+  seats     TransportSeat[]
+  floor     TransportSeatingFloor @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  @@unique([floorId, rowNumber])
+}
+
+model TransportSeat {
+  id          String              @id @default(uuid())
+  rowId       String
+  seatLabel   String // Display label like "1A", "2B", "22B"
+  seatClassId String
+  isAvailable Boolean             @default(true) // Can be disabled for maintenance, blocked seats, etc.
+  isAisle     Boolean             @default(false) // True if this is an aisle seat
+  isWindow    Boolean             @default(false) // True if this is a window seat
+  isEmergency Boolean             @default(false) // True if this is an emergency exit row
+  driverSeat  Boolean             @default(false) // True if this is the driver's seat/position
+  row         TransportSeatingRow @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  seatClass   SeatClass           @relation(fields: [seatClassId], references: [id])
+
+  @@unique([rowId, seatLabel]) // Ensure unique seat labels within a row
 }
 
 model SeatClass {
@@ -614,6 +668,8 @@ model SeatClass {
   icon                  String?
   VisarunSeatPrice      VisarunSeatPrice[]
   transportDistribution TransportSeatDistribution[]
+  VisarunPassenger      VisarunPassenger[]
+  transportSeats        TransportSeat[]
 }
 
 model VisarunSeatPrice {
@@ -753,7 +809,6 @@ model VisarunTrip {
   schedule VisarunSchedule? @relation(fields: [scheduleId], references: [id])
   route    VisarunRoute     @relation(fields: [routeId], references: [id])
 
-  // Связи
   transports VisarunTripTransport[]
   passengers VisarunPassenger[]
 
@@ -791,16 +846,14 @@ model VisarunPassenger {
   clientId        String
   orderItemId     String
 
-  serviceType VisarunServiceType
+  serviceType VisarunServiceType @default(visa)
 
-  // Место и посадка
   seatNumber    String?
-  seatClass     String?
+  seatClassId   String?
   pickupAddress String?
   pickupTime    String?
   routeStopId   String?
 
-  // Статус пассажира
   status PassengerStatus @default(confirmed)
 
   createdAt DateTime @default(now())
@@ -808,6 +861,7 @@ model VisarunPassenger {
 
   trip          VisarunTrip           @relation(fields: [tripId], references: [id])
   tripTransport VisarunTripTransport? @relation(fields: [tripTransportId], references: [id])
+  seatClass     SeatClass?            @relation(fields: [seatClassId], references: [id])
   client        Client                @relation(fields: [clientId], references: [id])
   orderItem     OrderItem             @relation(fields: [orderItemId], references: [id])
   pickupStop    VisarunRouteStop?     @relation(fields: [routeStopId], references: [id])

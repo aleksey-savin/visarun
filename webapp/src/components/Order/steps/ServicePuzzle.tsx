@@ -47,10 +47,15 @@ const ServicePuzzle = ({
     order,
     clients,
     setClients,
+    visarunPassengers,
   } = useOrderStore();
 
   const detectActiveService =
-    orderItems.filter(i => i.serviceType === 'acceleration').length > 0 ? 'acceleration' : 'visa';
+    visarunPassengers.length > 0
+      ? 'visarun'
+      : orderItems.filter(i => i.serviceType === 'acceleration').length > 0
+        ? 'acceleration'
+        : 'visa';
 
   const [activeService, setActiveService] = useState(detectActiveService);
 
@@ -130,7 +135,7 @@ const ServicePuzzle = ({
             <AddVisa activeService={activeService} client={client} />
           )}
           <ClientName client={client} />
-          {activeService === 'visarun' && <VisarunSection />}
+          {activeService === 'visarun' && <VisarunSection client={client} />}
           <Comments />
           <hr />
         </>
@@ -175,7 +180,7 @@ const ServicePuzzle = ({
             <Card className="flex items-center gap-1 p-1 bg-secondary rounded-md border-none">
               <div className="flex gap-2">
                 <Button
-                  disabled={true}
+                  disabled={isDisabled}
                   variant={activeService === 'visarun' ? 'accent-pink' : 'secondary'}
                   size="sm"
                   className="border-none"

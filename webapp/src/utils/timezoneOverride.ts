@@ -142,9 +142,8 @@ class SafeDateTimeFormat {
  */
 export const initTimezoneOverride = (): void => {
   const appTimezone = getAppTimezone();
-  console.log(`🌍 Инициализация переопределения часового пояса: ${appTimezone}`);
+  console.log(`🌍 Timezone initialized: ${appTimezone}`);
 
-  // Переопределяем только методы форматирования строк
   Date.prototype.toLocaleString = function (
     this: Date,
     locales?: string | string[],

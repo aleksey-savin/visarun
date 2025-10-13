@@ -17,6 +17,8 @@ import type {
   PaymentMethod,
   City,
   Country,
+  PassengerStatus,
+  VisarunServiceType,
 } from '@visarun/backend/node_modules/@prisma/client';
 
 // Frontend-compatible Decimal type that works without Prisma runtime dependency
@@ -154,6 +156,61 @@ export interface StoreOrderItem extends OrderItem {
   errors?: string[];
 }
 
+export interface StoreVisarunPassenger {
+  id: string;
+  orderItemId: string;
+  tripId: string;
+  tripTransportId?: string | null;
+  clientId: string;
+  serviceType: VisarunServiceType;
+  seatNumber?: string | null;
+  seatClassId?: string | null;
+  pickupAddress?: string | null;
+  pickupTime?: string | null;
+  routeStopId?: string | null;
+  status: PassengerStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  trip: {
+    id: string;
+    departureDateTime: Date;
+    route: {
+      id: string;
+      name: string | null;
+      routeStops: {
+        id: string;
+        stopType: string;
+        departureTime: string | null;
+        arrivalTime: string | null;
+        waitingDuration: number | null;
+        city: {
+          id: string;
+          name: string;
+        };
+      }[];
+    };
+  };
+  seatClass?: {
+    id: string;
+    name: string;
+    icon: string | null;
+  } | null;
+  tripTransport?: {
+    id: string;
+    transport: {
+      id: string;
+      name: string;
+    };
+  } | null;
+  pickupStop?: {
+    id: string;
+    city: {
+      id: string;
+      name: string;
+    };
+  } | null;
+}
+
 export interface StoreOrderPayment {
   id: string;
   orderId?: string;
@@ -194,6 +251,7 @@ interface OrderStore {
   contactMethods: StoreUserContactMethod[];
   orderItems: StoreOrderItem[];
   visaApplications: StoreVisaApplication[];
+  visarunPassengers: StoreVisarunPassenger[];
   orderPayments: StoreOrderPayment[];
   // visarun
   preferredDepartureCity: City | null;
@@ -214,6 +272,7 @@ interface OrderStore {
   // ----
   setOrderItems: (orderItems: StoreOrderItem[]) => void;
   setVisaApplications: (visaApplications: StoreVisaApplication[]) => void;
+  setVisarunPassengers: (visarunPassengers: StoreVisarunPassenger[]) => void;
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => void;
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) => void;
   reset: () => void;
@@ -230,6 +289,8 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
     updatedAt: new Date(),
     status: 'draft',
     comment: '',
+    createdById: null,
+    updatedById: null,
   },
   user: {
     id: '',
@@ -248,6 +309,7 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   // ---
   orderItems: [],
   visaApplications: [],
+  visarunPassengers: [],
   orderPayments: [],
 
   setSaveStatus: async (saveStatus: SaveStatus) => {
@@ -323,6 +385,8 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   setOrderItems: (orderItems: StoreOrderItem[]) => set(() => ({ orderItems })),
   setVisaApplications: (visaApplications: StoreVisaApplication[]) =>
     set(() => ({ visaApplications })),
+  setVisarunPassengers: (visarunPassengers: StoreVisarunPassenger[]) =>
+    set(() => ({ visarunPassengers })),
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),
   setPreferredDepartureDate: (date: Date) => set(() => ({ preferredDepartureDate: date })),
   setPreferredDepartureCity: (city: City | null) => set(() => ({ preferredDepartureCity: city })),

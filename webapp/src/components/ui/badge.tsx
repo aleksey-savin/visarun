@@ -12,13 +12,19 @@ const badgeVariants = cva(
         default: 'border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90',
         primary: 'border-transparent bg-purple-900 text-[#FAFAFA] [a&]:hover:bg-purple-900/90',
         secondary: 'border-transparent bg-muted text-[#FAFAFA] [a&]:hover:bg-emerald-900/90',
+        'secondary-green':
+          'border-transparent bg-emerald-600 text-foreground [a&]:hover:bg-[#172554]/90 text-[#FAFAFA]',
+        'secondary-pink':
+          'border-transparent bg-pink-600 text-foreground [a&]:hover:bg-[#172554]/90 text-[#FAFAFA]',
+        'secondary-blue':
+          'border-transparent bg-sky-600 text-foreground [a&]:hover:bg-[#172554]/90 text-[#FAFAFA]',
         warning: 'border-transparent bg-amber-600 text-[#FAFAFA] [a&]:hover:bg-amber-600/90',
         info: 'border-transparent bg-emerald-600 text-[#FAFAFA] [a&]:hover:bg-emerald-600/90',
         destructive:
           'border-transparent bg-[#F87171] text-secondary [a&]:hover:bg-[#F87171]/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
         accent:
           'border-transparent bg-[#172554] text-foreground [a&]:hover:bg-[#172554]/90 text-[#FAFAFA]',
-        'accent-ping':
+        'accent-pink':
           'border-transparent bg-pink-800 text-foreground [a&]:hover:bg-[#172554]/90 text-[#FAFAFA]',
         'accent-green':
           'border-transparent bg-emerald-900 text-foreground [a&]:hover:bg-[#172554]/90 text-[#FAFAFA]',
