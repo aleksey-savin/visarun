@@ -123,7 +123,8 @@ const pageConfigs: Record<string, PageConfig> = {
   '/currency-exchange': {
     title: 'Currency Exchange',
     icon: <CreditCard />,
-    showButton: false,
+      entity: 'currency-exchange',
+    showButton: true,
   },
   '/telegram-channels': {
     title: 'Telegram Channels',
@@ -251,6 +252,9 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
     } else if (['/dashboard', '/orders'].includes(location.pathname) && config.entity === 'order') {
       // Special handling for dashboard order creation
       setIsClientSearchOpen(true);
+    } else if (['/currency-exchange'].includes(location.pathname) && config.entity === 'currency-exchange') {
+        // Special handling for dashboard currency exchange creation
+        setIsClientSearchOpen(true);
     } else if (config.createRoute) {
       navigate(config.createRoute);
     }
@@ -315,7 +319,7 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
         )}
       </CardTitle>
 
-      {['/dashboard', '/orders'].includes(location.pathname) && (
+      {['/dashboard', '/orders', '/currency-exchange'].includes(location.pathname) && (
         <ClientSearchModal isOpen={isClientSearchOpen} onOpenChange={setIsClientSearchOpen} />
       )}
     </>

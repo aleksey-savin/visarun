@@ -5,7 +5,7 @@ import { VisaApplicationStatus } from '@prisma/client';
 export const zCreateOrderItemTrpcInput = z.object({
   orderId: z.string().uuid(),
   clientId: z.string().uuid(),
-  serviceType: z.enum(['visa', 'visarun']),
+  serviceType: z.enum(['visa', 'visarun', 'currencyExchange']),
   countryId: z.string().uuid().optional(),
   discountAppliedType: z.enum(['manual', 'rule']).optional(),
   discountRuleId: z.string().uuid().optional(),
@@ -184,11 +184,47 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
       }
     }
 
+      // If service type is exchange, create an exchange
+      let currencyExchange = null;
+      if (input.serviceType === 'currencyExchange') {
+          try {
+              if (!ctx.user?.id) {
+                  throw new Error("User must be authenticated to create a CurrencyExchange");
+              }
+
+              // Calculating new position value
+              const max = await ctx.prisma.currencyExchange.aggregate({
+                  _max: { position: true },
+              });
+
+              const newPosition = (max._max.position ?? 0) + 1;
+
+              const exchangeData: {
+                  orderItemId: string;
+                  position: number;
+                  createdById: string;
+                  updatedById: string;
+              } = {
+                  position: newPosition,
+                  orderItemId: orderItem.id,
+                  createdById: ctx.user.id,
+                  updatedById: ctx.user.id,
+              };
+
+              currencyExchange = await ctx.prisma.currencyExchange.create({
+                  data: exchangeData,
+              });
+          } catch (error) {
+              console.error('Failed to create currency exchange:', error);
+              // Continue without currency exchange if creation fails
+          }
+      }
+
     // Update order item
     const updatedOrderItem = await ctx.prisma.orderItem.update({
       where: { id: orderItem.id },
       data: {
-        serviceTypeId: visaApplication?.id,
+        serviceTypeId: visaApplication?.id || currencyExchange?.id,
       },
       include: {
         order: {
@@ -238,5 +274,6 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
     return {
       orderItem: updatedOrderItem,
       visaApplication,
+        currencyExchange,
     };
   });

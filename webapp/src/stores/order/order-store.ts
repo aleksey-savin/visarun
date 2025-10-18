@@ -10,6 +10,7 @@ import type {
   OrderItem,
   Citizenship,
   VisaApplicationStatus,
+    CurrencyExchangeStatus,
   OrderStatus,
   ClientDocument,
   Requirement,
@@ -84,6 +85,12 @@ export interface StoreClient extends Partial<Client> {
       isGlobal: boolean;
     }[];
   };
+  bankingDetails?: {
+      id: string;
+      content?: string;
+      documentUrl?: string;
+      clientId: string;
+  };
   documents?: (Omit<ClientDocument, 'reviewedAt' | 'uploadedAt' | 'expiresAt'> & {
     reviewedAt: string | null;
     uploadedAt: string;
@@ -145,6 +152,32 @@ export interface StoreVisaApplication {
   }[];
 }
 
+export interface StoreCurrencyExchange {
+    id: string;
+    orderItemId: string;
+    position: number;
+    exchangeRate?: number;
+    amount?: number;
+    amountInSelectedCurrencyFrom?: number;
+    amountInSelectedCurrencyTo?: number;
+    status: CurrencyExchangeStatus;
+    cancelReason?: string;
+    canceledByClient?: boolean;
+    deadline?: Date;
+    minTransactionAmount?: number;
+    fromCurrencyId?: string;
+    toCurrencyId?: string;
+    createdById: string;
+    updatedById: string;
+    // fromCurrency
+    // toCurrency
+    // transactions
+    // createdBy
+    // updatedBy
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 export interface StoreOrderItem extends OrderItem {
   errors?: string[];
 }
@@ -189,6 +222,7 @@ interface OrderStore {
   contactMethods: StoreUserContactMethod[];
   orderItems: StoreOrderItem[];
   visaApplications: StoreVisaApplication[];
+  currencyExchanges: StoreCurrencyExchange[];
   orderPayments: StoreOrderPayment[];
   // visarun
   preferredDepartureCity: City | null;
@@ -209,6 +243,7 @@ interface OrderStore {
   // ----
   setOrderItems: (orderItems: StoreOrderItem[]) => void;
   setVisaApplications: (visaApplications: StoreVisaApplication[]) => void;
+  setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) => void;
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => void;
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) => void;
   reset: () => void;
@@ -243,6 +278,7 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   // ---
   orderItems: [],
   visaApplications: [],
+    currencyExchanges: [],
   orderPayments: [],
 
   setSaveStatus: async (saveStatus: SaveStatus) => {
@@ -318,6 +354,8 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   setOrderItems: (orderItems: StoreOrderItem[]) => set(() => ({ orderItems })),
   setVisaApplications: (visaApplications: StoreVisaApplication[]) =>
     set(() => ({ visaApplications })),
+    setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) =>
+        set(() => ({ currencyExchanges })),
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),
   setPreferredDepartureDate: (date: Date) => set(() => ({ preferredDepartureDate: date })),
   setPreferredDepartureCity: (city: City | null) => set(() => ({ preferredDepartureCity: city })),

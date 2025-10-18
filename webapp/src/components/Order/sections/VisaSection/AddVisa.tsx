@@ -17,7 +17,7 @@ import { StoreVisaApplication } from '@/stores/order/order-store';
 const AddVisa = ({ client }: { client: StoreClient }) => {
   const { order, orderItems, visaApplications, setOrderItems, setVisaApplications, setSaveStatus } =
     useOrderStore();
-  const clientOrderItems = (orderItems?.filter(item => item.clientId === client.id) || []).sort(
+  const clientOrderItems = (orderItems?.filter(item => item.clientId === client.id && item.serviceType === "visa") || []).sort(
     (a, b) => b.id.localeCompare(a.id)
   );
   const clientVisaApplications =

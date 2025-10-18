@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 
-import { StoreClient } from '@/stores/order/order-store';
+import {StoreClient} from '@/stores/order/order-store';
 
 import { trpc } from '@/lib/trpc';
 
@@ -28,6 +28,8 @@ import useOrderStore from '@/stores/order/order-store.js';
 import ClientName from '../sections/ClientSection/ClientName';
 import Comments from '../Comments';
 import VisarunSection from '../sections/VisarunSection/VisarunSection';
+import CurrencyExchangeSection from "../sections/CurrencyExchangeSection/CurrencyExchangeSection.tsx";
+import AddExchangeButton from "@/components/Order/sections/CurrencyExchangeSection/AddExchangeButton.tsx";
 
 const ServicePuzzle = ({
   client,
@@ -53,7 +55,10 @@ const ServicePuzzle = ({
 
   const isDisabled = !client.citizenship?.id || !client.preConfirmPassportIsValid;
 
-  const handleServiceButtonClick = (service: string) => {
+  // At least one contact method exists
+  const hasContactMethod = contactMethods.find(method => method.value) != undefined
+
+  const handleServiceButtonClick = async (service: string) => {
     setActiveService(service);
   };
 
@@ -123,6 +128,7 @@ const ServicePuzzle = ({
     <>
       {servicePuzzleIsActive && (
         <>
+            {activeService === 'exchange' && <CurrencyExchangeSection client={client} />}
           {activeService === 'visa' && <AddVisa client={client} />}
           <ClientName client={client} />
           {activeService === 'visarun' && <VisarunSection />}
@@ -196,9 +202,11 @@ const ServicePuzzle = ({
               <Button disabled variant="secondary" size="sm" className="border-none">
                 + Transfer
               </Button>
-              <Button disabled variant="secondary" size="sm" className="border-none">
-                + Currency Exchange
-              </Button>
+                <AddExchangeButton
+                    client={client}
+                    disabled={!hasContactMethod}
+                    setActiveService={setActiveService}
+                />
             </div>
           </div>
         </CardContent>

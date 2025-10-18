@@ -58,6 +58,7 @@ export const getOrderTrpcRoute = orderReadProcedure
                 lastName: true,
                 requirements: true,
                 documents: true,
+                  bankingDetails: true,
                 citizenship: {
                   select: {
                     id: true,
@@ -192,12 +193,27 @@ export const getOrderTrpcRoute = orderReadProcedure
             })
           : [];
 
+
+        // Fetch currency exchanges for items with serviceType = 'currencyExchange'
+        const currencyExchangeItems = order.items.filter(item => item.serviceType === 'currencyExchange');
+        const currencyExchangeItemIds = currencyExchangeItems.map(item => item.id);
+
+        const currencyExchanges =
+            currencyExchangeItemIds.length > 0
+                ? await ctx.prisma.currencyExchange.findMany({
+                    where: {
+                        orderItemId: { in: currencyExchangeItemIds },
+                    },
+                })
+                : [];
+
       return {
         ...order,
         clients: order.clients.map(orderClient => ({
           ...orderClient.client,
         })),
         visaApplications,
+          currencyExchanges
       };
     }
   });

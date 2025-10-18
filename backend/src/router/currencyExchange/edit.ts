@@ -9,10 +9,10 @@ import { z } from 'zod';
 
 export const zEditCurrencyExchangeTrpcInput = z.object({
     id: z.string().uuid(),
-    exchangeRate: z.number().positive(),
-    amount: z.number().positive(),
-    amountInSelectedCurrencyFrom: z.number().positive(),
-    amountInSelectedCurrencyTo: z.number().positive(),
+    exchangeRate: z.number().positive().optional(),
+    amount: z.number().positive().optional(),
+    amountInSelectedCurrencyFrom: z.number().positive().optional(),
+    amountInSelectedCurrencyTo: z.number().positive().optional(),
     status: z.enum([
         'draft',
         'in_progress',
@@ -23,8 +23,8 @@ export const zEditCurrencyExchangeTrpcInput = z.object({
     canceledByClient: z.boolean().optional(),
     deadline: z.string().datetime().transform(str => new Date(str)).optional(),
     minTransactionAmount: z.number().positive().optional(),
-    fromCurrencyId: z.string().uuid(),
-    toCurrencyId: z.string().uuid(),
+    fromCurrencyId: z.string().uuid().optional(),
+    toCurrencyId: z.string().uuid().optional(),
 });
 
 export const editCurrencyExchangeTrpcRoute = currencyExchangeUpdateProcedure
@@ -51,13 +51,13 @@ export const editCurrencyExchangeTrpcRoute = currencyExchangeUpdateProcedure
         // Amount validation (must be greater than transactions sum)
         type Transaction = { amount: string }
 
-        if (input.amount < existingExchange.transactions.reduce((acc: number, curr: Transaction) => acc + parseInt(curr.amount), 0)) {
+        if (input.amount && input.amount < existingExchange.transactions.reduce((acc: number, curr: Transaction) => acc + parseInt(curr.amount), 0)) {
             throw new Error("Transactions sum must be smaller than exchange amount");
         }
 
         // Minimal transaction amount validation (must be lower than amount)
         const minTransactionAmount = input.minTransactionAmount || existingExchange.minTransactionAmount;
-        if (minTransactionAmount && minTransactionAmount > input.amount) {
+        if (minTransactionAmount && input.amount && minTransactionAmount > input.amount) {
             throw new Error("Minimal transaction amount must be lower than amount");
         }
 
@@ -67,21 +67,25 @@ export const editCurrencyExchangeTrpcRoute = currencyExchangeUpdateProcedure
         }
 
         // FromCurrency existence validation
-        const fromCurrency = await ctx.prisma.currency.findUnique({
-            where: { id: input.fromCurrencyId },
-        });
+        if (input.fromCurrencyId) {
+            const fromCurrency = await ctx.prisma.currency.findUnique({
+                where: { id: input.fromCurrencyId },
+            });
 
-        if (!fromCurrency) {
-            throw new Error("FromCurrency does not exist");
+            if (!fromCurrency) {
+                throw new Error("FromCurrency does not exist");
+            }
         }
 
         // ToCurrency existence validation
-        const toCurrency = await ctx.prisma.currency.findUnique({
-            where: { id: input.toCurrencyId },
-        });
+        if (input.toCurrencyId) {
+            const toCurrency = await ctx.prisma.currency.findUnique({
+                where: { id: input.toCurrencyId },
+            });
 
-        if (!toCurrency) {
-            throw new Error("ToCurrency does not exist");
+            if (!toCurrency) {
+                throw new Error("ToCurrency does not exist");
+            }
         }
 
         // Cancelled status validation for cancel reason

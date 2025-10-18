@@ -81,6 +81,7 @@ const EditOrderPage = () => {
     setContactMethods,
     setOrderItems,
     setVisaApplications,
+      setCurrencyExchanges,
     setOrderPayments,
     setActiveServicePuzzleSection,
   } = useOrderStore();
@@ -131,6 +132,11 @@ const EditOrderPage = () => {
             isOutsideTheCountryAt: client.isOutsideTheCountryAt
               ? new Date(client.isOutsideTheCountryAt)
               : undefined,
+              bankingDetails: client.bankingDetails ? {
+                id: client.bankingDetails.id,
+                content: client.bankingDetails.content,
+                documentUrl: client.bankingDetails.documentUrl,
+              } : undefined,
             citizenship: client.citizenship
               ? {
                   id: client.citizenship.id,
@@ -244,6 +250,33 @@ const EditOrderPage = () => {
         }))
       );
     }
+
+      if (orderData.currencyExchanges) {
+          const { currencyExchanges } = orderData;
+
+          setCurrencyExchanges(
+              currencyExchanges.map((i) => ({
+                  id: i.id,
+                  orderItemId: i.orderItemId,
+                  position: i.position,
+                  exchangeRate: i.exchangeRate,
+                  amount: i.amount,
+                  amountInSelectedCurrencyFrom: i.amountInSelectedCurrencyFrom,
+                  amountInSelectedCurrencyTo: i.amountInSelectedCurrencyTo,
+                  status: i.satus,
+                  cancelReason: i.cancelReason,
+                  canceledByClient: i.canceledByClient,
+                  deadline: i.deadline,
+                  minTransactionAmount: i.minTransactionAmount,
+                  fromCurrencyId: i.fromCurrencyId,
+                  toCurrencyId: i.toCurrencyId,
+                  createdById: i.createdById,
+                  updatedById: i.updatedById,
+                  createdAt: i.createdAt,
+                  createdBy: i.createdBy,
+              }))
+          );
+      }
 
     if (orderData.orderPayments) {
       setOrderPayments(

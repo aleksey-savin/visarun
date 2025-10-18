@@ -156,6 +156,55 @@ const paymentDocumentUpload = multer({
   },
 });
 
+// Configure multer for banking details uploads
+const bankingDetailsStorage = multer.diskStorage({
+    destination: async (
+        _req: Request,
+        _file: Express.Multer.File,
+        cb: (error: Error | null, destination: string) => void
+    ) => {
+        const uploadPath = path.join(__dirname, '../../../uploads/banking-details');
+        try {
+            await fs.access(uploadPath);
+        } catch {
+            await fs.mkdir(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
+    },
+    filename: (
+        _req: Request,
+        file: Express.Multer.File,
+        cb: (error: Error | null, filename: string) => void
+    ) => {
+        // Generate unique filename with timestamp and random string
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname);
+        cb(null, `banking-details-${uniqueSuffix}${ext}`);
+    },
+});
+
+const bankingDetailsUpload = multer({
+    storage: bankingDetailsStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+        const allowedTypes = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only JPG, PNG, PDF, DOC, and DOCX files are allowed.'));
+        }
+    },
+});
+
 // Express routes for file upload
 export const createUploadRoutes = () => {
   const router = express.Router();
@@ -281,6 +330,59 @@ export const createUploadRoutes = () => {
       }
     }
   );
+
+    // Upload banking details file
+    router.post(
+        '/banking-details',
+        bankingDetailsUpload.single('banking-details'),
+        (req: Request & { file?: Express.Multer.File }, res: Response) => {
+            try {
+                if (!req.file) {
+                    res.status(400).json({
+                        success: false,
+                        error: 'No file uploaded',
+                    });
+                    return;
+                }
+
+                // Return the file path
+                const filePath = `/uploads/banking-details/${req.file.filename}`;
+                res.json({
+                    success: true,
+                    filePath,
+                    fileName: req.file.filename,
+                    originalName: req.file.originalname,
+                    size: req.file.size,
+                    mimetype: req.file.mimetype,
+                });
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: 'File upload failed',
+                    message: error instanceof Error ? error.message : 'Unknown error',
+                });
+            }
+        }
+    );
+
+    // Serve uploaded banking details files
+    router.get('/banking-details/:filename', async (req: Request, res: Response) => {
+        try {
+            const filename = req.params.filename;
+            const filePath = path.join(__dirname, '../../../uploads/banking-details', filename);
+
+            // Check if file exists
+            await fs.access(filePath);
+
+            // Send file
+            res.sendFile(filePath);
+        } catch {
+            res.status(404).json({
+                success: false,
+                error: 'File not found',
+            });
+        }
+    });
 
   // Serve uploaded requirement document files
   router.get('/requirement-documents/:filename', async (req: Request, res: Response) => {
