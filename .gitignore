@@ -39,3 +39,7 @@ uploads/
 *.sql
 !backend/prisma/migrations/**/*.sql
 backup_*
+
+compose.yml
+docker-compose.yml
+docker-compose.override.yml

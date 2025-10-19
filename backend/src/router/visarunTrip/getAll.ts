@@ -62,7 +62,7 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
     const trips = await ctx.prisma.visarunTrip.findMany({
       where,
       skip: input?.offset ?? 0,
-      take: input?.limit ?? 20,
+      take: input?.limit ?? 999,
       orderBy: {
         departureDateTime: 'asc',
       },

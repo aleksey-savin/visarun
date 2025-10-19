@@ -93,6 +93,7 @@ const EditOrderPage = () => {
       id: orderData.id,
       userId: orderData.userId,
       status: orderData.status,
+      postPayment: orderData.postPayment,
       createdAt: new Date(orderData.createdAt),
       updatedAt: new Date(orderData.updatedAt),
       comment: orderData.comment || '',
@@ -334,15 +335,15 @@ const EditOrderPage = () => {
       setOrderPayments(
         orderData.orderPayments.map(p => ({
           id: p.id,
-          currencyId: p.currency.id,
+          currencyId: p.currency?.id,
           amount: String(p.amount),
           amountInSelectedCurrency: String(p.amountInSelectedCurrency),
           confirmPaymentWithoutDocument: p.confirmPaymentWithoutDocument,
-          paymentMethod: p.paymentMethod,
+          paymentMethod: p.paymentMethod || 'transfer',
           documentUrl: p.documentUrl,
           acceptedById: p.acceptedById,
           acceptedByUser: p.acceptedByUser,
-          currency: p.currency,
+          currency: p.currency || undefined,
           acceptedAt: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -391,6 +392,11 @@ const EditOrderPage = () => {
   }, [clients, user, hasOnlyAccelerationServices]);
 
   const orderHasPaymentErrors = useMemo(() => {
+    // If postPayment is enabled, there should be no payment errors
+    if (order.postPayment) {
+      return false;
+    }
+
     return (
       orderPayments.length === 0 ||
       orderPayments.filter(payment => {
@@ -398,7 +404,7 @@ const EditOrderPage = () => {
         return errors.length > 0;
       }).length > 0
     );
-  }, [orderPayments, orderItems]);
+  }, [orderPayments, orderItems, order.postPayment]);
 
   const servicePuzzleIsActive: boolean = useMemo(() => {
     // Basic requirements

@@ -3,11 +3,11 @@ import { z } from 'zod';
 
 const zCreateOrderPaymentInput = z.object({
   orderId: z.string().uuid(),
-  amount: z.number().positive(),
-  amountInSelectedCurrency: z.number().positive(),
-  currencyId: z.string().uuid(),
-  paidAt: z.string().datetime(),
-  paymentMethod: z.enum(['cash', 'transfer']),
+  amount: z.number().positive().optional(),
+  amountInSelectedCurrency: z.number().positive().optional(),
+  currencyId: z.string().uuid().optional(),
+  paidAt: z.string().datetime().optional(),
+  paymentMethod: z.enum(['cash', 'transfer']).optional(),
   documentUrl: z.string().optional(),
   acceptedById: z.string().uuid().optional(),
   confirmPaymentWithoutDocument: z.boolean().optional(),
@@ -26,22 +26,22 @@ export const createOrderPaymentTrpcRoute = orderPaymentCreateProcedure
     }
 
     // Check if currency exists
-    const existingCurrency = await ctx.prisma.currency.findUnique({
-      where: { id: input.currencyId },
-    });
+    // const existingCurrency = await ctx.prisma.currency.findUnique({
+    //   where: { id: input.currencyId },
+    // });
 
-    if (!existingCurrency) {
-      throw new Error('Currency not found');
-    }
+    // if (!existingCurrency) {
+    //   throw new Error('Currency not found');
+    // }
 
     const orderPayment = await ctx.prisma.orderPayment.create({
       data: {
         orderId: input.orderId,
-        amount: input.amount,
-        amountInSelectedCurrency: input.amountInSelectedCurrency,
-        currencyId: input.currencyId,
-        paidAt: new Date(input.paidAt),
-        paymentMethod: input.paymentMethod,
+        amount: input.amount || 0,
+        amountInSelectedCurrency: input.amountInSelectedCurrency || 0,
+        currencyId: input.currencyId ?? undefined,
+        paidAt: new Date(),
+        paymentMethod: input.paymentMethod || 'transfer',
         documentUrl: input.documentUrl,
         acceptedById: input.acceptedById,
         confirmPaymentWithoutDocument: input.confirmPaymentWithoutDocument || false,

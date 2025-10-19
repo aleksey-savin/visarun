@@ -26,6 +26,7 @@ import {
   Cog,
   Calendar,
 } from 'lucide-react';
+
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '@/lib/auth';
@@ -72,6 +73,7 @@ import {
   getAllTransportsRoute,
   getAllSeatClassesRoute,
   getAllVisarunSchedulesRoute,
+  getAllVisarunTripsRoute,
   getMessageTemplatesRoute,
   getAllAuditLogsRoute,
   getDashboardRoute,
@@ -196,9 +198,20 @@ export function AppSidebar() {
     hasPermission('visarunSchedules.update') ||
     hasPermission('visarunSchedules.delete');
 
+  // VisarunTrips permissions
+  const canReadVisarunTrips =
+    hasPermission('visarunTrips.read') ||
+    hasPermission('visarunTrips.create') ||
+    hasPermission('visarunTrips.update') ||
+    hasPermission('visarunTrips.delete');
+
   // Check if user has any transport management permissions
   const hasAnyTransportPermission =
-    canReadTransportTypes || canReadTransports || canReadSeatClasses || canReadVisarunSchedules;
+    canReadTransportTypes ||
+    canReadTransports ||
+    canReadSeatClasses ||
+    canReadVisarunSchedules ||
+    canReadVisarunTrips;
 
   // Check if user has any admin permissions
   const hasAnyAdminPermission =
@@ -236,6 +249,51 @@ export function AppSidebar() {
 
     // If searching, show section only if any items match the search
     return sectionItems.some(item => shouldShowMenuItem(item));
+  };
+
+  const WheelIcon = () => {
+    return (
+      <svg
+        width="17"
+        height="17"
+        viewBox="0 0 17 17"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M2.58203 8.87891C2.58203 9.66684 2.73723 10.4471 3.03875 11.175C3.34028 11.903 3.78224 12.5644 4.33939 13.1215C4.89654 13.6787 5.55798 14.1207 6.28593 14.4222C7.01388 14.7237 7.7941 14.8789 8.58203 14.8789C9.36996 14.8789 10.1502 14.7237 10.8781 14.4222C11.6061 14.1207 12.2675 13.6787 12.8247 13.1215C13.3818 12.5644 13.8238 11.903 14.1253 11.175C14.4268 10.4471 14.582 9.66684 14.582 8.87891C14.582 8.09098 14.4268 7.31076 14.1253 6.58281C13.8238 5.85485 13.3818 5.19342 12.8247 4.63627C12.2675 4.07911 11.6061 3.63716 10.8781 3.33563C10.1502 3.0341 9.36996 2.87891 8.58203 2.87891C7.7941 2.87891 7.01388 3.0341 6.28593 3.33563C5.55798 3.63716 4.89654 4.07911 4.33939 4.63627C3.78224 5.19342 3.34028 5.85485 3.03875 6.58281C2.73723 7.31076 2.58203 8.09098 2.58203 8.87891Z"
+          stroke="#FAFAFA"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M7.24805 8.87826C7.24805 9.23188 7.38852 9.57102 7.63857 9.82106C7.88862 10.0711 8.22776 10.2116 8.58138 10.2116C8.935 10.2116 9.27414 10.0711 9.52419 9.82106C9.77424 9.57102 9.91471 9.23188 9.91471 8.87826C9.91471 8.52463 9.77424 8.18549 9.52419 7.93545C9.27414 7.6854 8.935 7.54492 8.58138 7.54492C8.22776 7.54492 7.88862 7.6854 7.63857 7.93545C7.38852 8.18549 7.24805 8.52463 7.24805 8.87826Z"
+          stroke="#FAFAFA"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M8.58203 10.2129V14.8796"
+          stroke="#FAFAFA"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M7.24805 8.87826L2.74805 7.54492"
+          stroke="#FAFAFA"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M9.91602 8.87826L14.416 7.54492"
+          stroke="#FAFAFA"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
   };
 
   return (
@@ -354,6 +412,22 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              {canReadVisarunTrips && shouldShowMenuItem('Transfers') && (
+                <SidebarMenuSubItem key="VisarunTrips">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={
+                      location.pathname === getAllVisarunTripsRoute() ||
+                      location.pathname.startsWith(`${getAllVisarunTripsRoute()}/`)
+                    }
+                  >
+                    <Link to={getAllVisarunTripsRoute()} onClick={handleMenuItemClick}>
+                      <WheelIcon />
+                      Transfers
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuSubItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -469,9 +543,10 @@ export function AppSidebar() {
                             )}
                         </SidebarMenu>
                       </SidebarGroupContent>
-                      {shouldShowSection(['Visarun Schedules'], [canReadVisarunSchedules]) && (
-                        <SidebarGroupLabel>Visarun Management</SidebarGroupLabel>
-                      )}
+                      {shouldShowSection(
+                        ['Visarun Schedules', 'Transfers'],
+                        [canReadVisarunSchedules, canReadVisarunTrips]
+                      ) && <SidebarGroupLabel>Visarun Management</SidebarGroupLabel>}
                       <SidebarGroupContent>
                         <SidebarMenu>
                           {canReadVisarunSchedules && shouldShowMenuItem('Visarun Schedules') && (

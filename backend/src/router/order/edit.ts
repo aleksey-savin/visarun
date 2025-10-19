@@ -15,6 +15,7 @@ export const zEditOrderTrpcInput = z.object({
       'cancelled',
     ])
     .optional(),
+  postPayment: z.boolean().optional(),
 });
 
 export const editOrderTrpcRoute = orderUpdateProcedure

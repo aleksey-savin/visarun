@@ -272,6 +272,7 @@ model Order {
   updatedById        String?
   status             OrderStatus          @default(draft)
   comment            String?
+  postPayment        Boolean              @default(false)
   updatedAt          DateTime             @default(now()) @updatedAt
   createdBy          User?                @relation("OrderCreatedBy", fields: [createdById], references: [id])
   updatedBy          User?                @relation("OrderUpdatedBy", fields: [updatedById], references: [id])
@@ -572,19 +573,19 @@ model Currency {
 }
 
 model OrderPayment {
-  id                            String        @id @default(uuid())
+  id                            String         @id @default(uuid())
   orderId                       String
-  amount                        Decimal
-  amountInSelectedCurrency      Decimal
-  currencyId                    String
-  paidAt                        DateTime
-  paymentMethod                 PaymentMethod
-  confirmPaymentWithoutDocument Boolean       @default(false)
+  amount                        Decimal?
+  amountInSelectedCurrency      Decimal?
+  currencyId                    String?
+  paidAt                        DateTime       @default(now())
+  paymentMethod                 PaymentMethod?
+  confirmPaymentWithoutDocument Boolean        @default(false)
   documentUrl                   String?
   acceptedById                  String?
-  acceptedByUser                User?         @relation(fields: [acceptedById], references: [id])
-  currency                      Currency      @relation(fields: [currencyId], references: [id])
-  order                         Order         @relation(fields: [orderId], references: [id])
+  acceptedByUser                User?          @relation(fields: [acceptedById], references: [id])
+  currency                      Currency?      @relation(fields: [currencyId], references: [id])
+  order                         Order          @relation(fields: [orderId], references: [id])
 
   @@index([orderId])
   @@index([currencyId])

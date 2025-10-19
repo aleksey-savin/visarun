@@ -216,3 +216,6 @@ export const viewVisarunScheduleRouteParams = getRouteParams({ id: true });
 export type ViewVisarunScheduleRouteParams = typeof viewVisarunScheduleRouteParams;
 export const getViewVisarunScheduleRoute = ({ id }: ViewVisarunScheduleRouteParams) =>
   `/visarun-schedules/${id}/view`;
+
+// VisarunTrips routes
+export const getAllVisarunTripsRoute = () => '/transfers';

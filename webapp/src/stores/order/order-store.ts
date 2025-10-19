@@ -213,17 +213,14 @@ export interface StoreVisarunPassenger {
 
 export interface StoreOrderPayment {
   id: string;
-  orderId?: string;
-  currencyId: string;
-  amount: Decimal;
-  amountInSelectedCurrency: Decimal;
-  paymentMethod: PaymentMethod;
-  documentUrl: string | null;
-  acceptedById: string | null;
-  acceptedAt: Date | null;
+  currencyId?: string;
+  amount?: Decimal;
+  amountInSelectedCurrency?: Decimal;
+  paymentMethod?: PaymentMethod | 'transfer';
+  documentUrl?: string | null;
+  acceptedById?: string | null;
+  acceptedAt?: Date | null;
   paidAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
   confirmPaymentWithoutDocument?: boolean;
   acceptedByUser?: {
     id: string;
@@ -262,6 +259,7 @@ interface OrderStore {
   setActiveClientId: (activeClientId: string) => void;
   setOrder: (orderData: Order) => void;
   updateOrderStatus: (status: OrderStatus) => Promise<void>;
+
   setUser: (userData: StoreUser) => void;
   setClients: (clients: StoreClient[]) => void;
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => void;
@@ -285,6 +283,7 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   order: {
     id: '',
     userId: '',
+    postPayment: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     status: 'draft',
