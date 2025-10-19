@@ -15,6 +15,12 @@ interface RouteStop {
   arrivalNextDay: boolean | null;
   waitingDuration: number | null;
   stopOrder: number;
+  pickupLocations?: Array<{
+    pickupLocation: {
+      id: string;
+      name: string;
+    };
+  }>;
 }
 
 interface RouteTransport {
@@ -169,6 +175,7 @@ export default function EditVisarunSchedulePage() {
         const hasChanges =
           existingStop.cityId !== newStop.cityId ||
           existingStop.pickupMode !== newStop.pickupMode ||
+          existingStop.pickupLocations?.[0]?.pickupLocation?.id !== newStop.pickupLocationId ||
           existingStop.arrivalTime !== (newStop.arrivalTime || null) ||
           existingStop.departureTime !== (newStop.departureTime || null) ||
           existingStop.arrivalNextDay !== newStop.arrivalNextDay ||
@@ -179,6 +186,7 @@ export default function EditVisarunSchedulePage() {
             id: existingStop.id,
             stopType: newStop.stopType,
             pickupMode: newStop.pickupMode,
+            pickupLocationId: newStop.pickupLocationId,
             arrivalTime: newStop.arrivalTime || undefined,
             departureTime: newStop.departureTime || undefined,
             arrivalNextDay: newStop.arrivalNextDay,
@@ -196,6 +204,7 @@ export default function EditVisarunSchedulePage() {
           stopOrder,
           stopType: newStop.stopType,
           pickupMode: newStop.pickupMode,
+          pickupLocationId: newStop.pickupLocationId,
           arrivalTime: newStop.arrivalTime || undefined,
           departureTime: newStop.departureTime || undefined,
           arrivalNextDay: newStop.arrivalNextDay,
@@ -317,27 +326,27 @@ export default function EditVisarunSchedulePage() {
         stamp: schedule.route?.stamp ?? false,
         visa: schedule.route?.visa ?? false,
         routeStops:
-          schedule.route?.routeStops?.map((stop: RouteStop, index: number) => ({
-            id: stop.id,
-            cityId: stop.cityId,
-            stopType:
-              index === 0
-                ? ('departure' as const)
-                : index === (schedule.route?.routeStops?.length ?? 0) - 1
-                  ? ('arrival' as const)
-                  : ('intermediate' as const),
-            pickupMode:
-              stop.pickupMode === 'PICKUP_POINT'
-                ? ('location' as const)
-                : stop.pickupMode === 'DOOR_TO_DOOR'
-                  ? ('address' as const)
-                  : ('none' as const),
-            arrivalTime: stop.arrivalTime || '',
-            departureTime: stop.departureTime || '',
-            arrivalNextDay: stop.arrivalNextDay ?? false,
-            waitingDuration: stop.waitingDuration ?? undefined,
-            stopOrder: stop.stopOrder,
-          })) || [],
+          schedule.route?.routeStops?.map((stop: RouteStop, index: number) => {
+            const mappedStop = {
+              id: stop.id,
+              cityId: stop.cityId,
+              stopType:
+                index === 0
+                  ? ('departure' as const)
+                  : index === (schedule.route?.routeStops?.length ?? 0) - 1
+                    ? ('arrival' as const)
+                    : ('intermediate' as const),
+              pickupMode: (stop.pickupMode as 'location' | 'address') || 'location',
+              pickupLocationId: stop.pickupLocations?.[0]?.pickupLocation?.id || undefined,
+              arrivalTime: stop.arrivalTime || '',
+              departureTime: stop.departureTime || '',
+              arrivalNextDay: stop.arrivalNextDay ?? false,
+              waitingDuration: stop.waitingDuration ?? undefined,
+              stopOrder: stop.stopOrder,
+            };
+
+            return mappedStop;
+          }) || [],
         transports:
           schedule.route?.transports?.map((rt: RouteTransport) => ({
             id: rt.id,

@@ -37,7 +37,8 @@ const routeStopSchema = z.object({
   id: z.string().optional(),
   cityId: z.string().min(1, 'City is required'),
   stopType: z.enum(['departure', 'arrival', 'intermediate']),
-  pickupMode: z.enum(['location', 'address', 'none']).default('location'),
+  pickupMode: z.enum(['location', 'address']).default('location'),
+  pickupLocationId: z.string().optional(),
   arrivalTime: z.string().optional(),
   departureTime: z.string().optional(),
   arrivalNextDay: z.boolean().default(false),
@@ -60,6 +61,7 @@ const seatPriceSchema = z.object({
 const formSchema = z.object({
   stamp: z.boolean().default(false),
   visa: z.boolean().default(false),
+
   routeStops: z
     .array(routeStopSchema)
     .min(2, 'At least 2 stops are required (origin and destination)')
@@ -86,6 +88,7 @@ const formSchema = z.object({
 const editFormSchema = z.object({
   stamp: z.boolean().default(false),
   visa: z.boolean().default(false),
+
   routeStops: z
     .array(routeStopSchema)
     .min(2, 'At least 2 stops are required (origin and destination)')
@@ -262,18 +265,21 @@ export default function CombinedVisarunForm({
     defaultValues: {
       stamp: initialData?.stamp ?? false,
       visa: initialData?.visa ?? false,
+
       routeStops: initialData?.routeStops || [
         {
           cityId: '',
           stopType: 'departure' as const,
           pickupMode: 'location',
+          pickupLocationId: undefined,
           departureTime: '',
           arrivalNextDay: false,
         },
         {
           cityId: '',
           stopType: 'arrival' as const,
-          pickupMode: 'location',
+          pickupMode: 'address',
+          pickupLocationId: undefined,
           arrivalTime: '',
           arrivalNextDay: false,
         },
@@ -291,7 +297,7 @@ export default function CombinedVisarunForm({
 
   const {
     fields: stopFields,
-    append: appendStop,
+    insert: insertStop,
     remove: removeStop,
   } = useFieldArray({
     control: form.control,
@@ -330,9 +336,15 @@ export default function CombinedVisarunForm({
   // Fetch seat classes
   const { data: seatClassesData } = trpc.seatClass.getAll.useQuery();
 
+  // Fetch pickup locations
+  const { data: pickupLocationsData } = trpc.pickupLocation.getAll.useQuery({
+    isActive: true,
+  });
+
   const cities = citiesData?.cities || [];
   const transports = transportsData?.transports || [];
   const seatClasses = seatClassesData?.seatClasses || [];
+  const pickupLocations = pickupLocationsData?.pickupLocations || [];
 
   // Get available seat classes based on selected transports
   const getAvailableSeatClasses = () => {
@@ -381,16 +393,14 @@ export default function CombinedVisarunForm({
   const addStop = () => {
     // Insert intermediate stop before the last stop (destination)
     const insertIndex = stopFields.length - 1;
-    appendStop(
-      {
-        cityId: '',
-        stopType: 'intermediate' as const,
-        pickupMode: 'location',
-        departureTime: '',
-        arrivalNextDay: false,
-      },
-      insertIndex as any
-    );
+    insertStop(insertIndex, {
+      cityId: '',
+      stopType: 'intermediate' as const,
+      pickupMode: 'location',
+      pickupLocationId: undefined,
+      departureTime: '',
+      arrivalNextDay: false,
+    });
 
     // Update stop types to ensure first is departure and last is arrival
     setTimeout(() => {
@@ -469,6 +479,7 @@ export default function CombinedVisarunForm({
                   </Button>
                 </div>
               </div>
+
               <div className="flex flex-col gap-3">
                 {stopFields.map((field, index) => (
                   <div key={field.id} className="space-y-3">
@@ -534,6 +545,81 @@ export default function CombinedVisarunForm({
                             );
                           }}
                         />
+
+                        {/* Pickup Mode Switch per stop - Hide for last arrival stop */}
+                        {index < stopFields.length - 1 && (
+                          <FormField
+                            control={form.control as any}
+                            name={`routeStops.${index}.pickupMode`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <SelectTrigger className="min-w-32">
+                                      <SelectValue placeholder="Mode" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="location">Location</SelectItem>
+                                      <SelectItem value="address">Address</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        )}
+
+                        {/* Pickup Location Dropdown - Show only when pickup mode is 'location' and city is selected and not last stop */}
+                        {form.watch(`routeStops.${index}.pickupMode`) === 'location' &&
+                          form.watch(`routeStops.${index}.cityId`) &&
+                          index < stopFields.length - 1 && (
+                            <FormField
+                              control={form.control as any}
+                              name={`routeStops.${index}.pickupLocationId`}
+                              render={({ field }) => {
+                                const selectedCityId = form.watch(`routeStops.${index}.cityId`);
+                                const cityPickupLocations = pickupLocations.filter(
+                                  location => location.cityId === selectedCityId
+                                );
+
+                                return (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        value={field.value || ''}
+                                      >
+                                        <SelectTrigger className="min-w-52">
+                                          <SelectValue placeholder="Select pickup location" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {cityPickupLocations.length > 0 ? (
+                                            cityPickupLocations.map(location => (
+                                              <SelectItem key={location.id} value={location.id}>
+                                                <div className="flex flex-col">
+                                                  <span className="font-medium">
+                                                    {location.name}
+                                                  </span>
+                                                  <span className="text-xs text-muted-foreground">
+                                                    {location.address}
+                                                  </span>
+                                                </div>
+                                              </SelectItem>
+                                            ))
+                                          ) : (
+                                            <SelectItem value="no-locations" disabled>
+                                              No pickup locations available for this city
+                                            </SelectItem>
+                                          )}
+                                        </SelectContent>
+                                      </Select>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                          )}
 
                         {/* Show only departure time for departure and stopover */}
                         {index < stopFields.length - 1 && (

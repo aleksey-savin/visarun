@@ -6,7 +6,7 @@ export const zGetAllVisarunRouteStopsTrpcInput = z
     routeId: z.string().uuid().optional(),
     cityId: z.string().uuid().optional(),
     stopType: z.enum(['departure', 'intermediate', 'arrival']).optional(),
-    pickupMode: z.enum(['location', 'address', 'none']).optional(),
+    pickupMode: z.enum(['location', 'address']).optional(),
     search: z.string().optional(),
     includePickupLocations: z.boolean().optional().default(true),
   })

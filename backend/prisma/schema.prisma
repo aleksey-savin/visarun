@@ -746,7 +746,6 @@ model VisarunRouteStop {
   VisarunPassenger VisarunPassenger[]
 
   @@unique([routeId, stopOrder])
-  @@unique([routeId, cityId])
 }
 
 model PickupLocation {

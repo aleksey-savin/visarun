@@ -39,6 +39,7 @@ export default function CreateVisarunSchedulePage() {
           stopOrder: i + 1,
           stopType: stop.stopType,
           pickupMode: stop.pickupMode,
+          pickupLocationId: stop.pickupLocationId,
           arrivalTime: stop.arrivalTime || undefined,
           departureTime: stop.departureTime || undefined,
           arrivalNextDay: stop.arrivalNextDay,
