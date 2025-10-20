@@ -757,8 +757,9 @@ model PickupLocation {
   coordinates String?
   isActive    Boolean @default(true)
 
-  city       City                        @relation("PickupLocations", fields: [cityId], references: [id])
-  routeStops VisarunStopPickupLocation[]
+  city             City                        @relation("PickupLocations", fields: [cityId], references: [id])
+  routeStops       VisarunStopPickupLocation[]
+  VisarunPassenger VisarunPassenger[]
 }
 
 model VisarunSchedule {
@@ -848,23 +849,25 @@ model VisarunPassenger {
 
   serviceType VisarunServiceType @default(visa)
 
-  seatNumber    String?
-  seatClassId   String?
-  pickupAddress String?
-  pickupTime    String?
-  routeStopId   String?
+  seatNumber       String?
+  seatClassId      String?
+  pickupAddress    String?
+  pickupLocationId String?
+  pickupTime       String?
+  routeStopId      String?
 
   status PassengerStatus @default(confirmed)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  trip          VisarunTrip           @relation(fields: [tripId], references: [id])
-  tripTransport VisarunTripTransport? @relation(fields: [tripTransportId], references: [id])
-  seatClass     SeatClass?            @relation(fields: [seatClassId], references: [id])
-  client        Client                @relation(fields: [clientId], references: [id])
-  orderItem     OrderItem             @relation(fields: [orderItemId], references: [id])
-  pickupStop    VisarunRouteStop?     @relation(fields: [routeStopId], references: [id])
+  trip           VisarunTrip           @relation(fields: [tripId], references: [id])
+  tripTransport  VisarunTripTransport? @relation(fields: [tripTransportId], references: [id])
+  seatClass      SeatClass?            @relation(fields: [seatClassId], references: [id])
+  pickupLocation PickupLocation?       @relation(fields: [pickupLocationId], references: [id])
+  client         Client                @relation(fields: [clientId], references: [id])
+  orderItem      OrderItem             @relation(fields: [orderItemId], references: [id])
+  pickupStop     VisarunRouteStop?     @relation(fields: [routeStopId], references: [id])
 
   @@index([tripId])
   @@index([tripTransportId])

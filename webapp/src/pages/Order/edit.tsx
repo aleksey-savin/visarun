@@ -269,6 +269,7 @@ const EditOrderPage = () => {
           seatNumber: p.seatNumber,
           seatClassId: p.seatClassId,
           pickupAddress: p.pickupAddress,
+          pickupLocationId: p.pickupLocationId,
           pickupTime: p.pickupTime,
           routeStopId: p.routeStopId,
           status: p.status,
@@ -325,6 +326,13 @@ const EditOrderPage = () => {
                   id: p.pickupStop.city.id,
                   name: p.pickupStop.city.name,
                 },
+              }
+            : null,
+          pickupLocation: p.pickupLocation
+            ? {
+                id: p.pickupLocation.id,
+                name: p.pickupLocation.name,
+                address: p.pickupLocation.address,
               }
             : null,
         }))

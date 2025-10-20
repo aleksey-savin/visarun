@@ -319,6 +319,13 @@ export const getOrderTrpcRoute = orderReadProcedure
                     },
                   },
                 },
+                pickupLocation: {
+                  select: {
+                    id: true,
+                    name: true,
+                    address: true,
+                  },
+                },
               },
             })
           : [];

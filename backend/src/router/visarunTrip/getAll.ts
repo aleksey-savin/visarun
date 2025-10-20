@@ -115,6 +115,7 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
               select: {
                 id: true,
                 stopType: true,
+                pickupMode: true,
                 arrivalTime: true,
                 departureTime: true,
                 waitingDuration: true,
@@ -123,6 +124,17 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
                     id: true,
                     name: true,
                     country: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                  },
+                },
+                pickupLocations: {
+                  select: {
+                    id: true,
+                    pickupLocation: {
                       select: {
                         id: true,
                         name: true,
@@ -196,12 +208,33 @@ async function getSmartVisarunTrips(params: {
     return [];
   }
 
-  // Начало и конец предпочитаемой даты
-  const startOfDay = new Date(preferredDepartureDate);
-  startOfDay.setHours(0, 0, 0, 0);
+  // Начало и конец предпочитаемой даты (работаем только с датами, игнорируем время)
+  const targetDate = new Date(preferredDepartureDate);
 
-  const endOfDay = new Date(preferredDepartureDate);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Создаем начало и конец дня в UTC, чтобы избежать проблем с часовыми поясами
+  const startOfDay = new Date(
+    Date.UTC(
+      targetDate.getUTCFullYear(),
+      targetDate.getUTCMonth(),
+      targetDate.getUTCDate(),
+      0,
+      0,
+      0,
+      0
+    )
+  );
+
+  const endOfDay = new Date(
+    Date.UTC(
+      targetDate.getUTCFullYear(),
+      targetDate.getUTCMonth(),
+      targetDate.getUTCDate(),
+      23,
+      59,
+      59,
+      999
+    )
+  );
 
   // 1. Сначала ищем поездки в статусе scheduled на выбранную дату
   const scheduledTripsOnDate = await ctx.prisma.visarunTrip.findMany({
@@ -267,6 +300,7 @@ async function getSmartVisarunTrips(params: {
             select: {
               id: true,
               stopType: true,
+              pickupMode: true,
               arrivalTime: true,
               departureTime: true,
               waitingDuration: true,
@@ -275,6 +309,17 @@ async function getSmartVisarunTrips(params: {
                   id: true,
                   name: true,
                   country: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+              pickupLocations: {
+                select: {
+                  id: true,
+                  pickupLocation: {
                     select: {
                       id: true,
                       name: true,
@@ -367,6 +412,7 @@ async function getSmartVisarunTrips(params: {
             select: {
               id: true,
               stopType: true,
+              pickupMode: true,
               arrivalTime: true,
               departureTime: true,
               waitingDuration: true,
@@ -375,6 +421,17 @@ async function getSmartVisarunTrips(params: {
                   id: true,
                   name: true,
                   country: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+              pickupLocations: {
+                select: {
+                  id: true,
+                  pickupLocation: {
                     select: {
                       id: true,
                       name: true,
@@ -462,6 +519,7 @@ async function getSmartVisarunTrips(params: {
             select: {
               id: true,
               stopType: true,
+              pickupMode: true,
               arrivalTime: true,
               departureTime: true,
               waitingDuration: true,
@@ -470,6 +528,17 @@ async function getSmartVisarunTrips(params: {
                   id: true,
                   name: true,
                   country: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+              pickupLocations: {
+                select: {
+                  id: true,
+                  pickupLocation: {
                     select: {
                       id: true,
                       name: true,

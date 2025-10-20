@@ -105,7 +105,9 @@ export const getVisarunScheduleTrpcRoute = visarunScheduleReadProcedure
     const totalStops = schedule.route.routeStops?.length || 0;
     const totalTransports = schedule.route.transports?.length || 0;
     const totalPriceRules = schedule.route.prices?.length || 0;
-    const upcomingTrips = schedule.trips?.length || 0;
+    const upcomingTrips =
+      schedule.trips?.filter(trip => trip.departureDateTime > now && trip.status === 'scheduled')
+        .length || 0;
 
     // Convert day numbers to day names
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

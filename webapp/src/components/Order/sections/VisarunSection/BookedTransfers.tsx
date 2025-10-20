@@ -101,6 +101,7 @@ const BookedTransfers = ({ client }: { client: StoreClient }) => {
     return (
       <TripCard
         trip={trip}
+        bookedPassenger={passenger}
         seatClass={passenger.seatClass}
         price={orderItem?.finalPrice || 0}
         badgeContent={badgeContent}

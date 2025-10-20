@@ -20,17 +20,30 @@ export const useVisarunTrips = ({
       'smart',
       preferredDepartureCityId,
       preferredVisarunCountryId,
-      preferredDepartureDate?.toISOString(),
+      preferredDepartureDate
+        ? `${preferredDepartureDate.getFullYear()}-${(preferredDepartureDate.getMonth() + 1).toString().padStart(2, '0')}-${preferredDepartureDate.getDate().toString().padStart(2, '0')}`
+        : null,
     ],
     queryFn: async () => {
       if (!preferredDepartureCityId || !preferredVisarunCountryId || !preferredDepartureDate) {
         return [];
       }
 
+      // Send only date part to avoid timezone issues
+      const dateOnly = new Date(
+        preferredDepartureDate.getFullYear(),
+        preferredDepartureDate.getMonth(),
+        preferredDepartureDate.getDate(),
+        12, // Use noon to avoid timezone boundary issues
+        0,
+        0,
+        0
+      );
+
       const result = await trpcClient.visarunTrip.getAll.query({
         preferredDepartureCityId,
         preferredVisarunCountryId,
-        preferredDepartureDate: preferredDepartureDate.toISOString(),
+        preferredDepartureDate: dateOnly.toISOString(),
       });
 
       return result;

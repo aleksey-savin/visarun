@@ -19,6 +19,7 @@ interface TripCardProps {
   buttonIcon?: React.ReactNode;
   showCancelButton?: boolean;
   onCancelClick?: () => void;
+  bookedPassenger?: any;
 }
 
 const TripCard = ({
@@ -33,6 +34,7 @@ const TripCard = ({
   buttonIcon,
   showCancelButton = false,
   onCancelClick,
+  bookedPassenger,
 }: TripCardProps) => {
   return (
     <Card className="bg-secondary p-3">
@@ -60,6 +62,16 @@ const TripCard = ({
                   const timeB = b.departureTime || b.arrivalTime;
                   return timeA.localeCompare(timeB);
                 })
+                .reduce((uniqueStops: any[], stop: any) => {
+                  // Only add stop if this city hasn't been added yet
+                  const cityAlreadyExists = uniqueStops.some(
+                    existingStop => existingStop.city.name === stop.city.name
+                  );
+                  if (!cityAlreadyExists) {
+                    uniqueStops.push(stop);
+                  }
+                  return uniqueStops;
+                }, [])
                 .map((stop: any) => {
                   const isFirst = stop.stopType === 'departure';
                   const isLast = stop.stopType === 'arrival';
@@ -121,6 +133,19 @@ const TripCard = ({
                 })}
             </div>
           </div>
+
+          {/* Pickup Information for booked trips */}
+          {bookedPassenger && (
+            <div className="text-xs text-muted-foreground space-y-1">
+              {bookedPassenger.pickupAddress ? (
+                <div>Specified pickup address: {bookedPassenger.pickupAddress}</div>
+              ) : bookedPassenger.pickupLocation ? (
+                <div>Selected pickup location: {bookedPassenger.pickupLocation.name}</div>
+              ) : (
+                <div className="text-orange-400">To be specified later</div>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3 items-center">
             <div className="font-semibold text-primary flex-shrink-0">{formatCurrency(price)}</div>

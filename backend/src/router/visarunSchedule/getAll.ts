@@ -111,10 +111,13 @@ export const getAllVisarunSchedulesTrpcRoute = visarunScheduleReadProcedure
           ? {
               take: 10,
               orderBy: {
-                createdAt: 'asc',
+                departureDateTime: 'asc',
               },
               where: {
                 status: 'scheduled',
+                departureDateTime: {
+                  gte: new Date(),
+                },
               },
             }
           : false,
@@ -132,7 +135,9 @@ export const getAllVisarunSchedulesTrpcRoute = visarunScheduleReadProcedure
         : [];
       const totalStops = schedule.route?.routeStops?.length || 0;
       const totalTransports = schedule.route?.transports?.length || 0;
-      const upcomingTrips = schedule.trips?.length || 0;
+      const upcomingTrips =
+        schedule.trips?.filter(trip => trip.departureDateTime > now && trip.status === 'scheduled')
+          .length || 0;
 
       // Convert day numbers to day names
       const dayNames = [

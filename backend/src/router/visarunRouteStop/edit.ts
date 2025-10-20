@@ -59,7 +59,7 @@ export const editVisarunRouteStopTrpcRoute = visarunRouteStopUpdateProcedure
         },
       });
 
-      if (conflictingStop) {
+      if (conflictingStop && conflictingStop.id !== id) {
         throw new Error(`Stop order ${updateData.stopOrder} is already taken for this route`);
       }
     }

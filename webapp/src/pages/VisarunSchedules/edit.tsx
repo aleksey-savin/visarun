@@ -84,9 +84,6 @@ export default function EditVisarunSchedulePage() {
 
   // Route mutations
   const editRouteMutation = trpc.visarunRoute.edit.useMutation() as any;
-  const createRouteStopMutation = trpc.visarunRouteStop.create.useMutation() as any;
-  const editRouteStopMutation = trpc.visarunRouteStop.edit.useMutation() as any;
-  const deleteRouteStopMutation = trpc.visarunRouteStop.delete.useMutation() as any;
   const createRouteTransportMutation = trpc.visarunRouteTransport.create.useMutation() as any;
   const deleteRouteTransportMutation = trpc.visarunRouteTransport.delete.useMutation() as any;
   const createSeatPriceMutation = trpc.visarunSeatPrice.create.useMutation() as any;
@@ -114,16 +111,13 @@ export default function EditVisarunSchedulePage() {
         isActive: true,
       });
 
-      // 2. Handle route stops
-      await handleRouteStopsUpdate(routeId, route.routeStops || [], data.routeStops);
-
-      // 3. Handle transports
+      // 2. Handle transports
       await handleTransportsUpdate(routeId, route.transports || [], data.transports);
 
-      // 4. Handle seat prices
+      // 3. Handle seat prices
       await handleSeatPricesUpdate(routeId, route.prices || [], data.seatPrices || []);
 
-      // 5. Update the schedule
+      // 4. Update the schedule with route stops
       await editScheduleMutation.mutateAsync({
         id,
         daysOfWeek: data.daysOfWeek,
@@ -132,6 +126,10 @@ export default function EditVisarunSchedulePage() {
         validTo: data.validTo ? data.validTo.toISOString() : undefined,
         autoGeneratePeriodMonths: data.autoGeneratePeriodMonths,
         isActive: data.isActive,
+        routeStops: data.routeStops.map((stop, index) => ({
+          ...stop,
+          stopOrder: index + 1,
+        })),
       });
 
       toast.success('Schedule updated successfully');
@@ -153,71 +151,6 @@ export default function EditVisarunSchedulePage() {
         toast.error(`Failed to update schedule: ${errorMessage}`);
       }
       // Don't throw the error so the form can remain open for retry
-    }
-  };
-
-  const handleRouteStopsUpdate = async (
-    routeId: string,
-    existingStops: RouteStop[],
-    newStops: CombinedVisarunFormData['routeStops']
-  ) => {
-    // Create a map of existing stops by order for easier lookup
-    const existingStopsMap = new Map(existingStops.map(stop => [stop.stopOrder, stop]));
-
-    // Process each new stop
-    for (let i = 0; i < newStops.length; i++) {
-      const newStop = newStops[i];
-      const stopOrder = i + 1;
-      const existingStop = existingStopsMap.get(stopOrder);
-
-      if (existingStop) {
-        // Update existing stop if there are changes
-        const hasChanges =
-          existingStop.cityId !== newStop.cityId ||
-          existingStop.pickupMode !== newStop.pickupMode ||
-          existingStop.pickupLocations?.[0]?.pickupLocation?.id !== newStop.pickupLocationId ||
-          existingStop.arrivalTime !== (newStop.arrivalTime || null) ||
-          existingStop.departureTime !== (newStop.departureTime || null) ||
-          existingStop.arrivalNextDay !== newStop.arrivalNextDay ||
-          existingStop.waitingDuration !== (newStop.waitingDuration || null);
-
-        if (hasChanges) {
-          const updateData = {
-            id: existingStop.id,
-            stopType: newStop.stopType,
-            pickupMode: newStop.pickupMode,
-            pickupLocationId: newStop.pickupLocationId,
-            arrivalTime: newStop.arrivalTime || undefined,
-            departureTime: newStop.departureTime || undefined,
-            arrivalNextDay: newStop.arrivalNextDay,
-            waitingDuration: newStop.waitingDuration || undefined,
-          };
-
-          await editRouteStopMutation.mutateAsync(updateData);
-        }
-        existingStopsMap.delete(stopOrder);
-      } else {
-        // Create new stop
-        const createData = {
-          routeId,
-          cityId: newStop.cityId,
-          stopOrder,
-          stopType: newStop.stopType,
-          pickupMode: newStop.pickupMode,
-          pickupLocationId: newStop.pickupLocationId,
-          arrivalTime: newStop.arrivalTime || undefined,
-          departureTime: newStop.departureTime || undefined,
-          arrivalNextDay: newStop.arrivalNextDay,
-          waitingDuration: newStop.waitingDuration || undefined,
-        };
-
-        await createRouteStopMutation.mutateAsync(createData);
-      }
-    }
-
-    // Delete remaining existing stops that are no longer needed
-    for (const [, existingStop] of existingStopsMap) {
-      await deleteRouteStopMutation.mutateAsync({ id: existingStop.id });
     }
   };
 

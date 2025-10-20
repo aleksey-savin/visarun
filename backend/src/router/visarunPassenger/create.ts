@@ -9,6 +9,9 @@ export const zCreateVisarunPassengerTrpcInput = z.object({
   seatClassId: z.string().uuid().optional(),
   seatNumber: z.string().optional(),
   routeStopId: z.string().uuid().optional(),
+  pickupAddress: z.string().optional(),
+  pickupLocationId: z.string().uuid().optional(),
+  pickupTime: z.string().optional(),
   serviceType: z.enum(['visa', 'visa_and_transport']).default('visa'),
 });
 
@@ -77,6 +80,9 @@ export const createVisarunPassengerTrpcRoute = orderItemCreateProcedure
         seatClassId: input.seatClassId,
         seatNumber: input.seatNumber,
         routeStopId: input.routeStopId,
+        pickupAddress: input.pickupAddress,
+        pickupLocationId: input.pickupLocationId,
+        pickupTime: input.pickupTime,
         status: PassengerStatus.confirmed,
       },
       include: {
@@ -108,6 +114,12 @@ export const createVisarunPassengerTrpcRoute = orderItemCreateProcedure
         pickupStop: {
           include: {
             city: true,
+          },
+        },
+        pickupLocation: {
+          select: {
+            id: true,
+            name: true,
           },
         },
         seatClass: {

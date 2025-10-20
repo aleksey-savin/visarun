@@ -166,6 +166,7 @@ export interface StoreVisarunPassenger {
   seatNumber?: string | null;
   seatClassId?: string | null;
   pickupAddress?: string | null;
+  pickupLocationId?: string | null;
   pickupTime?: string | null;
   routeStopId?: string | null;
   status: PassengerStatus;
@@ -208,6 +209,11 @@ export interface StoreVisarunPassenger {
       id: string;
       name: string;
     };
+  } | null;
+  pickupLocation?: {
+    id: string;
+    name: string;
+    address: string;
   } | null;
 }
 
@@ -304,7 +310,11 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   // visarun
   preferredDepartureCity: null,
   preferredVisarunCountry: null,
-  preferredDepartureDate: new Date(),
+  preferredDepartureDate: (() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  })(),
   // ---
   orderItems: [],
   visaApplications: [],
