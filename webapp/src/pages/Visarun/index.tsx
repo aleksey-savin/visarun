@@ -4,6 +4,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import TripsList from '@/components/Trip/TripsList';
 
 const AllVisarunTripsPage = () => {
   const [fromDate, setFromDate] = useState(() => {
@@ -12,9 +15,9 @@ const AllVisarunTripsPage = () => {
   });
 
   const [toDate, setToDate] = useState(() => {
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    return sevenDaysFromNow.toISOString().split('T')[0];
+    const tenDaysFromNow = new Date();
+    tenDaysFromNow.setDate(tenDaysFromNow.getDate() + 10);
+    return tenDaysFromNow.toISOString().split('T')[0];
   });
 
   const [activeTab, setActiveTab] = useState('');
@@ -77,6 +80,20 @@ const AllVisarunTripsPage = () => {
     }
   };
 
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    const daysToAdd = direction === 'next' ? 10 : -10;
+
+    const newFromDate = new Date(fromDate);
+    newFromDate.setDate(newFromDate.getDate() + daysToAdd);
+
+    const newToDate = new Date(toDate);
+    newToDate.setDate(newToDate.getDate() + daysToAdd);
+
+    setFromDate(newFromDate.toISOString().split('T')[0]);
+    setToDate(newToDate.toISOString().split('T')[0]);
+    setActiveTab(''); // Reset active tab to allow auto-selection of first date
+  };
+
   return (
     <div className="p-6">
       {/* Date Filters */}
@@ -105,46 +122,55 @@ const AllVisarunTripsPage = () => {
         </div>
       </div>
 
-      {dateKeys.length > 0 && (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="text-sm">
-          <TabsList>
-            {dateKeys.map(dateKey => (
-              <TabsTrigger className="border-none" key={dateKey} value={dateKey}>
-                {formatDateTab(dateKey)}
-                <Badge variant="secondary" className="rounded-full text-xs bg-secondary">
-                  {tripsByDate[dateKey].length}
-                </Badge>
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      {/* Navigation and tabs - always available */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="text-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant="primary"
+            size="icon"
+            onClick={() => navigateWeek('prev')}
+            className="h-8 w-8"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
 
-          {dateKeys.map(dateKey => (
-            <TabsContent key={dateKey} value={dateKey} className="mt-6">
-              <div className="flex flex-col gap-4">
-                {tripsByDate[dateKey].map((trip: any) => (
-                  <div
-                    key={trip.id}
-                    className="p-4 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow"
-                  >
-                    <div className="text-lg font-semibold text-gray-900">
-                      {new Date(trip.departureDateTime).toLocaleString()}
-                    </div>
-                    {/* Add more trip details here as needed */}
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
-      )}
+          {dateKeys.length > 0 ? (
+            <TabsList className="flex-1">
+              {dateKeys.map(dateKey => (
+                <TabsTrigger className="border-none" key={dateKey} value={dateKey}>
+                  {formatDateTab(dateKey)}
+                  <Badge variant="secondary" className="rounded-full text-xs bg-secondary">
+                    {tripsByDate[dateKey].length}
+                  </Badge>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          ) : (
+            <div className="flex-1 text-center py-2 text-muted-foreground">
+              No trips for this period
+            </div>
+          )}
 
-      {/* No trips message */}
-      {dateKeys.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <p className="text-lg">No scheduled trips found for the selected date range.</p>
-          <p className="text-sm mt-2">Try adjusting your date filters.</p>
+          <Button
+            variant="primary"
+            size="icon"
+            onClick={() => navigateWeek('next')}
+            className="h-8 w-8"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
-      )}
+
+        {dateKeys.length > 0 && (
+          <>
+            {dateKeys.map(dateKey => (
+              <TabsContent key={dateKey} value={dateKey} className="mt-6">
+                <TripsList trips={tripsByDate[dateKey]} />
+              </TabsContent>
+            ))}
+          </>
+        )}
+      </Tabs>
     </div>
   );
 };

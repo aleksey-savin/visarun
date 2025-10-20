@@ -117,6 +117,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
       pickupLocationId?: string;
       pickupAddress?: string;
       specifyLater?: boolean;
+      routeStopId?: string;
     }
   ) => {
     setSaveStatus('saving');
@@ -176,13 +177,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
         serviceType: 'visa',
         pickupLocationId: pickupData?.pickupLocationId,
         pickupAddress: pickupData?.specifyLater ? undefined : pickupData?.pickupAddress,
-        routeStopId: pickupData?.pickupLocationId
-          ? trip.route?.routeStops?.find((stop: any) =>
-              stop.pickupLocations?.some(
-                (pl: any) => pl.pickupLocation.id === pickupData.pickupLocationId
-              )
-            )?.id
-          : undefined,
+        routeStopId: pickupData?.routeStopId,
       });
 
       if (!visarunPassengerData.visarunPassenger) {
@@ -220,6 +215,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
     pickupLocationId?: string;
     pickupAddress?: string;
     specifyLater?: boolean;
+    routeStopId?: string;
   }) => {
     if (
       !selectedTripForBooking ||
@@ -485,6 +481,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
           seatClass={selectedSeatClassForBooking}
           price={selectedPriceForBooking || 0}
           onConfirm={handleBookingConfirm}
+          preferredDepartureCity={preferredDepartureCity}
         />
 
         <CancelBookingDialog
@@ -628,6 +625,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
         trip={selectedTripForBooking}
         seatClass={selectedSeatClassForBooking}
         price={selectedPriceForBooking || 0}
+        preferredDepartureCity={preferredDepartureCity}
         onConfirm={handleBookingConfirm}
       />
 

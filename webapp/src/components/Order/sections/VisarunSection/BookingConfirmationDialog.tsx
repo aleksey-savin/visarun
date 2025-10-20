@@ -26,10 +26,12 @@ interface BookingConfirmationDialogProps {
   trip: any;
   seatClass: any;
   price: number;
+  preferredDepartureCity?: any;
   onConfirm: (bookingData: {
     pickupLocationId?: string;
     pickupAddress?: string;
     specifyLater?: boolean;
+    routeStopId?: string;
   }) => Promise<void>;
 }
 
@@ -37,7 +39,7 @@ const BookingConfirmationDialog = ({
   isOpen,
   onOpenChange,
   trip,
-
+  preferredDepartureCity,
   onConfirm,
 }: BookingConfirmationDialogProps) => {
   const [isConfirming, setIsConfirming] = useState(false);
@@ -45,15 +47,35 @@ const BookingConfirmationDialog = ({
   const [specifyLater, setSpecifyLater] = useState(false);
   const [selectedPickupLocationId, setSelectedPickupLocationId] = useState<string>('');
 
-  // Find departure stop
-  const departureStop = trip?.route?.routeStops?.find((stop: any) => stop.stopType === 'departure');
+  // Find the departure stop that matches the preferred departure city
+  const selectedDepartureStop = useMemo(() => {
+    if (!trip?.route?.routeStops) {
+      return undefined;
+    }
 
-  // Find all pickup locations in the same city as departure
+    // First try to find stop that matches the preferred departure city
+    if (preferredDepartureCity?.id) {
+      const matchingStop = trip.route.routeStops.find(
+        (stop: any) =>
+          stop.cityId === preferredDepartureCity.id &&
+          (stop.stopType === 'departure' || stop.stopType === 'intermediate')
+      );
+
+      if (matchingStop) {
+        return matchingStop;
+      }
+    }
+
+    // Fallback to first departure stop
+    return trip.route.routeStops.find((stop: any) => stop.stopType === 'departure');
+  }, [trip?.route?.routeStops, preferredDepartureCity]);
+
+  // Find all pickup locations in the selected departure city
   const departureCityPickupLocations = useMemo(() => {
     const allPickupLocations: any[] = [];
 
     trip?.route?.routeStops
-      ?.filter((stop: any) => stop.city.id === departureStop?.city.id)
+      ?.filter((stop: any) => stop.city.id === selectedDepartureStop?.city.id)
       ?.forEach((stop: any) => {
         stop.pickupLocations?.forEach((pl: any) => {
           if (!allPickupLocations.find(existing => existing.id === pl.pickupLocation.id)) {
@@ -63,7 +85,7 @@ const BookingConfirmationDialog = ({
       });
 
     return allPickupLocations;
-  }, [trip?.route?.routeStops, departureStop?.city.id]);
+  }, [trip?.route?.routeStops, selectedDepartureStop?.city.id]);
 
   // Set default pickup location to first element
   React.useEffect(() => {
@@ -79,15 +101,18 @@ const BookingConfirmationDialog = ({
         pickupLocationId?: string;
         pickupAddress?: string;
         specifyLater?: boolean;
-      } = {};
+        routeStopId?: string;
+      } = {
+        routeStopId: selectedDepartureStop?.id,
+      };
 
-      if (departureStop?.pickupMode === 'address') {
+      if (selectedDepartureStop?.pickupMode === 'address') {
         if (specifyLater) {
           bookingData.specifyLater = true;
         } else {
           bookingData.pickupAddress = pickupAddress;
         }
-      } else if (departureStop?.pickupMode === 'location') {
+      } else if (selectedDepartureStop?.pickupMode === 'location') {
         bookingData.pickupLocationId = selectedPickupLocationId;
       }
 
@@ -108,11 +133,11 @@ const BookingConfirmationDialog = ({
   };
 
   const isFormValid = () => {
-    if (!departureStop) return true;
+    if (!selectedDepartureStop) return true;
 
-    if (departureStop.pickupMode === 'address') {
+    if (selectedDepartureStop.pickupMode === 'address') {
       return specifyLater || pickupAddress.trim().length > 0;
-    } else if (departureStop.pickupMode === 'location') {
+    } else if (selectedDepartureStop.pickupMode === 'location') {
       return departureCityPickupLocations.length === 0 || selectedPickupLocationId.length > 0;
     }
 
@@ -133,10 +158,21 @@ const BookingConfirmationDialog = ({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Show departure city info */}
+          {selectedDepartureStop && (
+            <div className="flex flex-col gap-1">
+              <Label className="text-sm text-muted-foreground">Departing from</Label>
+              <div className="text-sm font-medium">
+                {selectedDepartureStop.city.name}
+                {selectedDepartureStop.stopType === 'intermediate' && ' (Intermediate Stop)'}
+              </div>
+            </div>
+          )}
+
           {/* Pickup Information */}
-          {departureStop && (
+          {selectedDepartureStop && (
             <div className="space-y-3">
-              {departureStop.pickupMode === 'address' && (
+              {selectedDepartureStop.pickupMode === 'address' && (
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="specify-later" className="text-sm">
@@ -166,7 +202,7 @@ const BookingConfirmationDialog = ({
                 </div>
               )}
 
-              {departureStop.pickupMode === 'location' && (
+              {selectedDepartureStop.pickupMode === 'location' && (
                 <div className="flex flex-col gap-1">
                   <Label className="text-sm">Pickup Location</Label>
                   {departureCityPickupLocations.length > 0 ? (
@@ -187,7 +223,7 @@ const BookingConfirmationDialog = ({
                     </Select>
                   ) : (
                     <div className="text-sm text-muted-foreground mt-1 p-2 bg-secondary rounded">
-                      No pickup locations available for {departureStop?.city?.name}
+                      No pickup locations available for {selectedDepartureStop?.city?.name}
                     </div>
                   )}
                 </div>

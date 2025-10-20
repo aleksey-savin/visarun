@@ -114,6 +114,7 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
             routeStops: {
               select: {
                 id: true,
+                cityId: true,
                 stopType: true,
                 pickupMode: true,
                 arrivalTime: true,
@@ -177,10 +178,12 @@ async function getSmartVisarunTrips(params: {
       routeStops: {
         some: {
           AND: [
-            // Есть остановка отправления в предпочитаемом городе
+            // Есть остановка (departure или intermediate) в предпочитаемом городе
             {
               cityId: preferredDepartureCityId,
-              stopType: 'departure',
+              stopType: {
+                in: ['departure', 'intermediate'],
+              },
             },
           ],
         },
@@ -299,6 +302,7 @@ async function getSmartVisarunTrips(params: {
           routeStops: {
             select: {
               id: true,
+              cityId: true,
               stopType: true,
               pickupMode: true,
               arrivalTime: true,
@@ -411,6 +415,7 @@ async function getSmartVisarunTrips(params: {
           routeStops: {
             select: {
               id: true,
+              cityId: true,
               stopType: true,
               pickupMode: true,
               arrivalTime: true,
@@ -518,6 +523,7 @@ async function getSmartVisarunTrips(params: {
           routeStops: {
             select: {
               id: true,
+              cityId: true,
               stopType: true,
               pickupMode: true,
               arrivalTime: true,
