@@ -4,6 +4,8 @@ import { z } from 'zod';
 export const zCreateVisaTypeTrpcInput = z.object({
   name: z.string().min(1).max(255),
   serviceCost: z.number().min(0),
+  accelerationCost: z.number().min(0),
+  accelerationAvailable: z.boolean().default(false),
   countryId: z.string().uuid(),
   isMultientry: z.boolean().default(false),
   favourite: z.boolean().default(false),
@@ -94,6 +96,8 @@ export const createVisaTypeTrpcRoute = visaTypeCreateProcedure
       data: {
         name: input.name,
         serviceCost: input.serviceCost,
+        accelerationCost: input.accelerationCost,
+        accelerationAvailable: input.accelerationAvailable,
         countryId: input.countryId,
         isMultientry: finalIsMultientry,
         favourite: input.favourite,

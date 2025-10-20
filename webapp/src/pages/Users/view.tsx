@@ -311,7 +311,7 @@ const ViewUserPage = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-lg">
-                            {client.firstName || ''} {client.lastName || ''}
+                            {client.lastName || ''} {client.firstName || ''}
                           </CardTitle>
                           {client.isPrimary && (
                             <Badge

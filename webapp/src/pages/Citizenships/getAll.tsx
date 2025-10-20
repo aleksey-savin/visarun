@@ -190,7 +190,7 @@ const AllCitizenshipsPage = () => {
                   {citizenships.map((citizenship: Citizenship) => (
                     <TableRow key={citizenship.id} className="hover:bg-muted/50">
                       <TableCell>
-                        <div className="text-2xl">{citizenship.emoji}</div>
+                        <div className="text-2xl">{citizenship?.emoji}</div>
                       </TableCell>
                       <TableCell>
                         <Link
@@ -274,7 +274,7 @@ const AllCitizenshipsPage = () => {
                     >
                       <CardTitle className="text-base">
                         <div className="flex items-center space-x-2">
-                          <div className="text-lg">{citizenship.emoji}</div>
+                          <div className="text-lg">{citizenship?.emoji}</div>
                           <span className="font-medium text-foreground">{citizenship.name}</span>
                         </div>
                       </CardTitle>

@@ -5,25 +5,26 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { trpc } from '@/lib/trpc';
-import useOrderStore from '@/stores/order/order-store.js';
+import useOrderStore, { StoreClient } from '@/stores/order/order-store.js';
 
 const formSchema = z.object({
   email: z.string(),
   phoneNumber: z.string(),
 });
 
-const UserContacts = () => {
-  const { setSaveStatus, user, setUser } = useOrderStore();
+const UserContacts = ({ client }: { client: StoreClient }) => {
+  const { setSaveStatus, user, setUser, setClients, clients } = useOrderStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: user.email || '',
+      email: (client.isPrimary ? user.email : client.email) || '',
       phoneNumber: user.phoneNumber || '',
     },
   });
 
   const editUserMutation = trpc.user.edit.useMutation();
+  const editClientMutation = trpc.clientData.edit.useMutation();
 
   const handleContactUpdate = async (fieldName: 'email' | 'phoneNumber', value: string) => {
     if (!user) return;
@@ -38,11 +39,33 @@ const UserContacts = () => {
       [fieldName]: value,
     });
 
+    if (fieldName === 'email') {
+      setClients(
+        clients.map(c =>
+          c.id === client.id
+            ? {
+                ...c,
+                email: value,
+              }
+            : c
+        )
+      );
+    }
+
     try {
-      await editUserMutation.mutateAsync({
-        id: user.id,
-        [fieldName]: value,
-      });
+      if (client.isPrimary || fieldName !== 'email') {
+        await editUserMutation.mutateAsync({
+          id: user.id,
+          [fieldName]: value.trim(),
+        });
+      }
+
+      if (fieldName === 'email') {
+        await editClientMutation.mutateAsync({
+          id: client.id,
+          email: value.trim(),
+        });
+      }
 
       setSaveStatus('saved');
     } catch (error: any) {
@@ -114,28 +137,30 @@ const UserContacts = () => {
   return (
     <div>
       <Label className="text-sm mb-2">
-        Contacts<span className="text-red-500">*</span>
+        Contacts {client.isPrimary && <span className="text-red-500">*</span>}
       </Label>
       <div className="flex gap-4">
         <Form {...form}>
-          <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    placeholder="Phone Number"
-                    value={field.value || ''}
-                    onChange={e => handleChange(field, e.target.value)}
-                    onBlur={() => handleBlur('phoneNumber')}
-                    name={field.name}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {client.isPrimary && (
+            <FormField
+              control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      placeholder="Phone Number"
+                      value={field.value || ''}
+                      onChange={e => handleChange(field, e.target.value)}
+                      onBlur={() => handleBlur('phoneNumber')}
+                      name={field.name}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <FormField
             control={form.control}
             name="email"

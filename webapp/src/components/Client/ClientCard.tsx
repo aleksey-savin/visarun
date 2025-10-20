@@ -9,8 +9,6 @@ import { getViewClientRoute } from '@/lib/routes';
 import { Card } from '../ui/card';
 import { ContactMethodIcon } from '../ContactMethod';
 
-import { trpc } from '@/lib/trpc';
-
 interface RelatedClient {
   id: string;
   firstName: string | null;
@@ -75,17 +73,8 @@ const ClientCard = ({
   onSelectionChange,
   isSelectable = true,
   showLinkedClients = false,
-  showLatestOrderItems = false,
 }: ClientCardProps) => {
   const navigate = useNavigate();
-
-  const { data: orderItemsData } = trpc.orderItem.getLatestByClientId.useQuery({
-    clientId: client.id,
-  });
-
-  if (showLatestOrderItems) {
-    console.log(orderItemsData);
-  }
 
   const [copiedContact, setCopiedContact] = useState<string | null>(null);
 
@@ -131,11 +120,11 @@ const ClientCard = ({
                 <Badge
                   variant="primary"
                   className="cursor-pointer"
-                  onClick={e => handleClientNameClick(e, client.id)}
+                  onClick={(e: any) => handleClientNameClick(e, client.id)}
                 >
                   <Crown />
                   <span>
-                    {client.firstName || ''} {client.lastName || ''}
+                    {client.lastName || ''} {client.firstName || ''}
                   </span>
                 </Badge>
                 {showLinkedClients && (
@@ -154,10 +143,10 @@ const ClientCard = ({
                 <Badge
                   variant="secondary"
                   className="cursor-pointer"
-                  onClick={e => handleClientNameClick(e, client.id)}
+                  onClick={(e: any) => handleClientNameClick(e, client.id)}
                 >
                   <User />
-                  {client.firstName || ''} {client.lastName || ''}
+                  {client.lastName || ''} {client.firstName || ''}
                 </Badge>
               </div>
             )}
@@ -179,7 +168,7 @@ const ClientCard = ({
                       ? 'bg-green-500/20 text-green-300'
                       : 'bg-muted hover:bg-muted/80'
                   }`}
-                  onClick={e => handleCopyToClipboard(contact.value, e, contact.id)}
+                  onClick={(e: any) => handleCopyToClipboard(contact.value, e, contact.id)}
                 >
                   <ContactMethodIcon method={contact.method} className="w-3 h-3" />
                   {` ${contact.value}`}
@@ -198,7 +187,7 @@ const ClientCard = ({
                     ? 'bg-green-500/20 text-green-300'
                     : 'bg-muted hover:bg-muted/80'
                 }`}
-                onClick={e =>
+                onClick={(e: any) =>
                   client.user?.email && handleCopyToClipboard(client.user.email, e, 'email')
                 }
               >

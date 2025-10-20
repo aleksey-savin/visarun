@@ -30,8 +30,12 @@ export const createRequirementDocumentTrpcRoute = requirementDocumentCreateProce
       throw new Error('Requirement not found');
     }
 
-    // Validate file URL format
-    if (!fileUrl.startsWith('/uploads/')) {
+    // Validate file URL format (S3 URLs or legacy local URLs)
+    const s3Endpoint = process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net';
+    const isS3Url = fileUrl.includes(s3Endpoint);
+    const isLegacyUrl = fileUrl.startsWith('/uploads/');
+
+    if (!isS3Url && !isLegacyUrl) {
       throw new Error('Invalid file URL format');
     }
 

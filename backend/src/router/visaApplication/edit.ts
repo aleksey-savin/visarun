@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const zEditVisaApplicationTrpcInput = z.object({
   id: z.string().uuid(),
-  applicationCode: z.string().min(1).max(100).optional(),
+  applicationCode: z.string().min(0).max(100).optional(),
   submittedByAgent: z.boolean().optional(),
   countryId: z.string().uuid().optional(),
   visaTypeId: z.string().uuid().optional(),

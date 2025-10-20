@@ -5,30 +5,122 @@ import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent } from '../ui/dialog';
+import { ImageViewer } from '../ui/image-viewer';
 
-import { Crown, User, Mail, Check, Copy, Phone, File, Eye, Download } from 'lucide-react';
+import {
+  Crown,
+  User,
+  Mail,
+  Check,
+  Copy,
+  Phone,
+  File,
+  Eye,
+  Download,
+  Image,
+  FileX,
+} from 'lucide-react';
 
 import { ContactMethodIcon } from '../ContactMethod';
 
 import { formatCurrency } from '@/utils/currency';
 import { cn } from '@/lib/utils';
 
+// Application type mapping
+const applicationTypes = {
+  visa: 'Visa',
+  acceleration: 'Acceleration',
+} as const;
+
+interface Country {
+  name: string;
+}
+
+interface VisaType {
+  name: string;
+}
+
+interface Citizenship {
+  name: string;
+  abbreviation: string;
+}
+
+interface Method {
+  name: string;
+  icon?: string | null | undefined;
+}
+
+interface Requirement {
+  title: string;
+}
+
+interface ContactMethod {
+  id: string;
+  type: string;
+  value: string;
+  method: Method;
+}
+
+interface Document {
+  id: string;
+  originalName: string;
+  fileUrl: string;
+  requirement: Requirement;
+}
+
+interface User {
+  contactMethods: ContactMethod[];
+  phoneNumber: string;
+  email: string;
+}
+
+interface Client {
+  lastName: string | null;
+  firstName: string | null;
+  isPrimary: boolean;
+  citizenship: Citizenship | null;
+  user: User | null;
+  documents: Document[];
+}
+
+interface OrderItem {
+  id: string;
+  client: Client;
+  finalPrice: number;
+}
+
+interface Application {
+  id: string;
+  type: string;
+  country: Country;
+  visaType: VisaType;
+  plannedCountryEntryDate: Date;
+  orderItem: OrderItem;
+}
+
+interface Order {
+  status: string;
+}
+
 const ClientCard = ({
-  application,
+  client,
   order,
+  orderItem,
+  application,
   border,
 }: {
-  application: any;
-  order?: any;
+  client: Client;
+  order: Order;
+  orderItem: OrderItem;
+  application: Application;
   border?: string;
 }) => {
-  const { orderItem } = application;
-  const { client } = orderItem;
-
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [viewingDocument, setViewingDocument] = useState<any>(null);
+  const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
 
   const [copiedContact, setCopiedContact] = useState<string | null>(null);
+
+  const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
 
   const handleCopyToClipboard = (text: string, event: React.MouseEvent, contactId: string) => {
     event.stopPropagation();
@@ -46,21 +138,39 @@ const ClientCard = ({
   }, [copiedContact]);
 
   const isImageFile = (fileName: string) => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic'];
     return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
   };
 
   const getFullFileUrl = (fileUrl: string) => {
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    return fileUrl.startsWith('/') ? `${baseUrl}${fileUrl}` : fileUrl;
+
+    // If it's an S3 URL, convert it to use backend file endpoint
+    if (fileUrl.includes('storage.yandexcloud.net/')) {
+      // Extract the file path after bucket name
+      const parts = fileUrl.split('storage.yandexcloud.net/')[1];
+      if (parts) {
+        // Remove bucket name from path: bucket/folder/file -> folder/file
+        const filePath = parts.split('/').slice(1).join('/');
+        return `${baseUrl}/upload/file/${filePath}`;
+      }
+    }
+
+    // For legacy local paths, prepend the API base URL
+    if (fileUrl.startsWith('/')) {
+      return `${baseUrl}${fileUrl}`;
+    }
+
+    // Return as-is for other cases
+    return fileUrl;
   };
 
-  const handleViewDocument = (document: any) => {
+  const handleViewDocument = (document: Document) => {
     setViewingDocument(document);
     setViewModalOpen(true);
   };
 
-  const handleDownloadDocument = async (doc: any, event: React.MouseEvent) => {
+  const handleDownloadDocument = async (doc: Document, event: React.MouseEvent) => {
     event.stopPropagation();
 
     try {
@@ -103,7 +213,7 @@ const ClientCard = ({
     }
   };
 
-  const downloadWithBlob = async (doc: any, fullUrl: string) => {
+  const downloadWithBlob = async (doc: Document, fullUrl: string) => {
     const response = await fetch(fullUrl);
     if (!response.ok) {
       throw new Error('Failed to download file');
@@ -141,7 +251,7 @@ const ClientCard = ({
               <Badge variant="primary">
                 <Crown />
                 <span>
-                  {client.firstName || ''} {client.lastName || ''}
+                  {client.lastName || ''} {client.firstName || ''}
                 </span>
               </Badge>
             </div>
@@ -153,7 +263,7 @@ const ClientCard = ({
               </Badge>
               <Badge variant="secondary">
                 <User />
-                {client.firstName || ''} {client.lastName || ''}
+                {client.lastName || ''} {client.firstName || ''}
               </Badge>
             </div>
           )}
@@ -172,26 +282,28 @@ const ClientCard = ({
           </Badge>
         )}
 
-        {client.user?.contactMethods?.map((contact: any) => (
-          <Badge
-            key={contact.id}
-            variant="secondary"
-            className={`flex gap-1 items-center cursor-pointer transition-all duration-300 ${
-              copiedContact === contact.id
-                ? 'bg-green-500/20 text-green-300'
-                : 'bg-muted hover:bg-muted/80'
-            }`}
-            onClick={e => handleCopyToClipboard(contact.value, e, contact.id)}
-          >
-            <ContactMethodIcon method={contact.method} className="w-4 h-4" />
-            {` ${contact.value}`}
-            {copiedContact === contact.id ? (
-              <Check className="w-4 h-4 animate-pulse" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
-          </Badge>
-        ))}
+        {client.user?.contactMethods
+          .filter(contact => contact.method)
+          .map((contact: ContactMethod) => (
+            <Badge
+              key={contact.id}
+              variant="secondary"
+              className={`flex gap-1 items-center cursor-pointer transition-all duration-300 ${
+                copiedContact === contact.id
+                  ? 'bg-green-500/20 text-green-300'
+                  : 'bg-muted hover:bg-muted/80'
+              }`}
+              onClick={e => handleCopyToClipboard(contact.value, e, contact.id)}
+            >
+              <ContactMethodIcon method={contact.method} className="w-4 h-4" />
+              {` ${contact.value}`}
+              {copiedContact === contact.id ? (
+                <Check className="w-4 h-4 animate-pulse" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+            </Badge>
+          ))}
         {client.user?.phoneNumber && (
           <Badge
             variant="secondary"
@@ -237,11 +349,16 @@ const ClientCard = ({
         )}
       </div>
       <div className="flex flex-col gap-2">
-        <div key={`${application.id}-visa-data`} className="md:flex flex-col items-center">
-          <Badge variant="accent" className="rounded-b-none md:rounded-r-none  w-full">
-            Visa - {application.country.name} - {application.visaType.name}
+        <div key={`${application.id}-visa-data`} className="flex items-center">
+          <Badge
+            variant={application.type === 'visa' ? 'accent' : 'accent-green'}
+            className="rounded-r-none"
+          >
+            {applicationTypes[application.type as keyof typeof applicationTypes] ||
+              application.type}{' '}
+            - {application.country.name} - {application.visaType.name}
           </Badge>
-          <Badge variant="secondary" className="rounded-t-none md:rounded-l-none w-full">
+          <Badge variant="secondary" className="rounded-l-none">
             {new Date(application.plannedCountryEntryDate).toLocaleDateString()} -{' '}
             {new Date(application.plannedCountryEntryDate).toLocaleTimeString([], {
               hour: '2-digit',
@@ -254,12 +371,21 @@ const ClientCard = ({
       {client.documents.length > 0 && (
         <>
           <Separator />
-          <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-3">
-            {client.documents.map((document: any) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-3 items-center">
+            {client.documents.map((document: Document) => (
               <Card key={document.id} className="bg-secondary p-3 rounded-md">
                 {/* Show existing document */}
-                <div className="flex items-center gap-2">
-                  {isImageFile(document.originalName) ? (
+                <div className="flex justify-between items-center gap-2">
+                  {document.originalName.toLowerCase().includes('.heic') ||
+                  document.originalName.toLowerCase().includes('.heif') ? (
+                    <div className="flex items-center justify-center border-dashed rounded-md p-2">
+                      <Image className="w-8 h-8 text-gray-400" />
+                    </div>
+                  ) : imageLoadErrors?.has(document.fileUrl) ? (
+                    <div className="flex items-center">
+                      <FileX className="w-8 h-8 text-destructive" />
+                    </div>
+                  ) : isImageFile(document.originalName) ? (
                     <div className="flex items-center justify-center border-dashed rounded-md">
                       <img
                         src={getFullFileUrl(document.fileUrl)}
@@ -268,27 +394,34 @@ const ClientCard = ({
                         onError={() => {
                           console.error('Image failed to load:', document.fileUrl);
                           console.error('Full URL:', getFullFileUrl(document.fileUrl));
+                          setImageLoadErrors?.((prev: Set<string>) =>
+                            new Set(prev).add(document.fileUrl)
+                          );
                         }}
                       />
                     </div>
                   ) : (
-                    <File className="w-6 h-6" />
+                    <File className="w-8 h-8" />
                   )}
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleViewDocument(document)}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={e => handleDownloadDocument(document, e)}
-                    >
-                      {document.requirement?.title} <Download />
-                    </Button>
+                    {!imageLoadErrors?.has(document.fileUrl) && (
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleViewDocument(document)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={e => handleDownloadDocument(document, e)}
+                        >
+                          {document.requirement?.title} <Download />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -301,7 +434,7 @@ const ClientCard = ({
                 {viewingDocument && (
                   <>
                     {isImageFile(viewingDocument.originalName) ? (
-                      <img
+                      <ImageViewer
                         src={getFullFileUrl(viewingDocument.fileUrl)}
                         alt={viewingDocument.originalName}
                         className="max-w-full max-h-[70vh] object-contain rounded"

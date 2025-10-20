@@ -1,12 +1,7 @@
 import { userDeleteProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 import { removePrimaryClient } from '../../utils/clientPrimary.js';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { deleteFile } from '../../services/s3.js';
 
 export const zDeleteClientTrpcInput = z.object({
   id: z.string().uuid(),
@@ -45,16 +40,12 @@ export const deleteClientTrpcRoute = userDeleteProcedure
 
     // Delete all associated documents first
     if (existingClient.documents.length > 0) {
-      // Delete physical files from filesystem
+      // Delete physical files from S3 or filesystem
       for (const document of existingClient.documents) {
         try {
-          const fileName = document.fileUrl.split('/').pop();
-          if (fileName) {
-            const filePath = path.join(__dirname, '../../../uploads/client-documents', fileName);
-            await fs.unlink(filePath);
-          }
+          await deleteFile(document.fileUrl);
         } catch (error) {
-          console.warn(`Failed to delete physical file: ${document.fileUrl}`, error);
+          console.warn(`Failed to delete file: ${document.fileUrl}`, error);
           // Continue with deletion even if file deletion fails
         }
       }

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "public"."OrderPayment" ALTER COLUMN "paidAt" SET DEFAULT CURRENT_TIMESTAMP;

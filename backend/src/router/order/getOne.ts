@@ -40,6 +40,20 @@ export const getOrderTrpcRoute = orderReadProcedure
             },
           },
         },
+        createdBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        updatedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
         clients: {
           select: {
             id: true,
@@ -49,6 +63,7 @@ export const getOrderTrpcRoute = orderReadProcedure
                 userId: true,
                 isPrimary: true,
                 preConfirmPassportIsValid: true,
+                birthDate: true,
                 passportExpirationDate: true,
                 prevViolations: true,
                 prevViolationsDesc: true,
@@ -56,6 +71,7 @@ export const getOrderTrpcRoute = orderReadProcedure
                 isOutsideTheCountryAt: true,
                 firstName: true,
                 lastName: true,
+                email: true,
                 requirements: true,
                 documents: true,
                   bankingDetails: true,
@@ -134,7 +150,9 @@ export const getOrderTrpcRoute = orderReadProcedure
         }); **/
 
       // Fetch visa applications for items with serviceType = 'visa'
-      const visaItems = order.items.filter(item => item.serviceType === 'visa');
+      const visaItems = order.items.filter(item =>
+        ['visa', 'acceleration'].includes(item.serviceType)
+      );
       const visaItemIds = visaItems.map(item => item.id);
 
       const visaApplications =
@@ -146,6 +164,7 @@ export const getOrderTrpcRoute = orderReadProcedure
               select: {
                 id: true,
                 orderItemId: true,
+                type: true,
                 plannedCountryEntryDate: true,
                 plannedCountryExitDate: true,
                 plannedCompletionDate: true,
@@ -171,8 +190,9 @@ export const getOrderTrpcRoute = orderReadProcedure
                     id: true,
                     name: true,
                     serviceCost: true,
+                    accelerationCost: true,
+                    accelerationAvailable: true,
                     isMultientry: true,
-
                     multientryExtraCost: true,
                     processingMode: true,
                     processingUnit: true,
@@ -207,12 +227,131 @@ export const getOrderTrpcRoute = orderReadProcedure
                 })
                 : [];
 
+      // Fetch visarun passengers for items with serviceType = 'visarun'
+      const visarunItems = order.items.filter(item => item.serviceType === 'visarun');
+      const visarunItemIds = visarunItems.map(item => item.id);
+
+      const visarunPassengers =
+        visarunItemIds.length > 0
+          ? await ctx.prisma.visarunPassenger.findMany({
+              where: {
+                orderItemId: { in: visarunItemIds },
+              },
+              include: {
+                seatClass: {
+                  select: {
+                    id: true,
+                    name: true,
+                    icon: true,
+                  },
+                },
+                trip: {
+                  select: {
+                    id: true,
+                    departureDateTime: true,
+                    route: {
+                      select: {
+                        id: true,
+                        name: true,
+                        routeStops: {
+                          select: {
+                            id: true,
+                            stopType: true,
+                            departureTime: true,
+                            arrivalTime: true,
+                            waitingDuration: true,
+                            city: {
+                              select: {
+                                id: true,
+                                name: true,
+                              },
+                            },
+                          },
+                        },
+                        transports: {
+                          where: {
+                            isActive: true,
+                          },
+                          select: {
+                            id: true,
+                            transport: {
+                              select: {
+                                id: true,
+                                name: true,
+                                seatCount: true,
+                                transportType: {
+                                  select: {
+                                    id: true,
+                                    name: true,
+                                  },
+                                },
+                                seatingChart: {
+                                  select: {
+                                    id: true,
+                                    transportId: true,
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                        prices: {
+                          select: {
+                            id: true,
+                            price: true,
+                            seatClass: {
+                              select: {
+                                id: true,
+                                name: true,
+                                icon: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                tripTransport: {
+                  select: {
+                    id: true,
+                    transport: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                  },
+                },
+                pickupStop: {
+                  select: {
+                    id: true,
+                    city: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                  },
+                },
+                pickupLocation: {
+                  select: {
+                    id: true,
+                    name: true,
+                    address: true,
+                  },
+                },
+              },
+            })
+          : [];
+
       return {
         ...order,
         clients: order.clients.map(orderClient => ({
           ...orderClient.client,
         })),
         visaApplications,
+        visarunPassengers,
           currencyExchanges
       };
     }

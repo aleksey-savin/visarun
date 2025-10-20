@@ -15,7 +15,15 @@ import {
 
 import type { OrderItem, VisaType } from '@visarun/backend/node_modules/@prisma/client';
 
-const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
+const VisaTypeSelector = ({
+  item,
+  isReadOnly,
+  activeService,
+}: {
+  item: OrderItem;
+  isReadOnly: boolean;
+  activeService: string;
+}) => {
   const {
     clients,
     orderItems,
@@ -41,7 +49,11 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
 
   useEffect(() => {
     if (data) {
-      setVisaTypes(data.visaTypes);
+      setVisaTypes(
+        data.visaTypes.filter(type =>
+          activeService === 'acceleration' ? type.accelerationAvailable : true
+        )
+      );
     }
   }, [data]);
 
@@ -99,7 +111,13 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
         const extraCost = visaApplication.isMultientry
           ? visaApplication.visaType.multientryExtraCost || 0
           : 0;
-        itemPrice = basePrice + extraCost + surchargeAmount;
+        if (item.serviceType === 'visa') {
+          itemPrice = basePrice + extraCost + surchargeAmount;
+        }
+
+        if (item.serviceType === 'acceleration') {
+          itemPrice = visaApplication.visaType.accelerationCost || 0;
+        }
       }
 
       // Only update if the price has actually changed
@@ -171,7 +189,13 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
     if (!isCountryBlacklisted) {
       const basePrice = visaTypeObject.serviceCost || 0;
       const extraCost = visaApplication?.isMultientry ? visaTypeObject.multientryExtraCost || 0 : 0;
-      itemPrice = basePrice + extraCost + surchargeAmount;
+      if (item.serviceType === 'visa') {
+        itemPrice = basePrice + extraCost + surchargeAmount;
+      }
+
+      if (item.serviceType === 'acceleration') {
+        itemPrice = visaTypeObject?.accelerationCost || 0;
+      }
     }
 
     const updatedOrderItems = orderItems.map(i =>
@@ -196,11 +220,8 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
             processingValueMax: visaTypeObject.processingValueMax,
           }
         : null,
-      visaApplication?.plannedCountryExitDate
-        ? new Date(visaApplication.plannedCountryExitDate)
-        : null,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.stampUntilDate ? new Date(visaApplication.stampUntilDate) : null,
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedVisaApplications = visaApplications.map(application =>
@@ -256,7 +277,13 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
     if (!isCountryBlacklisted) {
       const basePrice = selectedVisaTypeObject.serviceCost || 0;
       const extraCost = isMultientry ? selectedVisaTypeObject.multientryExtraCost || 0 : 0;
-      itemPrice = basePrice + extraCost + surchargeAmount;
+      if (item.serviceType === 'visa') {
+        itemPrice = basePrice + extraCost + surchargeAmount;
+      }
+
+      if (item.serviceType === 'acceleration') {
+        itemPrice = visaApplication.visaType.accelerationCost || 0;
+      }
     }
 
     const updatedOrderItems = orderItems.map(i =>
@@ -341,17 +368,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
             const renderVisaTypeButton = (visaType: VisaType, isLastInGroup: boolean = false) => {
               const isSelected = visaType.id === selected;
               const isDisabled =
-                visaType.processingMode && visaType.processingUnit
-                  ? isVisaTypeDisabled(
-                      {
-                        processingMode: visaType.processingMode,
-                        processingUnit: visaType.processingUnit,
-                        processingValueFixed: visaType.processingValueFixed,
-                        processingValueMax: visaType.processingValueMax,
-                      },
-                      visaApplication?.clientIsInTheCountry || false
-                    )
-                  : false;
+                visaType.processingMode && visaType.processingUnit ? isVisaTypeDisabled() : false;
 
               return (
                 <Button
@@ -359,7 +376,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
                   variant={isSelected ? 'accent' : 'secondary'}
                   size="sm"
                   type="button"
-                  disabled={isDisabled}
+                  disabled={isDisabled || isReadOnly}
                   onClick={event => {
                     event?.preventDefault();
                     event?.stopPropagation();
@@ -402,7 +419,7 @@ const VisaTypeSelector = ({ item }: { item: OrderItem }) => {
             <Switch
               checked={isMulti}
               onCheckedChange={() => handleMulti(!isMulti)}
-              disabled={!selectedVisaTypeObject?.isMultientry}
+              disabled={!selectedVisaTypeObject?.isMultientry || isReadOnly}
               className="ml-2"
             />
             <Label>Multi</Label>

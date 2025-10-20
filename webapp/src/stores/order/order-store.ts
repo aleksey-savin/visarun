@@ -18,6 +18,8 @@ import type {
   PaymentMethod,
   City,
   Country,
+  PassengerStatus,
+  VisarunServiceType,
 } from '@visarun/backend/node_modules/@prisma/client';
 
 // Frontend-compatible Decimal type that works without Prisma runtime dependency
@@ -59,6 +61,7 @@ export interface StoreClient extends Partial<Client> {
   userId: string | null;
   isPrimary: boolean;
   preConfirmPassportIsValid: boolean;
+  birthDate?: Date;
   passportExpirationDate?: Date;
   prevViolations?: boolean;
   prevViolationsDesc?: string | null;
@@ -66,6 +69,7 @@ export interface StoreClient extends Partial<Client> {
   isOutsideTheCountryAt?: Date;
   firstName?: string;
   lastName?: string;
+  email?: string | null;
   citizenship?: Citizenship & {
     blacklisted?: {
       citizenshipId: string;
@@ -109,6 +113,7 @@ export interface StoreVisaApplication {
   id: string;
   orderItemId: string;
   applicationCode: string | null;
+  type: string;
   submittedByAgent: boolean;
   status: VisaApplicationStatus;
   note: string | null;
@@ -136,6 +141,8 @@ export interface StoreVisaApplication {
     id: string | undefined;
     name: string | undefined;
     serviceCost: number | undefined;
+    accelerationCost: number | null | undefined;
+    accelerationAvailable: boolean | null;
     isMultientry: boolean | undefined;
     multientryExtraCost: number | null | undefined;
     processingMode: 'fixed' | 'approximate' | undefined;
@@ -182,19 +189,77 @@ export interface StoreOrderItem extends OrderItem {
   errors?: string[];
 }
 
-export interface StoreOrderPayment {
+export interface StoreVisarunPassenger {
   id: string;
-  orderId?: string;
-  currencyId: string;
-  amount: Decimal;
-  amountInSelectedCurrency: Decimal;
-  paymentMethod: PaymentMethod;
-  documentUrl: string | null;
-  acceptedById: string | null;
-  acceptedAt: Date | null;
-  paidAt?: Date;
+  orderItemId: string;
+  tripId: string;
+  tripTransportId?: string | null;
+  clientId: string;
+  serviceType: VisarunServiceType;
+  seatNumber?: string | null;
+  seatClassId?: string | null;
+  pickupAddress?: string | null;
+  pickupLocationId?: string | null;
+  pickupTime?: string | null;
+  routeStopId?: string | null;
+  status: PassengerStatus;
   createdAt: Date;
   updatedAt: Date;
+  trip: {
+    id: string;
+    departureDateTime: Date;
+    route: {
+      id: string;
+      name: string | null;
+      routeStops: {
+        id: string;
+        stopType: string;
+        departureTime: string | null;
+        arrivalTime: string | null;
+        waitingDuration: number | null;
+        city: {
+          id: string;
+          name: string;
+        };
+      }[];
+    };
+  };
+  seatClass?: {
+    id: string;
+    name: string;
+    icon: string | null;
+  } | null;
+  tripTransport?: {
+    id: string;
+    transport: {
+      id: string;
+      name: string;
+    };
+  } | null;
+  pickupStop?: {
+    id: string;
+    city: {
+      id: string;
+      name: string;
+    };
+  } | null;
+  pickupLocation?: {
+    id: string;
+    name: string;
+    address: string;
+  } | null;
+}
+
+export interface StoreOrderPayment {
+  id: string;
+  currencyId?: string;
+  amount?: Decimal;
+  amountInSelectedCurrency?: Decimal;
+  paymentMethod?: PaymentMethod | 'transfer';
+  documentUrl?: string | null;
+  acceptedById?: string | null;
+  acceptedAt?: Date | null;
+  paidAt?: Date;
   confirmPaymentWithoutDocument?: boolean;
   acceptedByUser?: {
     id: string;
@@ -222,6 +287,7 @@ interface OrderStore {
   contactMethods: StoreUserContactMethod[];
   orderItems: StoreOrderItem[];
   visaApplications: StoreVisaApplication[];
+  visarunPassengers: StoreVisarunPassenger[];
   currencyExchanges: StoreCurrencyExchange[];
   orderPayments: StoreOrderPayment[];
   // visarun
@@ -233,6 +299,7 @@ interface OrderStore {
   setActiveClientId: (activeClientId: string) => void;
   setOrder: (orderData: Order) => void;
   updateOrderStatus: (status: OrderStatus) => Promise<void>;
+
   setUser: (userData: StoreUser) => void;
   setClients: (clients: StoreClient[]) => void;
   setContactMethods: (contactMethods: StoreUserContactMethod[]) => void;
@@ -243,6 +310,7 @@ interface OrderStore {
   // ----
   setOrderItems: (orderItems: StoreOrderItem[]) => void;
   setVisaApplications: (visaApplications: StoreVisaApplication[]) => void;
+  setVisarunPassengers: (visarunPassengers: StoreVisarunPassenger[]) => void;
   setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) => void;
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => void;
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) => void;
@@ -256,10 +324,13 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   order: {
     id: '',
     userId: '',
+    postPayment: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     status: 'draft',
     comment: '',
+    createdById: null,
+    updatedById: null,
   },
   user: {
     id: '',
@@ -274,10 +345,15 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   // visarun
   preferredDepartureCity: null,
   preferredVisarunCountry: null,
-  preferredDepartureDate: new Date(),
+  preferredDepartureDate: (() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  })(),
   // ---
   orderItems: [],
   visaApplications: [],
+  visarunPassengers: [],
     currencyExchanges: [],
   orderPayments: [],
 
@@ -354,6 +430,8 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   setOrderItems: (orderItems: StoreOrderItem[]) => set(() => ({ orderItems })),
   setVisaApplications: (visaApplications: StoreVisaApplication[]) =>
     set(() => ({ visaApplications })),
+  setVisarunPassengers: (visarunPassengers: StoreVisarunPassenger[]) =>
+    set(() => ({ visarunPassengers })),
     setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) =>
         set(() => ({ currencyExchanges })),
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),

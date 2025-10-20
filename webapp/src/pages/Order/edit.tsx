@@ -43,6 +43,7 @@ const EditOrderPage = () => {
     ...client,
     firstName: client.firstName ?? undefined,
     lastName: client.lastName ?? undefined,
+    birthDate: client.birthDate ? new Date(client.birthDate) : undefined,
     passportExpirationDate: client.passportExpirationDate
       ? new Date(client.passportExpirationDate)
       : undefined,
@@ -81,6 +82,7 @@ const EditOrderPage = () => {
     setContactMethods,
     setOrderItems,
     setVisaApplications,
+    setVisarunPassengers,
       setCurrencyExchanges,
     setOrderPayments,
     setActiveServicePuzzleSection,
@@ -92,9 +94,12 @@ const EditOrderPage = () => {
       id: orderData.id,
       userId: orderData.userId,
       status: orderData.status,
+      postPayment: orderData.postPayment,
       createdAt: new Date(orderData.createdAt),
       updatedAt: new Date(orderData.updatedAt),
       comment: orderData.comment || '',
+      createdById: orderData.createdById || null,
+      updatedById: orderData.updatedById || null,
     });
 
     if (orderData.user) {
@@ -117,7 +122,7 @@ const EditOrderPage = () => {
 
       const currentClients = useOrderStore.getState().clients;
       setClients(
-        orderData.clients.map(client => {
+        orderData.clients.map((client: any) => {
           // Find existing client to preserve visa requirements
           const existingClient = currentClients.find(c => c.id === client.id);
 
@@ -125,7 +130,9 @@ const EditOrderPage = () => {
             ...client,
             firstName: client.firstName ?? undefined,
             lastName: client.lastName ?? undefined,
+            email: client.email ?? undefined,
             preConfirmPassportIsValid: client.preConfirmPassportIsValid ?? undefined,
+            birthDate: client.birthDate ? new Date(client.birthDate) : undefined,
             passportExpirationDate: client.passportExpirationDate
               ? new Date(client.passportExpirationDate)
               : undefined,
@@ -207,6 +214,7 @@ const EditOrderPage = () => {
           id: i.id,
           orderItemId: i.orderItemId,
           applicationCode: i.applicationCode,
+          type: i.type,
           submittedByAgent: i.submittedByAgent,
           country: {
             id: i.country?.id,
@@ -215,6 +223,8 @@ const EditOrderPage = () => {
           visaType: {
             id: i.visaType?.id,
             name: i.visaType?.name,
+            accelerationCost: i.visaType?.accelerationCost ?? undefined,
+            accelerationAvailable: i.visaType?.accelerationAvailable ?? null,
             serviceCost: i.visaType?.serviceCost ?? undefined,
             isMultientry: i.visaType?.isMultientry,
             multientryExtraCost: i.visaType?.multientryExtraCost ?? undefined,
@@ -278,19 +288,103 @@ const EditOrderPage = () => {
           );
       }
 
+    if (orderData.visarunPassengers) {
+      const { visarunPassengers } = orderData;
+
+      setVisarunPassengers(
+        visarunPassengers.map(p => ({
+          id: p.id,
+          orderItemId: p.orderItemId,
+          tripId: p.tripId,
+          tripTransportId: p.tripTransportId,
+          clientId: p.clientId,
+          serviceType: p.serviceType,
+          seatNumber: p.seatNumber,
+          seatClassId: p.seatClassId,
+          pickupAddress: p.pickupAddress,
+          pickupLocationId: p.pickupLocationId,
+          pickupTime: p.pickupTime,
+          routeStopId: p.routeStopId,
+          status: p.status,
+          createdAt: new Date(p.createdAt),
+          updatedAt: new Date(p.updatedAt),
+          trip: {
+            id: p.trip.id,
+            departureDateTime: new Date(p.trip.departureDateTime),
+            route: {
+              id: p.trip.route.id,
+              name: p.trip.route.name,
+              routeStops: p.trip.route.routeStops.map(stop => ({
+                id: stop.id,
+                stopType: stop.stopType,
+                departureTime: stop.departureTime,
+                arrivalTime: stop.arrivalTime,
+                waitingDuration: stop.waitingDuration,
+                city: {
+                  id: stop.city.id,
+                  name: stop.city.name,
+                },
+              })),
+              prices: p.trip.route.prices.map(price => ({
+                id: price.id,
+                price: price.price,
+                seatClass: {
+                  id: price.seatClass.id,
+                  name: price.seatClass.name,
+                  icon: price.seatClass.icon,
+                },
+              })),
+            },
+          },
+          seatClass: p.seatClass
+            ? {
+                id: p.seatClass.id,
+                name: p.seatClass.name,
+                icon: p.seatClass.icon,
+              }
+            : null,
+          tripTransport: p.tripTransport
+            ? {
+                id: p.tripTransport.id,
+                transport: {
+                  id: p.tripTransport.transport.id,
+                  name: p.tripTransport.transport.name,
+                },
+              }
+            : null,
+          pickupStop: p.pickupStop
+            ? {
+                id: p.pickupStop.id,
+                city: {
+                  id: p.pickupStop.city.id,
+                  name: p.pickupStop.city.name,
+                },
+              }
+            : null,
+          pickupLocation: p.pickupLocation
+            ? {
+                id: p.pickupLocation.id,
+                name: p.pickupLocation.name,
+                address: p.pickupLocation.address,
+              }
+            : null,
+        }))
+      );
+    }
+
     if (orderData.orderPayments) {
       setOrderPayments(
         orderData.orderPayments.map(p => ({
           id: p.id,
-          currencyId: p.currency.id,
+          currencyId: p.currency?.id,
           amount: String(p.amount),
           amountInSelectedCurrency: String(p.amountInSelectedCurrency),
           confirmPaymentWithoutDocument: p.confirmPaymentWithoutDocument,
-          paymentMethod: p.paymentMethod,
+          paymentMethod: p.paymentMethod || 'transfer',
           documentUrl: p.documentUrl,
           acceptedById: p.acceptedById,
           acceptedByUser: p.acceptedByUser,
-          currency: p.currency,
+          currency: p.currency || undefined,
           acceptedAt: null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -309,8 +403,12 @@ const EditOrderPage = () => {
     setClients,
     setActiveServicePuzzleSection,
     setVisaApplications,
+    setVisarunPassengers,
     setActiveClientId,
   ]);
+
+  // Check if order contains only acceleration services
+  const hasOnlyAccelerationServices = false;
 
   const clientsHaveServicePuzzleErrors = useMemo(
     () =>
@@ -319,19 +417,27 @@ const EditOrderPage = () => {
           Array.from(clientHasServicePuzzleErrors(client, orderItems, visaApplications) || [])
             .length > 0
       ).length > 0,
-    [clients, orderItems, visaApplications, user]
+    [clients, orderItems, visaApplications]
   );
 
   const clientsHavePersonalDataErrors = useMemo(() => {
+    // Skip personal data validation for acceleration-only orders
+    if (hasOnlyAccelerationServices) return false;
+
     return (
       clients.filter(client => {
-        const errors = Array.from(clientHasPersonalDataErrors(client, user) || []);
+        const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
         return errors.length > 0;
       }).length > 0
     );
-  }, [clients, user]);
+  }, [clients, user, hasOnlyAccelerationServices]);
 
   const orderHasPaymentErrors = useMemo(() => {
+    // If postPayment is enabled, there should be no payment errors
+    if (order.postPayment) {
+      return false;
+    }
+
     return (
       orderPayments.length === 0 ||
       orderPayments.filter(payment => {
@@ -339,11 +445,14 @@ const EditOrderPage = () => {
         return errors.length > 0;
       }).length > 0
     );
-  }, [orderPayments]);
+  }, [orderPayments, orderItems, order.postPayment]);
 
   const servicePuzzleIsActive: boolean = useMemo(() => {
     // Basic requirements
-    const hasContactMethod = !!(contactMethods?.length > 0 && contactMethods[0]?.value);
+    const hasContactMethod =
+      !!(contactMethods?.length > 0 && contactMethods[0]?.value) ||
+      user?.email ||
+      user?.phoneNumber;
     const hasClients = clients.length > 0;
 
     if (!hasContactMethod || !hasClients) return false;
@@ -362,8 +471,8 @@ const EditOrderPage = () => {
     );
   }, [contactMethods, clients, activeClientId]);
 
-  const steps = useMemo(
-    () => [
+  const steps = useMemo(() => {
+    const allSteps = [
       {
         name: 'Service Puzzle',
         status: 'draft',
@@ -387,26 +496,47 @@ const EditOrderPage = () => {
           order.status
         ),
       },
-    ],
-    [
-      clientsHaveServicePuzzleErrors,
-      clientsHavePersonalDataErrors,
-      orderHasPaymentErrors,
-      order.status,
-    ]
-  );
+    ];
 
-  const [activeStep, setActiveStep] = useState(order.status === 'draft' ? steps[0] : steps[1]);
+    // If order has only acceleration services, skip Personal Data step
+    if (hasOnlyAccelerationServices) {
+      return allSteps.filter(step => step.status !== 'personal_data_verification');
+    }
+
+    return allSteps;
+  }, [
+    clientsHaveServicePuzzleErrors,
+    clientsHavePersonalDataErrors,
+    orderHasPaymentErrors,
+    order.status,
+    hasOnlyAccelerationServices,
+  ]);
+
+  const [activeStep, setActiveStep] = useState(() => {
+    if (order.status === 'draft') return steps[0];
+    if (hasOnlyAccelerationServices) {
+      return order.status === 'payment_pending' ? steps[1] : steps[0];
+    }
+    return steps[1];
+  });
 
   useEffect(() => {
-    setActiveStep(
-      order.status === 'draft'
-        ? steps[0]
-        : order.status === 'personal_data_verification'
+    if (order.status === 'draft') {
+      setActiveStep(steps[0]);
+    } else if (hasOnlyAccelerationServices) {
+      // For acceleration-only orders, skip personal data step
+      setActiveStep(order.status === 'payment_pending' ? steps[1] : steps[0]);
+    } else {
+      // Regular flow with all steps
+      setActiveStep(
+        order.status === 'personal_data_verification'
           ? steps[1]
-          : steps[2]
-    );
-  }, [order, steps]);
+          : order.status === 'payment_pending'
+            ? steps[2]
+            : steps[0]
+      );
+    }
+  }, [order, steps, hasOnlyAccelerationServices]);
 
   const editOrderMutation = trpc.order.edit.useMutation();
 
@@ -425,14 +555,23 @@ const EditOrderPage = () => {
     try {
       setActiveStep(clickedStep);
 
-      // Update order status in backend
-      await editOrderMutation.mutateAsync({
-        id: order.id,
-        status: clickedStep.status as StepStatus,
-      });
+      // Determine the correct status to set based on whether we're skipping personal data
+      let statusToSet = clickedStep.status as StepStatus;
+      if (hasOnlyAccelerationServices && clickedStep.status === 'payment_pending') {
+        // For acceleration-only orders, when clicking on payment step, set status directly to payment_pending
+        statusToSet = 'payment_pending';
+      }
+
+      if (!['submitted', 'completed', 'cancelled'].includes(order.status)) {
+        // Update order status in backend
+        await editOrderMutation.mutateAsync({
+          id: order.id,
+          status: statusToSet,
+        });
+      }
 
       // Update order status in store
-      await updateOrderStatus(clickedStep.status as StepStatus);
+      await updateOrderStatus(statusToSet);
     } catch (error) {
       console.error('Failed to update order status:', error);
       // Revert on error
@@ -442,7 +581,12 @@ const EditOrderPage = () => {
 
   const handleNext = async () => {
     if (activeStep.status === 'draft') {
-      await handleStepClick(steps[1]);
+      if (hasOnlyAccelerationServices) {
+        // Skip personal data step for acceleration-only orders
+        await handleStepClick(steps[1]); // This will be Payment step
+      } else {
+        await handleStepClick(steps[1]); // This will be Personal Data step
+      }
     }
     if (activeStep.status === 'personal_data_verification') {
       await handleStepClick(steps[2]);
@@ -458,6 +602,8 @@ const EditOrderPage = () => {
 
         // Update order status in store
         await updateOrderStatus('submitted');
+
+        // Navigate to the visa applications table
         navigate(getAllVisaApplicationsRoute());
       } catch (error) {
         console.error('Failed to update order status:', error);
@@ -472,12 +618,37 @@ const EditOrderPage = () => {
   useEffect(() => {
     if (activeStep.status === 'payment_pending') {
       // Only set to first client if no active client is currently selected
-      if (!activeClientId && clients.length > 0) {
-        console.log('hello');
+      if ((!activeClientId || activeClientId === '-') && clients.length > 0) {
         setActiveClientId(clients[0].id);
       }
     }
-  }, [activeStep, setActiveClientId, clients, activeClientId]);
+
+    if (
+      activeStep.status === 'personal_data_verification' &&
+      clientsHavePersonalDataErrors &&
+      !hasOnlyAccelerationServices
+    ) {
+      if (['', '-'].includes(activeClientId) && clients.length > 0) {
+        const clientWithErrors = clients.find(client => {
+          const errors = Array.from(clientHasPersonalDataErrors(client, orderItems, user) || []);
+          return errors.length > 0;
+        });
+        setActiveClientId(clientWithErrors?.id || clients[0].id);
+      }
+    }
+
+    if (activeStep.status === 'draft' && clientsHaveServicePuzzleErrors) {
+      if (['', '-'].includes(activeClientId) && clients.length > 0) {
+        const clientWithErrors = clients.find(client => {
+          const errors = Array.from(
+            clientHasServicePuzzleErrors(client, orderItems, visaApplications) || []
+          );
+          return errors.length > 0;
+        });
+        setActiveClientId(clientWithErrors?.id || clients[0].id);
+      }
+    }
+  }, [activeStep, setActiveClientId, clients]);
 
   return (
     <>
@@ -537,7 +708,7 @@ const EditOrderPage = () => {
       </div>
       <div className="p-0 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-12">
-          <div className="lg:col-span-9">
+          <div className="flex flex-col lg:col-span-9 gap-2.5">
             {clients
               ?.sort((a, b) => {
                 // Primary client first
@@ -554,7 +725,7 @@ const EditOrderPage = () => {
                 }, 0);
                 return (
                   <Card
-                    className="bg-secondary my-2 md:my-0 mx-2 md:mx-0 md:mr-2.5 p-0 mb-2.5"
+                    className="bg-secondary my-2 md:my-0 mx-2 md:mx-0 md:mr-2.5 p-0"
                     key={client.id}
                   >
                     <ClientSection
@@ -586,8 +757,10 @@ const EditOrderPage = () => {
                   </Card>
                 );
               })}
-            {activeClientId === '' && activeStep.status === 'draft' && <AddClientCard />}
-            {activeClientId === '' && activeStep.status === 'draft' && (
+            {['', '-'].includes(activeClientId) && activeStep.status === 'draft' && (
+              <AddClientCard />
+            )}
+            {['', '-'].includes(activeClientId) && activeStep.status === 'draft' && (
               <>
                 {notIncludedClients
                   ?.filter(
@@ -628,13 +801,13 @@ const EditOrderPage = () => {
             <Button
               variant={
                 activeStep.canProceed &&
-                (activeClientId === '' || order.status === 'payment_pending')
+                (['', '-'].includes(activeClientId) || order.status === 'payment_pending')
                   ? 'default'
                   : 'secondary'
               }
               disabled={
                 activeStep.canProceed &&
-                (activeClientId === '' || order.status === 'payment_pending')
+                (['', '-'].includes(activeClientId) || order.status === 'payment_pending')
                   ? false
                   : true
               }

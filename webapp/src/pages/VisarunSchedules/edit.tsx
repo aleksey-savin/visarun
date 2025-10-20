@@ -15,6 +15,12 @@ interface RouteStop {
   arrivalNextDay: boolean | null;
   waitingDuration: number | null;
   stopOrder: number;
+  pickupLocations?: Array<{
+    pickupLocation: {
+      id: string;
+      name: string;
+    };
+  }>;
 }
 
 interface RouteTransport {
@@ -67,14 +73,10 @@ export default function EditVisarunSchedulePage() {
     { enabled: isEditing }
   ) as unknown as QueryResult;
 
-  const { data: scheduleData, isLoading, error, refetch: refetchSchedule } = queryResult;
+  const { data: scheduleData, isLoading, error } = queryResult;
 
   // Schedule mutation
   const editScheduleMutation = trpc.visarunSchedule.edit.useMutation({
-    onSuccess: () => {
-      toast.success('Schedule updated successfully');
-      refetchSchedule();
-    },
     onError: (error: any) => {
       toast.error(`Error updating schedule: ${error.message}`);
     },
@@ -82,9 +84,6 @@ export default function EditVisarunSchedulePage() {
 
   // Route mutations
   const editRouteMutation = trpc.visarunRoute.edit.useMutation() as any;
-  const createRouteStopMutation = trpc.visarunRouteStop.create.useMutation() as any;
-  const editRouteStopMutation = trpc.visarunRouteStop.edit.useMutation() as any;
-  const deleteRouteStopMutation = trpc.visarunRouteStop.delete.useMutation() as any;
   const createRouteTransportMutation = trpc.visarunRouteTransport.create.useMutation() as any;
   const deleteRouteTransportMutation = trpc.visarunRouteTransport.delete.useMutation() as any;
   const createSeatPriceMutation = trpc.visarunSeatPrice.create.useMutation() as any;
@@ -92,7 +91,10 @@ export default function EditVisarunSchedulePage() {
   const deleteSeatPriceMutation = trpc.visarunSeatPrice.delete.useMutation() as any;
 
   const handleSubmit = async (data: CombinedVisarunFormData) => {
-    if (!id || !scheduleData?.schedule?.route) return;
+    if (!id || !scheduleData?.schedule?.route) {
+      toast.error('No schedule data found');
+      return;
+    }
 
     try {
       const route = scheduleData.schedule.route;
@@ -109,16 +111,13 @@ export default function EditVisarunSchedulePage() {
         isActive: true,
       });
 
-      // 2. Handle route stops
-      await handleRouteStopsUpdate(routeId, route.routeStops || [], data.routeStops);
-
-      // 3. Handle transports
+      // 2. Handle transports
       await handleTransportsUpdate(routeId, route.transports || [], data.transports);
 
-      // 4. Handle seat prices
+      // 3. Handle seat prices
       await handleSeatPricesUpdate(routeId, route.prices || [], data.seatPrices || []);
 
-      // 5. Update the schedule
+      // 4. Update the schedule with route stops
       await editScheduleMutation.mutateAsync({
         id,
         daysOfWeek: data.daysOfWeek,
@@ -127,73 +126,31 @@ export default function EditVisarunSchedulePage() {
         validTo: data.validTo ? data.validTo.toISOString() : undefined,
         autoGeneratePeriodMonths: data.autoGeneratePeriodMonths,
         isActive: data.isActive,
+        routeStops: data.routeStops.map((stop, index) => ({
+          ...stop,
+          stopOrder: index + 1,
+        })),
       });
 
+      toast.success('Schedule updated successfully');
       navigate('/visarun-schedules');
     } catch (error) {
-      console.error('Error updating schedule and route:', error);
-      toast.error(
-        `Failed to update schedule: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-      throw error;
-    }
-  };
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
-  const handleRouteStopsUpdate = async (
-    routeId: string,
-    existingStops: RouteStop[],
-    newStops: CombinedVisarunFormData['routeStops']
-  ) => {
-    // Create a map of existing stops by order for easier lookup
-    const existingStopsMap = new Map(existingStops.map(stop => [stop.stopOrder, stop]));
-
-    // Process each new stop
-    for (let i = 0; i < newStops.length; i++) {
-      const newStop = newStops[i];
-      const stopOrder = i + 1;
-      const existingStop = existingStopsMap.get(stopOrder);
-
-      if (existingStop) {
-        // Update existing stop if there are changes
-        const hasChanges =
-          existingStop.cityId !== newStop.cityId ||
-          existingStop.pickupMode !== newStop.pickupMode ||
-          existingStop.arrivalTime !== (newStop.arrivalTime || null) ||
-          existingStop.departureTime !== (newStop.departureTime || null) ||
-          existingStop.arrivalNextDay !== newStop.arrivalNextDay ||
-          existingStop.waitingDuration !== (newStop.waitingDuration || null);
-
-        if (hasChanges) {
-          await editRouteStopMutation.mutateAsync({
-            id: existingStop.id,
-            stopType: newStop.stopType,
-            pickupMode: newStop.pickupMode,
-            arrivalTime: newStop.arrivalTime || undefined,
-            departureTime: newStop.departureTime || undefined,
-            arrivalNextDay: newStop.arrivalNextDay,
-            waitingDuration: newStop.waitingDuration || undefined,
-          });
-        }
-        existingStopsMap.delete(stopOrder);
+      // Handle specific transport removal error
+      if (errorMessage.includes('Cannot remove transport from route with active schedules')) {
+        toast.error(
+          'Cannot update transports: This route has existing trips that prevent transport changes. ' +
+            'To fix this, the backend needs to be updated to automatically clean up scheduled trips without passengers when transport changes are made. ' +
+            'Please contact your administrator.',
+          {
+            duration: 10000,
+          }
+        );
       } else {
-        // Create new stop
-        await createRouteStopMutation.mutateAsync({
-          routeId,
-          cityId: newStop.cityId,
-          stopOrder,
-          stopType: newStop.stopType,
-          pickupMode: newStop.pickupMode,
-          arrivalTime: newStop.arrivalTime || undefined,
-          departureTime: newStop.departureTime || undefined,
-          arrivalNextDay: newStop.arrivalNextDay,
-          waitingDuration: newStop.waitingDuration || undefined,
-        });
+        toast.error(`Failed to update schedule: ${errorMessage}`);
       }
-    }
-
-    // Delete remaining existing stops that are no longer needed
-    for (const [, existingStop] of existingStopsMap) {
-      await deleteRouteStopMutation.mutateAsync({ id: existingStop.id });
+      // Don't throw the error so the form can remain open for retry
     }
   };
 
@@ -206,6 +163,7 @@ export default function EditVisarunSchedulePage() {
     const newTransportIds = new Set(newTransports.map(t => t.transportId).filter(Boolean));
 
     // Delete removed transports
+
     for (const existingTransport of existingTransports) {
       if (!newTransportIds.has(existingTransport.transport.id)) {
         await deleteRouteTransportMutation.mutateAsync({ id: existingTransport.id });
@@ -213,13 +171,16 @@ export default function EditVisarunSchedulePage() {
     }
 
     // Add new transports
+
     for (const newTransport of newTransports) {
       if (newTransport.transportId && !existingTransportIds.has(newTransport.transportId)) {
-        await createRouteTransportMutation.mutateAsync({
+        const createData = {
           routeId,
           transportId: newTransport.transportId,
           isActive: newTransport.isActive,
-        });
+        };
+
+        await createRouteTransportMutation.mutateAsync(createData);
       }
     }
   };
@@ -248,18 +209,22 @@ export default function EditVisarunSchedulePage() {
       if (existingPrice) {
         // Update if price changed
         if (existingPrice.price !== newPrice.price) {
-          await editSeatPriceMutation.mutateAsync({
+          const updateData = {
             id: existingPrice.id,
             price: newPrice.price,
-          });
+          };
+
+          await editSeatPriceMutation.mutateAsync(updateData);
         }
       } else {
         // Create new price
-        await createSeatPriceMutation.mutateAsync({
+        const createData = {
           routeId,
           seatClassId,
           price: newPrice.price,
-        });
+        };
+
+        await createSeatPriceMutation.mutateAsync(createData);
       }
     }
   };
@@ -294,27 +259,27 @@ export default function EditVisarunSchedulePage() {
         stamp: schedule.route?.stamp ?? false,
         visa: schedule.route?.visa ?? false,
         routeStops:
-          schedule.route?.routeStops?.map((stop: RouteStop, index: number) => ({
-            id: stop.id,
-            cityId: stop.cityId,
-            stopType:
-              index === 0
-                ? ('departure' as const)
-                : index === (schedule.route?.routeStops?.length ?? 0) - 1
-                  ? ('arrival' as const)
-                  : ('intermediate' as const),
-            pickupMode:
-              stop.pickupMode === 'PICKUP_POINT'
-                ? ('location' as const)
-                : stop.pickupMode === 'DOOR_TO_DOOR'
-                  ? ('address' as const)
-                  : ('none' as const),
-            arrivalTime: stop.arrivalTime || '',
-            departureTime: stop.departureTime || '',
-            arrivalNextDay: stop.arrivalNextDay ?? false,
-            waitingDuration: stop.waitingDuration ?? undefined,
-            stopOrder: stop.stopOrder,
-          })) || [],
+          schedule.route?.routeStops?.map((stop: RouteStop, index: number) => {
+            const mappedStop = {
+              id: stop.id,
+              cityId: stop.cityId,
+              stopType:
+                index === 0
+                  ? ('departure' as const)
+                  : index === (schedule.route?.routeStops?.length ?? 0) - 1
+                    ? ('arrival' as const)
+                    : ('intermediate' as const),
+              pickupMode: (stop.pickupMode as 'location' | 'address') || 'location',
+              pickupLocationId: stop.pickupLocations?.[0]?.pickupLocation?.id || undefined,
+              arrivalTime: stop.arrivalTime || '',
+              departureTime: stop.departureTime || '',
+              arrivalNextDay: stop.arrivalNextDay ?? false,
+              waitingDuration: stop.waitingDuration ?? undefined,
+              stopOrder: stop.stopOrder,
+            };
+
+            return mappedStop;
+          }) || [],
         transports:
           schedule.route?.transports?.map((rt: RouteTransport) => ({
             id: rt.id,
@@ -325,7 +290,7 @@ export default function EditVisarunSchedulePage() {
           schedule.route?.prices?.map((price: RoutePrice) => ({
             id: price.id,
             seatClassId: price.seatClass.id,
-            price: price.price,
+            price: typeof price.price === 'string' ? parseFloat(price.price) : price.price,
           })) || [],
         daysOfWeek: Array.isArray(schedule.daysOfWeek) ? (schedule.daysOfWeek as number[]) : [],
         departureTime: schedule.departureTime,

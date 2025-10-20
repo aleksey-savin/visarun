@@ -44,7 +44,9 @@ const PassportExpiry = ({ client }: { client: StoreClient }) => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       passportExpirationDate: client?.passportExpirationDate
-        ? new Date(client.passportExpirationDate)
+        ? client.passportExpirationDate instanceof Date
+          ? client.passportExpirationDate
+          : new Date(client.passportExpirationDate)
         : undefined,
     },
   });
@@ -64,6 +66,11 @@ const PassportExpiry = ({ client }: { client: StoreClient }) => {
       await editClientMutation.mutateAsync({
         id: client.id,
         passportExpirationDate: date.toISOString(),
+        birthDate: client.birthDate
+          ? client.birthDate instanceof Date
+            ? client.birthDate.toISOString()
+            : client.birthDate
+          : null,
       });
       setSaveStatus('saved');
     } catch {

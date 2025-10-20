@@ -14,15 +14,19 @@ const buttonVariants = cva(
         primary:
           'bg-[#09090B] text-white shadow-xs hover:bg-[#1a1a1a] hover:shadow-md  border-[#3F3F46] transition-all duration-200',
         destructive:
-          'bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+          'bg-destructive border-transparent text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
         outline:
           'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
         secondary:
           'bg-secondary text-secondary-foreground shadow-xs hover:bg-muted hover:shadow-md transition-all duration-200',
         accent:
-          'bg-[#172554] text-primary-foreground shadow-xs hover:bg-[#172554]/90 hover:shadow-md border-[#172554] text-[#FAFAFA]',
+          'bg-[#172554] text-primary-foreground shadow-xs hover:bg-[#172554]/90 hover:shadow-md border-transparent text-[#FAFAFA]',
         'accent-pink':
-          'bg-pink-800 text-primary-foreground shadow-xs hover:bg-pink-800/90 hover:shadow-md border-pink-800 text-[#FAFAFA]',
+          'bg-pink-800 text-primary-foreground shadow-xs hover:bg-pink-800/90 hover:shadow-md border-transparent text-[#FAFAFA]',
+        'accent-green':
+          'bg-emerald-900 text-primary-foreground shadow-xs hover:bg-emerald-900/90 hover:shadow-md border-transparent text-[#FAFAFA]',
+        warning:
+          'bg-orange-500 text-primary-foreground shadow-xs hover:bg-[#172554]/90 hover:shadow-md border-transparent text-[#FAFAFA]',
         ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
       },

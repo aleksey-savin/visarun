@@ -3,12 +3,19 @@ import { Button } from './button';
 
 import { Label } from './label';
 import { Card, CardContent } from './card';
+import { Dialog, DialogContent } from './dialog';
+import { ImageViewer } from '@/components/ui/image-viewer';
 
-import { Upload, FileText, Image, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, AlertCircle, Loader2, FileX, File, Eye, Replace, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getFullFileUrl, isImageFile } from '@/utils/fileUtils';
 
 interface FileUploadProps {
-  value?: string;
+  value?: string | { id: string; originalName: string; fileUrl: string };
+  handleReplaceFileSelect?:
+    | ((requirementId: string, files: FileList | null) => Promise<void>)
+    | ((file: File) => Promise<void>);
+  handleDeleteDocument?: (documentId: string) => Promise<void>;
   onChange: (filePath: string | null) => void;
   accept?: string;
   maxSize?: number; // in bytes
@@ -19,13 +26,17 @@ interface FileUploadProps {
   placeholder?: string;
   uploadEndpoint: string; // e.g., '/api/upload/requirement-document'
   fileFieldName?: string; // e.g., 'document'
-  customFileName?: string; // custom filename to use on server
-  onUploadSuccess?: (fileInfo: {
-    fileName?: string;
-    originalName: string;
-    size: number;
-    mimetype?: string;
-  }) => void;
+  customData?: Record<string, string>; // custom data to send to server (clientId, requirementId, etc.)
+
+  onUploadSuccess?: (
+    fileInfo: {
+      fileName?: string;
+      originalName: string;
+      size: number;
+      mimetype?: string;
+    },
+    filePath?: string
+  ) => void;
 }
 
 interface UploadResponse {
@@ -41,8 +52,10 @@ interface UploadResponse {
 
 export const FileUpload: React.FC<FileUploadProps> = ({
   value,
+  handleReplaceFileSelect,
+  handleDeleteDocument,
   onChange,
-  accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png',
+  accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.heic',
   maxSize = 10 * 1024 * 1024, // 10MB
   label,
   description,
@@ -51,7 +64,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   placeholder = 'Click to upload or drag and drop',
   uploadEndpoint,
   fileFieldName = 'document',
-  customFileName,
+  customData,
   onUploadSuccess,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -62,6 +75,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     size: number;
     type: string;
   } | null>(null);
+
+  const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set());
 
   // Extract file info from existing path
   const getFileInfoFromPath = (path: string) => {
@@ -84,14 +99,18 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     };
   };
 
-  // Check if we have an existing file path
+  // Check if we have an existing file path (S3 URL or legacy local URL)
   React.useEffect(() => {
-    if (value && value.startsWith('/uploads/') && !uploadedFile) {
-      setUploadedFile(getFileInfoFromPath(value));
-    } else if (!value && uploadedFile) {
+    if (
+      value &&
+      typeof value === 'object' &&
+      (value.fileUrl.startsWith('/uploads/') || value.fileUrl.includes('storage.yandexcloud.net/'))
+    ) {
+      setUploadedFile(getFileInfoFromPath(value.fileUrl));
+    } else if (!value) {
       setUploadedFile(null);
     }
-  }, [value, uploadedFile]);
+  }, [value]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,13 +120,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) {
-      return <Image className="w-4 h-4" />;
-    }
-    return <FileText className="w-4 h-4" />;
   };
 
   const validateFile = (file: File): string | null => {
@@ -146,9 +158,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       const formData = new FormData();
       formData.append(fileFieldName, file);
 
-      // Add custom filename if provided
-      if (customFileName) {
-        formData.append('customFileName', customFileName);
+      // Add custom data if provided
+      if (customData) {
+        Object.entries(customData).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
       }
 
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -161,29 +175,39 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         body: formData,
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result: UploadResponse = await response.json();
 
       if (result.success && result.filePath) {
-        setUploadedFile({
+        const uploadedFileInfo = {
           name: result.originalName || file.name,
           size: result.size || file.size,
           type: result.mimetype || file.type,
-        });
-        onChange(result.filePath);
+        };
+
+        setUploadedFile(uploadedFileInfo);
+        onChange(result.filePath); // This now contains S3 URL
 
         if (onUploadSuccess) {
-          onUploadSuccess({
-            fileName: result.fileName,
-            originalName: result.originalName || file.name,
-            size: result.size || file.size,
-            mimetype: result.mimetype || file.type,
-          });
+          onUploadSuccess(
+            {
+              fileName: result.fileName,
+              originalName: result.originalName || file.name,
+              size: result.size || file.size,
+              mimetype: result.mimetype || file.type,
+            },
+            result.filePath
+          );
         }
       } else {
         setUploadError(result.error || result.message || 'Upload failed');
       }
-    } catch {
-      setUploadError('Upload failed. Please try again.');
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -218,21 +242,26 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
-  const handleClear = () => {
-    onChange(null);
-    setUploadedFile(null);
-    setUploadError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
   const handleClick = () => {
     if (disabled) return;
     fileInputRef.current?.click();
   };
 
   const hasFile = value && uploadedFile;
+
+  const replaceInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<{
+    id: string;
+    originalName: string;
+    fileUrl: string;
+  } | null>(null);
+
+  const handleViewDocument = (document: { id: string; originalName: string; fileUrl: string }) => {
+    setViewingDocument(document);
+    setViewModalOpen(true);
+  };
 
   return (
     <div className={cn('space-y-2', className)}>
@@ -249,34 +278,89 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         />
 
         {hasFile ? (
-          <Card className="border-2 border-dashed border-green-300 bg-green-50">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">{getFileIcon(uploadedFile.type)}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-green-800 truncate">
-                      {uploadedFile.name}
-                    </p>
-                    <p className="text-xs text-green-600">
-                      {uploadedFile.size > 0 ? formatFileSize(uploadedFile.size) : 'Existing file'}
-                    </p>
-                  </div>
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+          <Card className="bg-secondary p-3 rounded-md">
+            <div className="flex items-center justify-between gap-2">
+              {value && typeof value === 'object' && isImageFile(value.originalName) ? (
+                <div className="flex items-center justify-center border-dashed rounded-md">
+                  {imageLoadErrors?.has(value.fileUrl) ? (
+                    <FileX className="w-6 h-6 text-destructive" />
+                  ) : (
+                    <img
+                      src={getFullFileUrl(value.fileUrl)}
+                      alt=""
+                      className="max-w-full max-h-8 object-contain rounded"
+                      onError={() => {
+                        console.error('Image failed to load:', getFullFileUrl(value.fileUrl));
+                        setImageLoadErrors?.((prev: Set<string>) =>
+                          new Set(prev).add(value.fileUrl)
+                        );
+                      }}
+                    />
+                  )}
                 </div>
+              ) : (
+                <File className="w-6 h-6" />
+              )}
+              <div className="flex items-center gap-2">
+                {typeof value === 'object' && !imageLoadErrors?.has(value.fileUrl) && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => value && handleViewDocument(value)}
+                    disabled={isUploading}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                )}
 
                 <Button
-                  type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
-                  onClick={handleClear}
-                  disabled={disabled}
-                  className="text-green-700 hover:text-green-900"
+                  onClick={() => replaceInputRef.current?.click()}
+                  disabled={isUploading}
                 >
-                  <X className="w-4 h-4" />
+                  <Replace className="w-4 h-4" />
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    handleDeleteDocument &&
+                    typeof value === 'object' &&
+                    handleDeleteDocument(value.id)
+                  }
+                  disabled={isUploading}
+                >
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
-            </CardContent>
+            </div>
+
+            {/* Hidden file input for replace functionality */}
+            <input
+              ref={replaceInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
+              onChange={e => {
+                if (e.target.files && e.target.files.length > 0 && handleReplaceFileSelect) {
+                  // Check function signature by parameter count
+                  if (handleReplaceFileSelect.length === 2 && customData?.requirementId) {
+                    // Two parameter version: (requirementId: string, files: FileList | null)
+                    (
+                      handleReplaceFileSelect as (
+                        requirementId: string,
+                        files: FileList | null
+                      ) => Promise<void>
+                    )(customData.requirementId, e.target.files);
+                  } else if (handleReplaceFileSelect.length === 1) {
+                    // Single parameter version: (file: File)
+                    (handleReplaceFileSelect as (file: File) => Promise<void>)(e.target.files[0]);
+                  }
+                }
+              }}
+              className="hidden"
+            />
           </Card>
         ) : (
           <Card
@@ -295,7 +379,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               <div className="flex flex-col items-center justify-center space-y-2">
                 {isUploading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                    <Loader2 className="w-4 h-4 animate-spin " />
                     <p className="text-sm text-gray-600">Uploading...</p>
                   </>
                 ) : (
@@ -314,6 +398,42 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           </Card>
         )}
       </div>
+      {/* View Document Modal */}
+      <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+        <DialogContent className="overflow-auto">
+          <div className="flex items-center justify-center p-4">
+            {viewingDocument && (
+              <>
+                {isImageFile(viewingDocument.originalName) ? (
+                  <ImageViewer
+                    src={getFullFileUrl(viewingDocument.fileUrl)}
+                    alt={viewingDocument.originalName}
+                    className="max-w-full max-h-[70vh] object-contain rounded"
+                    onError={() => {
+                      console.error(
+                        'Modal image failed to load:',
+                        getFullFileUrl(viewingDocument.fileUrl)
+                      );
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-[70vh]">
+                    <iframe
+                      src={getFullFileUrl(viewingDocument.fileUrl)}
+                      className="w-full h-full border rounded"
+                      title={viewingDocument.originalName}
+                      onError={() => {
+                        console.error('Failed to load:', getFullFileUrl(viewingDocument.fileUrl));
+                        console.error('Full URL:', getFullFileUrl(viewingDocument.fileUrl));
+                      }}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {uploadError && (
         <div className="flex items-center space-x-2 text-red-600">

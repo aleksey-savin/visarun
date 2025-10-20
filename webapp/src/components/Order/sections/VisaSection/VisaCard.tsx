@@ -48,7 +48,7 @@ const formSchema = z.object({
   clientIsInTheCountry: z.boolean().optional(),
 });
 
-const VisaCard = ({ item }: { item: OrderItem }) => {
+const VisaCard = ({ item, activeService }: { item: OrderItem; activeService: string }) => {
   const {
     clients,
     orderItems,
@@ -76,7 +76,12 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
   };
 
   const visaApplication = visaApplications.find(va => va.orderItemId === item.id);
+
   const client = clients.find(c => c.id === item.clientId);
+
+  const isReadOnly = visaApplication
+    ? !['draft', 'pending_submit'].includes(visaApplication.status)
+    : false;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -201,11 +206,18 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
   const handleExitDateUpdate = async (selectedDate: Date | undefined) => {
     if (!selectedDate) return;
 
-    setExitDate(selectedDate);
+    // Normalize the selected date to avoid timezone issues
+    const normalizedDate = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate()
+    );
+
+    setExitDate(normalizedDate);
     setSaveStatus('saving');
 
     const [hours, minutes] = exitTime.split(':').map(Number);
-    const combinedDate = new Date(selectedDate);
+    const combinedDate = new Date(normalizedDate);
     combinedDate.setHours(hours, minutes, 0, 0);
     const dateString = combinedDate.toISOString();
 
@@ -228,8 +240,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           }
         : null,
       combinedDate,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedApplication: any = {
@@ -277,7 +288,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
     }
   };
 
-  const handleExitTimeUpdate = async (newTime: string) => {
+  /* const handleExitTimeUpdate = async (newTime: string) => {
     setExitTime(newTime);
 
     if (!exitDate) return;
@@ -306,8 +317,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           }
         : null,
       combinedDate,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedApplication: any = {
@@ -349,7 +359,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
     } catch {
       setSaveStatus('error');
     }
-  };
+  }; */
 
   // Visa completion date and time
   const [completionDateOpen, setCompletionDateOpen] = useState(false);
@@ -461,8 +471,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           }
         : null,
       combinedDate,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedApplication: any = {
@@ -528,8 +537,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           }
         : null,
       combinedDate,
-      visaApplication?.clientIsInTheCountry || false,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      visaApplication?.clientIsInTheCountry || false
     );
 
     const updatedApplication: any = {
@@ -569,8 +577,47 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
     }
   };
 
-  const [clientIsInTheCountry, setClientIsInTheCountry] = useState(
-    visaApplication?.clientIsInTheCountry || false
+  // Visa code (application code)
+  const [visaCode, setVisaCode] = useState<string>(visaApplication?.applicationCode || '');
+  const [visaCodeError, setVisaCodeError] = useState<string>('');
+
+  const handleVisaCodeUpdate = async (newCode: string) => {
+    setVisaCode(newCode);
+    setVisaCodeError('');
+    setSaveStatus('saving');
+
+    setVisaApplications(
+      visaApplications.map(va =>
+        va.orderItemId === item.id ? { ...va, applicationCode: newCode } : va
+      )
+    );
+
+    try {
+      await editVisaApplicationMutation.mutateAsync({
+        id: visaApplication?.id || '',
+        applicationCode: newCode,
+      });
+      setSaveStatus('saved');
+    } catch (error: any) {
+      setSaveStatus('error');
+      // Parse validation error array format
+
+      if (error?.message) {
+        const array = JSON.parse(error.message);
+        if (Array.isArray(array)) {
+          const messages = array.map((err: any) => err.message).join(', ');
+          setVisaCodeError(messages);
+        } else {
+          setVisaCodeError(error.message);
+        }
+      } else {
+        setVisaCodeError(error?.message || 'Failed to save visa code');
+      }
+    }
+  };
+
+  const [clientIsInTheCountry, setClientIsInTheCountry] = useState<boolean>(
+    visaApplication?.clientIsInTheCountry !== false
   );
 
   const handleClientIsInTheCountry = async (clientIsInTheCountry: boolean) => {
@@ -598,8 +645,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
       visaApplication?.plannedCountryExitDate
         ? new Date(visaApplication.plannedCountryExitDate)
         : null,
-      clientIsInTheCountry,
-      visaApplication?.createdAt ? new Date(visaApplication.createdAt) : null
+      clientIsInTheCountry
     );
 
     const updatedApplication: any = {
@@ -747,13 +793,20 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
       form.setValue('stampUntilDate', undefined);
       form.setValue('stampUntilTime', '00:00');
     }
+
+    // Sync visa code
+    setVisaCode(visaApplication?.applicationCode || '');
+    setVisaCodeError('');
   }, [
     visaApplication?.plannedCountryEntryDate,
     visaApplication?.plannedCountryExitDate,
     visaApplication?.plannedCompletionDate,
     visaApplication?.stampUntilDate,
+    visaApplication?.applicationCode,
     form,
   ]);
+
+  const visaCodeIsRequired = visaApplication?.type === 'acceleration';
 
   return (
     <Card className="p-3 bg-secondary gap-5">
@@ -770,9 +823,10 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           <div className="flex gap-2 md:ps-4 pt-3 md:pt-0.5">
             <Switch
               checked={clientIsInTheCountry}
+              disabled={isReadOnly}
               onCheckedChange={() => handleClientIsInTheCountry(!clientIsInTheCountry)}
             />
-            <Label>Client in {visaApplication?.country?.name}</Label>
+            <Label>Client is in {visaApplication?.country?.name}</Label>
           </div>
         </div>
 
@@ -782,6 +836,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
           type="button"
           onClick={() => setShowDeleteModal(true)}
           className="h-8 w-8 p-0"
+          disabled={isReadOnly}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -789,6 +844,22 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
       {!isBlacklisted && (
         <>
           <Form {...form}>
+            <div className="space-y-2">
+              <Label>
+                Visa code {visaCodeIsRequired ? <span className="text-red-500">*</span> : ''}
+              </Label>
+              <Input
+                className={cn('max-w-52', visaCodeError && 'border-destructive')}
+                required={activeService === 'acceleration'}
+                disabled={isReadOnly}
+                placeholder="Enter visa code"
+                value={visaCode}
+                onChange={e => setVisaCode(e.target.value)}
+                onBlur={e => handleVisaCodeUpdate(e.target.value)}
+              />
+              {visaCodeError && <p className="text-sm text-destructive mt-1">{visaCodeError}</p>}
+            </div>
+
             {clientIsInTheCountry && (
               <>
                 {/* Leaving country row */}
@@ -808,6 +879,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                 <Popover open={exitDateOpen} onOpenChange={setExitDateOpen}>
                                   <PopoverTrigger asChild>
                                     <Button
+                                      disabled={isReadOnly}
                                       variant="secondary"
                                       id="date-picker"
                                       className={cn(
@@ -815,7 +887,9 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                         !field.value && 'text-muted-foreground'
                                       )}
                                     >
-                                      {exitDate ? exitDate.toLocaleDateString() : 'Select date'}
+                                      {exitDate
+                                        ? `${exitDate.getDate().toString().padStart(2, '0')}.${(exitDate.getMonth() + 1).toString().padStart(2, '0')}.${exitDate.getFullYear()}`
+                                        : 'Select date'}
                                       <CalendarIcon />
                                     </Button>
                                   </PopoverTrigger>
@@ -827,14 +901,15 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                       mode="single"
                                       selected={exitDate}
                                       captionLayout="dropdown"
+                                      startMonth={new Date()}
+                                      endMonth={new Date(2050, 11)}
                                       onSelect={handleExitDateUpdate}
                                       disabled={date => {
                                         const yesterday = new Date();
                                         yesterday.setDate(yesterday.getDate() - 1);
                                         return date < yesterday;
                                       }}
-                                      startMonth={new Date()}
-                                      endMonth={new Date(2100, 11)}
+                                      defaultMonth={exitDate || new Date()}
                                     />
                                   </PopoverContent>
                                 </Popover>
@@ -843,10 +918,11 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                           )}
                         />
                       </div>
-                      <div className="flex flex-col gap-3">
+                      {/* <div className="flex flex-col gap-3">
                         <Input
                           type="time"
                           value={exitTime}
+                          disabled={isReadOnly}
                           onChange={e => {
                             handleExitTimeUpdate(e.target.value);
                           }}
@@ -855,7 +931,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                             'bg-secondary appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none'
                           )}
                         />
-                      </div>
+                      </div>*/}
                     </div>
                   </div>
                   {/* Stamp until */}
@@ -877,6 +953,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                 >
                                   <PopoverTrigger asChild>
                                     <Button
+                                      disabled={isReadOnly}
                                       variant="secondary"
                                       id="date-picker"
                                       className={cn(
@@ -885,7 +962,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                       )}
                                     >
                                       {stampUntilDate
-                                        ? stampUntilDate.toLocaleDateString()
+                                        ? `${stampUntilDate.getDate().toString().padStart(2, '0')}.${(stampUntilDate.getMonth() + 1).toString().padStart(2, '0')}.${stampUntilDate.getFullYear()}`
                                         : 'Select date'}
                                       <CalendarIcon />
                                     </Button>
@@ -898,14 +975,15 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                       mode="single"
                                       selected={stampUntilDate}
                                       captionLayout="dropdown"
+                                      startMonth={new Date()}
+                                      endMonth={new Date(2050, 11)}
                                       onSelect={handleStampUntilDateUpdate}
                                       disabled={date => {
                                         const yesterday = new Date();
                                         yesterday.setDate(yesterday.getDate() - 1);
                                         return date < yesterday;
                                       }}
-                                      startMonth={new Date()}
-                                      endMonth={new Date(2100, 11)}
+                                      defaultMonth={stampUntilDate || new Date()}
                                     />
                                   </PopoverContent>
                                 </Popover>
@@ -916,6 +994,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                       </div>
                       <div className="flex flex-col gap-3">
                         <Input
+                          disabled={isReadOnly}
                           type="time"
                           value={stampUntilTime}
                           onChange={e => {
@@ -949,6 +1028,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                             <Popover open={entryDateOpen} onOpenChange={setEntryDateOpen}>
                               <PopoverTrigger asChild>
                                 <Button
+                                  disabled={isReadOnly}
                                   variant="secondary"
                                   id="date-picker"
                                   className={cn(
@@ -956,7 +1036,9 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                     !field.value && 'text-muted-foreground'
                                   )}
                                 >
-                                  {entryDate ? entryDate.toLocaleDateString() : 'Select date'}
+                                  {entryDate
+                                    ? `${entryDate.getDate().toString().padStart(2, '0')}.${(entryDate.getMonth() + 1).toString().padStart(2, '0')}.${entryDate.getFullYear()}`
+                                    : 'Select date'}
                                   <CalendarIcon />
                                 </Button>
                               </PopoverTrigger>
@@ -965,14 +1047,15 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                   mode="single"
                                   selected={entryDate}
                                   captionLayout="dropdown"
+                                  startMonth={new Date()}
+                                  endMonth={new Date(2050, 11)}
                                   onSelect={handleEntryDateUpdate}
                                   disabled={date => {
                                     const yesterday = new Date();
                                     yesterday.setDate(yesterday.getDate() - 1);
                                     return date < yesterday;
                                   }}
-                                  startMonth={new Date()}
-                                  endMonth={new Date(2100, 11)}
+                                  defaultMonth={entryDate || new Date()}
                                 />
                               </PopoverContent>
                             </Popover>
@@ -983,6 +1066,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                   </div>
                   <div className="flex flex-col gap-3">
                     <Input
+                      disabled={isReadOnly}
                       type="time"
                       value={entryTime}
                       onChange={e => {
@@ -1004,9 +1088,13 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                       {entryDate && visaFreeStampDuration && (
                         <Badge variant="destructive" className="text-xs text-secondary">
                           exit by{' '}
-                          {new Date(
-                            entryDate.getTime() + (visaFreeStampDuration - 1) * 24 * 60 * 60 * 1000
-                          ).toLocaleDateString()}
+                          {(() => {
+                            const visaFreeDate = new Date(
+                              entryDate.getTime() +
+                                (visaFreeStampDuration - 1) * 24 * 60 * 60 * 1000
+                            );
+                            return `${visaFreeDate.getDate().toString().padStart(2, '0')}.${(visaFreeDate.getMonth() + 1).toString().padStart(2, '0')}.${visaFreeDate.getFullYear()}`;
+                          })()}
                         </Badge>
                       )}
                     </div>
@@ -1015,7 +1103,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
               </div>
             </div>
             <div>
-              <VisaTypeSelector item={item} />
+              <VisaTypeSelector item={item} isReadOnly={isReadOnly} activeService={activeService} />
             </div>
 
             <div className="flex flex-wrap gap-6 justify-between items-end">
@@ -1054,6 +1142,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                               >
                                 <PopoverTrigger asChild>
                                   <Button
+                                    disabled={isReadOnly}
                                     variant="secondary"
                                     id="date-picker"
                                     className={cn(
@@ -1062,7 +1151,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                     )}
                                   >
                                     {completionDate
-                                      ? completionDate.toLocaleDateString()
+                                      ? `${completionDate.getDate().toString().padStart(2, '0')}.${(completionDate.getMonth() + 1).toString().padStart(2, '0')}.${completionDate.getFullYear()}`
                                       : 'Select date'}
                                     <CalendarIcon />
                                   </Button>
@@ -1075,14 +1164,15 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                                     mode="single"
                                     selected={completionDate}
                                     captionLayout="dropdown"
+                                    startMonth={new Date()}
+                                    endMonth={new Date(2050, 11)}
                                     onSelect={handleCompletionDateUpdate}
                                     disabled={date => {
                                       const yesterday = new Date();
                                       yesterday.setDate(yesterday.getDate() - 1);
                                       return date < yesterday;
                                     }}
-                                    startMonth={new Date()}
-                                    endMonth={new Date(2100, 11)}
+                                    defaultMonth={completionDate || new Date()}
                                   />
                                 </PopoverContent>
                               </Popover>
@@ -1093,6 +1183,7 @@ const VisaCard = ({ item }: { item: OrderItem }) => {
                     </div>
                     <div className="flex flex-col gap-3">
                       <Input
+                        disabled={isReadOnly}
                         type="time"
                         value={completionTime}
                         onChange={e => {

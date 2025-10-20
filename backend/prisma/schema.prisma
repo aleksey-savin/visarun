@@ -96,6 +96,9 @@ model User {
   currencyExchangesUpdated CurrencyExchange[]         @relation("CurrencyExchangeUpdatedBy")
   transactionsCreated      Transaction[]              @relation("TransactionCreatedBy")
   transactionsUpdated      Transaction[]              @relation("TransactionUpdatedBy")
+  Comment                  Comment[]
+  createdOrders            Order[]                    @relation("OrderCreatedBy")
+  updatedOrders            Order[]                    @relation("OrderUpdatedBy")
 }
 
 model Client {
@@ -108,7 +111,9 @@ model Client {
   isOutsideTheCountryAt     DateTime?
   firstName                 String?
   lastName                  String?
+  email                     String?
   isPrimary                 Boolean                    @default(false)
+  birthDate                 DateTime?
   passportExpirationDate    DateTime?
   preConfirmPassportIsValid Boolean                    @default(false)
   citizenship               Citizenship?               @relation(fields: [citizenshipId], references: [id])
@@ -269,9 +274,14 @@ model Order {
   id                 String               @id @default(uuid())
   userId             String
   createdAt          DateTime             @default(now())
+  createdById        String?
+  updatedById        String?
   status             OrderStatus          @default(draft)
   comment            String?
+  postPayment        Boolean              @default(false)
   updatedAt          DateTime             @default(now()) @updatedAt
+  createdBy          User?                @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  updatedBy          User?                @relation("OrderUpdatedBy", fields: [updatedById], references: [id])
   user               User                 @relation(fields: [userId], references: [id])
   clients            OrderClient[]
   items              OrderItem[]
@@ -354,6 +364,8 @@ model VisaType {
   id                    String                             @id @default(uuid())
   name                  String
   serviceCost           Float
+  accelerationCost      Float?
+  accelerationAvailable Boolean                            @default(false)
   countryId             String
   isMultientry          Boolean
   multientryExtraCost   Float?
@@ -376,6 +388,7 @@ model VisaApplication {
   id                      String                @id @default(uuid())
   orderItemId             String
   applicationCode         String?
+  type                    VisaApplicationType   @default(visa)
   submittedByAgent        Boolean
   countryId               String
   visaTypeId              String?
@@ -390,7 +403,7 @@ model VisaApplication {
   plannedCompletionDate   DateTime?
   stampUntilDate          DateTime?
   stampIsRecieved         Boolean               @default(false)
-  clientIsInTheCountry    Boolean               @default(false)
+  clientIsInTheCountry    Boolean               @default(true)
   isMultientry            Boolean               @default(false)
   isArchived              Boolean               @default(false)
   createdAt               DateTime              @default(now())
@@ -404,6 +417,7 @@ model VisaApplication {
 model ClientVisa {
   id                String          @id @default(uuid())
   clientId          String
+  code              String?
   countryId         String
   visaTypeId        String
   visaApplicationId String
@@ -568,19 +582,19 @@ model Currency {
 }
 
 model OrderPayment {
-  id                            String        @id @default(uuid())
+  id                            String         @id @default(uuid())
   orderId                       String
-  amount                        Decimal
-  amountInSelectedCurrency      Decimal
-  currencyId                    String
-  paidAt                        DateTime
-  paymentMethod                 PaymentMethod
-  confirmPaymentWithoutDocument Boolean       @default(false)
+  amount                        Decimal?
+  amountInSelectedCurrency      Decimal?
+  currencyId                    String?
+  paidAt                        DateTime       @default(now())
+  paymentMethod                 PaymentMethod?
+  confirmPaymentWithoutDocument Boolean        @default(false)
   documentUrl                   String?
   acceptedById                  String?
-  acceptedByUser                User?         @relation(fields: [acceptedById], references: [id])
-  currency                      Currency      @relation(fields: [currencyId], references: [id])
-  order                         Order         @relation(fields: [orderId], references: [id])
+  acceptedByUser                User?          @relation(fields: [acceptedById], references: [id])
+  currency                      Currency?      @relation(fields: [currencyId], references: [id])
+  order                         Order          @relation(fields: [orderId], references: [id])
 
   @@index([orderId])
   @@index([currencyId])
@@ -665,6 +679,54 @@ model Transport {
   seatDistribution      TransportSeatDistribution[]
   VisarunRouteTransport VisarunRouteTransport[]
   VisarunTripTransport  VisarunTripTransport[]
+  seatingChart          TransportSeatingChart?
+}
+
+model TransportSeatingChart {
+  id          String                  @id @default(uuid())
+  transportId String                  @unique
+  floors      TransportSeatingFloor[]
+  transport   Transport               @relation(fields: [transportId], references: [id], onDelete: Cascade)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+}
+
+model TransportSeatingFloor {
+  id          String                @id @default(uuid())
+  chartId     String
+  floorNumber Int // 1 = ground floor, 2 = upper deck, etc.
+  name        String? // Optional name like "Downstairs", "Upstairs"
+  rows        TransportSeatingRow[]
+  chart       TransportSeatingChart @relation(fields: [chartId], references: [id], onDelete: Cascade)
+
+  @@unique([chartId, floorNumber])
+}
+
+model TransportSeatingRow {
+  id        String                @id @default(uuid())
+  floorId   String
+  rowNumber Int // Row number within the floor
+  rowLabel  String? // Optional label like "A", "B", "1", "2"
+  seats     TransportSeat[]
+  floor     TransportSeatingFloor @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  @@unique([floorId, rowNumber])
+}
+
+model TransportSeat {
+  id          String              @id @default(uuid())
+  rowId       String
+  seatLabel   String // Display label like "1A", "2B", "22B"
+  seatClassId String
+  isAvailable Boolean             @default(true) // Can be disabled for maintenance, blocked seats, etc.
+  isAisle     Boolean             @default(false) // True if this is an aisle seat
+  isWindow    Boolean             @default(false) // True if this is a window seat
+  isEmergency Boolean             @default(false) // True if this is an emergency exit row
+  driverSeat  Boolean             @default(false) // True if this is the driver's seat/position
+  row         TransportSeatingRow @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  seatClass   SeatClass           @relation(fields: [seatClassId], references: [id])
+
+  @@unique([rowId, seatLabel]) // Ensure unique seat labels within a row
 }
 
 model SeatClass {
@@ -674,6 +736,8 @@ model SeatClass {
   icon                  String?
   VisarunSeatPrice      VisarunSeatPrice[]
   transportDistribution TransportSeatDistribution[]
+  VisarunPassenger      VisarunPassenger[]
+  transportSeats        TransportSeat[]
 }
 
 model VisarunSeatPrice {
@@ -749,7 +813,6 @@ model VisarunRouteStop {
   VisarunPassenger VisarunPassenger[]
 
   @@unique([routeId, stopOrder])
-  @@unique([routeId, cityId])
 }
 
 model PickupLocation {
@@ -761,8 +824,9 @@ model PickupLocation {
   coordinates String?
   isActive    Boolean @default(true)
 
-  city       City                        @relation("PickupLocations", fields: [cityId], references: [id])
-  routeStops VisarunStopPickupLocation[]
+  city             City                        @relation("PickupLocations", fields: [cityId], references: [id])
+  routeStops       VisarunStopPickupLocation[]
+  VisarunPassenger VisarunPassenger[]
 }
 
 model VisarunSchedule {
@@ -813,7 +877,6 @@ model VisarunTrip {
   schedule VisarunSchedule? @relation(fields: [scheduleId], references: [id])
   route    VisarunRoute     @relation(fields: [routeId], references: [id])
 
-  // Связи
   transports VisarunTripTransport[]
   passengers VisarunPassenger[]
 
@@ -851,26 +914,27 @@ model VisarunPassenger {
   clientId        String
   orderItemId     String
 
-  serviceType VisarunServiceType
+  serviceType VisarunServiceType @default(visa)
 
-  // Место и посадка
-  seatNumber    String?
-  seatClass     String?
-  pickupAddress String?
-  pickupTime    String?
-  routeStopId   String?
+  seatNumber       String?
+  seatClassId      String?
+  pickupAddress    String?
+  pickupLocationId String?
+  pickupTime       String?
+  routeStopId      String?
 
-  // Статус пассажира
   status PassengerStatus @default(confirmed)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  trip          VisarunTrip           @relation(fields: [tripId], references: [id])
-  tripTransport VisarunTripTransport? @relation(fields: [tripTransportId], references: [id])
-  client        Client                @relation(fields: [clientId], references: [id])
-  orderItem     OrderItem             @relation(fields: [orderItemId], references: [id])
-  pickupStop    VisarunRouteStop?     @relation(fields: [routeStopId], references: [id])
+  trip           VisarunTrip           @relation(fields: [tripId], references: [id])
+  tripTransport  VisarunTripTransport? @relation(fields: [tripTransportId], references: [id])
+  seatClass      SeatClass?            @relation(fields: [seatClassId], references: [id])
+  pickupLocation PickupLocation?       @relation(fields: [pickupLocationId], references: [id])
+  client         Client                @relation(fields: [clientId], references: [id])
+  orderItem      OrderItem             @relation(fields: [orderItemId], references: [id])
+  pickupStop     VisarunRouteStop?     @relation(fields: [routeStopId], references: [id])
 
   @@index([tripId])
   @@index([tripTransportId])
@@ -911,6 +975,26 @@ model City {
   pickupLocations PickupLocation[]   @relation("PickupLocations")
 }
 
+model Comment {
+  id          String     @id @default(uuid())
+  entityType  EntityType
+  entityId    String
+  content     String
+  documentUrl String?
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id])
+}
+
+enum EntityType {
+  order
+  visaApplication
+}
+
+enum VisaApplicationType {
+  visa
+  acceleration
+}
+
 enum VisarunServiceType {
   stamp
   visa
@@ -919,6 +1003,7 @@ enum VisarunServiceType {
 enum TripStatus {
   scheduled
   in_process
+  cancelled
   completed
 }
 
@@ -981,6 +1066,7 @@ enum ServiceType {
   visa
   visarun
   currencyExchange
+  acceleration
 }
 
 enum DiscountAppliedType {

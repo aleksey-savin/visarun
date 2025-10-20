@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+
 import { Download, Eye, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -16,25 +17,18 @@ export const FileViewer = ({ filePath, fileName, isOpen, onClose }: FileViewerPr
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fileUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${filePath}`;
+  // Handle S3 URLs vs legacy local URLs
+  const fileUrl = filePath.includes('storage.yandexcloud.net/')
+    ? filePath // S3 URL - use directly
+    : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${filePath}`; // Legacy local URL
   const isPDF = filePath.toLowerCase().endsWith('.pdf');
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filePath);
 
-  console.log('FileViewer - File path:', filePath);
-  console.log('FileViewer - Backend URL:', import.meta.env.VITE_API_URL);
-  console.log('FileViewer - Full file URL:', fileUrl);
-  console.log('FileViewer - Is PDF:', isPDF);
-  console.log('FileViewer - Is Image:', isImage);
-
   const handleDownload = async () => {
     try {
-      console.log('Downloading file from:', fileUrl);
       const response = await fetch(fileUrl);
-      console.log('Download response status:', response.status);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Download failed with response:', errorText);
         throw new Error(`Download failed: ${response.status} ${response.statusText}`);
       }
 
@@ -75,9 +69,8 @@ export const FileViewer = ({ filePath, fileName, isOpen, onClose }: FileViewerPr
     setError(null);
   };
 
-  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleImageError = () => {
     console.error('Image failed to load:', fileUrl);
-    console.error('Image error event:', event);
     setIsLoading(false);
     setError(`Failed to load image: ${fileUrl}`);
   };

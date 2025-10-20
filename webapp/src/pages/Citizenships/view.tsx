@@ -329,7 +329,7 @@ const ViewCitizenshipPage = () => {
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-muted-foreground">Full Name</label>
                       <div className="flex items-center gap-2">
-                        <span className="text-2xl">{citizenship.emoji}</span>
+                        <span className="text-2xl">{citizenship?.emoji}</span>
                         <span className="text-lg font-semibold">{citizenship.name}</span>
                       </div>
                     </div>

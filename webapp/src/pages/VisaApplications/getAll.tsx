@@ -4,7 +4,6 @@ import { trpc } from '../../lib/trpcProvider';
 import {
   CircleX,
   CircleAlert,
-  Search,
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
@@ -12,18 +11,16 @@ import {
   CircleCheck,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 import {
   Table,
@@ -41,10 +38,10 @@ import { ReadyStatusDialog } from '@/components/VisaApplication/StatusesDialogs/
 import { DraftStatusDialog } from '@/components/VisaApplication/StatusesDialogs/Draft';
 import { DeniedStatusDialog } from '@/components/VisaApplication/StatusesDialogs/Denied';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+
 import { CancelledStatusDialog } from '@/components/VisaApplication/StatusesDialogs/Cancelled';
 import { RefundStatusDialog } from '@/components/VisaApplication/StatusesDialogs/Refund';
-import { FilterContainer, FilterFields, FilterField } from '@/components/Filters';
+import { VisaApplicationFilters } from '@/components/VisaApplication/Filters';
 
 // Get status badge styling
 const getStatusButton = (application: any) => {
@@ -100,11 +97,14 @@ const AllVisaApplicationsPage = () => {
     searchTerm: '',
     selectedCountryFilter: 'all',
     selectedVisaTypeFilter: 'all',
+    selectedApplicationTypeFilter: 'all',
     selectedStatusGroupFilter: 'visas-to-apply',
-    visasToApplyTimeFilter: 'today' as 'today' | 'later',
+    visasToApplyTimeFilter: 'all' as 'today' | 'later' | 'all',
+    selectedStatusFilter: 'all',
     sortField: null as string | null,
     sortDirection: 'asc' as 'asc' | 'desc',
     groupByOrder: true,
+    currentPage: 1,
   };
 
   // Load initial state from localStorage
@@ -130,15 +130,35 @@ const AllVisaApplicationsPage = () => {
   const [selectedVisaTypeFilter, setSelectedVisaTypeFilter] = useState(
     initialState.selectedVisaTypeFilter
   );
+  const [selectedApplicationTypeFilter, setSelectedApplicationTypeFilter] = useState(
+    initialState.selectedApplicationTypeFilter
+  );
   const [selectedStatusGroupFilter, setSelectedStatusGroupFilter] = useState(
     initialState.selectedStatusGroupFilter
   );
-  const [visasToApplyTimeFilter, setVisasToApplyTimeFilter] = useState<'today' | 'later'>(
+  const [visasToApplyTimeFilter, setVisasToApplyTimeFilter] = useState<'today' | 'later' | 'all'>(
     initialState.visasToApplyTimeFilter
+  );
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState(
+    initialState.selectedStatusFilter
   );
   const [sortField, setSortField] = useState<string | null>(initialState.sortField);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(initialState.sortDirection);
   const [groupByOrder, setGroupByOrder] = useState(initialState.groupByOrder);
+  const [currentPage, setCurrentPage] = useState(initialState.currentPage);
+  const [pageSize] = useState(200);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check for mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Save filters to localStorage whenever they change
   useEffect(() => {
@@ -146,11 +166,14 @@ const AllVisaApplicationsPage = () => {
       searchTerm,
       selectedCountryFilter,
       selectedVisaTypeFilter,
+      selectedApplicationTypeFilter,
       selectedStatusGroupFilter,
       visasToApplyTimeFilter,
+      selectedStatusFilter,
       sortField,
       sortDirection,
       groupByOrder,
+      currentPage,
     };
 
     try {
@@ -162,11 +185,14 @@ const AllVisaApplicationsPage = () => {
     searchTerm,
     selectedCountryFilter,
     selectedVisaTypeFilter,
+    selectedApplicationTypeFilter,
     selectedStatusGroupFilter,
     visasToApplyTimeFilter,
+    selectedStatusFilter,
     sortField,
     sortDirection,
     groupByOrder,
+    currentPage,
   ]);
 
   // Reset all filters to default values
@@ -174,25 +200,95 @@ const AllVisaApplicationsPage = () => {
     setSearchTerm(defaultFilters.searchTerm);
     setSelectedCountryFilter(defaultFilters.selectedCountryFilter);
     setSelectedVisaTypeFilter(defaultFilters.selectedVisaTypeFilter);
+    setSelectedApplicationTypeFilter(defaultFilters.selectedApplicationTypeFilter);
     setSelectedStatusGroupFilter(defaultFilters.selectedStatusGroupFilter);
     setVisasToApplyTimeFilter(defaultFilters.visasToApplyTimeFilter);
+    setSelectedStatusFilter(defaultFilters.selectedStatusFilter);
     setSortField(defaultFilters.sortField);
     setSortDirection(defaultFilters.sortDirection);
     setGroupByOrder(defaultFilters.groupByOrder);
+    setCurrentPage(defaultFilters.currentPage);
   };
 
+  // Helper functions to reset page when filters change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleCountryFilterChange = (value: string) => {
+    setSelectedCountryFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleVisaTypeFilterChange = (value: string) => {
+    setSelectedVisaTypeFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleApplicationTypeFilterChange = (value: string) => {
+    setSelectedApplicationTypeFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusGroupFilterChange = (value: string) => {
+    setSelectedStatusGroupFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleVisasToApplyTimeFilterChange = (value: 'today' | 'later' | 'all') => {
+    setVisasToApplyTimeFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setSelectedStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
+  // Use single getAll API with statusGroup parameter
+  const getStatusGroup = () => {
+    switch (selectedStatusGroupFilter) {
+      case 'visas-to-apply':
+        return 'active' as const;
+      case 'drafts':
+        return 'drafts' as const;
+      case 'archived':
+        return 'archived' as const;
+      default:
+        return undefined;
+    }
+  };
+
+  const offset = (currentPage - 1) * pageSize;
+
   const { data, error, isLoading, isError } = trpc.visaApplication.getAll.useQuery({
+    limit: pageSize,
+    offset,
     search: searchTerm || undefined,
     countryId: selectedCountryFilter !== 'all' ? selectedCountryFilter : undefined,
     visaTypeId: selectedVisaTypeFilter !== 'all' ? selectedVisaTypeFilter : undefined,
+    statusGroup: getStatusGroup(),
   });
 
   // Get unique values for filters
   const allVisaApplications = useMemo(() => data?.visaApplications || [], [data?.visaApplications]);
+  const pagination = data?.pagination;
+  const totalPages = pagination ? Math.ceil(pagination.total / pageSize) : 0;
 
   // Helper function to determine if a visa should be in "today" filter
   const isVisaForToday = (va: any) => {
     const now = new Date();
+
+    if (now >= new Date(va.plannedCountryEntryDate)) {
+      return true;
+    }
+
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     // For visas with status ready, denied, cancelled - always in today
@@ -262,41 +358,39 @@ const AllVisaApplicationsPage = () => {
     return false;
   };
 
-  // Filter visa applications based on selected status group filter
+  // Filter visa applications based on time filter (only for active visas)
   const visaApplications = useMemo(() => {
     let filtered = allVisaApplications;
 
-    // First apply status group filter
-    if (selectedStatusGroupFilter === 'visas-to-apply') {
-      filtered = allVisaApplications.filter(
-        va =>
-          [
-            'pending_submit',
-            'awaiting_approval',
-            'approved',
-            'denied',
-            'cancelled',
-            'pending_refund',
-          ].includes(va.status) && !va.isArchived
-      );
-    } else if (selectedStatusGroupFilter === 'drafts') {
-      filtered = allVisaApplications.filter(va => va.status === 'draft');
-    } else if (selectedStatusGroupFilter === 'archived') {
-      filtered = allVisaApplications.filter(va => va.isArchived === true);
-    }
-
-    // Then apply today/later filter to ALL visas (not just visas-to-apply)
+    // Apply today/later filter only to active visas (visas-to-apply)
     if (selectedStatusGroupFilter === 'visas-to-apply') {
       if (visasToApplyTimeFilter === 'today') {
         filtered = filtered.filter(isVisaForToday);
-      } else {
+      } else if (visasToApplyTimeFilter === 'later') {
         // For "later" - show ALL visas that don't fit today criteria
         filtered = filtered.filter(va => !isVisaForToday(va));
       }
+      // For "all" - don't filter by time, show all visas
+    }
+
+    // Apply status filter
+    if (selectedStatusFilter !== 'all') {
+      filtered = filtered.filter(va => va.status === selectedStatusFilter);
+    }
+
+    // Apply application type filter
+    if (selectedApplicationTypeFilter !== 'all') {
+      filtered = filtered.filter(va => va.type === selectedApplicationTypeFilter.toLowerCase());
     }
 
     return filtered;
-  }, [allVisaApplications, selectedStatusGroupFilter, visasToApplyTimeFilter]);
+  }, [
+    allVisaApplications,
+    selectedStatusGroupFilter,
+    visasToApplyTimeFilter,
+    selectedStatusFilter,
+    selectedApplicationTypeFilter,
+  ]);
 
   // Sort visa applications
   const sortedVisaApplications = useMemo(() => {
@@ -309,9 +403,9 @@ const AllVisaApplicationsPage = () => {
       switch (sortField) {
         case 'client':
           aValue =
-            `${a.orderItem.client.firstName || ''} ${a.orderItem.client.lastName || ''}`.trim();
+            `${a.orderItem.client.lastName || ''} ${a.orderItem.client.firstName || ''}`.trim();
           bValue =
-            `${b.orderItem.client.firstName || ''} ${b.orderItem.client.lastName || ''}`.trim();
+            `${b.orderItem.client.lastName || ''} ${b.orderItem.client.firstName || ''}`.trim();
           break;
         case 'country':
           aValue = a.country.name;
@@ -320,6 +414,10 @@ const AllVisaApplicationsPage = () => {
         case 'type':
           aValue = a.visaType?.name || '';
           bValue = b.visaType?.name || '';
+          break;
+        case 'applicationType':
+          aValue = a.type || '';
+          bValue = b.type || '';
           break;
         case 'readinessDate':
           aValue = a.plannedCompletionDate ? new Date(a.plannedCompletionDate) : new Date(0);
@@ -384,15 +482,6 @@ const AllVisaApplicationsPage = () => {
       applications,
     }));
   }, [sortedVisaApplications, groupByOrder]);
-  const uniqueCountries = useMemo(() => {
-    const countries = allVisaApplications.map(va => va.country);
-    return [...new Map(countries.map(c => [c.id, c])).values()];
-  }, [allVisaApplications]);
-
-  const uniqueVisaTypes = useMemo(() => {
-    const visaTypes = allVisaApplications.map(va => va.visaType).filter(vt => vt !== null);
-    return [...new Map(visaTypes.map(vt => [vt!.id, vt!])).values()];
-  }, [allVisaApplications]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
@@ -436,103 +525,28 @@ const AllVisaApplicationsPage = () => {
   return (
     <div className="min-h-screen">
       <div className="grid gap-6 p-6">
-        <FilterContainer onClearFilters={resetFilters}>
-          <FilterFields>
-            <FilterField label="Status">
-              <Select
-                value={selectedStatusGroupFilter}
-                onValueChange={setSelectedStatusGroupFilter}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="visas-to-apply">Visas in work</SelectItem>
-                  <SelectItem value="drafts">Drafts</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-            </FilterField>
-
-            {selectedStatusGroupFilter === 'visas-to-apply' && (
-              <FilterField label="Time">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={visasToApplyTimeFilter === 'today' ? 'default' : 'ghost'}
-                    onClick={() => setVisasToApplyTimeFilter('today')}
-                  >
-                    Today
-                  </Button>
-                  <Button
-                    variant={visasToApplyTimeFilter === 'later' ? 'default' : 'ghost'}
-                    onClick={() => setVisasToApplyTimeFilter('later')}
-                  >
-                    Later
-                  </Button>
-                </div>
-              </FilterField>
-            )}
-
-            <FilterField label="Search">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </FilterField>
-
-            <FilterField label="Country">
-              <Select value={selectedCountryFilter} onValueChange={setSelectedCountryFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All countries" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All countries</SelectItem>
-                  {uniqueCountries.map(country => (
-                    <SelectItem key={country.id} value={country.id}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FilterField>
-
-            <FilterField label="Visa Type">
-              <Select value={selectedVisaTypeFilter} onValueChange={setSelectedVisaTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All visa types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All visa types</SelectItem>
-                  {uniqueVisaTypes.map(visaType => (
-                    <SelectItem key={visaType.id} value={visaType.id}>
-                      {visaType.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FilterField>
-            <div className="flex gap-2 items-end pb-1.5 pt-4 md:pt-0">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="group-by-order"
-                  checked={groupByOrder}
-                  onCheckedChange={setGroupByOrder}
-                />
-                <Label htmlFor="group-by-order" className="text-sm font-medium">
-                  Group by order
-                </Label>
-              </div>
-            </div>
-          </FilterFields>
-        </FilterContainer>
+        <VisaApplicationFilters
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+          selectedCountryFilter={selectedCountryFilter}
+          onCountryFilterChange={handleCountryFilterChange}
+          selectedVisaTypeFilter={selectedVisaTypeFilter}
+          onVisaTypeFilterChange={handleVisaTypeFilterChange}
+          selectedApplicationTypeFilter={selectedApplicationTypeFilter}
+          onApplicationTypeFilterChange={handleApplicationTypeFilterChange}
+          selectedStatusGroupFilter={selectedStatusGroupFilter}
+          onStatusGroupFilterChange={handleStatusGroupFilterChange}
+          visasToApplyTimeFilter={visasToApplyTimeFilter}
+          onVisasToApplyTimeFilterChange={handleVisasToApplyTimeFilterChange}
+          selectedStatusFilter={selectedStatusFilter}
+          onStatusFilterChange={handleStatusFilterChange}
+          groupByOrder={groupByOrder}
+          onGroupByOrderChange={setGroupByOrder}
+          onResetFilters={resetFilters}
+        />
 
         {/* Loading state */}
-        {isLoading && (
+        {isLoading && !data && (
           <Card className="rounded-md py-0">
             <CardContent className="p-0">
               <div className="flex justify-center items-center p-8 ">
@@ -548,7 +562,7 @@ const AllVisaApplicationsPage = () => {
             <CardContent className="p-0">
               <div className="p-6 bg-red-900/20 border border-red-800 rounded-lg text-red-400">
                 <h3 className="font-medium text-lg mb-2">Error Loading Visa Applications</h3>
-                <p>{error.message}</p>
+                <p>{error?.message || 'Unknown error occurred'}</p>
               </div>
             </CardContent>
           </Card>
@@ -566,7 +580,7 @@ const AllVisaApplicationsPage = () => {
         {/* Desktop Table View */}
         {visaApplications.length > 0 && !isLoading && !isError && (
           <>
-            <Card className="rounded-md py-0 hidden md:block">
+            <Card className="rounded-md py-0 hidden lg:block">
               <CardContent className="p-0">
                 <div className="overflow-x-auto rounded-md border border-muted">
                   <Table className="text-gray-400">
@@ -592,10 +606,28 @@ const AllVisaApplicationsPage = () => {
                         </TableHead>
                         <TableHead
                           className="text-gray-300 cursor-pointer hover:text-white select-none"
+                          onClick={() => handleSort('applicationType')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Service
+                            {getSortIcon('applicationType')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none"
+                          onClick={() => handleSort('applicationCode')}
+                        >
+                          <div className="flex items-center gap-2">
+                            Code
+                            {getSortIcon('applicationCode')}
+                          </div>
+                        </TableHead>
+                        <TableHead
+                          className="text-gray-300 cursor-pointer hover:text-white select-none"
                           onClick={() => handleSort('type')}
                         >
                           <div className="flex items-center gap-2">
-                            Type
+                            Visa Type
                             {getSortIcon('type')}
                           </div>
                         </TableHead>
@@ -640,7 +672,6 @@ const AllVisaApplicationsPage = () => {
                     <TableBody>
                       {groupedVisaApplications.flatMap(({ applications }) => {
                         const rows: any[] = [];
-                        let previousClient: any = null;
 
                         // Sort applications by primary clients first, then by client name within each group
                         const sortedApplications = applications.sort((a, b) => {
@@ -653,9 +684,9 @@ const AllVisaApplicationsPage = () => {
 
                           // If both are primary or both are not primary, sort by name
                           const nameA =
-                            `${clientA.firstName || ''} ${clientA.lastName || ''}`.trim();
+                            `${clientA.lastName || ''} ${clientA.firstName || ''}`.trim();
                           const nameB =
-                            `${clientB.firstName || ''} ${clientB.lastName || ''}`.trim();
+                            `${clientB.lastName || ''} ${clientB.firstName || ''}`.trim();
                           return nameA.localeCompare(nameB);
                         });
 
@@ -670,14 +701,9 @@ const AllVisaApplicationsPage = () => {
                           const isLastInGroup = index === sortedApplications.length - 1;
                           const hasMultipleInGroup = sortedApplications.length > 1 && groupByOrder;
 
-                          // Check if current client is the same as previous client
-                          const showClientBadge =
-                            !previousClient || previousClient.id !== client.id;
-                          previousClient = client;
-
                           rows.push(
                             <TableRow
-                              key={application.id}
+                              key={`table-${application.id}`}
                               className={cn(
                                 'border-gray-700 hover:bg-gray-800/50 relative',
                                 hasMultipleInGroup ? 'border-dashed' : '',
@@ -697,15 +723,15 @@ const AllVisaApplicationsPage = () => {
                                     }`}
                                   />
                                 )}
-                                {showClientBadge && (
-                                  <ClientBadge
-                                    client={client}
-                                    showLinkedClients={false}
-                                    stepStatus="submitted"
-                                  />
-                                )}
+                                <ClientBadge
+                                  client={client}
+                                  showLinkedClients={false}
+                                  stepStatus="submitted"
+                                />
                               </TableCell>
                               <TableCell>{application.country.name}</TableCell>
+                              <TableCell>{application.type}</TableCell>
+                              <TableCell>{application.applicationCode}</TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   {application.visaType && application.visaType.name}
@@ -802,8 +828,8 @@ const AllVisaApplicationsPage = () => {
                   if (!clientA.isPrimary && clientB.isPrimary) return 1;
 
                   // If both are primary or both are not primary, sort by name
-                  const nameA = `${clientA.firstName || ''} ${clientA.lastName || ''}`.trim();
-                  const nameB = `${clientB.firstName || ''} ${clientB.lastName || ''}`.trim();
+                  const nameA = `${clientA.lastName || ''} ${clientA.firstName || ''}`.trim();
+                  const nameB = `${clientB.lastName || ''} ${clientB.firstName || ''}`.trim();
                   return nameA.localeCompare(nameB);
                 });
 
@@ -825,7 +851,7 @@ const AllVisaApplicationsPage = () => {
 
                       return (
                         <Card
-                          key={application.id}
+                          key={`mobile-${application.id}`}
                           className={cn(
                             'p-4 relative',
                             hasMultipleInGroup && !isLastInGroup ? 'mb-2' : ''
@@ -856,7 +882,7 @@ const AllVisaApplicationsPage = () => {
                               </div>
                             )}
 
-                            {/* Country and Type */}
+                            {/* Country, Type and Application Type */}
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
                                 <div>
@@ -868,6 +894,9 @@ const AllVisaApplicationsPage = () => {
                                     {application.isMultientry && (
                                       <Badge variant="accent">Multi</Badge>
                                     )}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    <span className="font-medium">Type:</span> {application.type}
                                   </div>
                                 </div>
                               </div>
@@ -935,6 +964,68 @@ const AllVisaApplicationsPage = () => {
               })}
             </div>
           </>
+        )}
+
+        {/* Pagination */}
+        {pagination && totalPages > 1 && (
+          <div className="mt-6 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
+            <div className="text-sm text-gray-400 text-center sm:text-left">
+              Showing {offset + 1} to {Math.min(offset + pageSize, pagination.total)} of{' '}
+              {pagination.total} results
+              {isLoading && <span className="ml-2">(Loading...)</span>}
+            </div>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage((prev: number) => Math.max(1, prev - 1))}
+                    className={`w-auto ${
+                      currentPage === 1 || isLoading
+                        ? 'pointer-events-none opacity-50'
+                        : 'cursor-pointer'
+                    }`}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: Math.min(isMobile ? 3 : 5, totalPages) }, (_, i) => {
+                  const maxPages = isMobile ? 3 : 5;
+                  let pageNum: number;
+                  if (totalPages <= maxPages) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= Math.ceil(maxPages / 2)) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - Math.floor(maxPages / 2)) {
+                    pageNum = totalPages - maxPages + 1 + i;
+                  } else {
+                    pageNum = currentPage - Math.floor(maxPages / 2) + i;
+                  }
+
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(pageNum)}
+                        isActive={currentPage === pageNum}
+                        className={`cursor-pointer ${isLoading ? 'pointer-events-none opacity-50' : ''}`}
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage((prev: number) => Math.min(totalPages, prev + 1))}
+                    className={`w-auto ${
+                      currentPage === totalPages || isLoading
+                        ? 'pointer-events-none opacity-50'
+                        : 'cursor-pointer'
+                    }`}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         )}
       </div>
     </div>

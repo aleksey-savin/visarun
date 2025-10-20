@@ -114,26 +114,8 @@ const ClientName = ({ client }: { client: StoreClient | undefined }) => {
       <Label className="text-sm mb-2">
         Full name{order.status === 'draft' ? '' : <span className="text-red-500">*</span>}
       </Label>
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
         <Form {...form}>
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    placeholder="First Name"
-                    value={field.value || ''}
-                    onChange={e => handleChange(field, e.target.value)}
-                    onBlur={() => handleBlur('firstName')}
-                    name={field.name}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="lastName"
@@ -145,6 +127,24 @@ const ClientName = ({ client }: { client: StoreClient | undefined }) => {
                     value={field.value || ''}
                     onChange={e => handleChange(field, e.target.value)}
                     onBlur={() => handleBlur('lastName')}
+                    name={field.name}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    placeholder="First Name"
+                    value={field.value || ''}
+                    onChange={e => handleChange(field, e.target.value)}
+                    onBlur={() => handleBlur('firstName')}
                     name={field.name}
                   />
                 </FormControl>

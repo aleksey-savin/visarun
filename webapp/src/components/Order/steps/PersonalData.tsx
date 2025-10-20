@@ -6,12 +6,13 @@ import UserContacts from '../sections/UserSection/UserContacts';
 import Comments from '../Comments';
 import OtherRequirements from '../sections/PersonalDataSection/OtherRequirements';
 import PassportExpiry from '../sections/ClientSection/PassportExpiry';
+import BirthDate from '../sections/ClientSection/BirthDate';
 
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 
 const PersonalData = ({ client }: { client: StoreClient }) => {
-  const { setActiveClientId } = useOrderStore();
+  const { setActiveClientId, orderItems } = useOrderStore();
 
   const visaRequirementsDocuments = client.visaRequirements
     ? client.visaRequirements.filter((item: any) => item.inputType === 'document')
@@ -25,15 +26,29 @@ const PersonalData = ({ client }: { client: StoreClient }) => {
     setActiveClientId('');
   };
 
+  const clientOrderItems = orderItems.filter(item => item.clientId === client.id);
+
+  const showComponent =
+    clientOrderItems.filter(item => item.serviceType !== 'acceleration').length > 0;
+
   return (
     <>
-      <DocumentsUpload requirements={visaRequirementsDocuments} client={client} />
-      <PassportExpiry client={client} />
-      {client.isPrimary && <UserContacts />}
+      {showComponent && (
+        <>
+          <DocumentsUpload requirements={visaRequirementsDocuments} client={client} />
+          <PassportExpiry client={client} />
+        </>
+      )}
+      <BirthDate client={client} />
+      <UserContacts client={client} />
       {client.isPrimary && <ClientName client={client} />}
       <Separator />
-      <OtherRequirements client={client} requirements={otherVisaRequirements} />
-      <Separator />
+      {showComponent && otherVisaRequirements.length > 0 && (
+        <>
+          <OtherRequirements client={client} requirements={otherVisaRequirements} /> <Separator />
+        </>
+      )}
+
       <div className="flex flex-wrap justify-between align-center">
         <Comments />
         <Button type="button" onClick={handleConfirm}>

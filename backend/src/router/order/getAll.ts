@@ -23,11 +23,12 @@ export const zGetAllOrdersTrpcInput = z.object({
       'cancelled',
     ])
     .optional(),
+  workStatus: z.enum(['in-work', 'archived']).optional().default('in-work'),
   userId: z.string().uuid().optional(),
   search: z.string().optional(),
   dateFrom: z.date().optional(),
   dateTo: z.date().optional(),
-  limit: z.number().min(1).max(100).optional().default(20),
+  limit: z.number().min(1).max(200).optional().default(100),
   offset: z.number().min(0).optional().default(0),
   sortBy: z.enum(['createdAt', 'status']).optional().default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
@@ -38,7 +39,19 @@ export const getAllOrdersTrpcRoute = orderReadProcedure
   .query(async ({ input, ctx }) => {
     const whereClause: Prisma.OrderWhereInput = {};
 
-    // Filter by status
+    // Filter by work status (in-work vs archived)
+    if (input.workStatus === 'archived') {
+      whereClause.status = {
+        in: ['completed', 'cancelled'],
+      };
+    } else {
+      // in-work: exclude completed and cancelled
+      whereClause.status = {
+        in: ['draft', 'personal_data_verification', 'payment_pending', 'submitted'],
+      };
+    }
+
+    // Filter by specific status if provided (overrides workStatus filter)
     if (input.status) {
       whereClause.status = input.status;
     }
@@ -120,6 +133,20 @@ export const getAllOrdersTrpcRoute = orderReadProcedure
               middleName: true,
               lastName: true,
               email: true,
+            },
+          },
+          createdBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          updatedBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
             },
           },
           items: {

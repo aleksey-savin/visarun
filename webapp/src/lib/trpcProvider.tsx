@@ -55,8 +55,6 @@ export const TrpcProvider = ({ children }: { children: React.ReactNode }) => {
               }
             }
 
-            console.log(import.meta.env.VITE_API_URL);
-
             return response;
           },
         }),

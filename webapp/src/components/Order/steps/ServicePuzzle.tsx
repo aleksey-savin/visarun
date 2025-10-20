@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 
-import {StoreClient} from '@/stores/order/order-store';
+import { StoreClient } from '@/stores/order/order-store';
 
 import { trpc } from '@/lib/trpc';
 
@@ -49,9 +49,17 @@ const ServicePuzzle = ({
     order,
     clients,
     setClients,
+    visarunPassengers,
   } = useOrderStore();
 
-  const [activeService, setActiveService] = useState('visarun');
+  const detectActiveService =
+    visarunPassengers.length > 0
+      ? 'visarun'
+      : orderItems.filter(i => i.serviceType === 'acceleration').length > 0
+        ? 'acceleration'
+        : 'visa';
+
+  const [activeService, setActiveService] = useState(detectActiveService);
 
   const isDisabled = !client.citizenship?.id || !client.preConfirmPassportIsValid;
 
@@ -121,7 +129,7 @@ const ServicePuzzle = ({
   };
 
   const handleConfirm = () => {
-    setActiveClientId('');
+    setActiveClientId('-');
   };
 
   return (
@@ -129,9 +137,11 @@ const ServicePuzzle = ({
       {servicePuzzleIsActive && (
         <>
             {activeService === 'exchange' && <CurrencyExchangeSection client={client} />}
-          {activeService === 'visa' && <AddVisa client={client} />}
+          {['visa', 'acceleration'].includes(activeService) && (
+            <AddVisa activeService={activeService} client={client} />
+          )}
           <ClientName client={client} />
-          {activeService === 'visarun' && <VisarunSection />}
+          {activeService === 'visarun' && <VisarunSection client={client} />}
           <Comments />
           <hr />
         </>
@@ -193,7 +203,13 @@ const ServicePuzzle = ({
                 >
                   Visa
                 </Button>
-                <Button disabled variant="secondary" size="sm" className="border-none">
+                <Button
+                  disabled={isDisabled}
+                  variant={activeService === 'acceleration' ? 'accent-green' : 'secondary'}
+                  size="sm"
+                  className="border-none"
+                  onClick={() => handleServiceButtonClick('acceleration')}
+                >
                   Acceleration
                 </Button>
               </div>

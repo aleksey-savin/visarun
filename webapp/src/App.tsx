@@ -100,6 +100,9 @@ import AllVisarunSchedulesPage from './pages/VisarunSchedules/index.js';
 import CreateVisarunSchedulePage from './pages/VisarunSchedules/create.js';
 import EditVisarunSchedulePage from './pages/VisarunSchedules/edit.js';
 
+// Visarun trips pages
+import AllVisarunTripsPage from './pages/Visarun/index.js';
+
 import {
   getAllUsersRoute,
   getCurrencyExchangeRoute,
@@ -207,6 +210,8 @@ import {
   getAllVisaApplicationsRoute,
   getViewVisaApplicationRoute,
   viewVisaApplicationRouteParams,
+  // Visarun Trips routes
+  getAllVisarunTripsRoute,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -682,6 +687,16 @@ const App = () => {
                   }
                 />
 
+                {/* VisarunTrips Routes */}
+                <Route
+                  path={getAllVisarunTripsRoute()}
+                  element={
+                    <PermissionRoute requiredPermission="visarunTrips.read">
+                      <AllVisarunTripsPage />
+                    </PermissionRoute>
+                  }
+                />
+
                 {/* Visa Citizenship Surcharges Management Routes */}
                 <Route
                   path={getAllVisaCitizenshipSurchargesRoute()}
@@ -792,6 +807,8 @@ const App = () => {
                   }
                 />
               </Route>
+
+              {/* Visarun Routes */}
 
               {/* Fallback route */}
               <Route path="*" element={<Navigate to="/" replace />} />

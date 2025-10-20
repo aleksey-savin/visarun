@@ -6,7 +6,8 @@ export const zCreateVisarunRouteStopTrpcInput = z.object({
   cityId: z.string().uuid('Invalid city ID'),
   stopOrder: z.number().int().positive('Stop order must be a positive integer'),
   stopType: z.enum(['departure', 'arrival', 'intermediate']),
-  pickupMode: z.enum(['location', 'address', 'none']),
+  pickupMode: z.enum(['location', 'address']),
+  pickupLocationId: z.string().uuid().optional(),
   arrivalTime: z.string().optional(),
   departureTime: z.string().optional(),
   arrivalNextDay: z.boolean().optional().default(false),
@@ -48,20 +49,6 @@ export const createVisarunRouteStopTrpcRoute = visarunRouteStopCreateProcedure
       throw new Error(`Stop order ${input.stopOrder} is already taken for this route`);
     }
 
-    // Check if this city is already a stop on this route
-    const existingStopWithCity = await ctx.prisma.visarunRouteStop.findUnique({
-      where: {
-        routeId_cityId: {
-          routeId: input.routeId,
-          cityId: input.cityId,
-        },
-      },
-    });
-
-    if (existingStopWithCity) {
-      throw new Error('This city is already a stop on this route');
-    }
-
     // Validate time format if provided (expecting HH:MM format)
     if (input.arrivalTime && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(input.arrivalTime)) {
       throw new Error('Arrival time must be in HH:MM format');
@@ -71,31 +58,62 @@ export const createVisarunRouteStopTrpcRoute = visarunRouteStopCreateProcedure
       throw new Error('Departure time must be in HH:MM format');
     }
 
-    // Create the route stop
-    const routeStop = await ctx.prisma.visarunRouteStop.create({
-      data: {
-        routeId: input.routeId,
-        cityId: input.cityId,
-        stopOrder: input.stopOrder,
-        stopType: input.stopType,
-        pickupMode: input.pickupMode,
-        arrivalTime: input.arrivalTime,
-        departureTime: input.departureTime,
-        arrivalNextDay: input.arrivalNextDay,
-        waitingDuration: input.waitingDuration,
-      },
-      include: {
-        route: true,
-        city: true,
-        pickupLocations: {
-          include: {
-            pickupLocation: true,
+    // Validate pickup location if provided
+    if (input.pickupLocationId) {
+      const pickupLocation = await ctx.prisma.pickupLocation.findUnique({
+        where: {
+          id: input.pickupLocationId,
+        },
+      });
+
+      if (!pickupLocation || pickupLocation.cityId !== input.cityId || !pickupLocation.isActive) {
+        throw new Error('Pickup location not found or not in the same city');
+      }
+    }
+
+    // Use transaction to create route stop and pickup location associations
+    const result = await ctx.prisma.$transaction(async tx => {
+      // Create the route stop
+      const routeStop = await tx.visarunRouteStop.create({
+        data: {
+          routeId: input.routeId,
+          cityId: input.cityId,
+          stopOrder: input.stopOrder,
+          stopType: input.stopType,
+          pickupMode: input.pickupMode,
+          arrivalTime: input.arrivalTime,
+          departureTime: input.departureTime,
+          arrivalNextDay: input.arrivalNextDay,
+          waitingDuration: input.waitingDuration,
+        },
+      });
+
+      // Create pickup location association if provided
+      if (input.pickupLocationId) {
+        await tx.visarunStopPickupLocation.create({
+          data: {
+            routeStopId: routeStop.id,
+            pickupLocationId: input.pickupLocationId,
+          },
+        });
+      }
+
+      // Return the route stop with all related data
+      return await tx.visarunRouteStop.findUnique({
+        where: { id: routeStop.id },
+        include: {
+          route: true,
+          city: true,
+          pickupLocations: {
+            include: {
+              pickupLocation: true,
+            },
           },
         },
-      },
+      });
     });
 
     return {
-      routeStop,
+      routeStop: result,
     };
   });

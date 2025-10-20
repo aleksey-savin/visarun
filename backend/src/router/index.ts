@@ -47,6 +47,8 @@ import { pickupLocationRoutes } from './pickupLocation/index.js';
 import { visarunScheduleRoutes } from './visarunSchedule/index.js';
 import { visarunSeatPriceRoutes } from './visarunSeatPrice/index.js';
 import { visarunTripRoutes } from './visarunTrip/index.js';
+import { visarunTripTransportRoutes } from './visarunTripTransport/index.js';
+import { visarunPassengerRouter } from './visarunPassenger/index.js';
 
 import { currencyExchangeRoutes } from './currencyExchange/index.js';
 import { transactionRoutes } from "./transaction/index.js";
@@ -96,6 +98,8 @@ export const appRouter = trpc.router({
   visarunSchedule: visarunScheduleRoutes,
   visarunSeatPrice: visarunSeatPriceRoutes,
   visarunTrip: visarunTripRoutes,
+  visarunTripTransport: visarunTripTransportRoutes,
+  visarunPassenger: visarunPassengerRouter,
   signup: signupTrpcRoute,
   signin: signinTrpcRoute,
   exchangeRates: exchangeRatesRoute,

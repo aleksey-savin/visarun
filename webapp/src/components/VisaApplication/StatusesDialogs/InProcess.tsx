@@ -116,8 +116,10 @@ export const InProcessStatusDialog = ({ application }: { application: any }) => 
     ({ className }: { className?: string }) => (
       <div className={className}>
         <ClientCard
-          application={application}
+          client={application.orderItem?.client}
           order={application.orderItem?.order}
+          orderItem={application.orderItem}
+          application={application}
           border={clientCardBorder}
         />
         {denied && (

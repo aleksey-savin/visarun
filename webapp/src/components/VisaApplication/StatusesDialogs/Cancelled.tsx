@@ -76,8 +76,10 @@ export const CancelledStatusDialog = ({ application }: { application: any }) => 
   const CancelledContent = ({ className }: { className?: string }) => (
     <div className={className}>
       <ClientCard
-        application={application}
+        client={application.orderItem?.client}
         order={application.orderItem?.order}
+        orderItem={application.orderItem}
+        application={application}
         border={'border-destructive'}
       />
       <div className="border border-destructive rounded-md p-4">{application.cancelReason}</div>

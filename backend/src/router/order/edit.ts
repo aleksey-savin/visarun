@@ -15,6 +15,7 @@ export const zEditOrderTrpcInput = z.object({
       'cancelled',
     ])
     .optional(),
+  postPayment: z.boolean().optional(),
 });
 
 export const editOrderTrpcRoute = orderUpdateProcedure
@@ -61,6 +62,7 @@ export const editOrderTrpcRoute = orderUpdateProcedure
       where: { id },
       data: {
         ...restUpdateData,
+        updatedById: ctx.user?.id,
       },
       include: {
         user: {
@@ -70,6 +72,20 @@ export const editOrderTrpcRoute = orderUpdateProcedure
             middleName: true,
             lastName: true,
             email: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        updatedBy: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
           },
         },
         items: {

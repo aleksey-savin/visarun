@@ -36,8 +36,10 @@ export const RefundStatusDialog = ({ application }: { application: any }) => {
   const RefundContent = ({ className }: { className?: string }) => (
     <div className={className}>
       <ClientCard
-        application={application}
+        client={application.orderItem?.client}
         order={application.orderItem?.order}
+        orderItem={application.orderItem}
+        application={application}
         border="border-destructive"
       />
     </div>

@@ -45,10 +45,18 @@ export const validateRequirementInputTrpcRoute = requirementReadProcedure
     try {
       switch (requirement.inputType) {
         case 'document':
-          // For document type, we just check if a file URL is provided
-          if (typeof inputValue === 'string' && inputValue.startsWith('/uploads/')) {
-            validationResult.isValid = true;
-            validationResult.message = 'Document uploaded successfully';
+          // For document type, we check if a file URL is provided (S3 URLs or legacy local URLs)
+          if (typeof inputValue === 'string') {
+            const s3Endpoint = process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net';
+            const isS3Url = inputValue.includes(s3Endpoint);
+            const isLegacyUrl = inputValue.startsWith('/uploads/');
+
+            if (isS3Url || isLegacyUrl) {
+              validationResult.isValid = true;
+              validationResult.message = 'Document uploaded successfully';
+            } else {
+              validationResult.message = 'Valid document upload required';
+            }
           } else {
             validationResult.message = 'Valid document upload required';
           }

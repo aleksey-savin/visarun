@@ -44,6 +44,7 @@ const allowedFileTypes = {
   'application/pdf': ['.pdf'],
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
+  'image/heic': ['.heic'],
   'application/msword': ['.doc'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
 };

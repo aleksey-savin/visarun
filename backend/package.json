@@ -15,7 +15,7 @@
     "pgc": "prisma generate",
     "prisma:seed": "tsx src/utils/seed.ts",
     "prisma:seed-prod": "node dist/src/utils/seed.js",
-    "prepare": "",
+    "migrate:s3": "tsx src/utils/migrateToS3.ts",
     "build": "prisma generate && rm -rf dist && swc src -d dist --extensions '.ts,.tsx' && cp -r prisma dist/ && echo '{\"type\":\"module\"}' > dist/package.json"
   },
   "keywords": [],
@@ -31,6 +31,7 @@
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
+    "@types/heic-convert": "^2.1.0",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/lodash": "^4.17.16",
     "@types/multer": "^1.4.13",
@@ -46,6 +47,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.901.0",
+    "@aws-sdk/s3-request-presigner": "^3.901.0",
     "@prisma/client": "^6.6.0",
     "@trpc/server": "^11.1.0",
     "bcrypt": "^5.1.1",
@@ -53,9 +56,11 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "heic-convert": "^2.1.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "multer": "^2.0.1",
+    "node-cron": "^4.2.1",
     "prisma": "^6.6.0",
     "zod": "^3.24.3"
   }

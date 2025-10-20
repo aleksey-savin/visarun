@@ -162,8 +162,6 @@ export default function VisarunSchedulesPage() {
     return `${schedule.route.routeStops[0].city?.name} - ${schedule.route.routeStops[schedule.route.routeStops.length - 1].city?.name}`;
   };
 
-  console.log();
-
   return (
     <>
       <div className="grid gap-3 sm:gap-4 lg:gap-6 p-4 sm:p-6 pb-0">

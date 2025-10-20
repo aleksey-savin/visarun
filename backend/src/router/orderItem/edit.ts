@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const zEditOrderItemTrpcInput = z.object({
   id: z.string().uuid(),
-  serviceType: z.enum(['visa', 'visarun']).optional(),
+  serviceType: z.enum(['visa', 'visarun', 'acceleration']).optional(),
   serviceTypeId: z.string().optional(),
   visaTypeId: z.string().uuid().optional(),
   discountAppliedType: z.enum(['manual', 'rule']).optional(),

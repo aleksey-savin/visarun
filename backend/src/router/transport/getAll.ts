@@ -43,6 +43,26 @@ export const getAllTransportsTrpcRoute = transportReadProcedure
             seatClass: true,
           },
         },
+        seatingChart: {
+          include: {
+            floors: {
+              orderBy: { floorNumber: 'asc' },
+              include: {
+                rows: {
+                  orderBy: { rowNumber: 'asc' },
+                  include: {
+                    seats: {
+                      orderBy: { seatLabel: 'asc' },
+                      include: {
+                        seatClass: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
         name: 'asc',

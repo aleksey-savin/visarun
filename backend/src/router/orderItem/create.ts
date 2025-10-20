@@ -5,7 +5,7 @@ import { VisaApplicationStatus } from '@prisma/client';
 export const zCreateOrderItemTrpcInput = z.object({
   orderId: z.string().uuid(),
   clientId: z.string().uuid(),
-  serviceType: z.enum(['visa', 'visarun', 'currencyExchange']),
+  serviceType: z.enum(['visa', 'visarun', 'currencyExchange', 'acceleration']),
   countryId: z.string().uuid().optional(),
   discountAppliedType: z.enum(['manual', 'rule']).optional(),
   discountRuleId: z.string().uuid().optional(),
@@ -90,7 +90,7 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
     }
 
     // Validate visa-specific fields
-    if (input.serviceType === 'visa') {
+    if (input.serviceType === 'visa' || input.serviceType === 'acceleration') {
       if (!input.countryId) {
         throw new Error('Country ID is required for visa service type');
       }
@@ -124,7 +124,7 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
 
     // If service type is visa, create a visa application
     let visaApplication = null;
-    if (input.serviceType === 'visa') {
+    if (input.serviceType === 'visa' || input.serviceType === 'acceleration') {
       try {
         // Always create visa application for visa order items
         const visaTypeId = input.visaTypeId;
@@ -135,12 +135,16 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
           submittedByAgent: boolean;
           countryId: string;
           plannedCountryEntryDate?: Date;
+          clientIsInTheCountry?: boolean;
           status: VisaApplicationStatus;
           visaTypeId?: string;
+          type?: 'visa' | 'acceleration';
         } = {
           orderItemId: orderItem.id,
           submittedByAgent: false,
-          countryId: input.countryId!, // Safe to use ! because we validated above
+          clientIsInTheCountry: true,
+          type: input.serviceType,
+          countryId: input.countryId!,
           plannedCountryEntryDate: input.plannedCountryEntryDate,
           status: VisaApplicationStatus.draft,
         };
@@ -153,8 +157,16 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
           visaApplicationData.applicationCode = input.applicationCode;
         }
 
+        const country = await ctx.prisma.country.findUnique({
+          where: { id: input.countryId! },
+          select: { name: true },
+        });
+
         visaApplication = await ctx.prisma.visaApplication.create({
-          data: visaApplicationData,
+          data: {
+            ...visaApplicationData,
+            clientIsInTheCountry: country?.name === 'Cambodia' ? false : true,
+          },
           include: {
             country: {
               select: {
@@ -167,6 +179,8 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
                 id: true,
                 name: true,
                 serviceCost: true,
+                accelerationCost: true,
+                accelerationAvailable: true,
                 isMultientry: true,
                 multientryExtraCost: true,
                 processingMode: true,

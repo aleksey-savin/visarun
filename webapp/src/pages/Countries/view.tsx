@@ -25,6 +25,7 @@ import VisaCitizenshipSurchargeForm, {
 } from '@/components/VisaCitizenshipSurcharge/Form';
 import VisaFreeAccessDialog from '@/components/Countries/VisaFreeAccessDialog';
 import BlacklistCitizenshipDialog from '@/components/Countries/BlacklistCitizenshipDialog';
+import { PickupLocationManager } from '@/components/PickupLocation';
 
 import {
   ArrowLeft,
@@ -752,57 +753,65 @@ const ViewCountryPage = () => {
               <div className="space-y-2">
                 {country.cities?.length ? (
                   country.cities.map(city => (
-                    <Card
-                      key={city.id}
-                      className="flex flex-row justify-between items-center bg-secondary p-6"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Building2 className="h-6 w-6" />
-                        <span className="font-medium">{city.name}</span>
-                        <Badge variant={city.isActive ? 'default' : 'secondary'}>
-                          {city.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {canUpdateCities && editingCity?.id === city.id ? (
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={editingCity.isActive}
-                              onCheckedChange={isActive =>
-                                setEditingCity(prev => (prev ? { ...prev, isActive } : null))
-                              }
-                            />
-                            <Button size="sm" onClick={handleUpdateCity}>
-                              <Save className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => setEditingCity(null)}>
-                              <XCircle className="h-4 w-4" />
-                            </Button>
+                    <div key={city.id} className="space-y-0">
+                      <Card className="bg-secondary">
+                        <CardContent className="p-6">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                              <Building2 className="h-6 w-6" />
+                              <span className="font-medium">{city.name}</span>
+                              <Badge variant={city.isActive ? 'default' : 'secondary'}>
+                                {city.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {canUpdateCities && editingCity?.id === city.id ? (
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={editingCity.isActive}
+                                    onCheckedChange={isActive =>
+                                      setEditingCity(prev => (prev ? { ...prev, isActive } : null))
+                                    }
+                                  />
+                                  <Button size="sm" onClick={handleUpdateCity}>
+                                    <Save className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingCity(null)}
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <>
+                                  {canUpdateCities && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => setEditingCity(city)}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {canDeleteCities && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => deleteCityMutation.mutate({ id: city.id })}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </div>
-                        ) : (
-                          <>
-                            {canUpdateCities && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setEditingCity(city)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {canDeleteCities && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => deleteCityMutation.mutate({ id: city.id })}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </Card>
+                          <PickupLocationManager cityId={city.id} cityName={city.name} />
+                        </CardContent>
+                      </Card>
+                    </div>
                   ))
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">

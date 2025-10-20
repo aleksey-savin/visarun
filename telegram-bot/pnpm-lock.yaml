@@ -39,8 +39,8 @@ importers:
 
 packages:
 
-  '@babel/runtime@7.27.6':
-    resolution: {integrity: sha512-vbavdySgbTTrmFE+EsiqUTzlOr5bzlnJtUv9PynGCAKvfQqjIXbvFdumPM/GxMDfyuGMJaJAU6TO4zc1Jf1i8Q==}
+  '@babel/runtime@7.28.4':
+    resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
     engines: {node: '>=6.9.0'}
 
   '@cypress/request-promise@5.0.0':
@@ -955,7 +955,7 @@ packages:
 
 snapshots:
 
-  '@babel/runtime@7.27.6': {}
+  '@babel/runtime@7.28.4': {}
 
   '@cypress/request-promise@5.0.0(@cypress/request@3.0.8)(request@2.88.2)':
     dependencies:
@@ -1124,7 +1124,7 @@ snapshots:
 
   broadcast-channel@3.7.0:
     dependencies:
-      '@babel/runtime': 7.27.6
+      '@babel/runtime': 7.28.4
       detect-node: 2.1.0
       js-sha3: 0.8.0
       microseconds: 0.2.0
@@ -1628,7 +1628,7 @@ snapshots:
 
   match-sorter@6.3.4:
     dependencies:
-      '@babel/runtime': 7.27.6
+      '@babel/runtime': 7.28.4
       remove-accents: 0.5.0
 
   math-intrinsics@1.1.0: {}
@@ -1743,7 +1743,7 @@ snapshots:
 
   react-query@3.39.3(react@18.3.1):
     dependencies:
-      '@babel/runtime': 7.27.6
+      '@babel/runtime': 7.28.4
       broadcast-channel: 3.7.0
       match-sorter: 6.3.4
       react: 18.3.1
@@ -2037,7 +2037,7 @@ snapshots:
 
   unload@2.2.0:
     dependencies:
-      '@babel/runtime': 7.27.6
+      '@babel/runtime': 7.28.4
       detect-node: 2.1.0
 
   uri-js@4.4.1:

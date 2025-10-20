@@ -106,7 +106,11 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
 
   const handleDownloadFile = async (filePath: string, fileName: string) => {
     try {
-      const fileUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${filePath}`;
+      // Handle S3 URLs vs legacy local URLs
+      const fileUrl = filePath.includes('storage.yandexcloud.net/')
+        ? filePath // S3 URL - use directly
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${filePath}`; // Legacy local URL
+
       const response = await fetch(fileUrl);
 
       if (!response.ok) {
@@ -142,7 +146,7 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
       clientId,
       fileName: uploadedFileInfo.fileName,
       originalName: uploadedFileInfo.originalName,
-      fileUrl: newDocumentPath,
+      fileUrl: newDocumentPath, // Now contains S3 URL
       fileType: uploadedFileInfo.fileType,
       fileSize: uploadedFileInfo.fileSize,
     });
@@ -318,10 +322,10 @@ export const ClientInfo = ({ clientId, onEdit, onDelete }: ClientInfoProps) => {
                   onChange={handleFileUpload}
                   uploadEndpoint="/upload/client-document"
                   fileFieldName="document"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic"
                   maxSize={10 * 1024 * 1024} // 10MB
                   label="Document File"
-                  description="Upload PDF, DOC, DOCX, JPG, JPEG, or PNG files up to 10MB"
+                  description="Upload PDF, DOC, DOCX, JPG, JPEG, PNG, or HEIC files up to 10MB"
                   onUploadSuccess={fileInfo => {
                     setUploadedFileInfo({
                       fileName: fileInfo.fileName || fileInfo.originalName,

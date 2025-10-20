@@ -24,6 +24,7 @@ export const deleteVisarunRouteStopTrpcRoute = visarunRouteStopDeleteProcedure
             VisarunTrip: true,
           },
         },
+        city: true,
         VisarunPassenger: true,
       },
     });
@@ -32,21 +33,51 @@ export const deleteVisarunRouteStopTrpcRoute = visarunRouteStopDeleteProcedure
       throw new Error('Route stop not found');
     }
 
-    // Check if route has active schedules
+    // If there are active schedules, we need to handle them properly
+    // If there are active schedules, update scheduled trips to handle the removed stop
     if (existingRouteStop.route.VisarunSchedule.length > 0) {
+      // Get scheduled trips that don't have passengers yet
+      const scheduledTripsWithoutPassengers = existingRouteStop.route.VisarunTrip.filter(trip => {
+        if (trip.status !== 'scheduled') return false;
+        const hasPassengers = existingRouteStop.VisarunPassenger.some(
+          passenger => passenger.tripId === trip.id
+        );
+        return !hasPassengers;
+      });
+
+      // Update only scheduled trips that don't have passengers
+      if (scheduledTripsWithoutPassengers.length > 0) {
+        await ctx.prisma.visarunTrip.updateMany({
+          where: {
+            id: {
+              in: scheduledTripsWithoutPassengers.map(trip => trip.id),
+            },
+          },
+          data: {
+            notes: `Route stop "${existingRouteStop.city.name}" has been removed from this trip's route`,
+          },
+        });
+      }
+
+      // Note: Schedules themselves don't need updating as they reference routes, not individual stops
+      // The schedule will continue to work with the remaining stops on the route
+    }
+
+    // Check if route has any non-scheduled trips or scheduled trips with passengers (preserve historical data)
+    const tripsToPreserve = existingRouteStop.route.VisarunTrip.filter(trip => {
+      if (trip.status !== 'scheduled') return true;
+      const hasPassengers = existingRouteStop.VisarunPassenger.some(
+        passenger => passenger.tripId === trip.id
+      );
+      return hasPassengers;
+    });
+    if (tripsToPreserve.length > 0) {
       throw new Error(
-        'Cannot delete route stop from route with active schedules. Please deactivate all schedules first.'
+        'Cannot delete route stop from route with existing trips that have passengers or are non-scheduled. This stop has data that must be preserved.'
       );
     }
 
-    // Check if route has any trips
-    if (existingRouteStop.route.VisarunTrip.length > 0) {
-      throw new Error(
-        'Cannot delete route stop from route with existing trips. This stop has historical data that must be preserved.'
-      );
-    }
-
-    // Check if there are any passengers associated with this stop
+    // This check is now covered by the trips check above, but keeping for clarity
     if (existingRouteStop.VisarunPassenger.length > 0) {
       throw new Error(
         'Cannot delete route stop with existing passenger records. This stop has booking data that must be preserved.'

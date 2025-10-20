@@ -29,6 +29,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 const visaTypeSchema = z.object({
   name: z.string().min(1, 'Visa type name is required').max(255, 'Name is too long'),
   serviceCost: z.number().min(0, 'Service cost cannot be negative'),
+  accelerationCost: z.number().min(0, 'Acceleration cost cannot be negative'),
+  accelerationAvailable: z.boolean(),
   countryId: z.string().min(1, 'Country is required'),
   isMultientry: z.boolean(),
   favourite: z.boolean(),
@@ -77,6 +79,8 @@ const VisaTypeForm = ({
     defaultValues: {
       name: initialData?.name || '',
       serviceCost: initialData?.serviceCost || 0,
+      accelerationCost: initialData?.accelerationCost || 0,
+      accelerationAvailable: initialData?.accelerationAvailable || false,
       countryId: initialData?.countryId || '',
       isMultientry: initialData?.isMultientry || false,
       favourite: initialData?.favourite || false,
@@ -91,8 +95,13 @@ const VisaTypeForm = ({
   });
 
   // Watch form values
-  const watchedValues = form.watch(['countryId', 'isMultientry', 'processingMode']);
-  const [countryId, isMultientry, processingMode] = watchedValues;
+  const watchedValues = form.watch([
+    'countryId',
+    'isMultientry',
+    'processingMode',
+    'accelerationAvailable',
+  ]);
+  const [countryId, isMultientry, processingMode, accelerationAvailable] = watchedValues;
 
   // Get selected country info
   const selectedCountry = countries.find(country => country.id === countryId);
@@ -144,6 +153,12 @@ const VisaTypeForm = ({
       return;
     }
 
+    // Validate acceleration cost
+    if (data.accelerationAvailable && data.accelerationCost === 0) {
+      form.setError('accelerationCost', { message: 'Please enter acceleration cost' });
+      return;
+    }
+
     // Clean up data based on processing mode
     const submitData = {
       ...data,
@@ -153,6 +168,7 @@ const VisaTypeForm = ({
       processingValueMax:
         data.processingMode === 'approximate' ? data.processingValueMax : undefined,
       multientryExtraCost: data.isMultientry ? data.multientryExtraCost : undefined,
+      accelerationCost: data.accelerationAvailable ? data.accelerationCost : 0,
     };
 
     onSubmit(submitData);
@@ -330,6 +346,56 @@ const VisaTypeForm = ({
                               {globalMultivisaCost?.toLocaleString()} VND
                             </p>
                           )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+
+                {/* Acceleration Options */}
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="accelerationAvailable"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-medium">
+                            Acceleration service available
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {accelerationAvailable && (
+                    <FormField
+                      control={form.control}
+                      name="accelerationCost"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Acceleration Cost (VND)</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                min="0"
+                                step="1"
+                                placeholder="0"
+                                {...field}
+                                onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                              {field.value === 0 && (
+                                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 pointer-events-none">
+                                  *
+                                </span>
+                              )}
+                            </div>
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}

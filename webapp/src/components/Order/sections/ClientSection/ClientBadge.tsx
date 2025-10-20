@@ -41,7 +41,7 @@ const ClientBadge = ({
     if (clients.length === 0) return [];
 
     const servicePuzzleErrors = clientHasServicePuzzleErrors(client, orderItems, visaApplications);
-    const personalDataErrors = clientHasPersonalDataErrors(client, user);
+    const personalDataErrors = clientHasPersonalDataErrors(client, orderItems, user);
 
     // Show appropriate errors based on step status
     if (stepStatus === 'personal_data_verification') {
@@ -72,7 +72,7 @@ const ClientBadge = ({
                 <Badge variant="destructive">
                   <Crown />
                   <span>
-                    {client.firstName || ''} {client.lastName || ''}
+                    {client.lastName || ''} {client.firstName || ''}
                   </span>
                 </Badge>
                 <Tooltip>
@@ -101,9 +101,10 @@ const ClientBadge = ({
               <Badge variant="primary">
                 <Crown />
                 <span>
-                  {client.firstName || ''} {client.lastName || ''}
+                  {client.lastName || ''} {client.firstName || ''}
                 </span>
               </Badge>
+              <div className="flex ps-2 items-center text-xl">{client.citizenship?.emoji}</div>
               {showLinkedClients && (
                 <Badge variant="secondary" className="bg-emerald-900">
                   <User />
@@ -125,7 +126,7 @@ const ClientBadge = ({
                 </Badge>
                 <Badge variant="destructive">
                   <User />
-                  {client.firstName || ''} {client.lastName || ''}
+                  {client.lastName || ''} {client.firstName || ''}
                 </Badge>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -151,8 +152,9 @@ const ClientBadge = ({
               </Badge>
               <Badge variant="secondary" className="bg-emerald-900">
                 <User />
-                {client.firstName || ''} {client.lastName || ''}
+                {client.lastName || ''} {client.firstName || ''}
               </Badge>
+              <div className="flex ps-2 items-center text-xl">{client.citizenship?.emoji}</div>
             </div>
           )}
         </>

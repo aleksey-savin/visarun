@@ -75,12 +75,32 @@ export const zEditVisarunScheduleTrpcInput = z.object({
     .transform(str => (str ? new Date(str) : null)),
   autoGeneratePeriodMonths: z.number().int().min(1).max(24).optional(),
   isActive: z.boolean().optional(),
+  routeStops: z
+    .array(
+      z.object({
+        id: z.string().uuid().optional(),
+        cityId: z.string().uuid('Invalid city ID'),
+        stopOrder: z.number().int().positive('Stop order must be positive'),
+        stopType: z.enum(['departure', 'intermediate', 'arrival']),
+        pickupMode: z.enum(['location', 'address']),
+        pickupLocationId: z.string().uuid().optional(),
+        arrivalTime: z.string().optional(),
+        departureTime: z.string().optional(),
+        arrivalNextDay: z.boolean().optional().default(false),
+        waitingDuration: z
+          .number()
+          .int()
+          .min(0, 'Waiting duration must be non-negative')
+          .optional(),
+      })
+    )
+    .optional(),
 });
 
 export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
   .input(zEditVisarunScheduleTrpcInput)
   .mutation(async ({ input, ctx }) => {
-    const { id, ...updateData } = input;
+    const { id, routeStops, ...updateData } = input;
 
     // Check if schedule exists
     const existingSchedule = await ctx.prisma.visarunSchedule.findUnique({
@@ -183,10 +203,58 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
       updateData.departureTime ||
       updateData.validFrom ||
       updateData.validTo !== undefined ||
-      updateData.autoGeneratePeriodMonths;
+      updateData.autoGeneratePeriodMonths ||
+      routeStops; // Route stops changes also require trip regeneration
 
     // Use Prisma transaction to ensure atomicity
     const result = await ctx.prisma.$transaction(async tx => {
+      // Handle route stops update if provided
+      if (routeStops) {
+        // Delete existing route stops
+        await tx.visarunRouteStop.deleteMany({
+          where: {
+            routeId: existingSchedule.routeId,
+          },
+        });
+
+        // Create new route stops with proper sequential order
+        for (let i = 0; i < routeStops.length; i++) {
+          const stop = routeStops[i];
+          await tx.visarunRouteStop.create({
+            data: {
+              routeId: existingSchedule.routeId,
+              cityId: stop.cityId,
+              stopOrder: i + 1, // Sequential order based on array position
+              stopType: stop.stopType,
+              pickupMode: stop.pickupMode,
+              arrivalTime: stop.arrivalTime,
+              departureTime: stop.departureTime,
+              arrivalNextDay: stop.arrivalNextDay,
+              waitingDuration: stop.waitingDuration,
+            },
+          });
+
+          // Handle pickup location if provided
+          if (stop.pickupLocationId) {
+            const newStop = await tx.visarunRouteStop.findFirst({
+              where: {
+                routeId: existingSchedule.routeId,
+                stopOrder: i + 1,
+              },
+            });
+
+            if (newStop) {
+              await tx.visarunStopPickupLocation.create({
+                data: {
+                  routeStopId: newStop.id,
+                  pickupLocationId: stop.pickupLocationId,
+                },
+              });
+            }
+          }
+        }
+      }
+
       if (needsToRegenerateTrips) {
         // Delete only scheduled trips without passengers (from the future)
         await tx.visarunTrip.deleteMany({
