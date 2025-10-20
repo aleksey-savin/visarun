@@ -57,7 +57,9 @@ const ServicePuzzle = ({
       ? 'visarun'
       : orderItems.filter(i => i.serviceType === 'acceleration').length > 0
         ? 'acceleration'
-        : 'visa';
+        : orderItems.filter(i => i.serviceType === 'visa').length > 0
+                ? 'visa'
+                : 'currencyExchange';
 
   const [activeService, setActiveService] = useState(detectActiveService);
 
@@ -134,9 +136,10 @@ const ServicePuzzle = ({
 
   return (
     <>
+        {activeService === 'currencyExchange' && <CurrencyExchangeSection client={client} />}
+
       {servicePuzzleIsActive && (
         <>
-            {activeService === 'exchange' && <CurrencyExchangeSection client={client} />}
           {['visa', 'acceleration'].includes(activeService) && (
             <AddVisa activeService={activeService} client={client} />
           )}

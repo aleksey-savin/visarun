@@ -85,7 +85,7 @@ async function handleFileUpload(
     };
   },
   res: Response,
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents'
+  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'banking-details'
 ) {
   try {
     if (!req.file) {
@@ -172,7 +172,7 @@ async function generateServerFileName(
       }
     | undefined,
   originalName: string,
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents'
+  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'banking-details'
 ): Promise<string | undefined> {
   if (!metadata) return undefined;
 
@@ -243,6 +243,19 @@ async function generateServerFileName(
           }
         }
         break;
+
+        case 'banking-details':
+            if (metadata.clientId) {
+                const client = await prisma.client.findUnique({
+                    where: { id: metadata.clientId },
+                    select: { firstName: true, lastName: true },
+                });
+
+                if (client) {
+                    return `banking-details-${client.lastName}-${client.firstName}-${dateStr}.${extension}`.toLowerCase();
+                }
+            }
+            break;
     }
 
     await prisma.$disconnect();

@@ -159,6 +159,9 @@ export const viewOrderRouteParams = getRouteParams({ id: true });
 export type ViewOrderRouteParams = typeof viewOrderRouteParams;
 export const getViewOrderRoute = ({ id }: ViewOrderRouteParams) => `/orders/view/${id}`;
 
+// Currency Exchanges routes
+export const getAllCurrencyExchangesRoute = () => '/currency-exchanges';
+
 // Visa Applications routes
 export const getAllVisaApplicationsRoute = () => '/visa-applications';
 export const getCreateVisaApplicationRoute = () => '/visa-applications/create';

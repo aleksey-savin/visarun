@@ -24,7 +24,7 @@ import {
 import PersonalData from '@/components/Order/steps/PersonalData';
 import Payment from '@/components/Order/steps/Payment';
 import { cn } from '@/lib/utils';
-import { getAllVisaApplicationsRoute } from '@/lib/routes';
+import { getAllVisaApplicationsRoute, getAllCurrencyExchangesRoute } from '@/lib/routes';
 
 // Define the restricted status types that can be used in step navigation
 type StepStatus = 'draft' | 'personal_data_verification' | 'payment_pending' | 'submitted';
@@ -407,8 +407,9 @@ const EditOrderPage = () => {
     setActiveClientId,
   ]);
 
-  // Check if order contains only acceleration services
-  const hasOnlyAccelerationServices = false;
+  // Check if order contains only acceleration or exchange services
+  const hasOnlyServicesWithoutPersonalDataVerification = orderData?.items?.every(item => item.serviceType === 'acceleration' || item.serviceType === 'currencyExchange');
+  const hasOnlyCurrencyExchangeServices = orderData?.items?.every(item => item.serviceType === 'currencyExchange');
 
   const clientsHaveServicePuzzleErrors = useMemo(
     () =>
@@ -421,8 +422,8 @@ const EditOrderPage = () => {
   );
 
   const clientsHavePersonalDataErrors = useMemo(() => {
-    // Skip personal data validation for acceleration-only orders
-    if (hasOnlyAccelerationServices) return false;
+    // Skip personal data validation for acceleration-only and exchange-only orders
+    if (hasOnlyServicesWithoutPersonalDataVerification) return false;
 
     return (
       clients.filter(client => {
@@ -430,7 +431,7 @@ const EditOrderPage = () => {
         return errors.length > 0;
       }).length > 0
     );
-  }, [clients, user, hasOnlyAccelerationServices]);
+  }, [clients, user, hasOnlyServicesWithoutPersonalDataVerification]);
 
   const orderHasPaymentErrors = useMemo(() => {
     // If postPayment is enabled, there should be no payment errors
@@ -498,8 +499,8 @@ const EditOrderPage = () => {
       },
     ];
 
-    // If order has only acceleration services, skip Personal Data step
-    if (hasOnlyAccelerationServices) {
+    // If order has only acceleration and exchange services, skip Personal Data step
+    if (hasOnlyServicesWithoutPersonalDataVerification) {
       return allSteps.filter(step => step.status !== 'personal_data_verification');
     }
 
@@ -509,12 +510,12 @@ const EditOrderPage = () => {
     clientsHavePersonalDataErrors,
     orderHasPaymentErrors,
     order.status,
-    hasOnlyAccelerationServices,
+    hasOnlyServicesWithoutPersonalDataVerification,
   ]);
 
   const [activeStep, setActiveStep] = useState(() => {
     if (order.status === 'draft') return steps[0];
-    if (hasOnlyAccelerationServices) {
+    if (hasOnlyServicesWithoutPersonalDataVerification) {
       return order.status === 'payment_pending' ? steps[1] : steps[0];
     }
     return steps[1];
@@ -523,8 +524,8 @@ const EditOrderPage = () => {
   useEffect(() => {
     if (order.status === 'draft') {
       setActiveStep(steps[0]);
-    } else if (hasOnlyAccelerationServices) {
-      // For acceleration-only orders, skip personal data step
+    } else if (hasOnlyServicesWithoutPersonalDataVerification) {
+      // For acceleration-only and exchange-only orders, skip personal data step
       setActiveStep(order.status === 'payment_pending' ? steps[1] : steps[0]);
     } else {
       // Regular flow with all steps
@@ -536,7 +537,7 @@ const EditOrderPage = () => {
             : steps[0]
       );
     }
-  }, [order, steps, hasOnlyAccelerationServices]);
+  }, [order, steps, hasOnlyServicesWithoutPersonalDataVerification]);
 
   const editOrderMutation = trpc.order.edit.useMutation();
 
@@ -557,8 +558,8 @@ const EditOrderPage = () => {
 
       // Determine the correct status to set based on whether we're skipping personal data
       let statusToSet = clickedStep.status as StepStatus;
-      if (hasOnlyAccelerationServices && clickedStep.status === 'payment_pending') {
-        // For acceleration-only orders, when clicking on payment step, set status directly to payment_pending
+      if (hasOnlyServicesWithoutPersonalDataVerification && clickedStep.status === 'payment_pending') {
+        // For acceleration-only and exchange-only orders, when clicking on payment step, set status directly to payment_pending
         statusToSet = 'payment_pending';
       }
 
@@ -581,8 +582,8 @@ const EditOrderPage = () => {
 
   const handleNext = async () => {
     if (activeStep.status === 'draft') {
-      if (hasOnlyAccelerationServices) {
-        // Skip personal data step for acceleration-only orders
+      if (hasOnlyServicesWithoutPersonalDataVerification) {
+        // Skip personal data step for acceleration-only and exchange-only orders
         await handleStepClick(steps[1]); // This will be Payment step
       } else {
         await handleStepClick(steps[1]); // This will be Personal Data step
@@ -603,8 +604,13 @@ const EditOrderPage = () => {
         // Update order status in store
         await updateOrderStatus('submitted');
 
-        // Navigate to the visa applications table
-        navigate(getAllVisaApplicationsRoute());
+        if (hasOnlyCurrencyExchangeServices) {
+            // Navigate to the currency exchanges table
+            navigate(getAllCurrencyExchangesRoute());
+        } else {
+            // Navigate to the visa applications table
+            navigate(getAllVisaApplicationsRoute());
+        }
       } catch (error) {
         console.error('Failed to update order status:', error);
         // Revert on error
@@ -626,7 +632,7 @@ const EditOrderPage = () => {
     if (
       activeStep.status === 'personal_data_verification' &&
       clientsHavePersonalDataErrors &&
-      !hasOnlyAccelerationServices
+      !hasOnlyServicesWithoutPersonalDataVerification
     ) {
       if (['', '-'].includes(activeClientId) && clients.length > 0) {
         const clientWithErrors = clients.find(client => {
@@ -814,7 +820,12 @@ const EditOrderPage = () => {
               onClick={handleNext}
               className="flex border-none w-full items-center justify-between text-sm"
             >
-              <span>{`${order.status !== 'payment_pending' ? 'Next step' : 'Confirm & go to visas table'}`}</span>
+              <span>{`${order.status !== 'payment_pending' 
+                  ? 'Next step' 
+                  : hasOnlyCurrencyExchangeServices
+                    ? 'Confirm & go to currency exchanges table'
+                    : 'Confirm & go to visas table'
+              }`}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>

@@ -54,7 +54,7 @@ const AddVisa = ({ client, activeService }: { client: StoreClient; activeService
       countryId,
       clientId: client.id,
       serviceType:
-        activeService === 'visa' || activeService === 'visarun' ? 'visa' : 'acceleration',
+        activeService === 'visa' || activeService === 'visarun' || activeService === 'currencyExchange' ? 'visa' : 'acceleration',
       basePrice: 0,
       finalPrice: 0,
     });

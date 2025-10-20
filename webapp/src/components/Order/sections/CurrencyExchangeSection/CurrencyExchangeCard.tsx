@@ -9,7 +9,7 @@ import {useEffect, useState} from "react";
 import CurrenciesSelectionRow from "@/components/Order/sections/CurrencyExchangeSection/CurrenciesSelectionRow.tsx";
 import PaymentDetails from "@/components/Order/sections/CurrencyExchangeSection/PaymentDetails.tsx";
 import BankingDetailsCard from "@/components/Order/sections/CurrencyExchangeSection/BankingDetailsCard.tsx";
-import useOrderStore, {StoreClient, StoreCurrencyExchange} from "@/stores/order/order-store.ts";
+import useOrderStore, {StoreClient, StoreCurrencyExchange, StoreOrderItem} from "@/stores/order/order-store.ts";
 
 const formSchema = z.object({
     exchangeRate: z.number().positive().optional(),
@@ -38,7 +38,7 @@ interface CurrencyExchange {
 
 type FieldName = "exchangeRate" | "amount" | "amountInSelectedCurrencyFrom" | "amountInSelectedCurrencyTo" | "deadline" | "minTransactionAmount" | "orderItemId" | "fromCurrencyId" | "toCurrencyId";
 
-const CurrencyExchangeCard = ({ savedExchange, client }: { savedExchange: StoreCurrencyExchange, client: StoreClient }) => {
+const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExchange: StoreCurrencyExchange, client: StoreClient, orderItem: StoreOrderItem }) => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -61,10 +61,13 @@ const CurrencyExchangeCard = ({ savedExchange, client }: { savedExchange: StoreC
         setCurrencyExchanges,
         setSaveStatus,
         clients,
-        setClients
+        setClients,
+        orderItems,
+        setOrderItems,
     } = useOrderStore();
 
     const editCurrencyExchangeMutation = trpc.currencyExchange.edit.useMutation();
+    const editOrderItemMutation = trpc.orderItem.edit.useMutation();
 
     const createBankingDetailsMutation = trpc.bankingDetails.create.useMutation();
     const editBankingDetailsMutation = trpc.bankingDetails.edit.useMutation();
@@ -137,6 +140,30 @@ const CurrencyExchangeCard = ({ savedExchange, client }: { savedExchange: StoreC
                 fromCurrencyId: updatedCurrencyExchange.fromCurrencyId,
                 toCurrencyId: updatedCurrencyExchange.toCurrencyId,
             }));
+
+            const itemPrice = updatedCurrencyExchange.amountInSelectedCurrencyFrom;
+
+            // Only update if the price has actually changed
+            if (orderItem.finalPrice !== itemPrice) {
+
+                const updatedOrderItems = orderItems.map(i =>
+                    i.id === orderItem.id
+                        ? {
+                            ...orderItem,
+                            basePrice: itemPrice,
+                            finalPrice: itemPrice,
+                        }
+                        : i
+                );
+
+                setOrderItems(updatedOrderItems);
+
+                await editOrderItemMutation.mutateAsync({
+                    id: orderItem.id || '',
+                    basePrice: itemPrice || 0,
+                    finalPrice: itemPrice || 0,
+                });
+            }
 
             setSaveStatus('saved');
         } catch {

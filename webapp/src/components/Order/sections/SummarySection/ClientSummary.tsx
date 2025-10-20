@@ -23,6 +23,8 @@ const ClientSummary = ({ client }: { client: StoreClient }) => {
         return 'Visarun';
       case 'transfer':
         return 'Transfer';
+        case 'currencyExchange':
+            return 'Currency Exchange';
       default:
         return 'Service';
     }

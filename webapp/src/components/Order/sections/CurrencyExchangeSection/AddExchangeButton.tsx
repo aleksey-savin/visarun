@@ -77,7 +77,7 @@ const AddExchangeButton = ({
     };
 
     const handleClick = async () => {
-        setActiveService("exchange");
+        setActiveService("currencyExchange");
 
         if (clientOrderItems.length !== 0) return;
 
