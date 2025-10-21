@@ -1,13 +1,12 @@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 
-import { User, Crown, Mail, Copy, Check } from 'lucide-react';
+import { User, Mail, Copy, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-import { useNavigate } from 'react-router-dom';
-import { getViewClientRoute } from '@/lib/routes';
 import { Card } from '../ui/card';
 import { ContactMethodIcon } from '../ContactMethod';
+import ClientBadge from './ClientBadge';
 
 interface RelatedClient {
   id: string;
@@ -74,14 +73,7 @@ const ClientCard = ({
   isSelectable = true,
   showLinkedClients = false,
 }: ClientCardProps) => {
-  const navigate = useNavigate();
-
   const [copiedContact, setCopiedContact] = useState<string | null>(null);
-
-  const handleClientNameClick = (event: React.MouseEvent, clientId: string) => {
-    event.stopPropagation();
-    navigate(getViewClientRoute({ id: clientId }));
-  };
 
   const handleCopyToClipboard = (text: string, event: React.MouseEvent, contactId: string) => {
     event.stopPropagation();
@@ -115,41 +107,7 @@ const ClientCard = ({
       <div className="flex items-start justify-between">
         <div className="flex-1 space-y-6">
           <div className="flex items-center gap-2 flex-wrap">
-            {client.isPrimary && (
-              <div className="flex flex-wrap gap-1">
-                <Badge
-                  variant="primary"
-                  className="cursor-pointer"
-                  onClick={(e: any) => handleClientNameClick(e, client.id)}
-                >
-                  <Crown />
-                  <span>
-                    {client.lastName || ''} {client.firstName || ''}
-                  </span>
-                </Badge>
-                {showLinkedClients && (
-                  <Badge variant="secondary">
-                    <span>+ {client.relatedClients?.length}</span>
-                    <User />
-                  </Badge>
-                )}
-              </div>
-            )}
-            {!client.isPrimary && (
-              <div className="flex gap-1">
-                <Badge variant="primary">
-                  <Crown />
-                </Badge>
-                <Badge
-                  variant="secondary"
-                  className="cursor-pointer"
-                  onClick={(e: any) => handleClientNameClick(e, client.id)}
-                >
-                  <User />
-                  {client.lastName || ''} {client.firstName || ''}
-                </Badge>
-              </div>
-            )}
+            <ClientBadge client={client} showLinkedClients={showLinkedClients} />
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {client.citizenship && (
