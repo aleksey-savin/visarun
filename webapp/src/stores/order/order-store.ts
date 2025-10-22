@@ -164,14 +164,13 @@ export interface StoreCurrencyExchange {
     orderItemId: string;
     position: number;
     exchangeRate?: number;
-    amount?: number;
     amountInSelectedCurrencyFrom?: number;
     amountInSelectedCurrencyTo?: number;
     status: CurrencyExchangeStatus;
     cancelReason?: string;
     canceledByClient?: boolean;
     deadline?: Date;
-    minTransactionAmount?: number;
+    minTransactionAmountInSelectedCurrency?: number;
     fromCurrencyId?: string;
     toCurrencyId?: string;
     createdById: string;
@@ -403,6 +402,9 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
       const draftVisaApplications = currentState.visaApplications.filter(
         visaApp => visaApp.status === 'draft'
       );
+      const draftCurrencyExchanges = currentState.currencyExchanges.filter(
+          exchange => exchange.status === 'draft'
+      );
 
       // Update each draft visa application to pending_submit
       for (const visaApp of draftVisaApplications) {
@@ -422,6 +424,25 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
           console.error(`Failed to update visa application ${visaApp.id} status:`, error);
         }
       }
+
+        // Update each draft currency exchange to in_progress
+        for (const exchange of draftCurrencyExchanges) {
+            try {
+                await trpcClient.currencyExchange.updateStatus.mutate({
+                    id: exchange.id,
+                    status: 'in_progress',
+                });
+    
+                // Update the currency exchange in the local store
+                set(state => ({
+                    currencyExchanges: state.currencyExchanges.map(ex =>
+                        ex.id === exchange.id ? { ...ex, status: 'in_progress' as const } : ex
+                    ),
+                }));
+            } catch (error) {
+                console.error(`Failed to update currency exchange ${exchange.id} status:`, error);
+            }
+        }
     }
   },
   setUser: (userData: StoreUser) => set(() => ({ user: userData })),

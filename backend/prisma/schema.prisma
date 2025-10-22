@@ -604,30 +604,32 @@ model OrderPayment {
 // CURRENCY EXCHANGE
 
 model CurrencyExchange {
-  id                           String                 @id @default(uuid())
-  position                     Int
-  exchangeRate                 Decimal?
-  amount                       Decimal?
-  amountInSelectedCurrencyFrom Decimal?
-  amountInSelectedCurrencyTo   Decimal?
-  status                       CurrencyExchangeStatus @default(draft)
-  cancelReason                 String?
-  canceledByClient             Boolean?
-  deadline                     DateTime?
-  minTransactionAmount         Decimal?
-  orderItemId                  String                 @unique
-  fromCurrencyId               String?
-  toCurrencyId                 String?
-  createdById                  String
-  updatedById                  String
-  orderItem                    OrderItem              @relation(fields: [orderItemId], references: [id])
-  fromCurrency                 Currency?              @relation("FromCurrency", fields: [fromCurrencyId], references: [id])
-  toCurrency                   Currency?              @relation("ToCurrency", fields: [toCurrencyId], references: [id])
-  transactions                 Transaction[]
-  createdBy                    User                   @relation("CurrencyExchangeCreatedBy", fields: [createdById], references: [id])
-  updatedBy                    User                   @relation("CurrencyExchangeUpdatedBy", fields: [updatedById], references: [id])
-  createdAt                    DateTime               @default(now())
-  updatedAt                    DateTime               @default(now()) @updatedAt
+  id                                     String                 @id @default(uuid())
+  position                               Int
+  exchangeRate                           Decimal?
+  amountFrom                             Decimal?
+  amountTo                               Decimal?
+  amountInSelectedCurrencyFrom           Decimal?
+  amountInSelectedCurrencyTo             Decimal?
+  status                                 CurrencyExchangeStatus @default(draft)
+  cancelReason                           String?
+  canceledByClient                       Boolean?
+  deadline                               DateTime?
+  minTransactionAmount                   Decimal?
+  minTransactionAmountInSelectedCurrency Decimal?
+  orderItemId                            String                 @unique
+  fromCurrencyId                         String?
+  toCurrencyId                           String?
+  createdById                            String
+  updatedById                            String
+  orderItem                              OrderItem              @relation(fields: [orderItemId], references: [id])
+  fromCurrency                           Currency?              @relation("FromCurrency", fields: [fromCurrencyId], references: [id])
+  toCurrency                             Currency?              @relation("ToCurrency", fields: [toCurrencyId], references: [id])
+  transactions                           Transaction[]
+  createdBy                              User                   @relation("CurrencyExchangeCreatedBy", fields: [createdById], references: [id])
+  updatedBy                              User                   @relation("CurrencyExchangeUpdatedBy", fields: [updatedById], references: [id])
+  createdAt                              DateTime               @default(now())
+  updatedAt                              DateTime               @default(now()) @updatedAt
 }
 
 model Transaction {

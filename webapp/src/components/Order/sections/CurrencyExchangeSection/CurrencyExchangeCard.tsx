@@ -13,11 +13,10 @@ import useOrderStore, {StoreClient, StoreCurrencyExchange, StoreOrderItem} from 
 
 const formSchema = z.object({
     exchangeRate: z.number().positive().optional(),
-    amount: z.number().positive().optional(),
     amountInSelectedCurrencyFrom: z.number().positive().optional(),
     amountInSelectedCurrencyTo: z.number().positive().optional(),
     deadline: z.date().optional(),
-    minTransactionAmount: z.number().positive().optional(),
+    minTransactionAmountInSelectedCurrency: z.number().positive().optional(),
     orderItemId: z.string(),
     fromCurrencyId: z.string(),
     toCurrencyId: z.string(),
@@ -26,30 +25,28 @@ const formSchema = z.object({
 interface CurrencyExchange {
     position: number,
     exchangeRate?: number,
-    amount?: number,
     amountInSelectedCurrencyFrom?: number,
     amountInSelectedCurrencyTo?: number,
     deadline?: Date,
-    minTransactionAmount?: number,
+    minTransactionAmountInSelectedCurrency?: number,
     orderItemId?: string,
     fromCurrencyId?: string,
     toCurrencyId?: string,
 }
 
-type FieldName = "exchangeRate" | "amount" | "amountInSelectedCurrencyFrom" | "amountInSelectedCurrencyTo" | "deadline" | "minTransactionAmount" | "orderItemId" | "fromCurrencyId" | "toCurrencyId";
+type FieldName = "exchangeRate" | "amountInSelectedCurrencyFrom" | "amountInSelectedCurrencyTo" | "deadline" | "minTransactionAmountInSelectedCurrency" | "orderItemId" | "fromCurrencyId" | "toCurrencyId";
 
 const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExchange: StoreCurrencyExchange, client: StoreClient, orderItem: StoreOrderItem }) => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             exchangeRate: savedExchange?.exchangeRate,
-            amount: savedExchange?.amount,
             amountInSelectedCurrencyFrom: savedExchange?.amountInSelectedCurrencyFrom,
             amountInSelectedCurrencyTo: savedExchange?.amountInSelectedCurrencyTo,
             deadline: savedExchange?.deadline
                 ? new Date(savedExchange.deadline)
                 : undefined,
-            minTransactionAmount: savedExchange?.minTransactionAmount,
+            minTransactionAmountInSelectedCurrency: savedExchange?.minTransactionAmountInSelectedCurrency,
             orderItemId: savedExchange?.orderItemId,
             fromCurrencyId: savedExchange?.fromCurrencyId,
             toCurrencyId: savedExchange?.toCurrencyId,
@@ -75,13 +72,12 @@ const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExcha
     const [currencyExchange, setCurrencyExchange] = useState<CurrencyExchange>({
         position: savedExchange?.position,
         exchangeRate: savedExchange?.exchangeRate,
-        amount: savedExchange?.amount,
         amountInSelectedCurrencyFrom: savedExchange?.amountInSelectedCurrencyFrom,
         amountInSelectedCurrencyTo: savedExchange?.amountInSelectedCurrencyTo,
         deadline: savedExchange?.deadline
             ? new Date(savedExchange.deadline)
             : undefined,
-        minTransactionAmount: savedExchange?.minTransactionAmount,
+        minTransactionAmountInSelectedCurrency: savedExchange?.minTransactionAmountInSelectedCurrency,
         orderItemId: savedExchange?.orderItemId,
         fromCurrencyId: savedExchange?.fromCurrencyId,
         toCurrencyId: savedExchange?.toCurrencyId,
@@ -89,11 +85,10 @@ const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExcha
 
     const normalizeInput = (input: Record<string, any>) => {
         input.exchangeRate = Number.parseInt(input.exchangeRate) || undefined;
-        input.amount = Number.parseInt(input.amount) || undefined;
         input.amountInSelectedCurrencyFrom = Number.parseInt(input.amountInSelectedCurrencyFrom) || undefined;
         input.amountInSelectedCurrencyTo = Number.parseInt(input.amountInSelectedCurrencyTo) || undefined;
         input.deadline = input.deadline || undefined;
-        input.minTransactionAmount = Number.parseInt(input.minTransactionAmount) || undefined;
+        input.minTransactionAmountInSelectedCurrency = Number.parseInt(input.minTransactionAmountInSelectedCurrency) || undefined;
         input.orderItemId = input.orderItemId || undefined;
         input.fromCurrencyId = input.fromCurrencyId || undefined;
         input.toCurrencyId = input.toCurrencyId || undefined;
@@ -129,14 +124,13 @@ const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExcha
             await sendNormalizedInput(normalizeInput({
                 id: updatedCurrencyExchange.id,
                 exchangeRate: updatedCurrencyExchange.exchangeRate,
-                amount: updatedCurrencyExchange.amount,
                 amountInSelectedCurrencyFrom: updatedCurrencyExchange.amountInSelectedCurrencyFrom,
                 amountInSelectedCurrencyTo: updatedCurrencyExchange.amountInSelectedCurrencyTo,
                 status: updatedCurrencyExchange.status,
                 cancelReason: updatedCurrencyExchange.cancelReason,
                 canceledByClient: updatedCurrencyExchange.canceledByClient,
                 deadline: updatedCurrencyExchange.deadline?.toISOString(),
-                minTransactionAmount: updatedCurrencyExchange.minTransactionAmount,
+                minTransactionAmountInSelectedCurrency: updatedCurrencyExchange.minTransactionAmountInSelectedCurrency,
                 fromCurrencyId: updatedCurrencyExchange.fromCurrencyId,
                 toCurrencyId: updatedCurrencyExchange.toCurrencyId,
             }));
@@ -191,7 +185,7 @@ const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExcha
             setCurrencyExchange({
                 ...currencyExchange,
                 amountInSelectedCurrencyTo: value || undefined,
-                minTransactionAmount: value || undefined,
+                minTransactionAmountInSelectedCurrency: value || undefined,
             });
         } else {
             handleBlur("amountInSelectedCurrencyTo", value);

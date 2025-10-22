@@ -10,19 +10,10 @@ import { z } from 'zod';
 export const zEditCurrencyExchangeTrpcInput = z.object({
     id: z.string().uuid(),
     exchangeRate: z.number().positive().optional(),
-    amount: z.number().positive().optional(),
     amountInSelectedCurrencyFrom: z.number().positive().optional(),
     amountInSelectedCurrencyTo: z.number().positive().optional(),
-    status: z.enum([
-        'draft',
-        'in_progress',
-        'finished',
-        'cancelled',
-    ]),
-    cancelReason: z.string().optional(),
-    canceledByClient: z.boolean().optional(),
     deadline: z.string().datetime().transform(str => new Date(str)).optional(),
-    minTransactionAmount: z.number().positive().optional(),
+    minTransactionAmountInSelectedCurrency: z.number().positive().optional(),
     fromCurrencyId: z.string().uuid().optional(),
     toCurrencyId: z.string().uuid().optional(),
 });
@@ -48,17 +39,17 @@ export const editCurrencyExchangeTrpcRoute = currencyExchangeUpdateProcedure
             throw new Error('Currency exchange not found');
         }
 
-        // Amount validation (must be greater than transactions sum)
-        type Transaction = { amount: string }
+        // AmountTo validation (must be greater than transactions sum)
+        type Transaction = { amountInSelectedCurrency: number }
 
-        if (input.amount && input.amount < existingExchange.transactions.reduce((acc: number, curr: Transaction) => acc + parseInt(curr.amount), 0)) {
-            throw new Error("Transactions sum must be smaller than exchange amount");
+        if (input.amountInSelectedCurrencyTo && input.amountInSelectedCurrencyTo < existingExchange.transactions.reduce((acc: number, curr: Transaction) => acc + curr.amountInSelectedCurrency, 0)) {
+            throw new Error("Transactions sum must be smaller than exchange amountTo (in selected currency)");
         }
 
-        // Minimal transaction amount validation (must be lower than amount)
-        const minTransactionAmount = input.minTransactionAmount || existingExchange.minTransactionAmount;
-        if (minTransactionAmount && input.amount && minTransactionAmount > input.amount) {
-            throw new Error("Minimal transaction amount must be lower than amount");
+        // Minimal transaction amount validation (must be lower than amountTo)
+        const minTransactionAmountInSelectedCurrency = input.minTransactionAmountInSelectedCurrency || existingExchange.minTransactionAmountInSelectedCurrency;
+        if (minTransactionAmountInSelectedCurrency && input.amountInSelectedCurrencyTo && minTransactionAmountInSelectedCurrency > input.amountInSelectedCurrencyTo) {
+            throw new Error("Minimal transaction amount must be lower than amountTo (in selected currency)");
         }
 
         // Deadline validation (must be later than creation time)
@@ -86,16 +77,6 @@ export const editCurrencyExchangeTrpcRoute = currencyExchangeUpdateProcedure
             if (!toCurrency) {
                 throw new Error("ToCurrency does not exist");
             }
-        }
-
-        // Cancelled status validation for cancel reason
-        if (updateData.status != "cancelled" && updateData.cancelReason) {
-            throw new Error("Cancel reason can be set only on 'cancelled' status");
-        }
-
-        // Cancel reason and canceled by client flag existence validation
-        if (updateData.status == "cancelled" && (!updateData.cancelReason || updateData.canceledByClient === undefined)) {
-            throw new Error("Cancel reason and canceled by client flag must be set on 'cancelled' status");
         }
 
         // Update exchange

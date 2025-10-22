@@ -18,12 +18,14 @@ export const getOneCurrencyExchangeTrpcRoute = currencyExchangeReadProcedure
             where: { id: input.id },
             select: {
                 id: true,
-                amount: true,
+                amountFrom: true,
+                amountTo: true,
                 amountInSelectedCurrencyFrom: true,
                 amountInSelectedCurrencyTo: true,
                 status: true,
                 deadline: true,
                 minTransactionAmount: true,
+                minAmountInSelectedCurrency: true,
                 orderItem: {
                     select: {
                         id: true,

@@ -14,11 +14,10 @@ import {cn} from "@/lib/utils.ts";
 interface CurrencyExchange {
     position: number,
     exchangeRate?: number,
-    amount?: number,
     amountInSelectedCurrencyFrom?: number,
     amountInSelectedCurrencyTo?: number,
     deadline?: Date,
-    minTransactionAmount?: number,
+    minTransactionAmountInSelectedCurrency?: number,
     orderItemId?: string,
     fromCurrencyId?: string,
     toCurrencyId?: string,
@@ -34,7 +33,7 @@ type PaymentDetailsProps = {
     handleChange: (field: any, value: string) => void;
 }
 
-type FieldName = "exchangeRate" | "amount" | "amountInSelectedCurrencyFrom" | "amountInSelectedCurrencyTo" | "deadline" | "minTransactionAmount" | "orderItemId" | "fromCurrencyId" | "toCurrencyId";
+type FieldName = "exchangeRate" | "amountInSelectedCurrencyFrom" | "amountInSelectedCurrencyTo" | "deadline" | "minTransactionAmountInSelectedCurrency" | "orderItemId" | "fromCurrencyId" | "toCurrencyId";
 
 const PaymentDetails = ({
     form,
@@ -101,18 +100,20 @@ const PaymentDetails = ({
 
     const handlePaymentTypeChange = (value: string) => {
         if (value == "full" && currencyExchange.amountInSelectedCurrencyTo) {
-            // When "full" type selected minTransactionAmount = amountInSelectedCurrencyTo
+            // When "full" type selected minTransactionAmountInSelectedCurrency = amountInSelectedCurrencyTo
 
             setCurrencyExchange({
                 ...currencyExchange,
-                minTransactionAmount: currencyExchange.amountInSelectedCurrencyTo,
+                minTransactionAmountInSelectedCurrency: currencyExchange.amountInSelectedCurrencyTo,
             });
         } else if (value == "partial") {
-            // When "partial" type selected minTransactionAmount = minTransactionAmount input value
+            // When "partial" type selected minTransactionAmountInSelectedCurrency = minTransactionAmount input value
 
             setCurrencyExchange({
                 ...currencyExchange,
-                minTransactionAmount: minTransactionAmount ? Number.parseInt(minTransactionAmount) : undefined,
+                minTransactionAmountInSelectedCurrency: minTransactionAmountInSelectedCurrency
+                    ? Number.parseInt(minTransactionAmountInSelectedCurrency)
+                    : undefined,
             });
         }
 
@@ -120,18 +121,20 @@ const PaymentDetails = ({
     };
 
     const [minTransactionIndefinitely, setMinTransactionIndefinitely] = useState(false);
-    const [minTransactionAmount, setMinTransactionAmount] = useState<string | undefined>();
+    const [minTransactionAmountInSelectedCurrency, setMinTransactionAmountInSelectedCurrency] = useState<string | undefined>();
     const handleMinTransactionIndefinitely = () => {
         setMinTransactionIndefinitely(prevState => {
             if (!prevState) {
                 setCurrencyExchange({
                     ...currencyExchange,
-                    minTransactionAmount: undefined,
+                    minTransactionAmountInSelectedCurrency: undefined,
                 });
             } else {
                 setCurrencyExchange({
                     ...currencyExchange,
-                    minTransactionAmount: minTransactionAmount ? Number.parseInt(minTransactionAmount) : undefined,
+                    minTransactionAmountInSelectedCurrency: minTransactionAmountInSelectedCurrency
+                        ? Number.parseInt(minTransactionAmountInSelectedCurrency)
+                        : undefined,
                 });
             }
 
@@ -174,7 +177,7 @@ const PaymentDetails = ({
                             <div className="flex flex-wrap gap-1.5">
                                 <div className="flex flex-col gap-3">
                                     <FormField
-                                        name="minTransactionAmount"
+                                        name="minTransactionAmountInSelectedCurrency"
                                         control={form.control}
                                         render={({ field }) => (
                                             <FormItem>
@@ -185,7 +188,7 @@ const PaymentDetails = ({
                                                         disabled={minTransactionIndefinitely}
                                                         onChange={e => {
                                                             handleChange(field, e.target.value)
-                                                            setMinTransactionAmount(e.target.value)
+                                                            setMinTransactionAmountInSelectedCurrency(e.target.value)
                                                         }}
                                                         onBlur={() => handleBlur(field.name, Number.parseInt(field.value))}
                                                         name={field.name}

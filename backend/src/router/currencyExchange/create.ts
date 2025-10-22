@@ -8,11 +8,10 @@ import { z } from 'zod';
 
 export const zCreateCurrencyExchangeTrpcInput = z.object({
     exchangeRate: z.number().positive().optional(),
-    amount: z.number().positive().optional(),
     amountInSelectedCurrencyFrom: z.number().positive().optional(),
     amountInSelectedCurrencyTo: z.number().positive().optional(),
     deadline: z.string().datetime().transform(str => new Date(str)).optional(),
-    minTransactionAmount: z.number().positive().optional(),
+    minTransactionAmountInSelectedCurrency: z.number().positive().optional(),
     orderItemId: z.string().uuid(),
     fromCurrencyId: z.string().uuid().optional(),
     toCurrencyId: z.string().uuid().optional(),
@@ -26,8 +25,8 @@ export const createCurrencyExchangeTrpcRoute = currencyExchangeCreateProcedure
         }
 
         // Minimal transaction amount validation (must be lower than amount)
-        if (input.minTransactionAmount && input.amount && input.minTransactionAmount > input.amount) {
-            throw new Error("Minimal transaction amount must be lower than amount");
+        if (input.minTransactionAmountInSelectedCurrency && input.amountInSelectedCurrencyTo && input.minTransactionAmountInSelectedCurrency > input.amountInSelectedCurrencyTo) {
+            throw new Error("Minimal transaction amount must be lower than amount (in selected currency)");
         }
 
         // Deadline validation (must be later than current time)
@@ -77,7 +76,8 @@ export const createCurrencyExchangeTrpcRoute = currencyExchangeCreateProcedure
             data: {
                 position: newPosition,
                 exchangeRate: input.exchangeRate,
-                amount: input.amount,
+                // amountFrom: input.amountFrom,
+                // amountTo: input.amountTo,
                 amountInSelectedCurrencyFrom: input.amountInSelectedCurrencyFrom,
                 amountInSelectedCurrencyTo: input.amountInSelectedCurrencyTo,
                 orderItemId: input.orderItemId,
@@ -86,7 +86,8 @@ export const createCurrencyExchangeTrpcRoute = currencyExchangeCreateProcedure
                 createdById: ctx.user.id,
                 updatedById: ctx.user.id,
                 deadline: input.deadline,
-                minTransactionAmount: input.minTransactionAmount,
+                // minTransactionAmount: input.minTransactionAmount,
+                minTransactionAmountInSelectedCurrency: input.minTransactionAmountInSelectedCurrency,
             },
         });
 

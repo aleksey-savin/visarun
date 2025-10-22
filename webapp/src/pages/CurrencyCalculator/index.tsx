@@ -1,6 +1,6 @@
-import { CurrencyExchangeForm } from '@/components/CurrencyExchange/exchange-calc-form';
-import { ExchangeRatesForm } from '@/components/CurrencyExchange/exchange-rates-form';
-import { ExchangeRatesDisplay } from '@/components/CurrencyExchange/exchange-rates-display';
+import { CurrencyCalculatorForm } from '@/components/CurrencyCalculator/exchange-calc-form';
+import { ExchangeRatesForm } from '@/components/CurrencyCalculator/exchange-rates-form';
+import { ExchangeRatesDisplay } from '@/components/CurrencyCalculator/exchange-rates-display';
 import { useAuth } from '@/lib/auth';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { trpc } from '@/lib/trpcProvider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const CurrencyExchangePage = () => {
+const CurrencyCalculatorPage = () => {
   const { hasPermission } = useAuth();
   const canCreateExchangeRates = hasPermission('exchangeRates.create');
   const [isOpen, setIsOpen] = useState(false);
@@ -118,7 +118,7 @@ const CurrencyExchangePage = () => {
             <h2 className="md:text-2xl text-lg font-semibold md:mb-6 mb-2 text-center">
               Currency Calculator
             </h2>
-            <CurrencyExchangeForm
+            <CurrencyCalculatorForm
               isClient={false}
               rates={{
                 rubToVnd: rates.rubToVnd,
@@ -221,4 +221,4 @@ const CurrencyExchangePage = () => {
   }
 };
 
-export default CurrencyExchangePage;
+export default CurrencyCalculatorPage;

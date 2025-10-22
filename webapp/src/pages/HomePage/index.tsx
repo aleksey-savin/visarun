@@ -5,8 +5,8 @@ import { trpc } from '@/lib/trpcProvider';
 import { useAuth } from '@/lib/auth';
 import { getDashboardRoute } from '@/lib/routes';
 
-import { ExchangeRatesDisplay } from '@/components/CurrencyExchange/exchange-rates-display';
-import { CurrencyExchangeForm } from '@/components/CurrencyExchange/exchange-calc-form';
+import { ExchangeRatesDisplay } from '@/components/CurrencyCalculator/exchange-rates-display';
+import { CurrencyCalculatorForm } from '@/components/CurrencyCalculator/exchange-calc-form';
 
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
@@ -31,7 +31,7 @@ const HomePage = () => {
     }
   }, [location.pathname]);
 
-  // Redirect to currency exchange page if user is already authenticated
+  // Redirect to dashboard page if user is already authenticated
   useEffect(() => {
     if (isAuthenticated && !isAuthLoading) {
       navigate(getDashboardRoute(), { replace: true });
@@ -94,7 +94,7 @@ const HomePage = () => {
       <main className="container mx-auto px-4 pt-8 pb-12">
         {/* Page Heading */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-center mb-2">Currency Exchange</h1>
+          <h1 className="text-4xl font-bold text-center mb-2">Currency Calculator</h1>
           <p className="text-center text-muted-foreground mb-4">Convert between RUB, VND, USDT</p>
         </div>
 
@@ -140,7 +140,7 @@ const HomePage = () => {
           <section className="w-full">
             <div className="bg-card rounded-lg shadow-md p-6 border border-border/50 hover:border-border/90 transition-colors">
               <h2 className="text-2xl font-semibold mb-6 text-center">Currency Calculator</h2>
-              <CurrencyExchangeForm
+              <CurrencyCalculatorForm
                 isClient={true}
                 rates={{
                   rubToVnd: rates.rubToVnd,

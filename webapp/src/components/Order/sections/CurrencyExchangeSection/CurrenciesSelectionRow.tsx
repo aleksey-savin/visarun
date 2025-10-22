@@ -8,17 +8,16 @@ import {UseFormReturn} from "react-hook-form";
 
 interface CurrencyExchange {
     exchangeRate?: number,
-    amount?: number,
     amountInSelectedCurrencyFrom?: number,
     amountInSelectedCurrencyTo?: number,
     deadline?: Date,
-    minTransactionAmount?: number,
+    minTransactionAmountInSelectedCurrency?: number,
     orderItemId?: string,
     fromCurrencyId?: string,
     toCurrencyId?: string,
 }
 
-type FieldName = "exchangeRate" | "amount" | "amountInSelectedCurrencyFrom" | "amountInSelectedCurrencyTo" | "deadline" | "minTransactionAmount" | "orderItemId" | "fromCurrencyId" | "toCurrencyId";
+type FieldName = "exchangeRate" | "amountInSelectedCurrencyFrom" | "amountInSelectedCurrencyTo" | "deadline" | "minTransactionAmountInSelectedCurrency" | "orderItemId" | "fromCurrencyId" | "toCurrencyId";
 
 type CurrenciesSelectionRowProps = {
     form: UseFormReturn<any>

@@ -273,7 +273,7 @@ const EditOrderPage = () => {
                   amount: i.amount,
                   amountInSelectedCurrencyFrom: i.amountInSelectedCurrencyFrom,
                   amountInSelectedCurrencyTo: i.amountInSelectedCurrencyTo,
-                  status: i.satus,
+                  status: i.status,
                   cancelReason: i.cancelReason,
                   canceledByClient: i.canceledByClient,
                   deadline: i.deadline,
