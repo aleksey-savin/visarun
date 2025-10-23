@@ -41,8 +41,9 @@ const CancelBookingDialog = ({ isOpen, onOpenChange, onConfirm }: CancelBookingD
             Cancel Booking
           </AlertDialogTitle>
           <AlertDialogDescription>
-            <div>Are you sure you want to cancel this booking?</div>
-            <div className="text-sm text-muted-foreground mt-2">This action cannot be undone.</div>
+            <span>Are you sure you want to cancel this booking?</span>
+            <br />
+            <span className="text-sm text-muted-foreground">This action cannot be undone.</span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

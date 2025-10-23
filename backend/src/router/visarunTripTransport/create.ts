@@ -47,19 +47,6 @@ export const createVisarunTripTransportTrpcRoute = visarunTripCreateProcedure
       throw new Error('Transport not found');
     }
 
-    // Check if trip transport already exists
-    const existingTripTransport = await ctx.prisma.visarunTripTransport.findFirst({
-      where: {
-        tripId: input.tripId,
-        transportId: input.transportId,
-        isActive: true,
-      },
-    });
-
-    if (existingTripTransport) {
-      throw new Error('Trip transport already exists for this trip and transport');
-    }
-
     // Create trip transport
     const tripTransport = await ctx.prisma.visarunTripTransport.create({
       data: {

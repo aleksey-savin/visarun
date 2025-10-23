@@ -84,13 +84,13 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
 
     // Check if any transport has seating chart
     const hasTransportWithSeatingChart = trip.route?.transports?.some(
-      (routeTransport: any) => routeTransport.transport.seatingChart?.id
+      (routeTransport: any) => routeTransport.seatingChart?.id
     );
 
     if (hasTransportWithSeatingChart) {
       // Open seat selection dialog
       const transportWithSeatingChart = trip.route.transports.find(
-        (routeTransport: any) => routeTransport.transport.seatingChart?.id
+        (routeTransport: any) => routeTransport.seatingChart?.id
       );
 
       setSelectedTripForSeat(trip);
@@ -345,7 +345,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
 
     // Check if any transport has seating chart
     const hasTransportWithSeatingChart = trip.route?.transports?.some(
-      (routeTransport: any) => routeTransport.transport.seatingChart?.id
+      (routeTransport: any) => routeTransport.seatingChart?.id
     );
 
     // Count passengers for trip transports if seating chart exists

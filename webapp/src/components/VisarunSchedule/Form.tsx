@@ -400,7 +400,7 @@ export default function CombinedVisarunForm({
               />
               <div className="md:ms-6">
                 <div className="flex flex-col gap-2">
-                  <Label>Transport type</Label>
+                  <Label>Available transport</Label>
                   <div className="flex flex-wrap gap-2">
                     {transports.map(transport => {
                       const currentTransports = form.watch('transports');

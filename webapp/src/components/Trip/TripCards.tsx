@@ -14,7 +14,7 @@ interface TripCardProps {
   setActiveTab: (value: string) => void;
 }
 
-const TripTabs = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
+const TripCards = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
   // Sort route stops by arrival time
   const sortedStops = [...trip.route.routeStops].sort((a, b) => {
     const timeA = a.departureTime || a.arrivalTime;
@@ -64,4 +64,4 @@ const TripTabs = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
   );
 };
 
-export default TripTabs;
+export default TripCards;

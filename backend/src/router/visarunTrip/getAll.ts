@@ -98,6 +98,7 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
                     transportType: {
                       select: {
                         id: true,
+                        icon: true,
                         name: true,
                       },
                     },
@@ -159,7 +160,16 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
       },
     });
 
-    return trips;
+    // Flatten transports array to remove nested structure
+    const flattenedTrips = trips.map(trip => ({
+      ...trip,
+      route: {
+        ...trip.route,
+        transports: trip.route.transports.map(t => t.transport),
+      },
+    }));
+
+    return flattenedTrips;
   });
 
 // Функция для умного поиска поездок на основе предпочтений клиента
@@ -347,9 +357,18 @@ async function getSmartVisarunTrips(params: {
     },
   });
 
+  // Flatten transports for scheduled trips on date
+  const flattenedScheduledTrips = scheduledTripsOnDate.map(trip => ({
+    ...trip,
+    route: {
+      ...trip.route,
+      transports: trip.route.transports.map(t => t.transport),
+    },
+  }));
+
   // Если есть поездки на выбранную дату - возвращаем их
-  if (scheduledTripsOnDate.length > 0) {
-    return scheduledTripsOnDate;
+  if (flattenedScheduledTrips.length > 0) {
+    return flattenedScheduledTrips;
   }
 
   // 2. Если нет поездок на выбранную дату, ищем ближайшие
@@ -568,12 +587,26 @@ async function getSmartVisarunTrips(params: {
     },
   });
 
-  // Объединяем результаты
+  // Flatten transports and combine results
   const result = [];
   if (tripBefore) {
-    result.push(tripBefore);
+    result.push({
+      ...tripBefore,
+      route: {
+        ...tripBefore.route,
+        transports: tripBefore.route.transports.map(t => t.transport),
+      },
+    });
   }
-  result.push(...tripsAfter);
+  result.push(
+    ...tripsAfter.map(trip => ({
+      ...trip,
+      route: {
+        ...trip.route,
+        transports: trip.route.transports.map(t => t.transport),
+      },
+    }))
+  );
 
   // Сортируем по дате отправления
   return result.sort((a, b) => a.departureDateTime.getTime() - b.departureDateTime.getTime());

@@ -739,6 +739,7 @@ model VisarunRouteStop {
   departureTime   String?
   arrivalNextDay  Boolean       @default(false)
   waitingDuration Int?
+  replacedById    String?
 
   route            VisarunRoute                @relation(fields: [routeId], references: [id], onDelete: Cascade)
   city             City                        @relation("RouteStops", fields: [cityId], references: [id])
@@ -828,6 +829,8 @@ model VisarunTripTransport {
   driverPhone   String?
   vehicleNumber String?
 
+  status VisarunTripTransportStatus @default(added)
+
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
@@ -916,6 +919,13 @@ model Comment {
   documentUrl String?
   userId      String?
   user        User?      @relation(fields: [userId], references: [id])
+}
+
+enum VisarunTripTransportStatus {
+  added
+  rented
+  cancelled
+  completed
 }
 
 enum EntityType {

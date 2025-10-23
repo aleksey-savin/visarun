@@ -5,11 +5,17 @@ import { trpc } from '@/lib/trpc';
 import { Trip } from '@/types/trip';
 import { IconDisplay } from '@/components/ui/icon-display';
 import { Armchair } from 'lucide-react';
-import TripTabs from './TripTabs';
+import TripCards from './TripCards';
+import TripTransportsList from './TripTransportsList';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import PassengersListCard from './PassengersListCard';
+import OrderInfoDialog from './OrderInfoDialog';
 
-import ClientBadge from '@/components/Client/ClientBadge';
+import { Button } from '../ui/button';
 
 interface TripsListProps {
   trips: Trip[];
@@ -17,6 +23,16 @@ interface TripsListProps {
 
 const TripsList = ({ trips }: TripsListProps) => {
   const [activeTab, setActiveTab] = useState(trips[0]?.route.routeStops[0]?.id || '');
+  const [selectedTransport, setSelectedTransport] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isOrderInfoDialogOpen, setIsOrderInfoDialogOpen] = useState(false);
+  const [selectedOrderInfo, setSelectedOrderInfo] = useState<any>(null);
+
+  const [formData, setFormData] = useState({
+    driverName: '',
+    driverPhone: '',
+    vehicleNumber: '',
+  });
 
   // Find the trip and stop for the selected tab
   const selectedTripAndStop = activeTab
@@ -45,6 +61,36 @@ const TripsList = ({ trips }: TripsListProps) => {
     }
   );
 
+  const { data: tripTransports } = trpc.visarunTripTransport.getByTripIds.useQuery(
+    {
+      tripIds: selectedTripAndStop?.trip.id ? [selectedTripAndStop.trip.id] : [],
+    },
+    {
+      enabled: !!selectedTripAndStop?.trip.id,
+    }
+  );
+
+  const utils = trpc.useContext();
+  const createTripTransportMutation = trpc.visarunTripTransport.create.useMutation({
+    onSuccess: () => {
+      // Reset form and close dialog
+      setFormData({
+        driverName: '',
+        driverPhone: '',
+        vehicleNumber: '',
+      });
+      setIsDialogOpen(false);
+      setSelectedTransport(null);
+      // Refetch passengers data and trip transports to update the UI
+      utils.visarunPassenger.getAll.invalidate();
+      utils.visarunTripTransport.getByTripIds.invalidate();
+    },
+    onError: error => {
+      console.error('Failed to add transport:', error.message);
+      // You can add toast notification here if available
+    },
+  });
+
   if (trips.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -55,13 +101,42 @@ const TripsList = ({ trips }: TripsListProps) => {
 
   const stopPassengers = passengers?.filter(p => p.routeStopId === activeTab) || [];
 
+  const addTransportHandler = () => {
+    if (!selectedTransport || !selectedTripAndStop?.trip.id) {
+      console.warn('No transport selected or trip not found');
+      return;
+    }
+    setIsDialogOpen(true);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTransport || !selectedTripAndStop?.trip.id) {
+      console.warn('Missing required data for transport creation');
+      return;
+    }
+
+    createTripTransportMutation.mutate({
+      tripId: selectedTripAndStop.trip.id,
+      transportId: selectedTransport,
+      driverName: formData.driverName.trim() || undefined,
+      driverPhone: formData.driverPhone.trim() || undefined,
+      vehicleNumber: formData.vehicleNumber.trim() || undefined,
+    });
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {trips.map(trip => (
-          <TripTabs key={trip.id} trip={trip} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <TripCards key={trip.id} trip={trip} activeTab={activeTab} setActiveTab={setActiveTab} />
         ))}
       </div>
+      <Separator />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           {activeTab && selectedTripAndStop && selectedTripAndStop.stop.stopType !== 'arrival' && (
@@ -110,11 +185,16 @@ const TripsList = ({ trips }: TripsListProps) => {
                         <Separator />
                         <ScrollArea className="min-h-0">
                           <div className="space-y-2 pr-3">
-                            {passengers.map(passenger => (
-                              <div key={passenger.id} className="flex w-full">
-                                <ClientBadge client={passenger.client} fullWidth={true} />
-                              </div>
-                            ))}
+                            <PassengersListCard
+                              passengers={passengers}
+                              showInfoButton={true}
+                              showPaymentStatus={true}
+                              isDraggable={true}
+                              onInfoClick={order => {
+                                setSelectedOrderInfo(order);
+                                setIsOrderInfoDialogOpen(true);
+                              }}
+                            />
                           </div>
                         </ScrollArea>
                       </Card>
@@ -122,8 +202,8 @@ const TripsList = ({ trips }: TripsListProps) => {
                   )
                 ) : (
                   <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-sm text-muted-foreground italic">
+                    <CardContent className="p-3">
+                      <div className="text-sm text-muted-foreground text-center">
                         No passengers for this stop
                       </div>
                     </CardContent>
@@ -133,7 +213,113 @@ const TripsList = ({ trips }: TripsListProps) => {
             </div>
           )}
         </div>
+        {stopPassengers.length > 0 && (
+          <div className="col-span-2 space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <TripTransportsList
+                tripTransports={tripTransports || []}
+                tripId={selectedTripAndStop?.trip.id}
+              />
+              <Card className=" p-3 h-fit">
+                <div className="flex flex-wrap gap-2">
+                  {selectedTripAndStop?.trip.route?.transports?.map(transport => (
+                    <Button
+                      className="flex gap-2 items-center"
+                      key={transport.id}
+                      variant={selectedTransport === transport.id ? 'accent' : 'secondary'}
+                      value={transport.id}
+                      onClick={() =>
+                        setSelectedTransport(
+                          selectedTransport === transport.id ? null : transport.id
+                        )
+                      }
+                    >
+                      <IconDisplay
+                        iconFilename={transport.transportType.icon}
+                        iconType="transport-type"
+                      />
+                      <span>{transport.name}</span>
+                      <span>
+                        <Badge className="rounded-full text-xs">{transport.seatCount}</Badge>
+                      </span>
+                    </Button>
+                  ))}
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={addTransportHandler} disabled={!selectedTransport}>
+                    Add Transport
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          </div>
+        )}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Transport Details</DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="driverName">Driver Name</Label>
+              <Input
+                id="driverName"
+                value={formData.driverName}
+                onChange={e => handleInputChange('driverName', e.target.value)}
+                placeholder="Enter driver name (optional)"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="driverPhone">Driver Phone</Label>
+              <Input
+                id="driverPhone"
+                value={formData.driverPhone}
+                onChange={e => handleInputChange('driverPhone', e.target.value)}
+                placeholder="Enter driver phone (optional)"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="vehicleNumber">Vehicle Number</Label>
+              <Input
+                id="vehicleNumber"
+                value={formData.vehicleNumber}
+                onChange={e => handleInputChange('vehicleNumber', e.target.value)}
+                placeholder="Enter vehicle number (optional)"
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+                disabled={createTripTransportMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createTripTransportMutation.isPending}>
+                {createTripTransportMutation.isPending ? 'Adding...' : 'Add Transport'}
+              </Button>
+            </DialogFooter>
+            {createTripTransportMutation.error && (
+              <div className="text-red-600 text-sm mt-2">
+                Error: {createTripTransportMutation.error.message}
+              </div>
+            )}
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <OrderInfoDialog
+        isOpen={isOrderInfoDialogOpen}
+        onClose={() => setIsOrderInfoDialogOpen(false)}
+        orderInfo={selectedOrderInfo}
+      />
     </div>
   );
 };

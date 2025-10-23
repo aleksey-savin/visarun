@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import FormPageLayout from '@/components/Layout/Form';
 import CombinedVisarunForm, { CombinedVisarunFormData } from '@/components/VisarunSchedule/Form';
-import { getAllVisarunSchedulesRoute } from '@/lib/routes';
 
 export default function CreateVisarunSchedulePage() {
   const navigate = useNavigate();
@@ -85,7 +84,7 @@ export default function CreateVisarunSchedulePage() {
       });
 
       toast.success('Schedule created successfully');
-      navigate(getAllVisarunSchedulesRoute());
+      navigate(-1);
     } catch (error) {
       console.error('Error creating route and schedule:', error);
       toast.error(
@@ -96,7 +95,7 @@ export default function CreateVisarunSchedulePage() {
   };
 
   const handleCancel = () => {
-    navigate('/visarun-schedules');
+    navigate(-1);
   };
 
   return (

@@ -133,7 +133,7 @@ export default function EditVisarunSchedulePage() {
       });
 
       toast.success('Schedule updated successfully');
-      navigate('/visarun-schedules');
+      navigate(-1);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
@@ -230,7 +230,7 @@ export default function EditVisarunSchedulePage() {
   };
 
   const handleCancel = () => {
-    navigate('/visarun-schedules');
+    navigate(-1);
   };
 
   if (isEditing && isLoading) {

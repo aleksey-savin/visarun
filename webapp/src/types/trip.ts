@@ -30,5 +30,15 @@ export interface Trip {
     id: string;
     name: string;
     routeStops: RouteStop[];
+    transports?: Array<{
+      id: string;
+      name: string;
+      seatCount: number;
+      transportType: {
+        id: string;
+        name: string;
+        icon: string;
+      };
+    }>;
   };
 }

@@ -210,40 +210,90 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
     const result = await ctx.prisma.$transaction(async tx => {
       // Handle route stops update if provided
       if (routeStops) {
-        // Delete existing route stops
-        await tx.visarunRouteStop.deleteMany({
+        // Get existing route stops
+        const existingStops = await tx.visarunRouteStop.findMany({
           where: {
             routeId: existingSchedule.routeId,
           },
+          include: {
+            pickupLocations: true,
+          },
         });
 
-        // Create new route stops with proper sequential order
+        // Create a map of existing stops by cityId
+        const existingStopsByCityId = new Map(existingStops.map(stop => [stop.cityId, stop]));
+
+        // Track which cityIds are in the new route stops
+        const newCityIds = new Set(routeStops.map(stop => stop.cityId));
+
+        // Delete stops that are no longer in the route
+        await tx.visarunRouteStop.deleteMany({
+          where: {
+            routeId: existingSchedule.routeId,
+            cityId: {
+              notIn: Array.from(newCityIds),
+            },
+          },
+        });
+
+        // Process each route stop
         for (let i = 0; i < routeStops.length; i++) {
           const stop = routeStops[i];
-          await tx.visarunRouteStop.create({
-            data: {
-              routeId: existingSchedule.routeId,
-              cityId: stop.cityId,
-              stopOrder: i + 1, // Sequential order based on array position
-              stopType: stop.stopType,
-              pickupMode: stop.pickupMode,
-              arrivalTime: stop.arrivalTime,
-              departureTime: stop.departureTime,
-              arrivalNextDay: stop.arrivalNextDay,
-              waitingDuration: stop.waitingDuration,
-            },
-          });
+          const existingStop = existingStopsByCityId.get(stop.cityId);
 
-          // Handle pickup location if provided
-          if (stop.pickupLocationId) {
-            const newStop = await tx.visarunRouteStop.findFirst({
-              where: {
-                routeId: existingSchedule.routeId,
-                stopOrder: i + 1,
+          if (existingStop) {
+            // Update existing stop
+            await tx.visarunRouteStop.update({
+              where: { id: existingStop.id },
+              data: {
+                stopOrder: i + 1, // Sequential order based on array position
+                stopType: stop.stopType,
+                pickupMode: stop.pickupMode,
+                arrivalTime: stop.arrivalTime,
+                departureTime: stop.departureTime,
+                arrivalNextDay: stop.arrivalNextDay,
+                waitingDuration: stop.waitingDuration,
               },
             });
 
-            if (newStop) {
+            // Handle pickup location updates
+            if (stop.pickupLocationId) {
+              // Remove existing pickup locations
+              await tx.visarunStopPickupLocation.deleteMany({
+                where: { routeStopId: existingStop.id },
+              });
+
+              // Add new pickup location
+              await tx.visarunStopPickupLocation.create({
+                data: {
+                  routeStopId: existingStop.id,
+                  pickupLocationId: stop.pickupLocationId,
+                },
+              });
+            } else {
+              // Remove pickup locations if none specified
+              await tx.visarunStopPickupLocation.deleteMany({
+                where: { routeStopId: existingStop.id },
+              });
+            }
+          } else {
+            // Create new stop
+            const newStop = await tx.visarunRouteStop.create({
+              data: {
+                routeId: existingSchedule.routeId,
+                cityId: stop.cityId,
+                stopOrder: i + 1, // Sequential order based on array position
+                stopType: stop.stopType,
+                pickupMode: stop.pickupMode,
+                arrivalTime: stop.arrivalTime,
+                departureTime: stop.departureTime,
+                arrivalNextDay: stop.arrivalNextDay,
+                waitingDuration: stop.waitingDuration,
+              },
+            });
+
+            // Handle pickup location if provided
+            if (stop.pickupLocationId) {
               await tx.visarunStopPickupLocation.create({
                 data: {
                   routeStopId: newStop.id,

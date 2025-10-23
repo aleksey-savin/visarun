@@ -19,7 +19,12 @@ export const getByTripIdsTrpcRoute = visarunTripReadProcedure
         },
         isActive: true,
       },
-      include: {
+      select: {
+        id: true,
+        driverName: true,
+        driverPhone: true,
+        vehicleNumber: true,
+        createdAt: true,
         transport: {
           select: {
             id: true,
@@ -29,6 +34,7 @@ export const getByTripIdsTrpcRoute = visarunTripReadProcedure
               select: {
                 id: true,
                 name: true,
+                icon: true,
               },
             },
           },
@@ -41,7 +47,7 @@ export const getByTripIdsTrpcRoute = visarunTripReadProcedure
         },
       },
       orderBy: {
-        createdAt: 'asc',
+        createdAt: 'desc',
       },
     });
 

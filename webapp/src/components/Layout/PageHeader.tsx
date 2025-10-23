@@ -206,9 +206,9 @@ const pageConfigs: Record<string, PageConfig> = {
   '/transfers': {
     title: 'Transfers',
     icon: <WheelIcon />,
-    entity: 'visarun-trip',
-    createRoute: '',
-    showButton: false,
+    entity: 'visarun-schedule',
+    createRoute: '/visarun-schedules/create',
+    showButton: true,
   },
   '/visarun-schedules': {
     title: 'Visarun Schedules',
