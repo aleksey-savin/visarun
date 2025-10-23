@@ -1,19 +1,18 @@
 /*
 TODO:
-    1. Add permission in transactionCreateProcedure
-    2. Add amount validation (sum of all transactions with new one must be less or equal than amount in CurrencyExchange)
+    Add permission in transactionCreateProcedure
  */
 
 import { transactionCreateProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
 export const zCreateTransactionTrpcInput = z.object({
-    amount: z.number().positive(),
-    amountInSelectedCurrency: z.number().positive(),
-    customExchangeRate: z.boolean().optional().default(false),
+    amountInSelectedCurrency: z.number().positive().optional(),
     checkUrl: z.string().optional(),
     currencyExchangeId: z.string().uuid(),
-    senderId: z.string().uuid(),
+    senderId: z.string().uuid().optional(),
+    isCompanyTransaction: z.boolean().optional().default(true),
+    isInCash: z.boolean().optional().default(false),
 });
 
 export const createTransactionTrpcRoute = transactionCreateProcedure
@@ -27,11 +26,11 @@ export const createTransactionTrpcRoute = transactionCreateProcedure
         const exchange = await ctx.prisma.currencyExchange.findUnique({
             where: { id: input.currencyExchangeId },
             select: {
-                amount: true,
-                minTransactionAmount: true,
+                amountInSelectedCurrencyTo: true,
+                minTransactionAmountInSelectedCurrency: true,
                 transactions: {
                     select: {
-                        amount: true,
+                        amountInSelectedCurrency: true,
                     },
                 },
             },
@@ -42,38 +41,46 @@ export const createTransactionTrpcRoute = transactionCreateProcedure
         }
 
         // Transactions sum validation (must be smaller than exchange amount)
-        type Transaction = { amount: string }
+        if (exchange.amountInSelectedCurrencyTo && input.amountInSelectedCurrency) {
+            type Transaction = { amountInSelectedCurrency: string }
 
-        if (exchange.amount < exchange.transactions.reduce((acc: number, curr: Transaction) => acc + parseInt(curr.amount), 0) + input.amount) {
-            throw new Error("Transactions sum must be smaller than exchange amount");
+            if (exchange.amountInSelectedCurrencyTo < exchange.transactions.reduce(
+                (acc: number, curr: Transaction) => acc + parseInt(curr.amountInSelectedCurrency), 0) + input.amountInSelectedCurrency
+            ) {
+                throw new Error("Transactions sum must be smaller than exchange amount");
+            }
         }
 
         // Amount validation (must be greater than minTransactionAmount in CurrencyExchange)
-        if (input.amount < exchange.minTransactionAmount) {
-            throw new Error("Amount must be greater than minTransactionAmount in CurrencyExchange");
+        if (input.amountInSelectedCurrency && exchange.minTransactionAmountInSelectedCurrency) {
+            if (input.amountInSelectedCurrency < exchange.minTransactionAmountInSelectedCurrency) {
+                throw new Error("Amount must be greater than minTransactionAmount in CurrencyExchange");
+            }
         }
 
-        // Sender existence validation
-        const sender = await ctx.prisma.client.findUnique({
-            where: { id: input.senderId },
-        });
+        if (input.senderId) {
+            // Sender existence validation
+            const sender = await ctx.prisma.client.findUnique({
+                where: { id: input.senderId },
+            });
 
-        if (!sender) {
-            throw new Error("Sender does not exist");
+            if (!sender) {
+                throw new Error("Sender does not exist");
+            }
         }
 
         const transaction = await ctx.prisma.transaction.create({
             data: {
-                amount: input.amount,
                 amountInSelectedCurrency: input.amountInSelectedCurrency,
-                customExchangeRate: input.customExchangeRate,
                 checkUrl: input.checkUrl,
                 currencyExchangeId: input.currencyExchangeId,
+                isCompanyTransaction: input.isCompanyTransaction,
+                isInCash: input.isInCash,
                 senderId: input.senderId,
                 createdById: ctx.user.id,
                 updatedById: ctx.user.id,
             },
         });
 
-        return transaction;
+        return {transaction};
     });

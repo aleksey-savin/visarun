@@ -119,25 +119,49 @@ export const getAllCurrencyExchangesTrpcRoute = currencyExchangeReadProcedure
                             select: {
                                 firstName: true,
                                 lastName: true,
+                                bankingDetails: {
+                                    select: {
+                                        id: true,
+                                        content: true,
+                                        documentUrl: true,
+                                    },
+                                },
+                                user: {
+                                    select: {
+                                        contactMethods: {
+                                            select: {
+                                                id: true,
+                                                value: true,
+                                                method: true
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 },
                 fromCurrency: {
                     select: {
+                        id: true,
                         name: true,
                     }
                 },
                 toCurrency: {
                     select: {
+                        id: true,
                         name: true,
                     }
                 },
                 transactions: {
                     select: {
-                        amount: true,
+                        id: true,
                         amountInSelectedCurrency: true,
+                        checkUrl: true,
                         status: true,
+                        isInCash: true,
+                        isCompanyTransaction: true,
+                        senderId: true,
                     },
                 },
             },
@@ -145,11 +169,11 @@ export const getAllCurrencyExchangesTrpcRoute = currencyExchangeReadProcedure
 
         let finalExchanges = exchanges.map((ex) => {
             const inProgressTransactionsAmountInSelectedCurrency = ex.transactions
-                .filter((t) => t.status === 'in_progress')
+                .filter((t) => !['completed', 'canceled'].includes(t.status))
                 .reduce((sum, t) => sum + Number(t.amountInSelectedCurrency), 0);
 
             const finishedTransactionsAmountInSelectedCurrency = ex.transactions
-                .filter((t) => t.status === 'finished')
+                .filter((t) => ['completed'].includes(t.status))
                 .reduce((sum, t) => sum + Number(t.amountInSelectedCurrency), 0);
 
             return {

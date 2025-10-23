@@ -4,7 +4,7 @@ import IconArrowShuffle from "@/assets/tabler-icons/IconArrowShuffle.tsx";
 import {getEditCurrencyExchangeRoute} from "@/lib/routes.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {Badge} from "@/components/ui/badge.tsx";
-import {Crown} from "lucide-react";
+import {AlertCircle, Crown, Eye} from "lucide-react";
 import {formatCurrency, getCurrencySymbol} from "@/utils/currency.ts";
 import Summ from "@/components/ui/summ.tsx";
 import {Link} from "react-router-dom";
@@ -20,10 +20,12 @@ const CurrencyExchangesTable = ({
     currencyExchanges,
     sortStates,
     setSortStates,
+    handleSelectCurrencyExchange,
 }: {
     currencyExchanges: any;
     sortStates: SortStates;
     setSortStates: SetSortStates;
+    handleSelectCurrencyExchange: (currencyExchangeId: string) => void;
 }) => {
     const formatDate = (date: Date) => {
         return new Intl.DateTimeFormat('en-US', {
@@ -129,7 +131,7 @@ const CurrencyExchangesTable = ({
                                 && exchange.toCurrency
                             )
                                 ? (
-                                    <Summ className="bg-amber-600">
+                                    <Summ className={`${exchange.status === 'finished' ? 'bg-muted text-gray-500' : 'bg-amber-600'}`}>
                                         {formatCurrency(exchange.inProgressTransactionsAmountInSelectedCurrency, exchange.toCurrency.name)}
                                     </Summ>
                                 ) : 'N/A'
@@ -138,12 +140,13 @@ const CurrencyExchangesTable = ({
                         <TableCell>
                             {(
                                 (exchange.finishedTransactionsAmountInSelectedCurrency || exchange.finishedTransactionsAmountInSelectedCurrency === 0)
+                                && (exchange.inProgressTransactionsAmountInSelectedCurrency || exchange.inProgressTransactionsAmountInSelectedCurrency === 0)
                                 && exchange.amountInSelectedCurrencyTo
                                 && exchange.toCurrency
                             )
                                 ? (
-                                    <Summ className="bg-emerald-900">
-                                        {formatCurrency(exchange.amountInSelectedCurrencyTo - exchange.finishedTransactionsAmountInSelectedCurrency, exchange.toCurrency.name)}
+                                    <Summ className={`${exchange.status === 'finished' ? 'bg-muted text-gray-500' : 'bg-emerald-900'}`}>
+                                        {formatCurrency(exchange.amountInSelectedCurrencyTo - exchange.finishedTransactionsAmountInSelectedCurrency - exchange.inProgressTransactionsAmountInSelectedCurrency, exchange.toCurrency.name)}
                                     </Summ>
                                 ) : 'N/A'
                             }
@@ -157,9 +160,16 @@ const CurrencyExchangesTable = ({
                             }
                         </TableCell>
                         <TableCell>
-                            {exchange.deadline
-                                ? formatDate(exchange.deadline)
-                                : "N/A"
+                            {!exchange.deadline
+                                ? 'Indefinitely'
+                                : (Math.abs(new Date(exchange.deadline).getTime() - new Date().getTime()) < 60 * 60 * 1000 && exchange.status !== 'finished')
+                                    ? (
+                                        <Summ className="bg-yellow-300 text-gray-800">
+                                            {formatDate(exchange.deadline)}
+                                            <AlertCircle />
+                                        </Summ>
+                                    )
+                                    : formatDate(exchange.deadline)
                             }
                         </TableCell>
                         <TableCell className="pr-5">
@@ -170,7 +180,11 @@ const CurrencyExchangesTable = ({
                                 ? (
                                     <div className="flex gap-3 w-full justify-between">
                                         <div className="w-full flex flex-col justify-center">
-                                            <div className="flex justify-between text-white">
+                                            <div className={`${
+                                                exchange.status === 'finished'
+                                                    ? 'text-success'
+                                                    : 'text-white'
+                                            } flex justify-between`}>
                                                 <span>
                                                     {exchange.amountInSelectedCurrencyTo}
                                                 </span>
@@ -181,18 +195,24 @@ const CurrencyExchangesTable = ({
 
                                             <Progress
                                                 value={
-                                                    (exchange.finishedTransactionsAmount / exchange.amountInSelectedCurrencyTo * 100) || 0
+                                                    (exchange.finishedTransactionsAmountInSelectedCurrency / exchange.amountInSelectedCurrencyTo * 100) || 0
                                                 }
                                                 className="w-full bg-green-950 [&>div]:bg-success h-[4px]"
                                             />
                                         </div>
 
                                         <Button
-                                            className="bg-fuchsia-300 cursor-pointer"
+                                            className={`${
+                                                exchange.status === 'finished'
+                                                    ? 'bg-gray-50'
+                                                    : 'bg-fuchsia-300'
+                                            } cursor-pointer`}
+                                            onClick={() => {handleSelectCurrencyExchange(exchange.id)}}
                                         >
-                                            <Link to={getEditCurrencyExchangeRoute({ id: exchange.id })}>
-                                                <IconArrowShuffle />
-                                            </Link>
+                                            {exchange.status === 'finished'
+                                                ? (<Eye />)
+                                                : (<IconArrowShuffle />)
+                                            }
                                         </Button>
                                     </div>
                                 ) : 'N/A'

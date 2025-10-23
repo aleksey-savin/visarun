@@ -2,6 +2,7 @@
 TODO:
     1. Check if select object is full
     2. Add permission in transactionReadProcedure
+    3. REDO or DELETE
  */
 
 import { transactionReadProcedure } from '../../lib/trpc.js';

@@ -104,6 +104,7 @@ export const getAllUsersTrpcRoute = trpc.procedure
             createdAt: 'desc',
           },
         },
+          Client: true
       },
     });
 

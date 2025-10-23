@@ -175,9 +175,11 @@ export interface StoreCurrencyExchange {
     toCurrencyId?: string;
     createdById: string;
     updatedById: string;
-    // fromCurrency
-    // toCurrency
-    // transactions
+    // fromCurrency: StoreCurrency;
+    // toCurrency: StoreCurrency;
+    // transactions: StoreTransaction[];
+    // finishedTransactionsAmountInSelectedCurrency?: number;
+    // inProgressTransactionsAmountInSelectedCurrency?: number;
     // createdBy
     // updatedBy
     createdAt: Date;

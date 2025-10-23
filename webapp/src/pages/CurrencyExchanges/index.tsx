@@ -13,6 +13,8 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select.tsx";
+import SelectedCurrencyExchangeDialog from "@/components/CurrencyExchanges/SelectedCurrencyExchangeDialog.tsx";
+import useCurrencyExchangeStore from "@/stores/currencyExchange/currency-exchange-store.ts";
 
 type SortItem = 'asc' | 'desc' | 'none';
 type SortItemName = 'position' | 'inProgress' | 'remains' | 'minTransactionAmount' | 'deadline';
@@ -21,6 +23,11 @@ type SortStates = Record<SortItemName, SortItem>
 type StatusFilter = 'draft' | 'in_progress' | 'finished' | 'cancelled';
 
 const AllCurrencyExchangesPage = () => {
+    const {
+        currencyExchanges,
+        setCurrencyExchanges,
+    } = useCurrencyExchangeStore();
+
     const [sortStates, setSortStates] = useState<SortStates>({
         position: 'asc',
         inProgress: 'none',
@@ -68,6 +75,19 @@ const AllCurrencyExchangesPage = () => {
         }
     }, [currencyExchangeCombinations]);
 
+    const handleStatusFilterChange = (status: StatusFilter) => {
+        setStatusFilter(status);
+    }
+
+    // Debounce search term
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     const {
         data: currencyExchangesData,
         isLoading,
@@ -81,20 +101,20 @@ const AllCurrencyExchangesPage = () => {
         sortOrder: sortOrder !== 'none' ? sortOrder : undefined,
     });
 
-    const currencyExchanges = currencyExchangesData?.currencyExchanges || [];
-
-    const handleStatusFilterChange = (status: StatusFilter) => {
-        setStatusFilter(status);
-    }
-
-    // Debounce search term
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchTerm(searchTerm);
-        }, 300);
+        if (!currencyExchangesData) return;
 
-        return () => clearTimeout(timer);
-    }, [searchTerm]);
+        setCurrencyExchanges(currencyExchangesData?.currencyExchanges || []);
+    }, [currencyExchangesData]);
+
+    const [selectedCurrencyExchangeId, setSelectedCurrencyExchangeId] = useState<string | undefined>();
+    const handleSelectCurrencyExchange = (id: string) => {
+        const foundExchange = currencyExchanges?.find(ex => ex.id === id);
+
+        if (foundExchange) {
+            setSelectedCurrencyExchangeId(id);
+        }
+    }
 
     if (error) {
         return (
@@ -190,11 +210,17 @@ const AllCurrencyExchangesPage = () => {
                                 currencyExchanges={currencyExchanges}
                                 sortStates={sortStates}
                                 setSortStates={setSortStates}
+                                handleSelectCurrencyExchange={handleSelectCurrencyExchange}
                             />
                         </div>
                     </div>
                 </>
             )}
+
+            <SelectedCurrencyExchangeDialog
+                selectedCurrencyExchangeId={selectedCurrencyExchangeId}
+                setSelectedCurrencyExchangeId={setSelectedCurrencyExchangeId}
+            />
         </div>
     );
 };

@@ -74,6 +74,15 @@ const bankingDetailsUpload = multer({
     fileFilter: documentFileFilter,
 });
 
+// Configure multer for transaction checks uploads
+const transactionCheckUpload = multer({
+    storage: memoryStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: documentFileFilter,
+});
+
 // Common upload handler
 async function handleFileUpload(
   req: Request & {
@@ -82,10 +91,11 @@ async function handleFileUpload(
       orderId?: string;
       clientId?: string;
       requirementId?: string;
+      transactionId?: string;
     };
   },
   res: Response,
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'banking-details'
+  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'banking-details' | 'transaction-checks',
 ) {
   try {
     if (!req.file) {
@@ -169,10 +179,11 @@ async function generateServerFileName(
         orderId?: string;
         clientId?: string;
         requirementId?: string;
+        transactionId?: string;
       }
     | undefined,
   originalName: string,
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'banking-details'
+  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'banking-details' | 'transaction-checks'
 ): Promise<string | undefined> {
   if (!metadata) return undefined;
 
@@ -256,6 +267,18 @@ async function generateServerFileName(
                 }
             }
             break;
+
+        case 'transaction-checks':
+            if (metadata.transactionId) {
+                const transaction = await prisma.transaction.findUnique({
+                    where: { id: metadata.transactionId },
+                });
+
+                if (transaction) {
+                    return `transaction-check-${transaction.id}-${dateStr}.${extension}`.toLowerCase();
+                }
+            }
+            break;
     }
 
     await prisma.$disconnect();
@@ -330,7 +353,7 @@ export const createUploadRoutes = () => {
     }
   );
 
-    // Upload client document file
+    // Upload client banking details file
     router.post(
         '/banking-details',
         bankingDetailsUpload.single('document'),
@@ -345,6 +368,23 @@ export const createUploadRoutes = () => {
             res: Response
         ) => {
             await handleFileUpload(req, res, 'banking-details');
+        }
+    );
+
+    // Upload transaction check file
+    router.post(
+        '/transaction-check',
+        transactionCheckUpload.single('document'),
+        async (
+            req: Request & {
+                file?: Express.Multer.File;
+                body?: {
+                    transactionId?: string;
+                };
+            },
+            res: Response
+        ) => {
+            await handleFileUpload(req, res, 'transaction-checks');
         }
     );
 

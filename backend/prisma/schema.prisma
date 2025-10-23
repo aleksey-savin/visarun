@@ -634,17 +634,18 @@ model CurrencyExchange {
 
 model Transaction {
   id                       String            @id @default(uuid())
-  amount                   Decimal
-  amountInSelectedCurrency Decimal
-  customExchangeRate       Boolean
+  amount                   Decimal?
+  amountInSelectedCurrency Decimal?
   checkUrl                 String?
+  isCompanyTransaction     Boolean           @default(true)
+  isInCash                 Boolean           @default(false)
   status                   TransactionStatus @default(draft)
   currencyExchangeId       String
-  senderId                 String
+  senderId                 String?
   createdById              String
   updatedById              String
   currencyExchange         CurrencyExchange  @relation(fields: [currencyExchangeId], references: [id])
-  sender                   Client            @relation(fields: [senderId], references: [id])
+  sender                   Client?           @relation(fields: [senderId], references: [id])
   createdBy                User              @relation("TransactionCreatedBy", fields: [createdById], references: [id])
   updatedBy                User              @relation("TransactionUpdatedBy", fields: [updatedById], references: [id])
   createdAt                DateTime          @default(now())
@@ -1025,8 +1026,11 @@ enum CurrencyExchangeStatus {
 
 enum TransactionStatus {
   draft
-  in_progress
-  finished
+  details_sent
+  check_uploaded
+  paid_uninformed
+  paid_informed
+  completed
   cancelled
 }
 
