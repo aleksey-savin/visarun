@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
-import { getCurrencyExchangeRoute } from '@/lib/routes';
+import { getCurrencyCalculatorRoute } from '@/lib/routes';
 import { ShieldX, Home, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,7 +10,7 @@ export default function AccessDeniedPage() {
   const { user } = useAuth();
 
   const handleGoHome = () => {
-    navigate(getCurrencyExchangeRoute());
+    navigate(getCurrencyCalculatorRoute());
   };
 
   const handleGoBack = () => {

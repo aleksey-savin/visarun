@@ -30,6 +30,11 @@ export const deleteOrderItemTrpcRoute = orderItemDeleteProcedure
       where: { orderItemId: input.id },
     });
 
+    // Delete associated currency exchanges first (if any)
+    await ctx.prisma.currencyExchange.deleteMany({
+      where: { orderItemId: input.id },
+    });
+
     // Delete order item
     await ctx.prisma.orderItem.delete({
       where: { id: input.id },

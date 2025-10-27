@@ -193,7 +193,7 @@ export default function AllOrdersPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute right-1 top-1 h-8 w-8 p-0"
+                  className="absolute right-0 top-0 h-9 w-9 p-0"
                   onClick={() => handleSearchChange('')}
                 >
                   <X className="h-4 w-4" />

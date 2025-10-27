@@ -23,3 +23,53 @@ export const formatCurrency = (amount: number, currency?: string) => {
     }).format(amount) + ` ${currencySymbol}`
   );
 };
+
+export const getCurrencySymbol = (currency?: string) => {
+  try {
+    // Try to format with the provided currency
+    if (currency) {
+      const parts = new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: currency,
+        currencyDisplay: 'symbol',
+      }).formatToParts(1);
+
+      const symbolPart = parts.find(p => p.type === 'currency');
+      return symbolPart ? symbolPart.value : 'VND';
+    }
+  } catch {
+    // If currency is invalid, fall back to number formatting with currency symbol
+    console.warn(`Invalid currency code: ${currency}`);
+  }
+
+  // Fallback: format as number with currency name or default
+  return currency || 'VND';
+};
+
+export const getCurrencyAmount = (amount: number, currency?: string) => {
+  try {
+    // Try to format with the provided currency
+    if (currency) {
+      const parts = new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: currency,
+        maximumFractionDigits: 0,
+      }).formatToParts(amount);
+
+      return parts
+        .filter(p => p.type !== 'currency')
+        .map(p => p.value)
+        .join('')
+        .trim();
+    }
+  } catch {
+    // If currency is invalid, fall back to number formatting with currency symbol
+    console.warn(`Invalid currency code: ${currency}`);
+  }
+
+  // Fallback: format as number with currency name or default
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'decimal',
+    maximumFractionDigits: 0,
+  }).format(amount);
+};

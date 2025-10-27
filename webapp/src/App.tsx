@@ -14,7 +14,8 @@ import ViewRolePage from './pages/Roles/view.js';
 import CreateRolePage from './pages/Roles/create.js';
 import EditRolePage from './pages/Roles/edit';
 import DashboardPage from './pages/Dashboard';
-import CurrencyExchangePage from './pages/CurrencyExchange';
+import CurrencyCalculatorPage from './pages/CurrencyCalculator';
+import AllCurrencyExchangesPage from './pages/CurrencyExchanges';
 import HomePage from './pages/HomePage';
 import TelegramChannelsPage from './pages/Telegram/getAll.js';
 import ViewTelegramChannelPage from './pages/Telegram/view.js';
@@ -104,114 +105,114 @@ import EditVisarunSchedulePage from './pages/VisarunSchedules/edit.js';
 import AllVisarunTripsPage from './pages/Visarun/index.js';
 
 import {
-  getAllUsersRoute,
-  getCurrencyExchangeRoute,
-  getDashboardRoute,
-  getViewUserRoute,
-  getCreateUserRoute,
-  getEditUserRoute,
-  editUserRouteParams,
-  getAllRolesRoute,
-  getViewRoleRoute,
-  getCreateRoleRoute,
-  getEditRoleRoute,
-  editRoleRouteParams,
-  getSignInRoute,
-  viewRoleRouteParams,
-  viewUserRouteParams,
-  getTelegramChannelsRoute,
-  getViewTelegramChannelRoute,
-  viewTelegramChannelRouteParams,
-  getAccessDeniedRoute,
-  getAllContactMethodsRoute,
-  getCreateContactMethodRoute,
-  getEditContactMethodRoute,
-  editContactMethodRouteParams,
-  // Countries routes
-  getAllCountriesRoute,
-  getViewCountryRoute,
-  getCreateCountryRoute,
-  getEditCountryRoute,
-  editCountryRouteParams,
-  viewCountryRouteParams,
-  // Citizenships routes
-  getAllCitizenshipsRoute,
-  getViewCitizenshipRoute,
-  getCreateCitizenshipRoute,
-  getEditCitizenshipRoute,
-  editCitizenshipRouteParams,
-  viewCitizenshipRouteParams,
-  // Currency routes
-  getAllCurrenciesRoute,
-  getViewCurrencyRoute,
-  getCreateCurrencyRoute,
-  getEditCurrencyRoute,
-  editCurrencyRouteParams,
-  viewCurrencyRouteParams,
-  // Visa Types routes
-  getAllVisaTypesRoute,
-  getViewVisaTypeRoute,
-  getCreateVisaTypeRoute,
-  editTransportTypeRouteParams,
-  editTransportRouteParams,
-  // Transport Types routes
-  getAllTransportTypesRoute,
-  getCreateTransportTypeRoute,
-  getEditTransportTypeRoute,
-  // Transports routes
-  getAllTransportsRoute,
-  getCreateTransportRoute,
-  getEditTransportRoute,
-  // Seat Classes routes
-  getAllSeatClassesRoute,
-  getCreateSeatClassRoute,
-  getEditSeatClassRoute,
-  editSeatClassRouteParams,
-  getEditVisaTypeRoute,
-  editVisaTypeRouteParams,
-  viewVisaTypeRouteParams,
-  // VisarunSchedule routes
-  getAllVisarunSchedulesRoute,
-  getCreateVisarunScheduleRoute,
-  getEditVisarunScheduleRoute,
-  editVisarunScheduleRouteParams,
-  // Visa Citizenship Surcharges routes
-  getAllVisaCitizenshipSurchargesRoute,
-  getCreateVisaCitizenshipSurchargeRoute,
-  getViewVisaCitizenshipSurchargeRoute,
-  getEditVisaCitizenshipSurchargeRoute,
-  viewVisaCitizenshipSurchargeRouteParams,
-  editVisaCitizenshipSurchargeRouteParams,
-  getViewClientRoute,
-  viewClientRouteParams,
-  getAllRequirementsRoute,
-  getCreateRequirementRoute,
-  getViewRequirementRoute,
-  getEditRequirementRoute,
-  viewRequirementRouteParams,
-  editRequirementRouteParams,
-  getMessageTemplatesRoute,
-  getCreateMessageTemplateRoute,
-  getViewMessageTemplateRoute,
-  getEditMessageTemplateRoute,
-  viewMessageTemplateRouteParams,
-  editMessageTemplateRouteParams,
-  // Audit Log routes
-  getAllAuditLogsRoute,
-  getViewAuditLogRoute,
-  viewAuditLogRouteParams,
-  // Order routes
-  getAllOrdersRoute,
-  getEditOrderRoute,
-  getViewOrderRoute,
-  editOrderRouteParams,
-  viewOrderRouteParams,
-  // Visa Applications routes
-  getAllVisaApplicationsRoute,
-  getViewVisaApplicationRoute,
-  viewVisaApplicationRouteParams,
-  // Visarun Trips routes
-  getAllVisarunTripsRoute,
+    getAllUsersRoute,
+    getCurrencyCalculatorRoute,
+    getDashboardRoute,
+    getViewUserRoute,
+    getCreateUserRoute,
+    getEditUserRoute,
+    editUserRouteParams,
+    getAllRolesRoute,
+    getViewRoleRoute,
+    getCreateRoleRoute,
+    getEditRoleRoute,
+    editRoleRouteParams,
+    getSignInRoute,
+    viewRoleRouteParams,
+    viewUserRouteParams,
+    getTelegramChannelsRoute,
+    getViewTelegramChannelRoute,
+    viewTelegramChannelRouteParams,
+    getAccessDeniedRoute,
+    getAllContactMethodsRoute,
+    getCreateContactMethodRoute,
+    getEditContactMethodRoute,
+    editContactMethodRouteParams,
+    // Countries routes
+    getAllCountriesRoute,
+    getViewCountryRoute,
+    getCreateCountryRoute,
+    getEditCountryRoute,
+    editCountryRouteParams,
+    viewCountryRouteParams,
+    // Citizenships routes
+    getAllCitizenshipsRoute,
+    getViewCitizenshipRoute,
+    getCreateCitizenshipRoute,
+    getEditCitizenshipRoute,
+    editCitizenshipRouteParams,
+    viewCitizenshipRouteParams,
+    // Currency routes
+    getAllCurrenciesRoute,
+    getViewCurrencyRoute,
+    getCreateCurrencyRoute,
+    getEditCurrencyRoute,
+    editCurrencyRouteParams,
+    viewCurrencyRouteParams,
+    // Visa Types routes
+    getAllVisaTypesRoute,
+    getViewVisaTypeRoute,
+    getCreateVisaTypeRoute,
+    editTransportTypeRouteParams,
+    editTransportRouteParams,
+    // Transport Types routes
+    getAllTransportTypesRoute,
+    getCreateTransportTypeRoute,
+    getEditTransportTypeRoute,
+    // Transports routes
+    getAllTransportsRoute,
+    getCreateTransportRoute,
+    getEditTransportRoute,
+    // Seat Classes routes
+    getAllSeatClassesRoute,
+    getCreateSeatClassRoute,
+    getEditSeatClassRoute,
+    editSeatClassRouteParams,
+    getEditVisaTypeRoute,
+    editVisaTypeRouteParams,
+    viewVisaTypeRouteParams,
+    // VisarunSchedule routes
+    getAllVisarunSchedulesRoute,
+    getCreateVisarunScheduleRoute,
+    getEditVisarunScheduleRoute,
+    editVisarunScheduleRouteParams,
+    // Visa Citizenship Surcharges routes
+    getAllVisaCitizenshipSurchargesRoute,
+    getCreateVisaCitizenshipSurchargeRoute,
+    getViewVisaCitizenshipSurchargeRoute,
+    getEditVisaCitizenshipSurchargeRoute,
+    viewVisaCitizenshipSurchargeRouteParams,
+    editVisaCitizenshipSurchargeRouteParams,
+    getViewClientRoute,
+    viewClientRouteParams,
+    getAllRequirementsRoute,
+    getCreateRequirementRoute,
+    getViewRequirementRoute,
+    getEditRequirementRoute,
+    viewRequirementRouteParams,
+    editRequirementRouteParams,
+    getMessageTemplatesRoute,
+    getCreateMessageTemplateRoute,
+    getViewMessageTemplateRoute,
+    getEditMessageTemplateRoute,
+    viewMessageTemplateRouteParams,
+    editMessageTemplateRouteParams,
+    // Audit Log routes
+    getAllAuditLogsRoute,
+    getViewAuditLogRoute,
+    viewAuditLogRouteParams,
+    // Order routes
+    getAllOrdersRoute,
+    getEditOrderRoute,
+    getViewOrderRoute,
+    editOrderRouteParams,
+    viewOrderRouteParams,
+    // Visa Applications routes
+    getAllVisaApplicationsRoute,
+    getViewVisaApplicationRoute,
+    viewVisaApplicationRouteParams,
+    // Visarun Trips routes
+    getAllVisarunTripsRoute, getAllCurrencyExchangesRoute,
 } from './lib/routes';
 
 import Layout from '@/components/Layout';
@@ -258,14 +259,24 @@ const App = () => {
                 <Route path={getDashboardRoute()} element={<DashboardPage />} />
 
                 {/* Currency Exchange Routes */}
-                <Route
-                  path={getCurrencyExchangeRoute()}
-                  element={
-                    <PermissionRoute requiredPermission="exchangeRates.create">
-                      <CurrencyExchangePage />
-                    </PermissionRoute>
-                  }
-                />
+                  <Route
+                      path={getCurrencyCalculatorRoute()}
+                      element={
+                          <PermissionRoute requiredPermission="exchangeRates.create">
+                              <CurrencyCalculatorPage />
+                          </PermissionRoute>
+                      }
+                  />
+
+                  <Route
+                      //TODO add permission
+                      path={getAllCurrencyExchangesRoute()}
+                      element={
+                          <PermissionRoute requiredPermission="exchangeRates.create">
+                              <AllCurrencyExchangesPage />
+                          </PermissionRoute>
+                      }
+                  />
 
                 {/* User Management Routes */}
                 <Route

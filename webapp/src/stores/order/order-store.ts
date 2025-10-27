@@ -10,6 +10,7 @@ import type {
   OrderItem,
   Citizenship,
   VisaApplicationStatus,
+  CurrencyExchangeStatus,
   OrderStatus,
   ClientDocument,
   Requirement,
@@ -88,6 +89,12 @@ export interface StoreClient extends Partial<Client> {
       isGlobal: boolean;
     }[];
   };
+  bankingDetails?: {
+    id: string;
+    content?: string | null;
+    documentUrl?: string | null;
+    clientId: string;
+  };
   documents?: (Omit<ClientDocument, 'reviewedAt' | 'uploadedAt' | 'expiresAt'> & {
     reviewedAt: string | null;
     uploadedAt: string;
@@ -150,6 +157,33 @@ export interface StoreVisaApplication {
     validTo: Date;
     notifiedExpiry: boolean;
   }[];
+}
+
+export interface StoreCurrencyExchange {
+  id: string;
+  orderItemId: string;
+  position: number;
+  exchangeRate?: number;
+  amountInSelectedCurrencyFrom?: number;
+  amountInSelectedCurrencyTo?: number;
+  status: CurrencyExchangeStatus;
+  cancelReason?: string;
+  canceledByClient?: boolean;
+  deadline?: Date;
+  minTransactionAmountInSelectedCurrency?: number;
+  fromCurrencyId?: string;
+  toCurrencyId?: string;
+  createdById: string;
+  updatedById: string;
+  // fromCurrency: StoreCurrency;
+  // toCurrency: StoreCurrency;
+  // transactions: StoreTransaction[];
+  // finishedTransactionsAmountInSelectedCurrency?: number;
+  // inProgressTransactionsAmountInSelectedCurrency?: number;
+  // createdBy
+  // updatedBy
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface StoreOrderItem extends OrderItem {
@@ -255,6 +289,7 @@ interface OrderStore {
   orderItems: StoreOrderItem[];
   visaApplications: StoreVisaApplication[];
   visarunPassengers: StoreVisarunPassenger[];
+  currencyExchanges: StoreCurrencyExchange[];
   orderPayments: StoreOrderPayment[];
   // visarun
   preferredDepartureCity: City | null;
@@ -277,6 +312,7 @@ interface OrderStore {
   setOrderItems: (orderItems: StoreOrderItem[]) => void;
   setVisaApplications: (visaApplications: StoreVisaApplication[]) => void;
   setVisarunPassengers: (visarunPassengers: StoreVisarunPassenger[]) => void;
+  setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) => void;
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => void;
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) => void;
   reset: () => void;
@@ -319,6 +355,7 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   orderItems: [],
   visaApplications: [],
   visarunPassengers: [],
+  currencyExchanges: [],
   orderPayments: [],
 
   setSaveStatus: async (saveStatus: SaveStatus) => {
@@ -367,6 +404,9 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
       const draftVisaApplications = currentState.visaApplications.filter(
         visaApp => visaApp.status === 'draft'
       );
+      const draftCurrencyExchanges = currentState.currencyExchanges.filter(
+        exchange => exchange.status === 'draft'
+      );
 
       // Update each draft visa application to pending_submit
       for (const visaApp of draftVisaApplications) {
@@ -386,6 +426,25 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
           console.error(`Failed to update visa application ${visaApp.id} status:`, error);
         }
       }
+
+      // Update each draft currency exchange to in_progress
+      for (const exchange of draftCurrencyExchanges) {
+        try {
+          await trpcClient.currencyExchange.updateStatus.mutate({
+            id: exchange.id,
+            status: 'in_progress',
+          });
+
+          // Update the currency exchange in the local store
+          set(state => ({
+            currencyExchanges: state.currencyExchanges.map(ex =>
+              ex.id === exchange.id ? { ...ex, status: 'in_progress' as const } : ex
+            ),
+          }));
+        } catch (error) {
+          console.error(`Failed to update currency exchange ${exchange.id} status:`, error);
+        }
+      }
     }
   },
   setUser: (userData: StoreUser) => set(() => ({ user: userData })),
@@ -396,6 +455,8 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
     set(() => ({ visaApplications })),
   setVisarunPassengers: (visarunPassengers: StoreVisarunPassenger[]) =>
     set(() => ({ visarunPassengers })),
+  setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) =>
+    set(() => ({ currencyExchanges })),
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),
   setPreferredDepartureDate: (date: Date) => set(() => ({ preferredDepartureDate: date })),
   setPreferredDepartureCity: (city: City | null) => set(() => ({ preferredDepartureCity: city })),

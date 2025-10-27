@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Coins } from 'lucide-react';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
 
 const EditCurrencyPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [name, setName] = useState('');
+  const [isBegottening, setIsBegottening] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data, error, isLoading, isError } = trpc.currency.getOne.useQuery(
@@ -33,6 +35,7 @@ const EditCurrencyPage = () => {
   useEffect(() => {
     if (data?.currency) {
       setName(data.currency.name);
+      setIsBegottening(data.currency.isBegottening);
     }
   }, [data]);
 
@@ -50,9 +53,11 @@ const EditCurrencyPage = () => {
     }
 
     setIsSubmitting(true);
+
     editMutation.mutate({
       id,
       name: name.trim(),
+      isBegottening: isBegottening,
     });
   };
 
@@ -97,6 +102,18 @@ const EditCurrencyPage = () => {
               />
               <p className="text-sm text-muted-foreground">
                 Enter the currency name or code (maximum 100 characters)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="isBegottening">Currency is begottening</Label>
+              <Switch
+                id="isBegottening"
+                checked={isBegottening}
+                onClick={() => setIsBegottening(prevState => !prevState)}
+              />
+              <p className="text-sm text-muted-foreground">
+                Can be used as begottening in currency exchanges
               </p>
             </div>
 

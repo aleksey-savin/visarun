@@ -74,6 +74,15 @@ export const getOrderTrpcRoute = orderReadProcedure
                 email: true,
                 requirements: true,
                 documents: true,
+                bankingDetails: {
+                  select: {
+                    id: true,
+                    content: true,
+                    documentUrl: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  },
+                },
                 citizenship: {
                   select: {
                     id: true,
@@ -212,6 +221,30 @@ export const getOrderTrpcRoute = orderReadProcedure
             })
           : [];
 
+      // Fetch currency exchanges for items with serviceType = 'currencyExchange'
+      const currencyExchangeItems = order.items.filter(
+        item => item.serviceType === 'currencyExchange'
+      );
+      const currencyExchangeItemIds = currencyExchangeItems.map(item => item.id);
+
+      const currencyExchanges =
+        currencyExchangeItemIds.length > 0
+          ? await ctx.prisma.currencyExchange.findMany({
+              where: {
+                orderItemId: { in: currencyExchangeItemIds },
+              },
+              include: {
+                createdBy: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            })
+          : [];
+
       // Fetch visarun passengers for items with serviceType = 'visarun'
       const visarunItems = order.items.filter(item => item.serviceType === 'visarun');
       const visarunItemIds = visarunItems.map(item => item.id);
@@ -337,6 +370,7 @@ export const getOrderTrpcRoute = orderReadProcedure
         })),
         visaApplications,
         visarunPassengers,
+        currencyExchanges,
       };
     }
   });

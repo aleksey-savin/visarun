@@ -6,10 +6,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowUpDown, ExternalLink, RefreshCw } from 'lucide-react';
 import { trpc } from '@/lib/trpcProvider';
 import { Link } from 'react-router-dom';
-import { getCurrencyExchangeRoute } from '@/lib/routes';
+import { getCurrencyCalculatorRoute } from '@/lib/routes';
 import { useAuth } from '@/lib/auth';
 
-export function CurrencyExchangeWidget() {
+export function CurrencyCalculatorWidget() {
   const { hasPermission } = useAuth();
   const {
     data: latestRates,
@@ -38,7 +38,7 @@ export function CurrencyExchangeWidget() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4" />
-            Currency Exchange
+            Currency Calculator
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -56,7 +56,7 @@ export function CurrencyExchangeWidget() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4" />
-            Currency Exchange
+            Currency Calculator
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -64,10 +64,10 @@ export function CurrencyExchangeWidget() {
             <AlertDescription className="text-xs">Rates unavailable</AlertDescription>
           </Alert>
           {hasPermission('exchangeRates.create') && (
-            <Link to={getCurrencyExchangeRoute()}>
+            <Link to={getCurrencyCalculatorRoute()}>
               <Button variant="secondary" size="sm" className="w-full mt-2">
                 <ExternalLink className="h-3 w-3 mr-1" />
-                View Exchange
+                View Exchange Calculator
               </Button>
             </Link>
           )}
@@ -84,7 +84,7 @@ export function CurrencyExchangeWidget() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4" />
-            Currency Exchange
+            Currency Calculator
           </CardTitle>
           <Button
             variant="ghost"
@@ -185,7 +185,7 @@ export function CurrencyExchangeWidget() {
             </div>
           </div>
         </div>
-        <Link to={getCurrencyExchangeRoute()}>
+        <Link to={getCurrencyCalculatorRoute()}>
           <Button variant="default" className="w-full mt-2 text-md">
             <ExternalLink className="h-3 w-3 mr-1" />
             Manage

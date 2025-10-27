@@ -15,6 +15,7 @@ export const getAllClientsByUserIdTrpcRoute = userReadProcedure
     const clients = await ctx.prisma.client.findMany({
       where: { userId: input.userId },
       include: {
+        bankingDetails: true,
         citizenship: {
           select: {
             id: true,

@@ -50,6 +50,10 @@ import { visarunTripRoutes } from './visarunTrip/index.js';
 import { visarunTripTransportRoutes } from './visarunTripTransport/index.js';
 import { visarunPassengerRouter } from './visarunPassenger/index.js';
 
+import { currencyExchangeRoutes } from './currencyExchange/index.js';
+import { transactionRoutes } from "./transaction/index.js";
+import { bankingDetailsRoutes } from "./bankingDetails/index.js";
+
 // Create the main router with all routes
 export const appRouter = trpc.router({
   user: userRoutes,
@@ -80,6 +84,9 @@ export const appRouter = trpc.router({
   audit: auditRoutes,
   currency: currencyRoutes,
   orderPayment: orderPaymentRoutes,
+    currencyExchange: currencyExchangeRoutes,
+    transaction: transactionRoutes,
+    bankingDetails: bankingDetailsRoutes,
   transportType: transportTypeRoutes,
   transport: transportRoutes,
   seatClass: seatClassRoutes,

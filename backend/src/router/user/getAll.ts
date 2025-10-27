@@ -21,7 +21,9 @@ export const getAllUsersTrpcRoute = trpc.procedure
             permissions: {
               some: {
                 permission: {
-                  code: string;
+                  code: {
+                    in: string[];
+                  };
                 };
               };
             };
@@ -47,7 +49,9 @@ export const getAllUsersTrpcRoute = trpc.procedure
             permissions: {
               some: {
                 permission: {
-                  code: 'orderPayments.canAcceptPayments',
+                  code: {
+                    in: ['orderPayments.canAcceptPayments', 'global.fullAccess'],
+                  },
                 },
               },
             },
@@ -97,6 +101,7 @@ export const getAllUsersTrpcRoute = trpc.procedure
             createdAt: 'desc',
           },
         },
+        Client: true,
       },
     });
 

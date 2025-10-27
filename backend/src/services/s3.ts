@@ -48,7 +48,13 @@ export interface FileUploadParams {
   buffer: Buffer;
   originalName: string;
   mimeType: string;
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'transport-reports';
+  folder:
+    | 'requirement-documents'
+    | 'client-documents'
+    | 'payment-documents'
+    | 'transport-reports'
+    | 'transaction-checks'
+    | 'banking-details';
   customFileName?: string;
 }
 
@@ -75,7 +81,9 @@ function generateFileName(originalName: string, folder: string, customFileName?:
         ? 'client-doc'
         : folder === 'payment-documents'
           ? 'payment-doc'
-          : 'transport-report';
+          : folder === 'transaction-checks'
+            ? 'transaction-checks'
+            : 'transport-report';
 
   return `${folder}/${baseName}-${timestamp}-${randomString}${extension}`;
 }

@@ -87,6 +87,24 @@ const transportReportUpload = multer({
   fileFilter: documentFileFilter,
 });
 
+// Configure multer for banking details uploads
+const bankingDetailsUpload = multer({
+  storage: memoryStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: documentFileFilter,
+});
+
+// Configure multer for transaction checks uploads
+const transactionCheckUpload = multer({
+  storage: memoryStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: documentFileFilter,
+});
+
 // Common upload handler
 async function handleFileUpload(
   req: Request & {
@@ -99,7 +117,13 @@ async function handleFileUpload(
     };
   },
   res: Response,
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'transport-reports'
+  folder:
+    | 'requirement-documents'
+    | 'client-documents'
+    | 'payment-documents'
+    | 'transport-reports'
+    | 'transaction-checks'
+    | 'banking-details'
 ) {
   try {
     if (!req.file) {
@@ -184,10 +208,17 @@ async function generateServerFileName(
         clientId?: string;
         requirementId?: string;
         tripTransportId?: string;
+        transactionId?: string;
       }
     | undefined,
   originalName: string,
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'transport-reports'
+  folder:
+    | 'requirement-documents'
+    | 'client-documents'
+    | 'payment-documents'
+    | 'transport-reports'
+    | 'transaction-checks'
+    | 'banking-details'
 ): Promise<string | undefined> {
   if (!metadata) return undefined;
 
@@ -292,6 +323,31 @@ async function generateServerFileName(
           }
         }
         break;
+
+      case 'banking-details':
+        if (metadata.clientId) {
+          const client = await prisma.client.findUnique({
+            where: { id: metadata.clientId },
+            select: { firstName: true, lastName: true },
+          });
+
+          if (client) {
+            return `banking-details-${client.lastName}-${client.firstName}-${dateStr}.${extension}`.toLowerCase();
+          }
+        }
+        break;
+
+      case 'transaction-checks':
+        if (metadata.transactionId) {
+          const transaction = await prisma.transaction.findUnique({
+            where: { id: metadata.transactionId },
+          });
+
+          if (transaction) {
+            return `transaction-check-${transaction.id}-${dateStr}.${extension}`.toLowerCase();
+          }
+        }
+        break;
     }
 
     await prisma.$disconnect();
@@ -380,6 +436,39 @@ export const createUploadRoutes = () => {
       res: Response
     ) => {
       await handleFileUpload(req, res, 'transport-reports');
+    }
+  );
+
+  router.post(
+    '/banking-details',
+    bankingDetailsUpload.single('document'),
+    async (
+      req: Request & {
+        file?: Express.Multer.File;
+        body?: {
+          clientId?: string;
+          requirementId?: string;
+        };
+      },
+      res: Response
+    ) => {
+      await handleFileUpload(req, res, 'banking-details');
+    }
+  );
+
+  router.post(
+    '/transaction-check',
+    transactionCheckUpload.single('document'),
+    async (
+      req: Request & {
+        file?: Express.Multer.File;
+        body?: {
+          transactionId?: string;
+        };
+      },
+      res: Response
+    ) => {
+      await handleFileUpload(req, res, 'transaction-checks');
     }
   );
 

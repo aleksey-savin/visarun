@@ -35,6 +35,8 @@ export const createDocumentFromFileUrl = (
     | 'client-documents'
     | 'payment-documents'
     | 'requirement-documents'
+    | 'banking-details'
+    | 'transaction-checks'
     | 'transport-reports' = 'client-documents'
 ) => {
   return {
