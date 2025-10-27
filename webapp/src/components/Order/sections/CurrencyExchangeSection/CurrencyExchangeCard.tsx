@@ -256,8 +256,6 @@ const CurrencyExchangeCard = ({
           clientId: client.id,
         };
 
-        console.log('new', newBankingDetails);
-
         const newBankingDetailsId: string = (
           await createBankingDetailsMutation.mutateAsync(newBankingDetails)
         ).id;
@@ -283,8 +281,6 @@ const CurrencyExchangeCard = ({
           clientId: client.id,
           id: client.bankingDetails.id,
         };
-
-        console.log('edit', newBankingDetails);
 
         await editBankingDetailsMutation.mutateAsync(newBankingDetails);
 

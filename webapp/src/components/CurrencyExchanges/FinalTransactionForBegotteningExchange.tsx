@@ -105,7 +105,6 @@ const FinalTransactionForBegotteningExchange = ({
   };
 
   const handleChangeStatus = (newStatus: string) => {
-    console.log(transaction, newStatus);
     updateStatusTransaction(transaction.id, newStatus);
   };
 

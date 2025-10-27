@@ -40,8 +40,6 @@ const EditOrderPage = () => {
     userId: orderData?.userId || '',
   });
 
-  useEffect(() => console.log(orderData), [orderData]);
-
   const notIncludedClients = allClientsData?.clients?.map(client => ({
     ...client,
     firstName: client.firstName ?? undefined,

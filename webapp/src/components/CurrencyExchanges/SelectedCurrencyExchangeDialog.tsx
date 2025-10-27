@@ -506,8 +506,6 @@ const SelectedCurrencyExchangeDialog = ({
     }
   };
 
-  console.log(selectedCurrencyExchange, allCurrencyExchanges);
-
   const handleAddFinalTransactionForBegotteningExchange = async () => {
     try {
       if (!selectedCurrencyExchangeId || !selectedCurrencyExchange) {
@@ -570,13 +568,6 @@ const SelectedCurrencyExchangeDialog = ({
 
   useEffect(() => {
     if (!selectedCurrencyExchange?.isBegottening) return;
-
-    console.log(
-      finalTransactionCreated.current,
-      finalTransactionForBegotteningExchange,
-      selectedCurrencyExchange.finishedBegottenTransactionsAmountInSelectedCurrency,
-      selectedCurrencyExchange.amountInSelectedCurrencyFrom
-    );
 
     // Condition to create finalTransactionForBegotteningExchange
     if (
