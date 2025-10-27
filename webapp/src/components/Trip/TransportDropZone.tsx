@@ -9,6 +9,7 @@ import OrderInfoDialog from './OrderInfoDialog';
 
 interface TransportDropZoneProps {
   tripTransportId: string;
+  tripStatus: string;
   seatClass?: {
     id: string;
     name: string;
@@ -24,6 +25,7 @@ interface TransportDropZoneProps {
 
 const TransportDropZone = ({
   tripTransportId,
+  tripStatus,
   seatClass,
   seatCount,
   occupiedCount,
@@ -198,7 +200,7 @@ const TransportDropZone = ({
             passengers={passengers}
             showInfoButton={true}
             showPaymentStatus={true}
-            showRemoveButton={true}
+            showRemoveButton={tripStatus === 'scheduled'}
             onRemove={onRemove}
             isDraggable={false}
             onInfoClick={order => {

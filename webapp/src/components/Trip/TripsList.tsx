@@ -16,6 +16,7 @@ import PassengersListCard from './PassengersListCard';
 import OrderInfoDialog from './OrderInfoDialog';
 
 import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
 
 interface TripsListProps {
   trips: Trip[];
@@ -138,119 +139,136 @@ const TripsList = ({ trips }: TripsListProps) => {
       </div>
       <Separator />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          {activeTab && selectedTripAndStop && selectedTripAndStop.stop.stopType !== 'arrival' && (
-            <div className="space-y-4">
-              {(() => {
-                // Group passengers by seatClass
-                const groupedPassengers = stopPassengers
-                  .filter(passenger => !passenger.tripTransportId)
-                  .reduce(
-                    (groups, passenger) => {
-                      const seatClass = passenger.seatClass;
-                      const seatClassKey = passenger.seatClassId || 'unknown';
-                      if (!groups[seatClassKey]) {
-                        groups[seatClassKey] = {
-                          seatClass: seatClass,
-                          passengers: [],
-                        };
-                      }
-                      groups[seatClassKey].passengers.push(passenger);
-                      return groups;
-                    },
-                    {} as Record<string, { seatClass: any; passengers: typeof stopPassengers }>
-                  );
+        {selectedTripAndStop && selectedTripAndStop.trip.status === 'scheduled' && (
+          <div>
+            {activeTab && selectedTripAndStop.stop.stopType !== 'arrival' && (
+              <div className="space-y-4">
+                {(() => {
+                  // Group passengers by seatClass
+                  const groupedPassengers = stopPassengers
+                    .filter(passenger => !passenger.tripTransportId)
+                    .reduce(
+                      (groups, passenger) => {
+                        const seatClass = passenger.seatClass;
+                        const seatClassKey = passenger.seatClassId || 'unknown';
+                        if (!groups[seatClassKey]) {
+                          groups[seatClassKey] = {
+                            seatClass: seatClass,
+                            passengers: [],
+                          };
+                        }
+                        groups[seatClassKey].passengers.push(passenger);
+                        return groups;
+                      },
+                      {} as Record<string, { seatClass: any; passengers: typeof stopPassengers }>
+                    );
 
-                return Object.keys(groupedPassengers).length > 0 ? (
-                  Object.entries(groupedPassengers).map(
-                    ([seatClassKey, { seatClass, passengers }]) => (
-                      <Card key={seatClassKey} className="p-3 h-80 flex flex-col bg-secondary">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <IconDisplay
-                              iconFilename={seatClass?.icon}
-                              iconType="transport-seat"
-                              alt={seatClass?.name}
-                              size="md"
-                              fallback={<Armchair className="h-6 w-6" />}
-                            />
-                            <h4 className="text-lg font-semibold">
-                              {seatClass?.name || `Seat Class ${seatClassKey}`}
-                            </h4>
+                  return Object.keys(groupedPassengers).length > 0 ? (
+                    Object.entries(groupedPassengers).map(
+                      ([seatClassKey, { seatClass, passengers }]) => (
+                        <Card key={seatClassKey} className="p-3 h-80 flex flex-col bg-secondary">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <IconDisplay
+                                iconFilename={seatClass?.icon}
+                                iconType="transport-seat"
+                                alt={seatClass?.name}
+                                size="md"
+                                fallback={<Armchair className="h-6 w-6" />}
+                              />
+                              <h4 className="text-lg font-semibold">
+                                {seatClass?.name || `Seat Class ${seatClassKey}`}
+                              </h4>
+                            </div>
+                            <Badge variant="default" className="rounded-full">
+                              {passengers.length}
+                            </Badge>
                           </div>
-                          <Badge variant="default" className="rounded-full">
-                            {passengers.length}
-                          </Badge>
-                        </div>
-                        <Separator />
-                        <ScrollArea className="min-h-0">
-                          <div className="space-y-2 pr-3">
-                            <PassengersListCard
-                              passengers={passengers}
-                              showInfoButton={true}
-                              showPaymentStatus={true}
-                              isDraggable={true}
-                              onInfoClick={order => {
-                                setSelectedOrderInfo(order);
-                                setIsOrderInfoDialogOpen(true);
-                              }}
-                            />
-                          </div>
-                        </ScrollArea>
-                      </Card>
+                          <Separator />
+                          <ScrollArea className="min-h-0">
+                            <div className="space-y-2 pr-3">
+                              <PassengersListCard
+                                passengers={passengers}
+                                showInfoButton={true}
+                                showPaymentStatus={true}
+                                isDraggable={true}
+                                onInfoClick={order => {
+                                  setSelectedOrderInfo(order);
+                                  setIsOrderInfoDialogOpen(true);
+                                }}
+                              />
+                            </div>
+                          </ScrollArea>
+                        </Card>
+                      )
                     )
-                  )
-                ) : (
-                  <Card>
-                    <CardContent className="p-3">
-                      <div className="text-sm text-muted-foreground text-center">
-                        No passengers for this stop
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })()}
-            </div>
-          )}
-        </div>
+                  ) : (
+                    <Card>
+                      <CardContent className="p-3">
+                        <div className="text-sm text-muted-foreground text-center">
+                          No passengers for this stop
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
         {stopPassengers.length > 0 && (
-          <div className="col-span-2 space-y-4">
-            <div className="grid grid-cols-2 gap-2">
+          <div
+            className={cn(
+              selectedTripAndStop?.trip.status === 'scheduled'
+                ? 'col-span-2 space-y-4'
+                : 'col-span-3 space-y-4'
+            )}
+          >
+            <div
+              className={cn(
+                'grid gap-2',
+                selectedTripAndStop?.trip.status === 'scheduled' ? 'grid-cols-2 ' : 'grid-cols-3'
+              )}
+            >
               <TripTransportsList
                 tripTransports={tripTransports || []}
                 tripId={selectedTripAndStop?.trip.id}
+                tripStatus={selectedTripAndStop?.trip.status || ''}
               />
-              <Card className=" p-3 h-fit">
-                <div className="flex flex-wrap gap-2">
-                  {selectedTripAndStop?.trip.route?.transports?.map(transport => (
-                    <Button
-                      className="flex gap-2 items-center"
-                      key={transport.id}
-                      variant={selectedTransport === transport.id ? 'accent' : 'secondary'}
-                      value={transport.id}
-                      onClick={() =>
-                        setSelectedTransport(
-                          selectedTransport === transport.id ? null : transport.id
-                        )
-                      }
-                    >
-                      <IconDisplay
-                        iconFilename={transport.transportType.icon}
-                        iconType="transport-type"
-                      />
-                      <span>{transport.name}</span>
-                      <span>
-                        <Badge className="rounded-full text-xs">{transport.seatCount}</Badge>
-                      </span>
+              {selectedTripAndStop?.trip.status === 'scheduled' && (
+                <Card className=" p-3 h-fit">
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTripAndStop?.trip.route?.transports?.map(transport => (
+                      <Button
+                        className="flex gap-2 items-center"
+                        key={transport.id}
+                        variant={selectedTransport === transport.id ? 'accent' : 'secondary'}
+                        value={transport.id}
+                        onClick={() =>
+                          setSelectedTransport(
+                            selectedTransport === transport.id ? null : transport.id
+                          )
+                        }
+                      >
+                        <IconDisplay
+                          iconFilename={transport.transportType.icon}
+                          iconType="transport-type"
+                        />
+                        <span>{transport.name}</span>
+                        <span>
+                          <Badge className="rounded-full text-xs">{transport.seatCount}</Badge>
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={addTransportHandler} disabled={!selectedTransport}>
+                      Add Transport
                     </Button>
-                  ))}
-                </div>
-                <div className="flex justify-end">
-                  <Button onClick={addTransportHandler} disabled={!selectedTransport}>
-                    Add Transport
-                  </Button>
-                </div>
-              </Card>
+                  </div>
+                </Card>
+              )}
             </div>
           </div>
         )}

@@ -43,22 +43,28 @@ const TripCards = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
         <RouteStopsBadges trip={trip} />
       </div>
 
-      <div className="space-y-2">
-        <Label>Passengers seating</Label>
-        <Tabs value={activeTab} onValueChange={tabValueChangeHandler}>
-          <TabsList>
-            {sortedStops
-              .filter(stop => stop.stopType !== 'arrival')
-              .map(stop => (
-                <TabsTrigger key={stop.id} value={stop.id}>
-                  {stop.city.name}
-                  <Badge variant="secondary" className="rounded-full text-xs bg-secondary">
-                    {(passengers && passengers.filter(p => p.routeStopId === stop.id).length) || 0}
-                  </Badge>
-                </TabsTrigger>
-              ))}
-          </TabsList>
-        </Tabs>
+      <div className="flex flex-wrap justify-between items-end">
+        <div className="space-y-2">
+          <Label>Passengers seating</Label>
+          <Tabs value={activeTab} onValueChange={tabValueChangeHandler}>
+            <TabsList>
+              {sortedStops
+                .filter(stop => stop.stopType !== 'arrival')
+                .map(stop => (
+                  <TabsTrigger key={stop.id} value={stop.id}>
+                    {stop.city.name}
+                    <Badge variant="secondary" className="rounded-full text-xs bg-secondary">
+                      {(passengers && passengers.filter(p => p.routeStopId === stop.id).length) ||
+                        0}
+                    </Badge>
+                  </TabsTrigger>
+                ))}
+            </TabsList>
+          </Tabs>
+        </div>
+        <div className="self-end">
+          <Badge>{trip.status}</Badge>
+        </div>
       </div>
     </Card>
   );

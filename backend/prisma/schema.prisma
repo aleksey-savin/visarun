@@ -828,6 +828,7 @@ model VisarunTripTransport {
   driverName    String?
   driverPhone   String?
   vehicleNumber String?
+  reportUrl     String?
 
   status VisarunTripTransportStatus @default(added)
 

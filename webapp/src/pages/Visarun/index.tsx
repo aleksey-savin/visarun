@@ -31,7 +31,6 @@ const AllVisarunTripsPage = () => {
   const { data: trips } = trpc.visarunTrip.getAll.useQuery({
     departureFrom: fromDate,
     departureTo: toDate,
-    status: 'scheduled',
   });
 
   // Group trips by date

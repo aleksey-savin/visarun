@@ -4,7 +4,20 @@ import multer from 'multer';
 import express from 'express';
 import type { Request, Response } from 'express';
 import { processImageFile } from '../../utils/imageConverter.js';
-import { uploadFile, validateS3Config, getPresignedUrl } from '../../services/s3.js';
+import { uploadFile, validateS3Config } from '../../services/s3.js';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+// S3 Client configuration for direct presigned URL generation
+const s3Client = new S3Client({
+  region: process.env.S3_REGION || 'ru-central1',
+  endpoint: process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net',
+  forcePathStyle: true,
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+  },
+});
 
 // Configure multer for memory storage (files will be uploaded to S3)
 const memoryStorage = multer.memoryStorage();
@@ -65,6 +78,15 @@ const paymentDocumentUpload = multer({
   fileFilter: documentFileFilter,
 });
 
+// Configure multer for transport report uploads
+const transportReportUpload = multer({
+  storage: memoryStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: documentFileFilter,
+});
+
 // Common upload handler
 async function handleFileUpload(
   req: Request & {
@@ -73,10 +95,11 @@ async function handleFileUpload(
       orderId?: string;
       clientId?: string;
       requirementId?: string;
+      tripTransportId?: string;
     };
   },
   res: Response,
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents'
+  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'transport-reports'
 ) {
   try {
     if (!req.file) {
@@ -160,10 +183,11 @@ async function generateServerFileName(
         orderId?: string;
         clientId?: string;
         requirementId?: string;
+        tripTransportId?: string;
       }
     | undefined,
   originalName: string,
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents'
+  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'transport-reports'
 ): Promise<string | undefined> {
   if (!metadata) return undefined;
 
@@ -231,6 +255,40 @@ async function generateServerFileName(
           if (requirement) {
             const requirementName = requirement.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
             return `${requirementName}-${dateStr}.${extension}`.toLowerCase();
+          }
+        }
+        break;
+
+      case 'transport-reports':
+        if (metadata.tripTransportId) {
+          const tripTransport = await prisma.visarunTripTransport.findUnique({
+            where: { id: metadata.tripTransportId },
+            include: {
+              transport: { select: { name: true } },
+              trip: {
+                select: {
+                  departureDateTime: true,
+                },
+                include: {
+                  route: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          });
+
+          if (tripTransport) {
+            const transportName = tripTransport.transport.name
+              .replace(/[^a-zA-Z0-9]/g, '-')
+              .toLowerCase();
+            const routeName = tripTransport.trip.route.name
+              ? tripTransport.trip.route.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()
+              : 'unknown-route';
+            const dateStr = tripTransport.trip.departureDateTime.toISOString().slice(0, 10);
+            return `transport-report-${routeName}-${transportName}-${dateStr}.${extension}`.toLowerCase();
           }
         }
         break;
@@ -308,6 +366,23 @@ export const createUploadRoutes = () => {
     }
   );
 
+  // Upload transport report file
+  router.post(
+    '/transport-reports',
+    transportReportUpload.single('document'),
+    async (
+      req: Request & {
+        file?: Express.Multer.File;
+        body?: {
+          tripTransportId?: string;
+        };
+      },
+      res: Response
+    ) => {
+      await handleFileUpload(req, res, 'transport-reports');
+    }
+  );
+
   // File access endpoint - serves files via presigned URLs or proxy
   router.get(/^\/file\/(.*)$/, async (req: Request, res: Response) => {
     try {
@@ -321,11 +396,13 @@ export const createUploadRoutes = () => {
       // TODO: Add authentication/authorization checks here
       // Example: if (!req.user) { return res.status(401).json({ error: 'Unauthorized' }); }
 
-      // Reconstruct the full S3 URL
-      const s3Url = `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET_NAME}/${filePath}`;
+      // Generate presigned URL directly from the file key (filePath)
+      const command = new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: filePath,
+      });
 
-      // Generate presigned URL for temporary access
-      const presignedUrl = await getPresignedUrl(s3Url, 3600); // 1 hour expiry
+      const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 
       if (!presignedUrl) {
         res.status(404).json({ error: 'File not found or access denied' });
@@ -360,6 +437,10 @@ const zUploadRequirementDocumentTrpcInput = z.object({
 });
 
 const zUploadClientDocumentTrpcInput = z.object({
+  filePath: z.string().min(1, 'File path is required'),
+});
+
+const zUploadTransportReportTrpcInput = z.object({
   filePath: z.string().min(1, 'File path is required'),
 });
 
@@ -405,8 +486,30 @@ export const validateClientDocumentUploadTrpcRoute = userCreateProcedure
     };
   });
 
+export const validateTransportReportUploadTrpcRoute = userCreateProcedure
+  .input(zUploadTransportReportTrpcInput)
+  .mutation(async ({ input }) => {
+    const { filePath } = input;
+
+    // Validate file URL format (S3 URLs or legacy local URLs)
+    const s3Endpoint = process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net';
+    const isS3Url = filePath.includes(s3Endpoint);
+    const isLegacyUrl = filePath.startsWith('/uploads/transport-reports/');
+
+    if (!isS3Url && !isLegacyUrl) {
+      throw new Error('Invalid file path format');
+    }
+
+    return {
+      success: true,
+      filePath,
+      isS3: isS3Url,
+    };
+  });
+
 // Upload routes for TRPC
 export const uploadRoutes = {
   validateRequirementDocumentUpload: validateRequirementDocumentUploadTrpcRoute,
   validateClientDocumentUpload: validateClientDocumentUploadTrpcRoute,
+  validateTransportReportUpload: validateTransportReportUploadTrpcRoute,
 };

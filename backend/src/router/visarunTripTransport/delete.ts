@@ -1,11 +1,11 @@
-import { visarunTripDeleteProcedure } from '../../lib/trpc.js';
+import { visarunTripTransportDeleteProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
 export const zDeleteVisarunTripTransportTrpcInput = z.object({
   id: z.string().uuid(),
 });
 
-export const deleteVisarunTripTransportTrpcRoute = visarunTripDeleteProcedure
+export const deleteVisarunTripTransportTrpcRoute = visarunTripTransportDeleteProcedure
   .input(zDeleteVisarunTripTransportTrpcInput)
   .mutation(async ({ input, ctx }) => {
     // Check if trip transport exists
@@ -34,12 +34,9 @@ export const deleteVisarunTripTransportTrpcRoute = visarunTripDeleteProcedure
       );
     }
 
-    // Delete trip transport (soft delete by setting isActive to false)
-    await ctx.prisma.visarunTripTransport.update({
+    // Delete trip transport (hard delete from database)
+    await ctx.prisma.visarunTripTransport.delete({
       where: { id: input.id },
-      data: {
-        isActive: false,
-      },
     });
 
     return {

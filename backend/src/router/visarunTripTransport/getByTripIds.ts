@@ -1,11 +1,11 @@
-import { visarunTripReadProcedure } from '../../lib/trpc.js';
+import { visarunTripTransportReadProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
 export const zGetByTripIdsTrpcInput = z.object({
   tripIds: z.array(z.string().uuid()),
 });
 
-export const getByTripIdsTrpcRoute = visarunTripReadProcedure
+export const getByTripIdsTrpcRoute = visarunTripTransportReadProcedure
   .input(zGetByTripIdsTrpcInput)
   .query(async ({ input, ctx }) => {
     if (input.tripIds.length === 0) {
@@ -24,7 +24,9 @@ export const getByTripIdsTrpcRoute = visarunTripReadProcedure
         driverName: true,
         driverPhone: true,
         vehicleNumber: true,
+        status: true,
         createdAt: true,
+        reportUrl: true,
         transport: {
           select: {
             id: true,

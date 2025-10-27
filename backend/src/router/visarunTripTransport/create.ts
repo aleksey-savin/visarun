@@ -1,4 +1,4 @@
-import { visarunTripCreateProcedure } from '../../lib/trpc.js';
+import { visarunTripTransportCreateProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
 export const zCreateVisarunTripTransportTrpcInput = z.object({
@@ -9,7 +9,7 @@ export const zCreateVisarunTripTransportTrpcInput = z.object({
   vehicleNumber: z.string().optional(),
 });
 
-export const createVisarunTripTransportTrpcRoute = visarunTripCreateProcedure
+export const createVisarunTripTransportTrpcRoute = visarunTripTransportCreateProcedure
   .input(zCreateVisarunTripTransportTrpcInput)
   .mutation(async ({ input, ctx }) => {
     // Check if trip exists

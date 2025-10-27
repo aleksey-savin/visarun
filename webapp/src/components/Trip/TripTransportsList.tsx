@@ -10,18 +10,24 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { IconDisplay } from '@/components/ui/icon-display';
-import { CircleCheck, LoaderCircle, X } from 'lucide-react';
+import { AlertCircle, CheckCircle, CircleCheck, LoaderCircle, X } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import TransportDropZone from './TransportDropZone';
 import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
+import { FileUpload } from '@/components/ui/file-upload';
+
+import { formatCurrency } from '@/utils/currency';
+import { createDocumentFromFileUrl } from '@/utils/fileUtils';
 
 interface TripTransport {
   id: string;
   driverName: string | null;
   driverPhone: string | null;
   vehicleNumber: string | null;
+  status: string;
   createdAt: string;
+  reportUrl: string | null;
   transport: {
     id: string;
     name: string;
@@ -37,11 +43,13 @@ interface TripTransport {
 interface TripTransportsListProps {
   tripTransports: TripTransport[];
   tripId?: string;
+  tripStatus: string;
 }
 
-const TripTransportsList = ({ tripTransports, tripId }: TripTransportsListProps) => {
+const TripTransportsList = ({ tripTransports, tripId, tripStatus }: TripTransportsListProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [transportToDelete, setTransportToDelete] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<Record<string, boolean>>({});
 
   const utils = trpc.useContext();
 
@@ -116,6 +124,16 @@ const TripTransportsList = ({ tripTransports, tripId }: TripTransportsListProps)
     },
   });
 
+  const editTripTransportMutation = trpc.visarunTripTransport.edit.useMutation({
+    onSuccess: () => {
+      // Refetch trip transports to update the UI
+      utils.visarunTripTransport.getByTripIds.invalidate();
+    },
+    onError: error => {
+      console.error('Failed to update transport status:', error.message);
+    },
+  });
+
   const handleDeleteTransport = (transportId: string) => {
     setTransportToDelete(transportId);
     setIsDeleteDialogOpen(true);
@@ -124,6 +142,100 @@ const TripTransportsList = ({ tripTransports, tripId }: TripTransportsListProps)
   const confirmDeleteTransport = () => {
     if (transportToDelete) {
       deleteTripTransportMutation.mutate({ id: transportToDelete });
+    }
+  };
+
+  const getReportDocumentUrl = (tripTransport: TripTransport) => {
+    return tripTransport?.reportUrl
+      ? createDocumentFromFileUrl(tripTransport.id, tripTransport.reportUrl, 'transport-reports')
+      : null;
+  };
+
+  const handleReportUploadSuccess = async (
+    tripTransportId: string,
+    response: { fileUrl?: string }
+  ) => {
+    if (!response.fileUrl) {
+      console.error('No fileUrl in upload response');
+      return;
+    }
+
+    const fileUrl = response.fileUrl;
+
+    try {
+      await editTripTransportMutation.mutateAsync({
+        id: tripTransportId,
+        reportUrl: fileUrl,
+      });
+
+      // Refetch trip transports to update the UI
+      utils.visarunTripTransport.getByTripIds.invalidate();
+    } catch (error) {
+      console.error('Failed to update transport report:', error);
+    }
+  };
+
+  const handleReplaceReportFile = async (tripTransportId: string, file: File) => {
+    // Validate file
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      console.error('File size must be less than 10MB');
+      return;
+    }
+
+    const acceptedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.heic'];
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!acceptedTypes.includes(fileExtension)) {
+      console.error('File type not supported. Accepted types: PDF, DOC, DOCX, JPG, PNG, HEIC');
+      return;
+    }
+
+    setIsUploading(prev => ({ ...prev, [tripTransportId]: true }));
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('tripTransportId', tripTransportId);
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${baseUrl}/upload/transport-reports`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      const fileUrl = result.filePath;
+
+      // Update transport with new report URL
+      await editTripTransportMutation.mutateAsync({
+        id: tripTransportId,
+        reportUrl: fileUrl,
+      });
+
+      // Refetch trip transports to update the UI
+      utils.visarunTripTransport.getByTripIds.invalidate();
+    } catch (error) {
+      console.error('Failed to replace report document:', error);
+    } finally {
+      setIsUploading(prev => ({ ...prev, [tripTransportId]: false }));
+    }
+  };
+
+  const handleDeleteReport = async (tripTransportId: string) => {
+    try {
+      // Remove report URL from transport
+      await editTripTransportMutation.mutateAsync({
+        id: tripTransportId,
+        reportUrl: null,
+      });
+
+      // Refetch trip transports to update the UI
+      utils.visarunTripTransport.getByTripIds.invalidate();
+    } catch (error) {
+      console.error('Failed to delete report document:', error);
     }
   };
 
@@ -196,11 +308,40 @@ const TripTransportsList = ({ tripTransports, tripId }: TripTransportsListProps)
     return passengersQuery.data.filter(p => p.tripTransportId === tripTransportId).length > 0;
   };
 
+  // Check if Rent button should be enabled
+  const canRentTransport = (tripTransport: TripTransport) => {
+    if (!passengersQuery.data) return false;
+
+    const occupiedSeats = getPassengerCountForTripTransport(tripTransport.id);
+    const totalSeats = tripTransport.transport.seatCount || 0;
+
+    // Condition 1: No seats left (all seats occupied)
+    if (occupiedSeats >= totalSeats) {
+      return true;
+    }
+
+    // Condition 2: There are empty seats but no unassigned passengers
+    const unassignedPassengers = passengersQuery.data.filter(p => !p.tripTransportId);
+    if (unassignedPassengers.length === 0) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Handle rent button click
+  const handleRentTransport = (tripTransportId: string) => {
+    editTripTransportMutation.mutate({
+      id: tripTransportId,
+      status: 'rented',
+    });
+  };
+
   return (
     <>
       {tripTransports.map(tripTransport => (
-        <Card key={tripTransport.id} className={cn('p-3 bg-secondary')}>
-          <div className="flex items-center justify-between">
+        <Card key={tripTransport.id} className={cn('p-3 bg-secondary flex flex-col h-full')}>
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <IconDisplay
                 iconFilename={tripTransport.transport.transportType.icon || ''}
@@ -238,73 +379,197 @@ const TripTransportsList = ({ tripTransports, tripId }: TripTransportsListProps)
               </Button>
             </div>
           </div>
-          <Separator />
+          <div className="flex-1">
+            <Separator className="mb-3" />
 
-          {/* Seat Distribution Drop Zones */}
-          {getSeatDistributionForTransport(tripTransport.transport.id).length > 0 ? (
-            <div className="grid grid-cols-1 gap-6">
-              {getSeatDistributionForTransport(tripTransport.transport.id).map(
-                (distribution: any) => {
-                  const passengers = getPassengersByTripTransportAndSeatClass(
-                    tripTransport.id,
-                    distribution.seatClass.id
+            {/* Seat Distribution Drop Zones */}
+            {getSeatDistributionForTransport(tripTransport.transport.id).length > 0 ? (
+              <div className="grid grid-cols-1 gap-6">
+                {getSeatDistributionForTransport(tripTransport.transport.id).map(
+                  (distribution: any) => {
+                    const passengers = getPassengersByTripTransportAndSeatClass(
+                      tripTransport.id,
+                      distribution.seatClass.id
+                    );
+                    return (
+                      <TransportDropZone
+                        key={distribution.id}
+                        tripTransportId={tripTransport.id}
+                        tripStatus={tripStatus}
+                        seatClass={{
+                          id: distribution.seatClass.id,
+                          name: distribution.seatClass.name,
+                          icon: distribution.seatClass.icon ?? undefined,
+                        }}
+                        seatCount={distribution.seatCount}
+                        occupiedCount={passengers.length}
+                        passengers={passengers}
+                        onDrop={handlePassengerDrop}
+                        onRemove={handlePassengerRemove}
+                        isLoading={updatePassengerMutation.isPending || loadingSeatDistributions}
+                      />
+                    );
+                  }
+                )}
+              </div>
+            ) : (
+              <TransportDropZone
+                tripTransportId={tripTransport.id}
+                tripStatus={tripStatus}
+                seatCount={tripTransport.transport.seatCount || 0}
+                occupiedCount={getPassengerCountForTripTransport(tripTransport.id)}
+                passengers={getPassengersByTripTransportAndSeatClass(tripTransport.id)}
+                onDrop={handlePassengerDrop}
+                onRemove={handlePassengerRemove}
+                isLoading={updatePassengerMutation.isPending || loadingSeatDistributions}
+              />
+            )}
+
+            {(tripTransport.driverName ||
+              tripTransport.driverPhone ||
+              tripTransport.vehicleNumber) && (
+              <div className="mt-3 pt-3 border-t space-y-1">
+                {tripTransport.driverName && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Driver:</span>
+                    <span>{tripTransport.driverName}</span>
+                  </div>
+                )}
+                {tripTransport.driverPhone && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Phone:</span>
+                    <span>{tripTransport.driverPhone}</span>
+                  </div>
+                )}
+                {tripTransport.vehicleNumber && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Vehicle:</span>
+                    <span>{tripTransport.vehicleNumber}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Rent Button and Pricing - Always at bottom */}
+          <div className="mt-auto pt-3 border-t">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="text-sm text-muted-foreground">
+                {(() => {
+                  if (!passengersQuery.data) return null;
+
+                  const primaryPassengers = passengersQuery.data.filter(
+                    passenger =>
+                      passenger.tripTransportId === tripTransport.id &&
+                      passenger.client?.isPrimary === true
                   );
+
+                  if (primaryPassengers.length === 0) return null;
+
+                  // Get unique orders from primary clients to avoid counting items multiple times
+                  const uniqueOrders = new Map();
+                  primaryPassengers.forEach(passenger => {
+                    if (passenger.orderItem?.order) {
+                      uniqueOrders.set(passenger.orderItem.order.id, passenger.orderItem.order);
+                    }
+                  });
+
+                  // Sum all order items from all orders of primary clients
+                  const totalOrderItems = Array.from(uniqueOrders.values()).reduce((sum, order) => {
+                    if (!order.items) return sum;
+                    return (
+                      sum +
+                      order.items.reduce((itemSum: number, item: any) => {
+                        const finalPrice = item?.finalPrice;
+                        return itemSum + (typeof finalPrice === 'number' ? finalPrice : 0);
+                      }, 0)
+                    );
+                  }, 0);
+
+                  const totalPayments = Array.from(uniqueOrders.values()).reduce((sum, order) => {
+                    if (!order.orderPayments) return sum;
+                    return (
+                      sum +
+                      order.orderPayments.reduce((paymentSum: number, payment: any) => {
+                        const amount = payment?.amount;
+                        // Convert string to number since amount comes as string from database
+                        const numericAmount =
+                          typeof amount === 'string'
+                            ? parseFloat(amount)
+                            : typeof amount === 'number'
+                              ? amount
+                              : 0;
+                        return paymentSum + (isNaN(numericAmount) ? 0 : numericAmount);
+                      }, 0)
+                    );
+                  }, 0);
+
                   return (
-                    <TransportDropZone
-                      key={distribution.id}
-                      tripTransportId={tripTransport.id}
-                      seatClass={{
-                        id: distribution.seatClass.id,
-                        name: distribution.seatClass.name,
-                        icon: distribution.seatClass.icon ?? undefined,
-                      }}
-                      seatCount={distribution.seatCount}
-                      occupiedCount={passengers.length}
-                      passengers={passengers}
-                      onDrop={handlePassengerDrop}
-                      onRemove={handlePassengerRemove}
-                      isLoading={updatePassengerMutation.isPending || loadingSeatDistributions}
-                    />
+                    <>
+                      {totalPayments >= totalOrderItems ? (
+                        <div className="flex items-center gap-2 text-emerald-600">
+                          <CheckCircle className="h-4 w-4" />
+                          {formatCurrency(totalOrderItems, 'VND')}
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <div>Total: {formatCurrency(totalOrderItems, 'VND')}</div>
+                          <div className="flex items-center gap-2 text-warning">
+                            <AlertCircle className="h-4 w-4" /> Payments left:{' '}
+                            {formatCurrency(totalOrderItems - totalPayments, 'VND')}{' '}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   );
-                }
-              )}
+                })()}
+              </div>
             </div>
-          ) : (
-            <TransportDropZone
-              tripTransportId={tripTransport.id}
-              seatCount={tripTransport.transport.seatCount || 0}
-              occupiedCount={getPassengerCountForTripTransport(tripTransport.id)}
-              passengers={getPassengersByTripTransportAndSeatClass(tripTransport.id)}
-              onDrop={handlePassengerDrop}
-              onRemove={handlePassengerRemove}
-              isLoading={updatePassengerMutation.isPending || loadingSeatDistributions}
-            />
-          )}
-
-          {(tripTransport.driverName ||
-            tripTransport.driverPhone ||
-            tripTransport.vehicleNumber) && (
-            <div className="mt-3 pt-3 border-t space-y-1">
-              {tripTransport.driverName && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Driver:</span>
-                  <span>{tripTransport.driverName}</span>
-                </div>
-              )}
-              {tripTransport.driverPhone && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Phone:</span>
-                  <span>{tripTransport.driverPhone}</span>
-                </div>
-              )}
-              {tripTransport.vehicleNumber && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Vehicle:</span>
-                  <span>{tripTransport.vehicleNumber}</span>
-                </div>
-              )}
-            </div>
-          )}
+            {tripTransport.status === 'added' && (
+              <Button
+                variant="default"
+                size="sm"
+                className="w-full"
+                disabled={!canRentTransport(tripTransport) || editTripTransportMutation.isPending}
+                onClick={() => handleRentTransport(tripTransport.id)}
+              >
+                {editTripTransportMutation.isPending ? 'Renting...' : 'Rent'}
+              </Button>
+            )}
+            {tripStatus === 'in_process' && tripTransport.status === 'rented' && (
+              <div className="space-y-2">
+                <FileUpload
+                  onChange={filePath => {
+                    if (filePath) {
+                      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                      const response = {
+                        fileUrl: filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`,
+                      };
+                      void handleReportUploadSuccess(tripTransport.id, response);
+                    }
+                  }}
+                  value={getReportDocumentUrl(tripTransport) || ''}
+                  handleReplaceFileSelect={(file: File) =>
+                    handleReplaceReportFile(tripTransport.id, file)
+                  }
+                  handleDeleteDocument={() => handleDeleteReport(tripTransport.id)}
+                  uploadEndpoint="/upload/transport-reports"
+                  fileFieldName="document"
+                  placeholder="Upload transport report"
+                  disabled={isUploading[tripTransport.id] || false}
+                />
+                {isUploading[tripTransport.id] && (
+                  <div className="flex items-center justify-center gap-2 text-sm">
+                    <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Uploading report...</span>
+                  </div>
+                )}
+                <Button size="sm" className="w-full">
+                  Complete
+                </Button>
+              </div>
+            )}
+          </div>
         </Card>
       ))}
 
