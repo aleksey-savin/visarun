@@ -25,7 +25,7 @@ import PersonalData from '@/components/Order/steps/PersonalData';
 import Payment from '@/components/Order/steps/Payment';
 import { cn } from '@/lib/utils';
 import { getAllVisaApplicationsRoute, getAllCurrencyExchangesRoute } from '@/lib/routes';
-import CurrencyExchangePuzzle from "@/components/Order/steps/CurrencyExchangePuzzle.tsx";
+import CurrencyExchangePuzzle from '@/components/Order/steps/CurrencyExchangePuzzle.tsx';
 
 // Define the restricted status types that can be used in step navigation
 type StepStatus = 'draft' | 'personal_data_verification' | 'payment_pending' | 'submitted';
@@ -39,6 +39,8 @@ const EditOrderPage = () => {
   const { data: allClientsData } = trpc.clientData.getAllByUserId.useQuery({
     userId: orderData?.userId || '',
   });
+
+  useEffect(() => console.log(orderData), [orderData]);
 
   const notIncludedClients = allClientsData?.clients?.map(client => ({
     ...client,
@@ -63,6 +65,12 @@ const EditOrderPage = () => {
           surcharges: client.citizenship.surcharges || [],
         }
       : undefined,
+    bankingDetails: {
+      id: client.bankingDetails?.id || '',
+      clientId: client.bankingDetails?.id || '',
+      documentUrl: client.bankingDetails?.documentUrl || '',
+      content: client.bankingDetails?.content || '',
+    },
   }));
 
   const {
@@ -84,7 +92,7 @@ const EditOrderPage = () => {
     setOrderItems,
     setVisaApplications,
     setVisarunPassengers,
-      setCurrencyExchanges,
+    setCurrencyExchanges,
     setOrderPayments,
     setActiveServicePuzzleSection,
   } = useOrderStore();
@@ -140,11 +148,13 @@ const EditOrderPage = () => {
             isOutsideTheCountryAt: client.isOutsideTheCountryAt
               ? new Date(client.isOutsideTheCountryAt)
               : undefined,
-              bankingDetails: client.bankingDetails ? {
-                id: client.bankingDetails.id,
-                content: client.bankingDetails.content,
-                documentUrl: client.bankingDetails.documentUrl,
-              } : undefined,
+            bankingDetails: client.bankingDetails
+              ? {
+                  id: client.bankingDetails.id,
+                  content: client.bankingDetails.content,
+                  documentUrl: client.bankingDetails.documentUrl,
+                }
+              : undefined,
             citizenship: client.citizenship
               ? {
                   id: client.citizenship.id,
@@ -262,32 +272,38 @@ const EditOrderPage = () => {
       );
     }
 
-      if (orderData.currencyExchanges) {
-          const { currencyExchanges } = orderData;
+    if (orderData.currencyExchanges) {
+      const { currencyExchanges } = orderData;
 
-          setCurrencyExchanges(
-              currencyExchanges.map((i) => ({
-                  id: i.id,
-                  orderItemId: i.orderItemId,
-                  position: i.position,
-                  exchangeRate: i.exchangeRate,
-                  amount: i.amount,
-                  amountInSelectedCurrencyFrom: i.amountInSelectedCurrencyFrom,
-                  amountInSelectedCurrencyTo: i.amountInSelectedCurrencyTo,
-                  status: i.status,
-                  cancelReason: i.cancelReason,
-                  canceledByClient: i.canceledByClient,
-                  deadline: i.deadline,
-                  minTransactionAmount: i.minTransactionAmount,
-                  fromCurrencyId: i.fromCurrencyId,
-                  toCurrencyId: i.toCurrencyId,
-                  createdById: i.createdById,
-                  updatedById: i.updatedById,
-                  createdAt: i.createdAt,
-                  createdBy: i.createdBy,
-              }))
-          );
-      }
+      setCurrencyExchanges(
+        currencyExchanges.map(i => ({
+          id: i.id,
+          orderItemId: i.orderItemId,
+          position: i.position,
+          exchangeRate: i.exchangeRate ? parseFloat(i.exchangeRate) : undefined,
+          amountTo: i.amountTo,
+          amountFrom: i.amountFrom,
+          amountInSelectedCurrencyFrom: i.amountInSelectedCurrencyFrom
+            ? parseFloat(i.amountInSelectedCurrencyFrom)
+            : undefined,
+          amountInSelectedCurrencyTo: i.amountInSelectedCurrencyTo
+            ? parseFloat(i.amountInSelectedCurrencyTo)
+            : undefined,
+          status: i.status,
+          cancelReason: i.cancelReason ?? undefined,
+          canceledByClient: i.canceledByClient ?? false,
+          deadline: i.deadline ? new Date(i.deadline) : undefined,
+          minTransactionAmount: i.minTransactionAmount,
+          fromCurrencyId: i.fromCurrencyId ?? undefined,
+          toCurrencyId: i.toCurrencyId ?? undefined,
+          createdById: i.createdById,
+          updatedById: i.updatedById,
+          createdAt: new Date(i.createdAt),
+          createdBy: i.createdBy,
+          updatedAt: new Date(i.updatedAt),
+        }))
+      );
+    }
 
     if (orderData.visarunPassengers) {
       const { visarunPassengers } = orderData;
@@ -406,19 +422,25 @@ const EditOrderPage = () => {
     setVisaApplications,
     setVisarunPassengers,
     setActiveClientId,
+    setCurrencyExchanges,
   ]);
 
   // Check if order contains only acceleration or exchange services
-  const hasOnlyServicesWithoutPersonalDataVerification = orderData?.items?.every(item => item.serviceType === 'acceleration' || item.serviceType === 'currencyExchange');
-  const hasOnlyCurrencyExchangeServices = orderData?.items?.every(item => item.serviceType === 'currencyExchange');
+  const hasOnlyServicesWithoutPersonalDataVerification = orderData?.items?.every(
+    item => item.serviceType === 'acceleration' || item.serviceType === 'currencyExchange'
+  );
+  const hasOnlyCurrencyExchangeServices = orderData?.items?.every(
+    item => item.serviceType === 'currencyExchange'
+  );
 
   //TODO REDO THIS SHIT
 
   // Check if order contains only RUB -> X exchanges to enable CurrencyExchangePuzzle
-  const hasOnlyBegotteningCurrencyExchangeServices = orderData?.currencyExchanges[0]?.fromCurrencyId === 'e04347b6-67f5-4469-b9f8-3fa6aea15cf9';
-  const begotteningCurrencyExchangeId = hasOnlyBegotteningCurrencyExchangeServices ? orderData?.currencyExchanges[0].id : undefined;
-
-  console.log(hasOnlyBegotteningCurrencyExchangeServices, begotteningCurrencyExchangeId)
+  const hasOnlyBegotteningCurrencyExchangeServices =
+    orderData?.currencyExchanges[0]?.fromCurrencyId === 'e04347b6-67f5-4469-b9f8-3fa6aea15cf9';
+  const begotteningCurrencyExchangeId = hasOnlyBegotteningCurrencyExchangeServices
+    ? orderData?.currencyExchanges[0].id
+    : undefined;
 
   const clientsHaveServicePuzzleErrors = useMemo(
     () =>
@@ -567,7 +589,10 @@ const EditOrderPage = () => {
 
       // Determine the correct status to set based on whether we're skipping personal data
       let statusToSet = clickedStep.status as StepStatus;
-      if (hasOnlyServicesWithoutPersonalDataVerification && clickedStep.status === 'payment_pending') {
+      if (
+        hasOnlyServicesWithoutPersonalDataVerification &&
+        clickedStep.status === 'payment_pending'
+      ) {
         // For acceleration-only and exchange-only orders, when clicking on payment step, set status directly to payment_pending
         statusToSet = 'payment_pending';
       }
@@ -614,11 +639,11 @@ const EditOrderPage = () => {
         await updateOrderStatus('submitted');
 
         if (hasOnlyCurrencyExchangeServices) {
-            // Navigate to the currency exchanges table
-            navigate(getAllCurrencyExchangesRoute());
+          // Navigate to the currency exchanges table
+          navigate(getAllCurrencyExchangesRoute());
         } else {
-            // Navigate to the visa applications table
-            navigate(getAllVisaApplicationsRoute());
+          // Navigate to the visa applications table
+          navigate(getAllVisaApplicationsRoute());
         }
       } catch (error) {
         console.error('Failed to update order status:', error);
@@ -664,6 +689,8 @@ const EditOrderPage = () => {
       }
     }
   }, [activeStep, setActiveClientId, clients]);
+
+  console.log(orderItems);
 
   return (
     <>
@@ -722,20 +749,25 @@ const EditOrderPage = () => {
         </div>
       </div>
 
-        {hasOnlyBegotteningCurrencyExchangeServices && begotteningCurrencyExchangeId && activeStep.status === 'payment_pending' && (
-            <CurrencyExchangePuzzle
-                begotteningCurrencyExchangeId={begotteningCurrencyExchangeId}
-                clientId={orderData?.items?.find(item => item.serviceType === 'currencyExchange')?.clientId}
-                onEditOrder={() => handleStepClick(steps[0])}
-                handleFinishPuzzling={() => handleNext()}
-            />
+      {hasOnlyBegotteningCurrencyExchangeServices &&
+        begotteningCurrencyExchangeId &&
+        activeStep.status === 'payment_pending' && (
+          <CurrencyExchangePuzzle
+            begotteningCurrencyExchangeId={begotteningCurrencyExchangeId}
+            clientId={
+              orderData?.items?.find(item => item.serviceType === 'currencyExchange')?.clientId ||
+              ''
+            }
+            onEditOrder={() => handleStepClick(steps[0])}
+            handleFinishPuzzling={() => handleNext()}
+          />
         )}
 
       <div
-          className="p-0 md:p-6"
-          hidden={
-              hasOnlyBegotteningCurrencyExchangeServices && activeStep.status === 'payment_pending'
-          }
+        className="p-0 md:p-6"
+        hidden={
+          hasOnlyBegotteningCurrencyExchangeServices && activeStep.status === 'payment_pending'
+        }
       >
         <div className="grid grid-cols-1 lg:grid-cols-12">
           <div className="flex flex-col lg:col-span-9 gap-2.5">
@@ -844,8 +876,9 @@ const EditOrderPage = () => {
               onClick={handleNext}
               className="flex border-none w-full items-center justify-between text-sm"
             >
-              <span>{`${order.status !== 'payment_pending' 
-                  ? 'Next step' 
+              <span>{`${
+                order.status !== 'payment_pending'
+                  ? 'Next step'
                   : hasOnlyCurrencyExchangeServices
                     ? 'Confirm & go to currency exchanges table'
                     : 'Confirm & go to visas table'

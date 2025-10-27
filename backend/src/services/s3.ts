@@ -48,7 +48,12 @@ export interface FileUploadParams {
   buffer: Buffer;
   originalName: string;
   mimeType: string;
-  folder: 'requirement-documents' | 'client-documents' | 'payment-documents' | 'banking-details';
+  folder:
+    | 'requirement-documents'
+    | 'client-documents'
+    | 'payment-documents'
+    | 'banking-details'
+    | 'transaction-checks';
   customFileName?: string;
 }
 

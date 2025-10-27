@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 
-import {StoreClient, StoreCurrencyExchange} from '@/stores/order/order-store';
+import { StoreClient } from '@/stores/order/order-store';
 
 import { trpc } from '@/lib/trpc';
 
@@ -28,8 +28,8 @@ import useOrderStore from '@/stores/order/order-store.js';
 import ClientName from '../sections/ClientSection/ClientName';
 import Comments from '../Comments';
 import VisarunSection from '../sections/VisarunSection/VisarunSection';
-import CurrencyExchangeSection from "../sections/CurrencyExchangeSection/CurrencyExchangeSection.tsx";
-import AddExchangeButton from "@/components/Order/sections/CurrencyExchangeSection/AddExchangeButton.tsx";
+import CurrencyExchangeSection from '../sections/CurrencyExchangeSection/CurrencyExchangeSection.tsx';
+import AddExchangeButton from '@/components/Order/sections/CurrencyExchangeSection/AddExchangeButton.tsx';
 
 const ServicePuzzle = ({
   client,
@@ -50,8 +50,8 @@ const ServicePuzzle = ({
     clients,
     setClients,
     visarunPassengers,
-      setCurrencyExchanges,
-      currencyExchanges
+    setCurrencyExchanges,
+    currencyExchanges,
   } = useOrderStore();
 
   const detectActiveService =
@@ -60,15 +60,15 @@ const ServicePuzzle = ({
       : orderItems.filter(i => i.serviceType === 'acceleration').length > 0
         ? 'acceleration'
         : orderItems.filter(i => i.serviceType === 'visa').length > 0
-                ? 'visa'
-                : 'currencyExchange';
+          ? 'visa'
+          : 'currencyExchange';
 
   const [activeService, setActiveService] = useState(detectActiveService);
 
   const isDisabled = !client.citizenship?.id || !client.preConfirmPassportIsValid;
 
   // At least one contact method exists
-  const hasContactMethod = contactMethods.find(method => method.value) != undefined
+  const hasContactMethod = contactMethods.find(method => method.value) != undefined;
 
   const handleServiceButtonClick = async (service: string) => {
     setActiveService(service);
@@ -132,28 +132,24 @@ const ServicePuzzle = ({
     setSaveStatus('saved');
   };
 
-    const handleDeleteCurrencyExchange = async (orderItemId: string) => {
-        try {
-            setSaveStatus('saving');
+  const handleDeleteCurrencyExchange = async (orderItemId: string) => {
+    try {
+      setSaveStatus('saving');
 
-            await deleteOrderItemMutation.mutateAsync({
-                id: orderItemId
-            });
+      await deleteOrderItemMutation.mutateAsync({
+        id: orderItemId,
+      });
 
-            setOrderItems([
-                ...orderItems.filter(item => item.id !== orderItemId),
-            ]);
+      setOrderItems([...orderItems.filter(item => item.id !== orderItemId)]);
 
-            setCurrencyExchanges([
-                ...currencyExchanges.filter(ex => ex.orderItemId !== orderItemId),
-            ]);
+      setCurrencyExchanges([...currencyExchanges.filter(ex => ex.orderItemId !== orderItemId)]);
 
-            setSaveStatus('saved');
-        } catch (e) {
-            console.error('Currency exchange was not deleted', e);
-            setSaveStatus('error');
-        }
-    };
+      setSaveStatus('saved');
+    } catch (e) {
+      console.error('Currency exchange was not deleted', e);
+      setSaveStatus('error');
+    }
+  };
 
   const handleConfirm = () => {
     setActiveClientId('-');
@@ -161,7 +157,12 @@ const ServicePuzzle = ({
 
   return (
     <>
-        {activeService === 'currencyExchange' && <CurrencyExchangeSection client={client} handleDeleteCurrencyExchange={handleDeleteCurrencyExchange}/>}
+      {activeService === 'currencyExchange' && (
+        <CurrencyExchangeSection
+          client={client}
+          handleDeleteCurrencyExchange={handleDeleteCurrencyExchange}
+        />
+      )}
 
       {servicePuzzleIsActive && (
         <>
@@ -246,11 +247,11 @@ const ServicePuzzle = ({
               <Button disabled variant="secondary" size="sm" className="border-none">
                 + Transfer
               </Button>
-                <AddExchangeButton
-                    client={client}
-                    disabled={!hasContactMethod}
-                    setActiveService={setActiveService}
-                />
+              <AddExchangeButton
+                client={client}
+                disabled={!hasContactMethod}
+                setActiveService={setActiveService}
+              />
             </div>
           </div>
         </CardContent>

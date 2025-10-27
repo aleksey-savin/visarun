@@ -56,28 +56,29 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import {
-    getAllRolesRoute,
-    getAllUsersRoute,
-    getCurrencyCalculatorRoute,
-    getTelegramChannelsRoute,
-    getAllContactMethodsRoute,
-    getAllRequirementsRoute,
-    // New entity routes
-    getAllCountriesRoute,
-    getAllCurrenciesRoute,
-    getAllCitizenshipsRoute,
-    getAllVisaTypesRoute,
-    getAllVisaCitizenshipSurchargesRoute,
-    getAllVisaApplicationsRoute,
-    getAllTransportTypesRoute,
-    getAllTransportsRoute,
-    getAllSeatClassesRoute,
-    getAllVisarunSchedulesRoute,
-    getAllVisarunTripsRoute,
-    getMessageTemplatesRoute,
-    getAllAuditLogsRoute,
-    getDashboardRoute,
-    getAllOrdersRoute, getAllCurrencyExchangesRoute,
+  getAllRolesRoute,
+  getAllUsersRoute,
+  getCurrencyCalculatorRoute,
+  getTelegramChannelsRoute,
+  getAllContactMethodsRoute,
+  getAllRequirementsRoute,
+  // New entity routes
+  getAllCountriesRoute,
+  getAllCurrenciesRoute,
+  getAllCitizenshipsRoute,
+  getAllVisaTypesRoute,
+  getAllVisaCitizenshipSurchargesRoute,
+  getAllVisaApplicationsRoute,
+  getAllTransportTypesRoute,
+  getAllTransportsRoute,
+  getAllSeatClassesRoute,
+  getAllVisarunSchedulesRoute,
+  getAllVisarunTripsRoute,
+  getMessageTemplatesRoute,
+  getAllAuditLogsRoute,
+  getDashboardRoute,
+  getAllOrdersRoute,
+  getAllCurrencyExchangesRoute,
 } from '@/lib/routes';
 import { Button } from '../ui/button';
 import { getUserDisplayName } from '@/utils/user';
@@ -206,7 +207,7 @@ export function AppSidebar() {
     hasPermission('visarunTrips.delete');
 
   // TODO add permissions
-  const canReadCurrencyExchanges = true;
+  // const canReadCurrencyExchanges = true;
 
   // Check if user has any transport management permissions
   const hasAnyTransportPermission =
@@ -365,43 +366,43 @@ export function AppSidebar() {
               )}
               {canAccessExchangeRates && shouldShowMenuItem('Currency Exchange') && (
                 <>
-                    <SidebarMenuItem key="CurrencyCalculator" className="hidden md:block">
-                        <SidebarMenuButton
-                            asChild
-                            isActive={
-                                location.pathname === getCurrencyCalculatorRoute() ||
-                                location.pathname.startsWith(`${getCurrencyCalculatorRoute()}/`)
-                            }
-                        >
-                            <Link
-                                to={getCurrencyCalculatorRoute()}
-                                className="flex items-center gap-2"
-                                onClick={handleMenuItemClick}
-                            >
-                                <DollarSign />
-                                <span>Currency Calculator</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
+                  <SidebarMenuItem key="CurrencyCalculator" className="hidden md:block">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        location.pathname === getCurrencyCalculatorRoute() ||
+                        location.pathname.startsWith(`${getCurrencyCalculatorRoute()}/`)
+                      }
+                    >
+                      <Link
+                        to={getCurrencyCalculatorRoute()}
+                        className="flex items-center gap-2"
+                        onClick={handleMenuItemClick}
+                      >
+                        <DollarSign />
+                        <span>Currency Calculator</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
 
-                    <SidebarMenuItem key="CurrencyExchanges" className="hidden md:block">
-                        <SidebarMenuButton
-                            asChild
-                            isActive={
-                                location.pathname === getAllCurrencyExchangesRoute() ||
-                                location.pathname.startsWith(`${getAllCurrencyExchangesRoute()}/`)
-                            }
-                        >
-                            <Link
-                                to={getAllCurrencyExchangesRoute()}
-                                className="flex items-center gap-2"
-                                onClick={handleMenuItemClick}
-                            >
-                                <DollarSign />
-                                <span>Currency Exchanges</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
+                  <SidebarMenuItem key="CurrencyExchanges" className="hidden md:block">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        location.pathname === getAllCurrencyExchangesRoute() ||
+                        location.pathname.startsWith(`${getAllCurrencyExchangesRoute()}/`)
+                      }
+                    >
+                      <Link
+                        to={getAllCurrencyExchangesRoute()}
+                        className="flex items-center gap-2"
+                        onClick={handleMenuItemClick}
+                      >
+                        <DollarSign />
+                        <span>Currency Exchanges</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </>
               )}
               {canReadOrders && shouldShowMenuItem('Orders') && (

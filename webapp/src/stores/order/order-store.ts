@@ -10,7 +10,7 @@ import type {
   OrderItem,
   Citizenship,
   VisaApplicationStatus,
-    CurrencyExchangeStatus,
+  CurrencyExchangeStatus,
   OrderStatus,
   ClientDocument,
   Requirement,
@@ -90,10 +90,10 @@ export interface StoreClient extends Partial<Client> {
     }[];
   };
   bankingDetails?: {
-      id: string;
-      content?: string | null;
-      documentUrl?: string | null;
-      clientId: string;
+    id: string;
+    content?: string | null;
+    documentUrl?: string | null;
+    clientId: string;
   };
   documents?: (Omit<ClientDocument, 'reviewedAt' | 'uploadedAt' | 'expiresAt'> & {
     reviewedAt: string | null;
@@ -160,30 +160,30 @@ export interface StoreVisaApplication {
 }
 
 export interface StoreCurrencyExchange {
-    id: string;
-    orderItemId: string;
-    position: number;
-    exchangeRate?: number;
-    amountInSelectedCurrencyFrom?: number;
-    amountInSelectedCurrencyTo?: number;
-    status: CurrencyExchangeStatus;
-    cancelReason?: string;
-    canceledByClient?: boolean;
-    deadline?: Date;
-    minTransactionAmountInSelectedCurrency?: number;
-    fromCurrencyId?: string;
-    toCurrencyId?: string;
-    createdById: string;
-    updatedById: string;
-    // fromCurrency: StoreCurrency;
-    // toCurrency: StoreCurrency;
-    // transactions: StoreTransaction[];
-    // finishedTransactionsAmountInSelectedCurrency?: number;
-    // inProgressTransactionsAmountInSelectedCurrency?: number;
-    // createdBy
-    // updatedBy
-    createdAt: Date;
-    updatedAt: Date;
+  id: string;
+  orderItemId: string;
+  position: number;
+  exchangeRate?: number;
+  amountInSelectedCurrencyFrom?: number;
+  amountInSelectedCurrencyTo?: number;
+  status: CurrencyExchangeStatus;
+  cancelReason?: string;
+  canceledByClient?: boolean;
+  deadline?: Date;
+  minTransactionAmountInSelectedCurrency?: number;
+  fromCurrencyId?: string;
+  toCurrencyId?: string;
+  createdById: string;
+  updatedById: string;
+  // fromCurrency: StoreCurrency;
+  // toCurrency: StoreCurrency;
+  // transactions: StoreTransaction[];
+  // finishedTransactionsAmountInSelectedCurrency?: number;
+  // inProgressTransactionsAmountInSelectedCurrency?: number;
+  // createdBy
+  // updatedBy
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface StoreOrderItem extends OrderItem {
@@ -355,7 +355,7 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   orderItems: [],
   visaApplications: [],
   visarunPassengers: [],
-    currencyExchanges: [],
+  currencyExchanges: [],
   orderPayments: [],
 
   setSaveStatus: async (saveStatus: SaveStatus) => {
@@ -405,7 +405,7 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
         visaApp => visaApp.status === 'draft'
       );
       const draftCurrencyExchanges = currentState.currencyExchanges.filter(
-          exchange => exchange.status === 'draft'
+        exchange => exchange.status === 'draft'
       );
 
       // Update each draft visa application to pending_submit
@@ -427,24 +427,24 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
         }
       }
 
-        // Update each draft currency exchange to in_progress
-        for (const exchange of draftCurrencyExchanges) {
-            try {
-                await trpcClient.currencyExchange.updateStatus.mutate({
-                    id: exchange.id,
-                    status: 'in_progress',
-                });
-    
-                // Update the currency exchange in the local store
-                set(state => ({
-                    currencyExchanges: state.currencyExchanges.map(ex =>
-                        ex.id === exchange.id ? { ...ex, status: 'in_progress' as const } : ex
-                    ),
-                }));
-            } catch (error) {
-                console.error(`Failed to update currency exchange ${exchange.id} status:`, error);
-            }
+      // Update each draft currency exchange to in_progress
+      for (const exchange of draftCurrencyExchanges) {
+        try {
+          await trpcClient.currencyExchange.updateStatus.mutate({
+            id: exchange.id,
+            status: 'in_progress',
+          });
+
+          // Update the currency exchange in the local store
+          set(state => ({
+            currencyExchanges: state.currencyExchanges.map(ex =>
+              ex.id === exchange.id ? { ...ex, status: 'in_progress' as const } : ex
+            ),
+          }));
+        } catch (error) {
+          console.error(`Failed to update currency exchange ${exchange.id} status:`, error);
         }
+      }
     }
   },
   setUser: (userData: StoreUser) => set(() => ({ user: userData })),
@@ -455,8 +455,8 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
     set(() => ({ visaApplications })),
   setVisarunPassengers: (visarunPassengers: StoreVisarunPassenger[]) =>
     set(() => ({ visarunPassengers })),
-    setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) =>
-        set(() => ({ currencyExchanges })),
+  setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) =>
+    set(() => ({ currencyExchanges })),
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),
   setPreferredDepartureDate: (date: Date) => set(() => ({ preferredDepartureDate: date })),
   setPreferredDepartureCity: (city: City | null) => set(() => ({ preferredDepartureCity: city })),
