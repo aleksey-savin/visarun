@@ -6,6 +6,7 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 export interface StoreCurrency {
     id: string;
     name: string;
+    isBegottening: boolean;
 }
 
 export interface StoreBankingDetails {
@@ -18,14 +19,12 @@ export interface StoreTransaction {
     id: string;
     status: string;
     amountInSelectedCurrency?: number;
-    checkUrl?: string;
+    checkUrl?: string | null;
     isCompanyTransaction: boolean;
     isInCash: boolean;
     senderId?: string;
-    detailsSent?: boolean,
-    paymentConfirmed?: boolean,
-    clientsInformed?: boolean,
-    paymentCompleted?: boolean,
+    begottenByCurrencyExchangeId?: string;
+    currencyExchangeId?: string;
 }
 
 export interface StoreClient {
@@ -39,6 +38,7 @@ export interface StoreClient {
 
 export interface StoreCurrencyExchange {
     id: string;
+    isBegottening: boolean;
     orderItemId: string;
     position: number;
     exchangeRate?: number;
@@ -56,8 +56,11 @@ export interface StoreCurrencyExchange {
     fromCurrency: StoreCurrency;
     toCurrency: StoreCurrency;
     transactions: StoreTransaction[];
+    begottenTransactions: StoreTransaction[];
     finishedTransactionsAmountInSelectedCurrency?: number;
     inProgressTransactionsAmountInSelectedCurrency?: number;
+    finishedBegottenTransactionsAmountInSelectedCurrency?: number;
+    inProgressBegottenTransactionsAmountInSelectedCurrency?: number;
     orderItem?: {
         client: StoreClient;
     };
@@ -86,10 +89,14 @@ interface CurrencyExchangeStore {
     saveStatus: SaveStatus;
     contactMethods: StoreUserContactMethod[];
     currencyExchanges: StoreCurrencyExchange[];
+    allCurrencyExchanges: StoreCurrencyExchange[];
+    begotteningCurrencyExchange?: StoreCurrencyExchange;
 
     setSaveStatus: (saveStatus: SaveStatus) => void;
     setContactMethods: (contactMethods: StoreUserContactMethod[]) => void;
     setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) => void;
+    setAllCurrencyExchanges: (allCurrencyExchanges: StoreCurrencyExchange[]) => void;
+    setBegotteningCurrencyExchange: (begotteningCurrencyExchange: StoreCurrencyExchange) => void;
     reset: () => void;
 }
 
@@ -97,6 +104,7 @@ const useCurrencyExchangeStore = create<CurrencyExchangeStore>((set, _, store) =
     saveStatus: 'saved',
     contactMethods: [],
     currencyExchanges: [],
+    allCurrencyExchanges: [],
 
     setSaveStatus: async (saveStatus: SaveStatus) => {
         set({ saveStatus });
@@ -125,6 +133,10 @@ const useCurrencyExchangeStore = create<CurrencyExchangeStore>((set, _, store) =
     setContactMethods: (contactMethods: StoreUserContactMethod[]) => set(() => ({ contactMethods })),
     setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) =>
         set(() => ({ currencyExchanges })),
+    setAllCurrencyExchanges: (allCurrencyExchanges: StoreCurrencyExchange[]) =>
+        set(() => ({ allCurrencyExchanges })),
+    setBegotteningCurrencyExchange: (begotteningCurrencyExchange: StoreCurrencyExchange) =>
+        set(() => ({ begotteningCurrencyExchange })),
     reset: () => {
         set(store.getInitialState());
     },

@@ -2,7 +2,13 @@ import {Card} from "@/components/ui/card.tsx";
 import CurrencyExchangeCard from "@/components/Order/sections/CurrencyExchangeSection/CurrencyExchangeCard.tsx";
 import useOrderStore, {StoreClient} from "@/stores/order/order-store.ts";
 
-const CurrencyExchangeSection = ({ client }: { client: StoreClient }) => {
+const CurrencyExchangeSection = ({
+    client,
+    handleDeleteCurrencyExchange
+}: {
+    client: StoreClient;
+    handleDeleteCurrencyExchange: (orderItemId: string) => void;
+}) => {
     const {orderItems, currencyExchanges} = useOrderStore();
 
     const clientOrderItemsWithCurrencyExchange = (
@@ -24,7 +30,12 @@ const CurrencyExchangeSection = ({ client }: { client: StoreClient }) => {
                     if (!currencyExchange) return;
 
                     return(
-                        <CurrencyExchangeCard key={index} savedExchange={currencyExchange} client={client} orderItem={orderItem} />
+                        <CurrencyExchangeCard
+                            key={index}
+                            savedExchange={currencyExchange}
+                            client={client}
+                            orderItem={orderItem}
+                            handleDeleteCurrencyExchange={handleDeleteCurrencyExchange} />
                     )
                 })
             }

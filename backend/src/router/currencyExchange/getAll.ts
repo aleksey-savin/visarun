@@ -95,13 +95,12 @@ export const getAllCurrencyExchangesTrpcRoute = currencyExchangeReadProcedure
             orderBy[input.sortBy] = input.sortOrder;
         }
 
-        console.log(whereClause);
-
         const exchanges = await ctx.prisma.currencyExchange.findMany({
             orderBy,
             where: whereClause,
             select: {
                 id: true,
+                isBegottening: true,
                 position: true,
                 amountFrom: true,
                 amountTo: true,
@@ -145,12 +144,14 @@ export const getAllCurrencyExchangesTrpcRoute = currencyExchangeReadProcedure
                     select: {
                         id: true,
                         name: true,
+                        isBegottening: true,
                     }
                 },
                 toCurrency: {
                     select: {
                         id: true,
                         name: true,
+                        isBegottening: true,
                     }
                 },
                 transactions: {
@@ -162,8 +163,23 @@ export const getAllCurrencyExchangesTrpcRoute = currencyExchangeReadProcedure
                         isInCash: true,
                         isCompanyTransaction: true,
                         senderId: true,
+                        begottenByCurrencyExchangeId: true,
+                        currencyExchangeId: true,
                     },
                 },
+                begottenTransactions: {
+                    select: {
+                        id: true,
+                        amountInSelectedCurrency: true,
+                        checkUrl: true,
+                        status: true,
+                        isInCash: true,
+                        isCompanyTransaction: true,
+                        senderId: true,
+                        begottenByCurrencyExchangeId: true,
+                        currencyExchangeId: true,
+                    },
+                }
             },
         });
 
@@ -176,10 +192,20 @@ export const getAllCurrencyExchangesTrpcRoute = currencyExchangeReadProcedure
                 .filter((t) => ['completed'].includes(t.status))
                 .reduce((sum, t) => sum + Number(t.amountInSelectedCurrency), 0);
 
+            const inProgressBegottenTransactionsAmountInSelectedCurrency = ex.begottenTransactions
+                .filter(tr => tr.status !== 'completed' && tr.status !== 'canceled')
+                .reduce((acc, tr) => acc + Number(tr.amountInSelectedCurrency), 0);
+
+            const finishedBegottenTransactionsAmountInSelectedCurrency = ex.begottenTransactions
+                .filter(tr => tr.status === 'completed')
+                .reduce((acc, tr) => acc + Number(tr.amountInSelectedCurrency), 0);
+
             return {
                 ...ex,
                 inProgressTransactionsAmountInSelectedCurrency,
                 finishedTransactionsAmountInSelectedCurrency,
+                finishedBegottenTransactionsAmountInSelectedCurrency,
+                inProgressBegottenTransactionsAmountInSelectedCurrency
             };
         });
 

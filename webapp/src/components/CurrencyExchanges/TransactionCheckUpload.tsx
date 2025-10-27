@@ -1,3 +1,30 @@
+import { useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {Eye, Trash2, File} from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { FileUpload } from '@/components/ui/file-upload.tsx';
+
+const getMimeType = (fileName: string): string | undefined => {
+    const cleanName = fileName.split('?')[0].toLowerCase();
+    const ext = cleanName.split('.').pop();
+
+    if (!ext) return undefined;
+
+    const mimeTypes: Record<string, string> = {
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        gif: "image/gif",
+        webp: "image/webp",
+        pdf: "application/pdf",
+        json: "application/json",
+    };
+
+    return mimeTypes[ext] || undefined;
+};
+
 interface UploadedFile {
     name: string;
     type?: string;
@@ -5,24 +32,28 @@ interface UploadedFile {
 }
 
 interface PendingUpload {
-    filePath: string;
     fileInfo: {
         fileName?: string;
         originalName: string;
         size: number;
         mimetype?: string;
-    };
+    },
+    filePath?: string;
 }
 
 const TransactionCheckUpload = ({
+    handleCheckDelete,
     handleCheckUpload,
     existingTransaction,
+    disableDelete = false,
 } : {
     handleCheckUpload: (checkUrl: string) => void;
+    handleCheckDelete: () => void;
     existingTransaction?: {
         id: string;
-        checkUrl?: string;
+        checkUrl?: string | null;
     } | undefined;
+    disableDelete?: boolean;
 }) => {
     const [file, setFile] = useState<UploadedFile | null>(existingTransaction?.checkUrl ? {
         name: existingTransaction.checkUrl,
@@ -46,6 +77,11 @@ const TransactionCheckUpload = ({
         toast.success('File uploaded successfully');
     };
 
+    const handleDeleteFile = () => {
+        setFile(null);
+        handleCheckDelete();
+    }
+
     return (
         <div
             className={`w-full space-y-4`}
@@ -55,12 +91,11 @@ const TransactionCheckUpload = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {file.type?.startsWith('image/') ? (
-                                // <img
-                                //     src={file.url}
-                                //     alt={file.name}
-                                //     className="w-10 h-10 object-cover rounded"
-                                // />
-                                <ImageIcon />
+                                <img
+                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/upload/file/${file.url}`}
+                                    alt={file.name}
+                                    className="w-10 h-10 object-cover rounded"
+                                />
                             ) : (
                                 <File className="w-6 h-6" />
                             )}
@@ -68,14 +103,19 @@ const TransactionCheckUpload = ({
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
-                                disabled={true}
+                                disabled={!file.url}
                                 variant="secondary"
                                 size="sm"
                                 onClick={() => setPreviewOpen(true)}
                             >
                                 <Eye className="w-4 h-4" />
                             </Button>
-                            <Button variant="secondary" size="sm" onClick={() => setFile(null)}>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleDeleteFile}
+                                disabled={disableDelete}
+                            >
                                 <Trash2 className="w-4 h-4" />
                             </Button>
                         </div>
@@ -109,13 +149,13 @@ const TransactionCheckUpload = ({
                         <>
                             {file.type?.startsWith('image/') ? (
                                 <img
-                                    src={file.url}
+                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/upload/file/${file.url}`}
                                     alt={file.name}
                                     className="max-h-[70vh] object-contain mx-auto rounded"
                                 />
                             ) : (
                                 <iframe
-                                    src={file.url}
+                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/upload/file/${file.url}`}
                                     title={file.name}
                                     className="w-full h-[70vh] border rounded"
                                 />
@@ -129,33 +169,3 @@ const TransactionCheckUpload = ({
 }
 
 export default TransactionCheckUpload;
-
-
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import {Eye, Trash2, File, ImageIcon} from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { FileUpload } from '@/components/ui/file-upload.tsx';
-
-
-
-const getMimeType = (fileName: string): string | undefined => {
-    const cleanName = fileName.split('?')[0].toLowerCase();
-    const ext = cleanName.split('.').pop();
-
-    if (!ext) return undefined;
-
-    const mimeTypes: Record<string, string> = {
-        jpg: "image/jpeg",
-        jpeg: "image/jpeg",
-        png: "image/png",
-        gif: "image/gif",
-        webp: "image/webp",
-        pdf: "application/pdf",
-        json: "application/json",
-    };
-
-    return mimeTypes[ext] || undefined;
-};

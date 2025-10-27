@@ -23,9 +23,31 @@ export const updateCurrencyExchangeStatusTrpcRoute = currencyExchangeUpdateProce
             canceledByClient,
         } = input;
 
+        if (!ctx.user?.id) {
+            throw new Error("User must be authenticated to edit the Currency Exchange");
+        }
+
         // Check if exchange exists
         const existingExchange = await ctx.prisma.currencyExchange.findUnique({
             where: { id },
+            select: {
+                isBegottening: true,
+                status: true,
+                amountInSelectedCurrencyTo: true,
+                amountInSelectedCurrencyFrom: true,
+                transactions: {
+                    select: {
+                        status: true,
+                        amountInSelectedCurrency: true,
+                    },
+                },
+                begottenTransactions: {
+                    select: {
+                        status: true,
+                        amountInSelectedCurrency: true,
+                    },
+                },
+            },
         });
 
         if (!existingExchange) {
@@ -57,6 +79,34 @@ export const updateCurrencyExchangeStatusTrpcRoute = currencyExchangeUpdateProce
 
         if (!isSameStatus && !isValidTransition) {
             throw new Error(`Invalid status transition from ${currentStatus} to ${status}`);
+        }
+
+        //
+        if (status === 'finished' && !existingExchange.isBegottening) {
+            const finished = existingExchange.transactions
+                .filter(tr => tr.status === 'completed' && tr.amountInSelectedCurrency)
+                .reduce((acc, tr) => acc + Number(tr.amountInSelectedCurrency), 0);
+
+            if (finished < existingExchange.amountInSelectedCurrencyTo) {
+                throw new Error(`Completed transactions must be enough to make exchange finished`);
+            }
+
+            await ctx.prisma.transaction.deleteMany({
+                where: {
+                    AND: [
+                        {currencyExchangeId: id},
+                        { status: { in: ["details_sent", "draft"] } },
+                    ],
+                },
+            });
+        } else if (status === 'finished' && existingExchange.isBegottening) {
+            const finished = existingExchange.begottenTransactions
+                .filter(tr => tr.status === 'completed' && tr.amountInSelectedCurrency)
+                .reduce((acc, tr) => acc + Number(tr.amountInSelectedCurrency), 0);
+
+            if (finished < existingExchange.amountInSelectedCurrencyFrom) {
+                throw new Error(`Completed begotten transactions must be enough to make exchange finished`);
+            }
         }
 
         // Update currency exchange status

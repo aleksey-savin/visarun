@@ -8,8 +8,8 @@ import { z } from 'zod';
 
 export const zEditBankingDetailsTrpcInput = z.object({
     id: z.string().uuid(),
-    content: z.string().optional(),
-    documentUrl: z.string().optional(),
+    content: z.string().nullable().optional(),
+    documentUrl: z.string().nullable().optional(),
 });
 
 export const editBankingDetailsTrpcRoute = bankingDetailsUpdateProcedure
@@ -28,11 +28,6 @@ export const editBankingDetailsTrpcRoute = bankingDetailsUpdateProcedure
 
         if (!existingBankingDetails) {
             throw new Error('BankingDetails was not found');
-        }
-
-        // Content and documentUrl validation (either one or another must not be blank)
-        if (!input.content && !input.documentUrl) {
-            throw new Error("Either content or documentUrl must not be empty");
         }
 
         // Update banking details

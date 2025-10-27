@@ -13,6 +13,7 @@ export const zCreateTransactionTrpcInput = z.object({
     senderId: z.string().uuid().optional(),
     isCompanyTransaction: z.boolean().optional().default(true),
     isInCash: z.boolean().optional().default(false),
+    begottenByCurrencyExchangeId: z.string().uuid().optional(),
 });
 
 export const createTransactionTrpcRoute = transactionCreateProcedure
@@ -44,8 +45,9 @@ export const createTransactionTrpcRoute = transactionCreateProcedure
         if (exchange.amountInSelectedCurrencyTo && input.amountInSelectedCurrency) {
             type Transaction = { amountInSelectedCurrency: string }
 
-            if (exchange.amountInSelectedCurrencyTo < exchange.transactions.reduce(
-                (acc: number, curr: Transaction) => acc + parseInt(curr.amountInSelectedCurrency), 0) + input.amountInSelectedCurrency
+            if (exchange.amountInSelectedCurrencyTo < exchange.transactions
+                .filter(tr => !!tr.amountInSelectedCurrency)
+                .reduce((acc: number, curr: Transaction) => acc + parseInt(curr.amountInSelectedCurrency), 0) + input.amountInSelectedCurrency
             ) {
                 throw new Error("Transactions sum must be smaller than exchange amount");
             }
@@ -74,6 +76,7 @@ export const createTransactionTrpcRoute = transactionCreateProcedure
                 amountInSelectedCurrency: input.amountInSelectedCurrency,
                 checkUrl: input.checkUrl,
                 currencyExchangeId: input.currencyExchangeId,
+                begottenByCurrencyExchangeId: input.begottenByCurrencyExchangeId,
                 isCompanyTransaction: input.isCompanyTransaction,
                 isInCash: input.isInCash,
                 senderId: input.senderId,

@@ -25,6 +25,7 @@ import PersonalData from '@/components/Order/steps/PersonalData';
 import Payment from '@/components/Order/steps/Payment';
 import { cn } from '@/lib/utils';
 import { getAllVisaApplicationsRoute, getAllCurrencyExchangesRoute } from '@/lib/routes';
+import CurrencyExchangePuzzle from "@/components/Order/steps/CurrencyExchangePuzzle.tsx";
 
 // Define the restricted status types that can be used in step navigation
 type StepStatus = 'draft' | 'personal_data_verification' | 'payment_pending' | 'submitted';
@@ -411,6 +412,14 @@ const EditOrderPage = () => {
   const hasOnlyServicesWithoutPersonalDataVerification = orderData?.items?.every(item => item.serviceType === 'acceleration' || item.serviceType === 'currencyExchange');
   const hasOnlyCurrencyExchangeServices = orderData?.items?.every(item => item.serviceType === 'currencyExchange');
 
+  //TODO REDO THIS SHIT
+
+  // Check if order contains only RUB -> X exchanges to enable CurrencyExchangePuzzle
+  const hasOnlyBegotteningCurrencyExchangeServices = orderData?.currencyExchanges[0]?.fromCurrencyId === 'e04347b6-67f5-4469-b9f8-3fa6aea15cf9';
+  const begotteningCurrencyExchangeId = hasOnlyBegotteningCurrencyExchangeServices ? orderData?.currencyExchanges[0].id : undefined;
+
+  console.log(hasOnlyBegotteningCurrencyExchangeServices, begotteningCurrencyExchangeId)
+
   const clientsHaveServicePuzzleErrors = useMemo(
     () =>
       clients.filter(
@@ -712,7 +721,22 @@ const EditOrderPage = () => {
           </span>
         </div>
       </div>
-      <div className="p-0 md:p-6">
+
+        {hasOnlyBegotteningCurrencyExchangeServices && begotteningCurrencyExchangeId && activeStep.status === 'payment_pending' && (
+            <CurrencyExchangePuzzle
+                begotteningCurrencyExchangeId={begotteningCurrencyExchangeId}
+                clientId={orderData?.items?.find(item => item.serviceType === 'currencyExchange')?.clientId}
+                onEditOrder={() => handleStepClick(steps[0])}
+                handleFinishPuzzling={() => handleNext()}
+            />
+        )}
+
+      <div
+          className="p-0 md:p-6"
+          hidden={
+              hasOnlyBegotteningCurrencyExchangeServices && activeStep.status === 'payment_pending'
+          }
+      >
         <div className="grid grid-cols-1 lg:grid-cols-12">
           <div className="flex flex-col lg:col-span-9 gap-2.5">
             {clients

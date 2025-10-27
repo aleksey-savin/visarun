@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {Eye, Trash2, File, ImageIcon} from 'lucide-react';
+import {Eye, Trash2, File} from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { FileUpload } from '@/components/ui/file-upload.tsx';
@@ -43,14 +43,14 @@ const getMimeType = (fileName: string): string | undefined => {
 
 const BankingDetailsUpload = ({
     handleDocumentUpload,
-    existingBankingDetails
+    existingBankingDetails,
+    handleDocumentDelete
 } : {
     handleDocumentUpload: (documentUrl: string) => void;
+    handleDocumentDelete: () => void;
     existingBankingDetails?: {
         id: string;
-        content?: string;
-        documentUrl?: string;
-        clientId: string;
+        documentUrl?: string | null;
     } | undefined;
 }) => {
     const [file, setFile] = useState<UploadedFile | null>(existingBankingDetails?.documentUrl ? {
@@ -75,19 +75,23 @@ const BankingDetailsUpload = ({
         toast.success('File uploaded successfully');
     };
 
+    const handleDeleteFile = () => {
+        setFile(null);
+        handleDocumentDelete();
+    }
+
     return (
-        <div className="w-full max-w-md space-y-4">
+        <div className="w-full space-y-4">
             {file ? (
                 <Card className="p-4 bg-secondary">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {file.type?.startsWith('image/') ? (
-                                // <img
-                                //     src={file.url}
-                                //     alt={file.name}
-                                //     className="w-10 h-10 object-cover rounded"
-                                // />
-                                <ImageIcon />
+                                <img
+                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/upload/file/${file.url}`}
+                                    alt={file.name}
+                                    className="w-10 h-10 object-cover rounded"
+                                />
                             ) : (
                                 <File className="w-6 h-6" />
                             )}
@@ -95,14 +99,17 @@ const BankingDetailsUpload = ({
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
-                                disabled={true}
+                                disabled={!file.url}
                                 variant="secondary"
                                 size="sm"
                                 onClick={() => setPreviewOpen(true)}
                             >
                                 <Eye className="w-4 h-4" />
                             </Button>
-                            <Button variant="secondary" size="sm" onClick={() => setFile(null)}>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleDeleteFile}>
                                 <Trash2 className="w-4 h-4" />
                             </Button>
                         </div>
@@ -111,7 +118,7 @@ const BankingDetailsUpload = ({
             ) : (
                 <FileUpload
                     uploadEndpoint="/upload/banking-details"
-                    fileFieldName="banking-details"
+                    fileFieldName="document"
                     accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
                     maxSize={10 * 1024 * 1024}
                     placeholder="Drag or click to select"
@@ -136,13 +143,13 @@ const BankingDetailsUpload = ({
                         <>
                             {file.type?.startsWith('image/') ? (
                                 <img
-                                    src={file.url}
+                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/upload/file/${file.url}`}
                                     alt={file.name}
                                     className="max-h-[70vh] object-contain mx-auto rounded"
                                 />
                             ) : (
                                 <iframe
-                                    src={file.url}
+                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/upload/file/${file.url}`}
                                     title={file.name}
                                     className="w-full h-[70vh] border rounded"
                                 />

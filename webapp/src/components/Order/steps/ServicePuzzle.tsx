@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 
-import { StoreClient } from '@/stores/order/order-store';
+import {StoreClient, StoreCurrencyExchange} from '@/stores/order/order-store';
 
 import { trpc } from '@/lib/trpc';
 
@@ -50,6 +50,8 @@ const ServicePuzzle = ({
     clients,
     setClients,
     visarunPassengers,
+      setCurrencyExchanges,
+      currencyExchanges
   } = useOrderStore();
 
   const detectActiveService =
@@ -130,13 +132,36 @@ const ServicePuzzle = ({
     setSaveStatus('saved');
   };
 
+    const handleDeleteCurrencyExchange = async (orderItemId: string) => {
+        try {
+            setSaveStatus('saving');
+
+            await deleteOrderItemMutation.mutateAsync({
+                id: orderItemId
+            });
+
+            setOrderItems([
+                ...orderItems.filter(item => item.id !== orderItemId),
+            ]);
+
+            setCurrencyExchanges([
+                ...currencyExchanges.filter(ex => ex.orderItemId !== orderItemId),
+            ]);
+
+            setSaveStatus('saved');
+        } catch (e) {
+            console.error('Currency exchange was not deleted', e);
+            setSaveStatus('error');
+        }
+    };
+
   const handleConfirm = () => {
     setActiveClientId('-');
   };
 
   return (
     <>
-        {activeService === 'currencyExchange' && <CurrencyExchangeSection client={client} />}
+        {activeService === 'currencyExchange' && <CurrencyExchangeSection client={client} handleDeleteCurrencyExchange={handleDeleteCurrencyExchange}/>}
 
       {servicePuzzleIsActive && (
         <>

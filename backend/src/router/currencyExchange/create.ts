@@ -52,6 +52,8 @@ export const createCurrencyExchangeTrpcRoute = currencyExchangeCreateProcedure
             if (!fromCurrency) {
                 throw new Error("FromCurrency does not exist");
             }
+
+            input.isBegottening = fromCurrency.isBegottening;
         }
 
         // ToCurrency existence validation
@@ -75,6 +77,7 @@ export const createCurrencyExchangeTrpcRoute = currencyExchangeCreateProcedure
         const exchange = await ctx.prisma.currencyExchange.create({
             data: {
                 position: newPosition,
+                isBegottening: input.isBegottening,
                 exchangeRate: input.exchangeRate,
                 // amountFrom: input.amountFrom,
                 // amountTo: input.amountTo,

@@ -6,11 +6,11 @@ import BankingDetailsUpload from "@/components/Order/sections/CurrencyExchangeSe
 import {useState} from "react";
 
 type BankingDetailsProps = {
-    saveBankingDetails: (bankingDetailsType: "card" | "file", bankName: string, cardOrPhoneNumber: string, holderName: string, holderSurname: string, documentUrl: string) => void;
+    saveBankingDetails: (bankingDetailsType: "card" | "file", bankName: string, cardOrPhoneNumber: string, holderName: string, holderSurname: string, documentUrl: string | null) => void;
     existingBankingDetails?: {
         id: string;
-        content?: string;
-        documentUrl?: string;
+        content?: string | null;
+        documentUrl?: string | null;
         clientId: string;
     } | undefined
 }
@@ -19,7 +19,7 @@ const BankingDetailsCard = ({
     saveBankingDetails,
     existingBankingDetails
 } : BankingDetailsProps) => {
-    const [bankingDetailsType, setBankingDetailsType] = useState<"card" | "file">("card");
+    const [bankingDetailsType, setBankingDetailsType] = useState<"card" | "file">(existingBankingDetails?.documentUrl ? 'file' : 'card');
     const handleBankingDetailsTypeChange = (value: string) => {
         if (value === "card" || value === "file") setBankingDetailsType(value);
     }
@@ -37,13 +37,17 @@ const BankingDetailsCard = ({
         saveBankingDetails(bankingDetailsType, bankName, cardOrPhoneNumber, holderName, holderSurname, documentUrl)
     }
 
+    const handleDocumentDelete = () => {
+        saveBankingDetails(bankingDetailsType, bankName, cardOrPhoneNumber, holderName, holderSurname, null)
+    }
+
     return (
         <Card className="p-3 bg-secondary gap-5">
 
             {/*Tabs Card or File*/}
             <div>
                 <Tabs
-                    defaultValue="card"
+                    value={bankingDetailsType}
                     className="w-[400px]"
                     onValueChange={handleBankingDetailsTypeChange}
                 >
@@ -131,7 +135,11 @@ const BankingDetailsCard = ({
                             QR/File
                         </Label>
                         <div className="flex flex-wrap gap-1.5">
-                            <BankingDetailsUpload existingBankingDetails={existingBankingDetails} handleDocumentUpload={handleDocumentUpload} />
+                            <BankingDetailsUpload
+                                existingBankingDetails={existingBankingDetails}
+                                handleDocumentUpload={handleDocumentUpload}
+                                handleDocumentDelete={handleDocumentDelete}
+                            />
                         </div>
                     </div>
                 </div>

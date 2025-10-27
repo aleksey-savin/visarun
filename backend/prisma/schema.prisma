@@ -573,6 +573,7 @@ model AuditLog {
 model Currency {
   id                    String             @id @default(uuid())
   name                  String             @unique
+  isBegottening         Boolean            @default(false)
   exchangeRates         ExchangeRate[]
   orderPayments         OrderPayment[]
   currencyExchangesFrom CurrencyExchange[] @relation("FromCurrency")
@@ -606,6 +607,7 @@ model OrderPayment {
 model CurrencyExchange {
   id                                     String                 @id @default(uuid())
   position                               Int
+  isBegottening                          Boolean                @default(false)
   exchangeRate                           Decimal?
   amountFrom                             Decimal?
   amountTo                               Decimal?
@@ -625,7 +627,8 @@ model CurrencyExchange {
   orderItem                              OrderItem              @relation(fields: [orderItemId], references: [id])
   fromCurrency                           Currency?              @relation("FromCurrency", fields: [fromCurrencyId], references: [id])
   toCurrency                             Currency?              @relation("ToCurrency", fields: [toCurrencyId], references: [id])
-  transactions                           Transaction[]
+  transactions                           Transaction[]          @relation("CurrencyExchange")
+  begottenTransactions                   Transaction[]          @relation("BegottenByCurrencyExchange")
   createdBy                              User                   @relation("CurrencyExchangeCreatedBy", fields: [createdById], references: [id])
   updatedBy                              User                   @relation("CurrencyExchangeUpdatedBy", fields: [updatedById], references: [id])
   createdAt                              DateTime               @default(now())
@@ -633,23 +636,25 @@ model CurrencyExchange {
 }
 
 model Transaction {
-  id                       String            @id @default(uuid())
-  amount                   Decimal?
-  amountInSelectedCurrency Decimal?
-  checkUrl                 String?
-  isCompanyTransaction     Boolean           @default(true)
-  isInCash                 Boolean           @default(false)
-  status                   TransactionStatus @default(draft)
-  currencyExchangeId       String
-  senderId                 String?
-  createdById              String
-  updatedById              String
-  currencyExchange         CurrencyExchange  @relation(fields: [currencyExchangeId], references: [id])
-  sender                   Client?           @relation(fields: [senderId], references: [id])
-  createdBy                User              @relation("TransactionCreatedBy", fields: [createdById], references: [id])
-  updatedBy                User              @relation("TransactionUpdatedBy", fields: [updatedById], references: [id])
-  createdAt                DateTime          @default(now())
-  updatedAt                DateTime          @default(now()) @updatedAt
+  id                           String            @id @default(uuid())
+  amount                       Decimal?
+  amountInSelectedCurrency     Decimal?
+  checkUrl                     String?
+  isCompanyTransaction         Boolean           @default(true)
+  isInCash                     Boolean           @default(false)
+  status                       TransactionStatus @default(draft)
+  currencyExchangeId           String
+  begottenByCurrencyExchangeId String?
+  senderId                     String?
+  createdById                  String
+  updatedById                  String
+  currencyExchange             CurrencyExchange  @relation("CurrencyExchange", fields: [currencyExchangeId], references: [id])
+  begottenByCurrencyExchange   CurrencyExchange? @relation("BegottenByCurrencyExchange", fields: [begottenByCurrencyExchangeId], references: [id])
+  sender                       Client?           @relation(fields: [senderId], references: [id])
+  createdBy                    User              @relation("TransactionCreatedBy", fields: [createdById], references: [id])
+  updatedBy                    User              @relation("TransactionUpdatedBy", fields: [updatedById], references: [id])
+  createdAt                    DateTime          @default(now())
+  updatedAt                    DateTime          @default(now()) @updatedAt
 }
 
 model BankingDetails {

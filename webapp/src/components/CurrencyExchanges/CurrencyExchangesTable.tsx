@@ -5,7 +5,7 @@ import {getEditCurrencyExchangeRoute} from "@/lib/routes.ts";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table.tsx";
 import {Badge} from "@/components/ui/badge.tsx";
 import {AlertCircle, Crown, Eye} from "lucide-react";
-import {formatCurrency, getCurrencySymbol} from "@/utils/currency.ts";
+import {formatCurrency, getCurrencyAmount, getCurrencySymbol} from "@/utils/currency.ts";
 import Summ from "@/components/ui/summ.tsx";
 import {Link} from "react-router-dom";
 import TableSortField from "@/components/CurrencyExchanges/TableSortField.tsx";
@@ -186,7 +186,7 @@ const CurrencyExchangesTable = ({
                                                     : 'text-white'
                                             } flex justify-between`}>
                                                 <span>
-                                                    {exchange.amountInSelectedCurrencyTo}
+                                                    {getCurrencyAmount(exchange.amountInSelectedCurrencyTo, exchange.toCurrency.name)}
                                                 </span>
                                                 <span>
                                                     {getCurrencySymbol(exchange.toCurrency.name)}

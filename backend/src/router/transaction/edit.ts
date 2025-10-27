@@ -9,19 +9,15 @@ import { z } from 'zod';
 export const zEditTransactionTrpcInput = z.object({
     id: z.string().uuid(),
     amountInSelectedCurrency: z.number().positive().optional(),
-    checkUrl: z.string().optional(),
+    checkUrl: z.string().nullable().optional(),
     senderId: z.string().uuid().optional(),
     isInCash: z.boolean().optional(),
-    detailsSent: z.boolean().optional(),
-    paymentConfirmed: z.boolean().optional(),
-    clientsInformed: z.boolean().optional(),
-    paymentCompleted: z.boolean().optional(),
 });
 
 export const editTransactionTrpcRoute = transactionUpdateProcedure
     .input(zEditTransactionTrpcInput)
     .mutation(async ({ input, ctx }) => {
-        const { id, detailsSent, paymentConfirmed, clientsInformed, paymentCompleted, ...updateData } = input;
+        const { id, ...updateData } = input;
 
         if (!ctx.user?.id) {
             throw new Error("User must be authenticated to edit the Transaction");
@@ -61,8 +57,9 @@ export const editTransactionTrpcRoute = transactionUpdateProcedure
         if (existingTransaction.currencyExchange.amountInSelectedCurrencyTo && input.amountInSelectedCurrency) {
             type Transaction = { amountInSelectedCurrency: string }
 
-            if (existingTransaction.currencyExchange.amountInSelectedCurrencyTo < existingTransaction.currencyExchange.transactions.reduce(
-                (acc: number, curr: Transaction) => acc + parseInt(curr.amountInSelectedCurrency), 0) + input.amountInSelectedCurrency
+            if (existingTransaction.currencyExchange.amountInSelectedCurrencyTo < existingTransaction.currencyExchange.transactions
+                .filter(tr => !!tr.amountInSelectedCurrency)
+                .reduce((acc: number, curr: Transaction) => acc + parseInt(curr.amountInSelectedCurrency), 0) + input.amountInSelectedCurrency
             ) {
                 throw new Error("Transactions sum must be smaller than exchange amount (in selected currency)");
             }
@@ -86,107 +83,19 @@ export const editTransactionTrpcRoute = transactionUpdateProcedure
             }
         }
 
-        // Statuses
-        updateData.status = existingTransaction.status;
-
-        // console.log(existingTransaction.status, existingTransaction.isCompanyTransaction, input)
-
-        //draft -> check_uploaded (company transaction)
-        if (
-            existingTransaction.status === 'draft'
-            && existingTransaction.isCompanyTransaction === true
-            && input.checkUrl
-            && input.senderId
-            && input.amountInSelectedCurrency
-        ) {
-            updateData.status = 'check_uploaded';
-        }
-
-        //draft -> details_sent (not company transaction)
-        if (
-            existingTransaction.status === 'draft'
-            && existingTransaction.isCompanyTransaction === false
-            && input.detailsSent === true //button "details_sent" clicked
-            && !input.checkUrl
-            && input.amountInSelectedCurrency
-        ) {
-            updateData.status = 'details_sent';
-        }
-
-        //draft -> check_uploaded (not company transaction)
-        if (
-            existingTransaction.status === 'draft'
-            && existingTransaction.isCompanyTransaction === false
-            && input.checkUrl
-            && input.amountInSelectedCurrency
-        ) {
-            updateData.status = 'check_uploaded';
-        }
-
-        //details_sent -> draft (not company transaction)
-        if (
-            existingTransaction.status === 'details_sent'
-            && existingTransaction.isCompanyTransaction === false
-            && input.detailsSent === false //button "details_sent" unclicked
-            && !input.checkUrl
-        ) {
-            updateData.status = 'draft';
-        }
-
-        //check_uploaded -> draft (company transaction)
-        if (
-            existingTransaction.status === 'check_uploaded'
-            && existingTransaction.isCompanyTransaction === true
-            && !input.checkUrl
-        ) {
-            updateData.status = 'draft';
-        }
-
-        //check_uploaded -> paid_uninformed
-        if (
-            existingTransaction.status === 'check_uploaded'
-            && input.paymentConfirmed === true //button "confirm_payment" clicked
-        ) {
-            updateData.status = 'paid_uninformed';
-        }
-
-        //paid_uninformed -> paid_informed
-        if (
-            existingTransaction.status === 'paid_uninformed'
-            && input.clientsInformed === true //switch "informed" checked
-        ) {
-            updateData.status = 'paid_informed';
-        }
-
-        //paid_informed -> paid_uninformed
-        if (
-            existingTransaction.status === 'paid_informed'
-            && input.clientsInformed === false //switch "informed" unchecked
-        ) {
-            updateData.status = 'paid_uninformed';
-        }
-
-        //paid_informed -> completed
-        if (
-            existingTransaction.status === 'paid_informed'
-            && input.paymentCompleted // button "payment completed" clicked
-        ) {
-            updateData.status = 'completed';
-        }
-
         // amountInSelectedCurrency and senderId can be modified only in draft status
-        if (['details_sent', 'check_uploaded', 'paid_uninformed', 'paid_informed', 'completed'].includes(updateData.status)) {
+        if (['details_sent', 'check_uploaded', 'paid_uninformed', 'paid_informed', 'completed'].includes(existingTransaction.status)) {
             updateData.amountInSelectedCurrency = undefined;
             updateData.senderId = undefined;
         }
 
         // isInCash can be modified only in draft and details_sent status
-        if (['check_uploaded', 'paid_uninformed', 'paid_informed', 'completed'].includes(updateData.status)) {
+        if (['check_uploaded', 'paid_uninformed', 'paid_informed', 'completed'].includes(existingTransaction.status)) {
             updateData.isInCash = undefined;
         }
 
         // checkUrl can be modified only in draft, details_sent and check_uploaded status
-        if (['paid_uninformed', 'paid_informed', 'completed'].includes(updateData.status)) {
+        if (['paid_uninformed', 'paid_informed', 'completed'].includes(existingTransaction.status)) {
             updateData.checkUrl = undefined;
         }
 

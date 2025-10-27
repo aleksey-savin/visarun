@@ -7,8 +7,8 @@ import { bankingDetailsCreateProcedure } from '../../lib/trpc.js';
 import { z } from 'zod';
 
 export const zCreateBankingDetailsTrpcInput = z.object({
-    content: z.string().optional(),
-    documentUrl: z.string().optional(),
+    content: z.string().nullable().optional(),
+    documentUrl: z.string().nullable().optional(),
     clientId: z.string().uuid(),
 });
 
@@ -26,11 +26,6 @@ export const createBankingDetailsTrpcRoute = bankingDetailsCreateProcedure
 
         if (!client) {
             throw new Error("Client does not exist");
-        }
-
-        // Content and documentUrl validation (either one or another must not be blank)
-        if (!input.content && !input.documentUrl) {
-            throw new Error("Either content or documentUrl must not be empty");
         }
 
         const bankingDetails = await ctx.prisma.bankingDetails.create({

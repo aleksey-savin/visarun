@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select.tsx";
 import SelectedCurrencyExchangeDialog from "@/components/CurrencyExchanges/SelectedCurrencyExchangeDialog.tsx";
 import useCurrencyExchangeStore from "@/stores/currencyExchange/currency-exchange-store.ts";
+import BegotteningExchangesTable from "@/components/CurrencyExchanges/BegotteningExchangesTable.tsx";
 
 type SortItem = 'asc' | 'desc' | 'none';
 type SortItemName = 'position' | 'inProgress' | 'remains' | 'minTransactionAmount' | 'deadline';
@@ -24,8 +25,8 @@ type StatusFilter = 'draft' | 'in_progress' | 'finished' | 'cancelled';
 
 const AllCurrencyExchangesPage = () => {
     const {
-        currencyExchanges,
-        setCurrencyExchanges,
+        allCurrencyExchanges,
+        setAllCurrencyExchanges,
     } = useCurrencyExchangeStore();
 
     const [sortStates, setSortStates] = useState<SortStates>({
@@ -88,40 +89,74 @@ const AllCurrencyExchangesPage = () => {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
+    // const {
+    //     data: currencyExchangesData,
+    //     isLoading,
+    //     error,
+    // } = trpc.currencyExchange.getAll.useQuery({
+    //     status: statusFilter,
+    //     fromCurrencyId: selectedCombination?.split('|')[0],
+    //     toCurrencyId: selectedCombination?.split('|')[1],
+    //     search: debouncedSearchTerm || undefined,
+    //     sortBy: sortBy,
+    //     sortOrder: sortOrder !== 'none' ? sortOrder : undefined,
+    // });
+
+    // useEffect(() => {
+    //     if (!currencyExchangesData) return;
+    //
+    //     setCurrencyExchanges(currencyExchangesData?.currencyExchanges || []);
+    // }, [currencyExchangesData]);
+
     const {
-        data: currencyExchangesData,
-        isLoading,
-        error,
-    } = trpc.currencyExchange.getAll.useQuery({
-        status: statusFilter,
-        fromCurrencyId: selectedCombination?.split('|')[0],
-        toCurrencyId: selectedCombination?.split('|')[1],
-        search: debouncedSearchTerm || undefined,
-        sortBy: sortBy,
-        sortOrder: sortOrder !== 'none' ? sortOrder : undefined,
-    });
+        data: allCurrencyExchangesData,
+        isLoadingAllExchanges,
+        errorAllExchanges,
+    } = trpc.currencyExchange.getAll.useQuery({});
 
     useEffect(() => {
-        if (!currencyExchangesData) return;
+        if (!allCurrencyExchangesData) return;
 
-        setCurrencyExchanges(currencyExchangesData?.currencyExchanges || []);
-    }, [currencyExchangesData]);
+        setAllCurrencyExchanges(allCurrencyExchangesData?.currencyExchanges || []);
+    }, [allCurrencyExchangesData]);
 
     const [selectedCurrencyExchangeId, setSelectedCurrencyExchangeId] = useState<string | undefined>();
     const handleSelectCurrencyExchange = (id: string) => {
-        const foundExchange = currencyExchanges?.find(ex => ex.id === id);
+        const foundExchange = allCurrencyExchanges?.find(ex => ex.id === id);
 
         if (foundExchange) {
             setSelectedCurrencyExchangeId(id);
         }
     }
 
-    if (error) {
+    const filterExchanges = () => {
+        let filtered = allCurrencyExchanges;
+
+        if (statusFilter) {
+            filtered = filtered.filter(ex => ex.status === statusFilter);
+        }
+
+        if (selectedCombination?.split('|')[0]) {
+            filtered = filtered.filter(ex => ex.fromCurrency.id === selectedCombination?.split('|')[0]);
+        }
+
+        if (selectedCombination?.split('|')[1]) {
+            filtered = filtered.filter(ex => ex.toCurrency.id === selectedCombination?.split('|')[1]);
+        }
+
+        return filtered;
+
+        //     search: debouncedSearchTerm || undefined,
+        //     sortBy: sortBy,
+        //     sortOrder: sortOrder !== 'none' ? sortOrder : undefined,
+    }
+
+    if (errorAllExchanges) {
         return (
             <div className="p-6">
                 <div className="flex items-center gap-2 text-red-600">
                     <AlertTriangle className="h-5 w-5" />
-                    <span>Error loading orders: {error.message}</span>
+                    <span>Error loading exchanges: {errorAllExchanges.message}</span>
                 </div>
             </div>
         );
@@ -193,11 +228,11 @@ const AllCurrencyExchangesPage = () => {
                     </Select>
                 </div>
             </div>
-            {isLoading ? (
+            {isLoadingAllExchanges ? (
                 <div className="flex justify-center items-center p-8">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
-            ) : currencyExchanges.length === 0 ? (
+            ) : allCurrencyExchanges.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                     No currency exchanges found matching your criteria.
                 </div>
@@ -206,12 +241,22 @@ const AllCurrencyExchangesPage = () => {
                     {/* Desktop Table View */}
                     <div className="hidden lg:block text-gray-400">
                         <div className="overflow-x-auto rounded-md border border-muted">
-                            <CurrencyExchangesTable
-                                currencyExchanges={currencyExchanges}
-                                sortStates={sortStates}
-                                setSortStates={setSortStates}
-                                handleSelectCurrencyExchange={handleSelectCurrencyExchange}
-                            />
+                            {currencyExchangeCombinations?.find(comb => comb.fromCurrency.isBegottening)?.fromCurrency.id === selectedCombination?.split('|')[0] ? (
+                                <BegotteningExchangesTable
+                                    currencyExchanges={filterExchanges()}
+                                    sortStates={sortStates}
+                                    setSortStates={setSortStates}
+                                    handleSelectCurrencyExchange={handleSelectCurrencyExchange}
+                                />
+                            ) : (
+                                <CurrencyExchangesTable
+                                    currencyExchanges={filterExchanges()}
+                                    sortStates={sortStates}
+                                    setSortStates={setSortStates}
+                                    handleSelectCurrencyExchange={handleSelectCurrencyExchange}
+                                />
+                            )}
+
                         </div>
                     </div>
                 </>

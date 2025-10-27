@@ -91,8 +91,8 @@ export interface StoreClient extends Partial<Client> {
   };
   bankingDetails?: {
       id: string;
-      content?: string;
-      documentUrl?: string;
+      content?: string | null;
+      documentUrl?: string | null;
       clientId: string;
   };
   documents?: (Omit<ClientDocument, 'reviewedAt' | 'uploadedAt' | 'expiresAt'> & {

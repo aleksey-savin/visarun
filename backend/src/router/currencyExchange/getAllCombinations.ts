@@ -3,37 +3,44 @@ import {string} from "zod";
 
 export const getAllCurrencyExchangeCombinationsTrpcRoute = currencyExchangeReadProcedure
     .query(async ({ ctx }) => {
-        const exchanges = await ctx.prisma.currencyExchange.findMany({
+        let exchanges = await ctx.prisma.currencyExchange.findMany({
             select: {
+                status: true,
                 fromCurrency: {
                     select: {
                         id: true,
                         name: true,
+                        isBegottening: true,
                     },
                 },
                 toCurrency: {
                     select: {
                         id: true,
                         name: true,
+                        isBegottening: true,
                     },
                 },
             },
         });
 
+        exchanges = exchanges.filter(ex => ex.fromCurrency && ex.toCurrency && ex.fromCurrency.id && ex.toCurrency.id && ex.status !== 'draft');
+
         type CurrencyExchange = {
             fromCurrency: {
                 id: string,
                 name: string,
+                isBegottening: true,
             };
             toCurrency: {
                 id: string,
                 name: string,
+                isBegottening: true,
             };
         }
 
         const uniquePairs = new Set<string>(
             exchanges.map(
-                (e: CurrencyExchange) => `${e.fromCurrency.id}|${e.fromCurrency.name}_${e.toCurrency.id}|${e.toCurrency.name}`
+                (e: CurrencyExchange) => `${e.fromCurrency.id}|${e.fromCurrency.name}|${e.fromCurrency.isBegottening}_${e.toCurrency.id}|${e.toCurrency.name}|${e.toCurrency.isBegottening}`
             )
         );
 
@@ -41,17 +48,19 @@ export const getAllCurrencyExchangeCombinationsTrpcRoute = currencyExchangeReadP
             .from(uniquePairs)
             .map((pair) => {
                 const [fromCurrency, toCurrency] = pair.split('_');
-                const [fromCurrencyId, fromCurrencyName] = fromCurrency.split('|');
-                const [toCurrencyId, toCurrencyName] = toCurrency.split('|');
+                const [fromCurrencyId, fromCurrencyName, fromCurrencyIsBegottening] = fromCurrency.split('|');
+                const [toCurrencyId, toCurrencyName, toCurrencyIsBegottening] = toCurrency.split('|');
 
                 return {
                     fromCurrency: {
                         id: fromCurrencyId,
                         name: fromCurrencyName,
+                        isBegottening: fromCurrencyIsBegottening === 'true',
                     },
                     toCurrency: {
                         id: toCurrencyId,
                         name: toCurrencyName,
+                        isBegottening: toCurrencyIsBegottening === 'false',
                     }
                 };
             });

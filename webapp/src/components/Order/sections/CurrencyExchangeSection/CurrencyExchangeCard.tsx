@@ -5,11 +5,22 @@ import {useForm} from "react-hook-form";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {trpc} from "@/lib/trpc.ts";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import CurrenciesSelectionRow from "@/components/Order/sections/CurrencyExchangeSection/CurrenciesSelectionRow.tsx";
 import PaymentDetails from "@/components/Order/sections/CurrencyExchangeSection/PaymentDetails.tsx";
 import BankingDetailsCard from "@/components/Order/sections/CurrencyExchangeSection/BankingDetailsCard.tsx";
 import useOrderStore, {StoreClient, StoreCurrencyExchange, StoreOrderItem} from "@/stores/order/order-store.ts";
+import {Trash2} from "lucide-react";
+import {Button} from "@/components/ui/button.tsx";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger
+} from "@/components/ui/alert-dialog.tsx";
 
 const formSchema = z.object({
     exchangeRate: z.number().positive().optional(),
@@ -36,7 +47,17 @@ interface CurrencyExchange {
 
 type FieldName = "exchangeRate" | "amountInSelectedCurrencyFrom" | "amountInSelectedCurrencyTo" | "deadline" | "minTransactionAmountInSelectedCurrency" | "orderItemId" | "fromCurrencyId" | "toCurrencyId";
 
-const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExchange: StoreCurrencyExchange, client: StoreClient, orderItem: StoreOrderItem }) => {
+const CurrencyExchangeCard = ({
+    savedExchange,
+    client,
+    orderItem,
+    handleDeleteCurrencyExchange
+}: {
+    savedExchange: StoreCurrencyExchange,
+    client: StoreClient,
+    orderItem: StoreOrderItem,
+    handleDeleteCurrencyExchange: (orderItemId: string) => void,
+}) => {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -198,7 +219,7 @@ const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExcha
         cardOrPhoneNumber: string,
         holderName: string,
         holderSurname: string,
-        documentUrl: string
+        documentUrl: string | null
     ) => {
         const content = `${bankName}|${cardOrPhoneNumber}|${holderName}|${holderSurname}`;
 
@@ -218,6 +239,8 @@ const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExcha
                     clientId: client.id,
                 };
 
+                console.log("new", newBankingDetails);
+
                 const newBankingDetailsId: string = (await createBankingDetailsMutation.mutateAsync(newBankingDetails)).id;
 
                 setClients(
@@ -232,11 +255,13 @@ const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExcha
             } else {
                 //edit
                 const newBankingDetails = {
-                    content: bankingDetailsType === "card" ? content : undefined,
-                    documentUrl: bankingDetailsType === "file" ? documentUrl : undefined,
+                    content: bankingDetailsType === "card" ? content : null,
+                    documentUrl: bankingDetailsType === "file" ? documentUrl : null,
                     clientId: client.id,
                     id: client.bankingDetails.id
                 };
+
+                console.log("edit", newBankingDetails);
 
                 await editBankingDetailsMutation.mutateAsync(newBankingDetails);
 
@@ -268,6 +293,35 @@ const CurrencyExchangeCard = ({ savedExchange, client, orderItem }: { savedExcha
                     <Badge variant={'accent'}>
                         {currencyExchange.position}
                     </Badge>
+                </div>
+                <div>
+                    {currencyExchange.orderItemId && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Currency Exchange</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Are you sure you want to delete this exchange? This action cannot be
+                                        undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={() => handleDeleteCurrencyExchange(currencyExchange.orderItemId)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                        Delete
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
                 </div>
             </div>
             <Form {...form}>

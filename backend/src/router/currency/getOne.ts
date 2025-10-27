@@ -13,6 +13,7 @@ export const getOneCurrencyTrpcRoute = currencyReadProcedure
       select: {
         id: true,
         name: true,
+        isBegottening: true,
         _count: {
           select: {
             orderPayments: true,

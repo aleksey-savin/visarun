@@ -66,6 +66,8 @@ export const editCurrencyExchangeTrpcRoute = currencyExchangeUpdateProcedure
             if (!fromCurrency) {
                 throw new Error("FromCurrency does not exist");
             }
+
+            updateData.isBegottening = fromCurrency.isBegottening;
         }
 
         // ToCurrency existence validation

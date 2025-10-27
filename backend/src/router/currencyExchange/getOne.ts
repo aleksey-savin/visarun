@@ -1,7 +1,6 @@
 /*
 TODO:
-    1. Check if select object is full
-    2. Add permission in currencyExchangeReadProcedure
+    Add permission in currencyExchangeReadProcedure
  */
 
 import { currencyExchangeReadProcedure } from '../../lib/trpc.js';
@@ -18,6 +17,8 @@ export const getOneCurrencyExchangeTrpcRoute = currencyExchangeReadProcedure
             where: { id: input.id },
             select: {
                 id: true,
+                isBegottening: true,
+                position: true,
                 amountFrom: true,
                 amountTo: true,
                 amountInSelectedCurrencyFrom: true,
@@ -25,14 +26,13 @@ export const getOneCurrencyExchangeTrpcRoute = currencyExchangeReadProcedure
                 status: true,
                 deadline: true,
                 minTransactionAmount: true,
-                minAmountInSelectedCurrency: true,
+                minTransactionAmountInSelectedCurrency: true,
+                createdAt: true,
+                updatedAt: true,
                 orderItem: {
                     select: {
-                        id: true,
                         client: {
                             select: {
-                                id: true,
-                                userId: true,
                                 firstName: true,
                                 lastName: true,
                                 bankingDetails: {
@@ -42,66 +42,89 @@ export const getOneCurrencyExchangeTrpcRoute = currencyExchangeReadProcedure
                                         documentUrl: true,
                                     },
                                 },
-                            },
-                        },
-                    },
+                                user: {
+                                    select: {
+                                        contactMethods: {
+                                            select: {
+                                                id: true,
+                                                value: true,
+                                                method: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 },
                 fromCurrency: {
                     select: {
                         id: true,
                         name: true,
-                    },
+                        isBegottening: true,
+                    }
                 },
                 toCurrency: {
                     select: {
                         id: true,
                         name: true,
-                    },
+                        isBegottening: true,
+                    }
                 },
                 transactions: {
                     select: {
                         id: true,
-                        amount: true,
                         amountInSelectedCurrency: true,
-                        customExchangeRate: true,
                         checkUrl: true,
                         status: true,
-                        sender: {
-                            select: {
-                                id: true,
-                                userId: true,
-                                firstName: true,
-                                lastName: true,
-                            },
-                        },
-                        createdBy: {
-                            select: {
-                                id: true,
-                                email: true,
-                                firstName: true,
-                                middleName: true,
-                                lastName: true,
-                            },
-                        },
-                        updatedBy: {
-                            select: {
-                                id: true,
-                                email: true,
-                                firstName: true,
-                                middleName: true,
-                                lastName: true,
-                            },
-                        },
-                        createdAt: true,
-                        updatedAt: true,
+                        isInCash: true,
+                        isCompanyTransaction: true,
+                        senderId: true,
+                        begottenByCurrencyExchangeId: true,
+                        currencyExchangeId: true,
                     },
                 },
+                begottenTransactions: {
+                    select: {
+                        id: true,
+                        amountInSelectedCurrency: true,
+                        checkUrl: true,
+                        status: true,
+                        isInCash: true,
+                        isCompanyTransaction: true,
+                        senderId: true,
+                        begottenByCurrencyExchangeId: true,
+                        currencyExchangeId: true,
+                    },
+                }
             },
         });
 
         if (!exchange) {
             throw new Error('Currency exchange not found');
         }
+
+        const inProgressTransactionsAmountInSelectedCurrency = exchange.transactions
+            .filter((t) => !['completed', 'canceled'].includes(t.status))
+            .reduce((sum, t) => sum + Number(t.amountInSelectedCurrency), 0);
+
+        const finishedTransactionsAmountInSelectedCurrency = exchange.transactions
+            .filter((t) => ['completed'].includes(t.status))
+            .reduce((sum, t) => sum + Number(t.amountInSelectedCurrency), 0);
+
+        const inProgressBegottenTransactionsAmountInSelectedCurrency = exchange.begottenTransactions
+            .filter(tr => tr.status !== 'completed' && tr.status !== 'canceled')
+            .reduce((acc, tr) => acc + Number(tr.amountInSelectedCurrency), 0);
+
+        const finishedBegottenTransactionsAmountInSelectedCurrency = exchange.begottenTransactions
+            .filter(tr => tr.status === 'completed')
+            .reduce((acc, tr) => acc + Number(tr.amountInSelectedCurrency), 0);
+
+        exchange.inProgressTransactionsAmountInSelectedCurrency = inProgressTransactionsAmountInSelectedCurrency;
+        exchange.finishedTransactionsAmountInSelectedCurrency = finishedTransactionsAmountInSelectedCurrency;
+
+        exchange.inProgressBegottenTransactionsAmountInSelectedCurrency = inProgressBegottenTransactionsAmountInSelectedCurrency;
+        exchange.finishedBegottenTransactionsAmountInSelectedCurrency = finishedBegottenTransactionsAmountInSelectedCurrency;
 
         return { exchange };
     });
