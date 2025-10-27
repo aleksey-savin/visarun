@@ -70,6 +70,7 @@ export const clientHasPersonalDataErrors = (
 
   const hasAccelerationServices = orderItems.some(item => item.serviceType === 'acceleration');
   const hasOnlyAccelerationServices = orderItems.every(item => item.serviceType === 'acceleration');
+  const hasOnlyCurrencyExchangeServices = orderItems.every(item => item.serviceType === 'currencyExchange');
 
   const docRequirements =
     client.visaRequirements?.filter(req => req.inputType === 'document') || [];
@@ -80,7 +81,7 @@ export const clientHasPersonalDataErrors = (
   for (const req of docRequirements || []) {
     const uploadedDocument = client?.documents?.find(doc => doc.requirementId === req.id);
 
-    if (!uploadedDocument && !req.isOptional && needsToComply && !hasOnlyAccelerationServices) {
+    if (!uploadedDocument && !req.isOptional && needsToComply && !hasOnlyAccelerationServices && !hasOnlyCurrencyExchangeServices) {
       errors.add(`Document ${req.title} is not uploaded`);
     }
   }

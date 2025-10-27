@@ -159,10 +159,19 @@ const pageConfigs: Record<string, PageConfig> = {
     createRoute: '/contact-methods/create',
     showButton: true,
   },
-  '/currency-exchange': {
-    title: 'Currency Exchange',
+    '/currency-exchanges': {
+        title: 'Currency Exchanges',
+        icon: <CreditCard />,
+        entity: 'currency-exchange',
+        showButton: true,
+        buttonText: 'Currency Exchange',
+    },
+  '/currency-calculator': {
+    title: 'Currency Calculator',
     icon: <CreditCard />,
-    showButton: false,
+      entity: 'currency-calculator',
+    showButton: true,
+      buttonText: 'Currency Exchange',
   },
   '/telegram-channels': {
     title: 'Telegram Channels',
@@ -297,6 +306,12 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
     } else if (['/dashboard', '/orders'].includes(location.pathname) && config.entity === 'order') {
       // Special handling for dashboard order creation
       setIsClientSearchOpen(true);
+    } else if (['/currency-calculator'].includes(location.pathname) && config.entity === 'currency-calculator') {
+        // Special handling for dashboard currency exchange creation
+        setIsClientSearchOpen(true);
+    } else if (['/currency-exchanges'].includes(location.pathname) && config.entity === 'currency-exchange') {
+        // Special handling for currency exchange creation
+        setIsClientSearchOpen(true);
     } else if (config.createRoute) {
       navigate(config.createRoute);
     }
@@ -361,7 +376,7 @@ export function PageHeader({ onButtonClick }: PageHeaderProps) {
         )}
       </CardTitle>
 
-      {['/dashboard', '/orders'].includes(location.pathname) && (
+      {['/dashboard', '/orders', '/currency-calculator', '/currency-exchanges'].includes(location.pathname) && (
         <ClientSearchModal isOpen={isClientSearchOpen} onOpenChange={setIsClientSearchOpen} />
       )}
     </>

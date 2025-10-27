@@ -6,7 +6,7 @@ const getRouteParams = <T extends Record<string, boolean>>(object: T) => {
 };
 
 export const getDashboardRoute = () => '/dashboard';
-export const getCurrencyExchangeRoute = () => '/currency-exchange';
+export const getCurrencyCalculatorRoute = () => '/currency-calculator';
 
 export const getAllUsersRoute = () => '/users';
 export const getCreateUserRoute = () => '/users/create';
@@ -158,6 +158,12 @@ export const getEditOrderRoute = ({ id }: EditOrderRouteParams) => `/orders/edit
 export const viewOrderRouteParams = getRouteParams({ id: true });
 export type ViewOrderRouteParams = typeof viewOrderRouteParams;
 export const getViewOrderRoute = ({ id }: ViewOrderRouteParams) => `/orders/view/${id}`;
+
+// Currency Exchanges routes
+export const getAllCurrencyExchangesRoute = () => '/currency-exchanges';
+export const editCurrencyExchangeRouteParams = getRouteParams({ id: true });
+export type EditCurrencyExchangeRouteParams = typeof editCurrencyExchangeRouteParams;
+export const getEditCurrencyExchangeRoute = ({ id }: EditCurrencyExchangeRouteParams) => `/currency-exchanges/edit/${id}`;
 
 // Visa Applications routes
 export const getAllVisaApplicationsRoute = () => '/visa-applications';

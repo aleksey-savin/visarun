@@ -58,7 +58,7 @@ const FormSchema = z.object({
 // Define the form field names type for type safety
 type FormField = keyof z.infer<typeof FormSchema>;
 
-interface ExchangeCalcFormProps {
+interface CurrencyCalcFormProps {
   isClient: boolean;
   rates: {
     rubToVnd: number;
@@ -70,7 +70,7 @@ interface ExchangeCalcFormProps {
   };
 }
 
-export function CurrencyExchangeForm({ isClient, rates }: ExchangeCalcFormProps) {
+export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProps) {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 const zCreateCurrencyInput = z.object({
   name: z.string().min(1).max(100),
+  isBegottening: z.boolean().optional(),
 });
 
 export const createCurrencyTrpcRoute = currencyCreateProcedure
@@ -25,6 +26,7 @@ export const createCurrencyTrpcRoute = currencyCreateProcedure
     const currency = await ctx.prisma.currency.create({
       data: {
         name: input.name,
+        isBegottening: input.isBegottening
       },
       select: {
         id: true,

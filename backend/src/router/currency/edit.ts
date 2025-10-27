@@ -4,6 +4,7 @@ import { z } from 'zod';
 const zEditCurrencyInput = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100),
+  isBegottening: z.boolean().optional(),
 });
 
 export const editCurrencyTrpcRoute = currencyUpdateProcedure
@@ -39,6 +40,7 @@ export const editCurrencyTrpcRoute = currencyUpdateProcedure
       where: { id: input.id },
       data: {
         name: input.name,
+        isBegottening: input.isBegottening,
       },
       select: {
         id: true,

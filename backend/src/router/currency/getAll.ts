@@ -30,10 +30,13 @@ export const getAllCurrenciesTrpcRoute = currencyReadProcedure
         select: {
           id: true,
           name: true,
+          isBegottening: true,
           _count: {
             select: {
               orderPayments: true,
               exchangeRates: true,
+                currencyExchangesFrom: true,
+                currencyExchangesTo: true,
             },
           },
         },

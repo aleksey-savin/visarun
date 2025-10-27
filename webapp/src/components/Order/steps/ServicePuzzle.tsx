@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 
-import { StoreClient } from '@/stores/order/order-store';
+import {StoreClient, StoreCurrencyExchange} from '@/stores/order/order-store';
 
 import { trpc } from '@/lib/trpc';
 
@@ -28,6 +28,8 @@ import useOrderStore from '@/stores/order/order-store.js';
 import ClientName from '../sections/ClientSection/ClientName';
 import Comments from '../Comments';
 import VisarunSection from '../sections/VisarunSection/VisarunSection';
+import CurrencyExchangeSection from "../sections/CurrencyExchangeSection/CurrencyExchangeSection.tsx";
+import AddExchangeButton from "@/components/Order/sections/CurrencyExchangeSection/AddExchangeButton.tsx";
 
 const ServicePuzzle = ({
   client,
@@ -48,6 +50,8 @@ const ServicePuzzle = ({
     clients,
     setClients,
     visarunPassengers,
+      setCurrencyExchanges,
+      currencyExchanges
   } = useOrderStore();
 
   const detectActiveService =
@@ -55,13 +59,18 @@ const ServicePuzzle = ({
       ? 'visarun'
       : orderItems.filter(i => i.serviceType === 'acceleration').length > 0
         ? 'acceleration'
-        : 'visa';
+        : orderItems.filter(i => i.serviceType === 'visa').length > 0
+                ? 'visa'
+                : 'currencyExchange';
 
   const [activeService, setActiveService] = useState(detectActiveService);
 
   const isDisabled = !client.citizenship?.id || !client.preConfirmPassportIsValid;
 
-  const handleServiceButtonClick = (service: string) => {
+  // At least one contact method exists
+  const hasContactMethod = contactMethods.find(method => method.value) != undefined
+
+  const handleServiceButtonClick = async (service: string) => {
     setActiveService(service);
   };
 
@@ -123,12 +132,37 @@ const ServicePuzzle = ({
     setSaveStatus('saved');
   };
 
+    const handleDeleteCurrencyExchange = async (orderItemId: string) => {
+        try {
+            setSaveStatus('saving');
+
+            await deleteOrderItemMutation.mutateAsync({
+                id: orderItemId
+            });
+
+            setOrderItems([
+                ...orderItems.filter(item => item.id !== orderItemId),
+            ]);
+
+            setCurrencyExchanges([
+                ...currencyExchanges.filter(ex => ex.orderItemId !== orderItemId),
+            ]);
+
+            setSaveStatus('saved');
+        } catch (e) {
+            console.error('Currency exchange was not deleted', e);
+            setSaveStatus('error');
+        }
+    };
+
   const handleConfirm = () => {
     setActiveClientId('-');
   };
 
   return (
     <>
+        {activeService === 'currencyExchange' && <CurrencyExchangeSection client={client} handleDeleteCurrencyExchange={handleDeleteCurrencyExchange}/>}
+
       {servicePuzzleIsActive && (
         <>
           {['visa', 'acceleration'].includes(activeService) && (
@@ -212,9 +246,11 @@ const ServicePuzzle = ({
               <Button disabled variant="secondary" size="sm" className="border-none">
                 + Transfer
               </Button>
-              <Button disabled variant="secondary" size="sm" className="border-none">
-                + Currency Exchange
-              </Button>
+                <AddExchangeButton
+                    client={client}
+                    disabled={!hasContactMethod}
+                    setActiveService={setActiveService}
+                />
             </div>
           </div>
         </CardContent>
