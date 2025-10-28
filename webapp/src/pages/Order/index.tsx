@@ -45,6 +45,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import useClientSearchStore from "@/stores/clientSearch/client-search-store";
 
 type OrderStatus =
   | 'draft'
@@ -69,10 +70,14 @@ export default function AllOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
-  const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
   const [workStatusFilter, setWorkStatusFilter] = useState<'in-work' | 'archived'>('in-work');
+
+  const {
+    isClientSearchOpen,
+    setIsClientSearchOpen,
+  } = useClientSearchStore();
 
   const offset = (currentPage - 1) * pageSize;
 

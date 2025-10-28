@@ -42,9 +42,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Copy } from 'lucide-react';
+import { RefreshCw, Copy, ArrowLeftRight} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import useCurrencyCalculatorStore from "@/stores/currencyCalculator/currency-calculator-store";
+import useClientSearchStore from "@/stores/clientSearch/client-search-store";
 
 const FormSchema = z.object({
   clientRubles: z.string().optional(),
@@ -87,6 +89,14 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
 
   const [direction, setDirection] = useState<'clientToUs' | 'usToClient'>('clientToUs');
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  const {
+    setCurrencyCalculatorResults,
+  } = useCurrencyCalculatorStore();
+
+  const {
+    setIsClientSearchOpen,
+  } = useClientSearchStore();
 
   // Detect keyboard opening on mobile
   useEffect(() => {
@@ -259,6 +269,64 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
     }
   };
 
+  const handleCreateCurrencyExchange = (value: any, selectedCurrencyName: string) => {
+    const inputCurrencies = {
+      'RUB': form.getValues(direction === 'clientToUs' ? 'clientRubles' : 'ourRubles'),
+      'VND': form.getValues(direction === 'clientToUs' ? 'clientDongs' : 'ourDongs'),
+      'USDT': form.getValues(direction === 'clientToUs' ? 'clientUsdt' : 'ourUsdt'),
+    }
+
+    const foundCurrency = Object.entries(inputCurrencies).find(
+      ([, value]) => value !== '0' && value !== undefined && value !== null && value !== ''
+    );
+
+    if (!foundCurrency) return;
+
+    let fromCurrencyName = '';
+    let toCurrencyName = '';
+    let amountInSelectedCurrencyFrom = 0;
+    let amountInSelectedCurrencyTo = 0;
+
+    let amountInSelectedCurrencyFromString: string | undefined;
+    let amountInSelectedCurrencyToString: string | undefined;
+
+    if (direction === 'clientToUs') {
+      [fromCurrencyName, amountInSelectedCurrencyFromString] = foundCurrency;
+      toCurrencyName = selectedCurrencyName;
+
+      amountInSelectedCurrencyTo = Math.abs(Number(
+        value?.replace(/\s+/g, '')?.replace(',', '.') || 0
+      ));
+
+      amountInSelectedCurrencyFrom = Math.abs(Number(
+        amountInSelectedCurrencyFromString?.replace(/\s+/g, '')?.replace(',', '.') || 0
+      ));
+    } else if (direction === 'usToClient') {
+      fromCurrencyName = selectedCurrencyName;
+      [toCurrencyName, amountInSelectedCurrencyToString] = foundCurrency;
+
+      amountInSelectedCurrencyFrom = Math.abs(Number(
+        value?.replace(/\s+/g, '')?.replace(',', '.') || 0
+      ));
+
+      amountInSelectedCurrencyTo = Math.abs(Number(
+        amountInSelectedCurrencyToString?.replace(/\s+/g, '')?.replace(',', '.') || 0
+      ));
+    }
+
+    const exchangeRate = amountInSelectedCurrencyTo / amountInSelectedCurrencyFrom;
+
+    setCurrencyCalculatorResults({
+      amountInSelectedCurrencyFrom,
+      amountInSelectedCurrencyTo,
+      fromCurrencyName,
+      toCurrencyName,
+      exchangeRate,
+    });
+
+    setIsClientSearchOpen(true);
+  };
+
   return (
     <Form {...form}>
       {!isMobile && (
@@ -339,6 +407,14 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           RUB
                         </FormLabel>
 
+                        {direction === 'usToClient' && field.value && (
+                          <Button onClick={() => {
+                            handleCreateCurrencyExchange(field.value, 'RUB');
+                          }}>
+                            <ArrowLeftRight />
+                          </Button>
+                        )}
+
                         <FormMessage />
                       </FormItem>
                     )}
@@ -394,6 +470,14 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           VND
                         </FormLabel>
 
+                        {direction === 'usToClient' && field.value && (
+                          <Button onClick={() => {
+                            handleCreateCurrencyExchange(field.value, 'VND');
+                          }}>
+                            <ArrowLeftRight />
+                          </Button>
+                        )}
+
                         <FormMessage />
                       </FormItem>
                     )}
@@ -448,6 +532,15 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                         <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
                           USDT
                         </FormLabel>
+
+                        {direction === 'usToClient' && field.value && (
+                          <Button onClick={() => {
+                            handleCreateCurrencyExchange(field.value, 'USDT');
+                          }}>
+                            <ArrowLeftRight />
+                          </Button>
+                        )}
+
                         <FormMessage />
                       </FormItem>
                     )}
@@ -524,6 +617,14 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           RUB
                         </FormLabel>
 
+                        {direction === 'clientToUs' && field.value && (
+                          <Button onClick={() => {
+                            handleCreateCurrencyExchange(field.value, 'RUB');
+                          }}>
+                            <ArrowLeftRight />
+                          </Button>
+                        )}
+
                         <FormMessage />
                       </FormItem>
                     )}
@@ -587,6 +688,14 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           VND
                         </FormLabel>
 
+                        {direction === 'clientToUs' && field.value && (
+                          <Button onClick={() => {
+                            handleCreateCurrencyExchange(field.value, 'VND');
+                          }}>
+                            <ArrowLeftRight />
+                          </Button>
+                        )}
+
                         <FormMessage />
                       </FormItem>
                     )}
@@ -649,6 +758,14 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                         <FormLabel className="min-w-[50px] text-right font-medium md:text-sm text-xs">
                           USDT
                         </FormLabel>
+
+                        {direction === 'clientToUs' && field.value && (
+                          <Button onClick={() => {
+                            handleCreateCurrencyExchange(field.value, 'USDT');
+                          }}>
+                            <ArrowLeftRight />
+                          </Button>
+                        )}
 
                         <FormMessage />
                       </FormItem>

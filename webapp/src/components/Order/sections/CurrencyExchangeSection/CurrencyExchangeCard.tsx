@@ -374,15 +374,17 @@ const CurrencyExchangeCard = ({
           handleAmountInSelectedCurrencyToBlur={handleAmountInSelectedCurrencyToBlur}
         />
 
-        <PaymentDetails
-          form={form}
-          currencyExchange={currencyExchange}
-          setCurrencyExchange={setCurrencyExchange}
-          paymentType={paymentType}
-          setPaymentType={setPaymentType}
-          handleBlur={handleBlur}
-          handleChange={handleChange}
-        />
+        {!currencyExchange?.fromCurrency?.isBegottening && (
+          <PaymentDetails
+            form={form}
+            currencyExchange={currencyExchange}
+            setCurrencyExchange={setCurrencyExchange}
+            paymentType={paymentType}
+            setPaymentType={setPaymentType}
+            handleBlur={handleBlur}
+            handleChange={handleChange}
+          />
+        )}
 
         <BankingDetailsCard
           saveBankingDetails={saveBankingDetails}

@@ -1,6 +1,8 @@
 import { trpc } from '@/lib/trpc';
 import useOrderStore, { StoreClient, StoreCurrencyExchange } from '@/stores/order/order-store';
 import { Button } from '@/components/ui/button';
+import useCurrencyCalculatorStore from "@/stores/currencyCalculator/currency-calculator-store";
+import {useEffect, useRef} from "react";
 
 const AddExchangeButton = ({
   client,
@@ -20,6 +22,11 @@ const AddExchangeButton = ({
     currencyExchanges,
   } = useOrderStore();
 
+  const {
+    currencyCalculatorResults,
+    setCurrencyCalculatorResults,
+  } = useCurrencyCalculatorStore();
+
   const clientOrderItems =
     orderItems?.filter(
       item => item.clientId === client.id && item.serviceType === 'currencyExchange'
@@ -27,10 +34,25 @@ const AddExchangeButton = ({
 
   const createOrderItemMutation = trpc.orderItem.create.useMutation();
 
+  const {
+    data: currenciesData,
+    error: error,
+    isLoading: loading,
+  } = trpc.currency.getAll.useQuery({
+    search: '',
+  });
+
+  const alreadyAddedCurrencyExchange = useRef<boolean>(false);
+
   const handleAddCurrencyExchange = async () => {
     setSaveStatus('saving');
 
     const newData = await createOrderItemMutation.mutateAsync({
+      amountInSelectedCurrencyFrom: currencyCalculatorResults.amountInSelectedCurrencyFrom,
+      amountInSelectedCurrencyTo: currencyCalculatorResults.amountInSelectedCurrencyTo,
+      exchangeRate: currencyCalculatorResults.exchangeRate,
+      fromCurrencyId: currenciesData?.currencies?.find((curr: any) => curr.name === currencyCalculatorResults.fromCurrencyName)?.id ?? undefined,
+      toCurrencyId: currenciesData?.currencies?.find((curr: any) => curr.name === currencyCalculatorResults.toCurrencyName)?.id ?? undefined,
       orderId: order.id || '',
       clientId: client.id,
       serviceType: 'currencyExchange',
@@ -85,10 +107,18 @@ const AddExchangeButton = ({
       } as StoreCurrencyExchange,
     ]);
 
+    setCurrencyCalculatorResults({
+      amountInSelectedCurrencyFrom: 0,
+      amountInSelectedCurrencyTo: 0,
+      fromCurrencyName: '',
+      toCurrencyName: '',
+      exchangeRate: 0,
+    });
+
     setSaveStatus('saved');
   };
 
-  const handleClick = async () => {
+  const handleClickOrAutoAdd = async () => {
     setActiveService('currencyExchange');
 
     if (clientOrderItems.length !== 0) return;
@@ -96,10 +126,41 @@ const AddExchangeButton = ({
     await handleAddCurrencyExchange();
   };
 
+  useEffect(() => {
+    if (
+      currencyCalculatorResults.amountInSelectedCurrencyTo === 0
+      || currencyCalculatorResults.amountInSelectedCurrencyFrom === 0
+      || currencyCalculatorResults.exchangeRate === 0
+      || currencyCalculatorResults.fromCurrencyName === ''
+      || currencyCalculatorResults.toCurrencyName === ''
+      || alreadyAddedCurrencyExchange.current
+    ) return;
+
+    alreadyAddedCurrencyExchange.current = true;
+
+    handleClickOrAutoAdd();
+  }, []);
+
+  if (loading) {
+    return (
+      <div>
+        Loading...
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div>
+        Error: {error.message}
+      </div>
+    )
+  }
+
   return (
     <Button
       disabled={disabled}
-      onClick={() => handleClick()}
+      onClick={() => handleClickOrAutoAdd()}
       variant="secondary"
       size="sm"
       className="border-none"

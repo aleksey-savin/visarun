@@ -22,6 +22,13 @@ export const zCreateOrderItemTrpcInput = z.object({
     .transform(val => (val ? new Date(val) : undefined)),
   visaTypeId: z.string().uuid().optional(),
   applicationCode: z.string().optional(),
+
+  // Currency exchange initial values
+  amountInSelectedCurrencyFrom: z.number().optional(),
+  amountInSelectedCurrencyTo: z.number().optional(),
+  exchangeRate: z.number().optional(),
+  fromCurrencyId: z.string().uuid().optional(),
+  toCurrencyId: z.string().uuid().optional(),
 });
 
 export const createOrderItemTrpcRoute = orderItemCreateProcedure
@@ -198,41 +205,55 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
       }
     }
 
-      // If service type is exchange, create an exchange
-      let currencyExchange = null;
-      if (input.serviceType === 'currencyExchange') {
-          try {
-              if (!ctx.user?.id) {
-                  throw new Error("User must be authenticated to create a CurrencyExchange");
-              }
+    // If service type is exchange, create an exchange
+    let currencyExchange = null;
+    if (input.serviceType === 'currencyExchange') {
+      try {
+        if (!ctx.user?.id) {
+          throw new Error("User must be authenticated to create a CurrencyExchange");
+        }
 
-              // Calculating new position value
-              const max = await ctx.prisma.currencyExchange.aggregate({
-                  _max: { position: true },
-              });
+        // Calculating new position value
+        const max = await ctx.prisma.currencyExchange.aggregate({
+          _max: { position: true },
+        });
+        // amountInSelectedCurrencyFrom: z.number().optional(),
+        //   amountInSelectedCurrencyTo: z.number().optional(),
+        //   exchangeRate: z.number().optional(),
+        //   fromCurrencyId: z.string().uuid().optional(),
+        //   toCurrencyId: z.string().uuid().optional(),
+        const newPosition = (max._max.position ?? 0) + 1;
 
-              const newPosition = (max._max.position ?? 0) + 1;
+        const exchangeData: {
+          amountInSelectedCurrencyFrom: number | undefined,
+          amountInSelectedCurrencyTo: number | undefined,
+          exchangeRate: number | undefined,
+          fromCurrencyId: string | undefined,
+          toCurrencyId: string | undefined,
+          orderItemId: string;
+          position: number;
+          createdById: string;
+          updatedById: string;
+        } = {
+          amountInSelectedCurrencyFrom: input.amountInSelectedCurrencyFrom ?? undefined,
+          amountInSelectedCurrencyTo: input.amountInSelectedCurrencyTo ?? undefined,
+          exchangeRate: input.exchangeRate ?? undefined,
+          fromCurrencyId: input.fromCurrencyId ?? undefined,
+          toCurrencyId: input.toCurrencyId ?? undefined,
+          position: newPosition,
+          orderItemId: orderItem.id,
+          createdById: ctx.user.id,
+          updatedById: ctx.user.id,
+        };
 
-              const exchangeData: {
-                  orderItemId: string;
-                  position: number;
-                  createdById: string;
-                  updatedById: string;
-              } = {
-                  position: newPosition,
-                  orderItemId: orderItem.id,
-                  createdById: ctx.user.id,
-                  updatedById: ctx.user.id,
-              };
-
-              currencyExchange = await ctx.prisma.currencyExchange.create({
-                  data: exchangeData,
-              });
-          } catch (error) {
-              console.error('Failed to create currency exchange:', error);
-              // Continue without currency exchange if creation fails
-          }
+        currencyExchange = await ctx.prisma.currencyExchange.create({
+          data: exchangeData,
+        });
+      } catch (error) {
+        console.error('Failed to create currency exchange:', error);
+        // Continue without currency exchange if creation fails
       }
+    }
 
     // Update order item
     const updatedOrderItem = await ctx.prisma.orderItem.update({
@@ -288,6 +309,6 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
     return {
       orderItem: updatedOrderItem,
       visaApplication,
-        currencyExchange,
+      currencyExchange,
     };
   });

@@ -1,7 +1,6 @@
 import { CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import { ClientSearchModal } from '@/components/Client/client-search-modal.js';
 import { useAuth } from '@/lib/auth';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -27,6 +26,7 @@ import {
   CalendarCheck,
   ArrowRight,
 } from 'lucide-react';
+import useClientSearchStore from "@/stores/clientSearch/client-search-store";
 
 interface PageConfig {
   title: string;
@@ -238,9 +238,13 @@ interface PageHeaderProps {
 export function PageHeader({ onButtonClick }: PageHeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
   const { hasPermission } = useAuth();
   const { toggleSidebar } = useSidebar();
+
+  const {
+    isClientSearchOpen,
+    setIsClientSearchOpen,
+  } = useClientSearchStore();
 
   // Check if current route should skip the header
   const shouldSkipHeader = skipHeaderRoutes.some(route => {

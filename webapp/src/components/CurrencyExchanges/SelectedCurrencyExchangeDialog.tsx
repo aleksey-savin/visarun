@@ -617,6 +617,14 @@ const SelectedCurrencyExchangeDialog = ({
           id: selectedCurrencyExchangeId || '',
           status: 'finished',
         });
+
+        setAllCurrencyExchanges([
+          ...allCurrencyExchanges.filter(ex => ex.id !== selectedCurrencyExchangeId),
+          {
+            ...selectedCurrencyExchange,
+            status: 'finished',
+          },
+        ]);
       }
     } catch (error) {
       console.error(error);
