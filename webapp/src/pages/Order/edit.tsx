@@ -82,6 +82,7 @@ const EditOrderPage = () => {
     visaApplications = [],
     orderPayments,
     user,
+    currencyExchanges,
     setOrder,
     updateOrderStatus,
     setUser,
@@ -294,6 +295,16 @@ const EditOrderPage = () => {
           minTransactionAmount: i.minTransactionAmount,
           fromCurrencyId: i.fromCurrencyId ?? undefined,
           toCurrencyId: i.toCurrencyId ?? undefined,
+          fromCurrency: {
+            id: i.fromCurrency?.id ?? undefined,
+            name: i.fromCurrency?.name ?? undefined,
+            isBegottening: i.fromCurrency?.isBegottening ?? undefined,
+          },
+          toCurrency: {
+            id: i.toCurrency?.id ?? undefined,
+            name: i.toCurrency?.name ?? undefined,
+            isBegottening: i.toCurrency?.isBegottening ?? undefined,
+          },
           createdById: i.createdById,
           updatedById: i.updatedById,
           createdAt: new Date(i.createdAt),
@@ -424,21 +435,20 @@ const EditOrderPage = () => {
   ]);
 
   // Check if order contains only acceleration or exchange services
-  const hasOnlyServicesWithoutPersonalDataVerification = orderData?.items?.every(
-    item => item.serviceType === 'acceleration' || item.serviceType === 'currencyExchange'
-  );
-  const hasOnlyCurrencyExchangeServices = orderData?.items?.every(
-    item => item.serviceType === 'currencyExchange'
+  const hasOnlyServicesWithoutPersonalDataVerification = orderItems?.every(item =>
+    item.serviceType === 'acceleration' || item.serviceType === 'currencyExchange'
   );
 
-  //TODO REDO THIS SHIT
+  const hasOnlyCurrencyExchangeServices = orderItems?.every(item =>
+    item.serviceType === 'currencyExchange'
+  );
+
+  //TODO REDO for multiple exchanges in one order
 
   // Check if order contains only RUB -> X exchanges to enable CurrencyExchangePuzzle
-  const hasOnlyBegotteningCurrencyExchangeServices =
-    orderData?.currencyExchanges[0]?.fromCurrencyId === 'e04347b6-67f5-4469-b9f8-3fa6aea15cf9';
-  const begotteningCurrencyExchangeId = hasOnlyBegotteningCurrencyExchangeServices
-    ? orderData?.currencyExchanges[0].id
-    : undefined;
+  const begotteningCurrencyExchangeId = currencyExchanges?.find(ex =>
+    ex.fromCurrency?.isBegottening
+  )?.id;
 
   const clientsHaveServicePuzzleErrors = useMemo(
     () =>
@@ -688,8 +698,6 @@ const EditOrderPage = () => {
     }
   }, [activeStep, setActiveClientId, clients]);
 
-  console.log(orderItems);
-
   return (
     <>
       <div className="sticky top-0 z-10 bg-background border-b flex px-6 justify-between gap-2 items-center h-[50px]">
@@ -747,13 +755,13 @@ const EditOrderPage = () => {
         </div>
       </div>
 
-      {hasOnlyBegotteningCurrencyExchangeServices &&
-        begotteningCurrencyExchangeId &&
+      {begotteningCurrencyExchangeId &&
         activeStep.status === 'payment_pending' && (
           <CurrencyExchangePuzzle
             begotteningCurrencyExchangeId={begotteningCurrencyExchangeId}
             clientId={
-              orderData?.items?.find(item => item.serviceType === 'currencyExchange')?.clientId ||
+            //TODO redo
+              orderItems?.find(item => item.serviceType === 'currencyExchange')?.clientId ||
               ''
             }
             onEditOrder={() => handleStepClick(steps[0])}
@@ -764,7 +772,7 @@ const EditOrderPage = () => {
       <div
         className="p-0 md:p-6"
         hidden={
-          hasOnlyBegotteningCurrencyExchangeServices && activeStep.status === 'payment_pending'
+          !!begotteningCurrencyExchangeId && activeStep.status === 'payment_pending'
         }
       >
         <div className="grid grid-cols-1 lg:grid-cols-12">
@@ -866,10 +874,8 @@ const EditOrderPage = () => {
                   : 'secondary'
               }
               disabled={
-                activeStep.canProceed &&
-                (['', '-'].includes(activeClientId) || order.status === 'payment_pending')
-                  ? false
-                  : true
+                !(activeStep.canProceed &&
+                  (['', '-'].includes(activeClientId) || order.status === 'payment_pending'))
               }
               onClick={handleNext}
               className="flex border-none w-full items-center justify-between text-sm"

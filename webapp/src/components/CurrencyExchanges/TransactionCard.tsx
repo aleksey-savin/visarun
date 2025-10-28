@@ -72,8 +72,8 @@ const TransactionCard = ({
   const parentExchange = allCurrencyExchanges.find(
     (ex: StoreCurrencyExchange) => ex.id === transaction.currencyExchangeId
   );
-  const bankingDetailsContent = exchangeDetailsToShow?.orderItem?.client?.bankingDetails?.content;
-  const bankingDetailsUrl = exchangeDetailsToShow?.orderItem?.client?.bankingDetails?.documentUrl;
+  const bankingDetailsContent = !exchangeDetailsToShow?.isBegottening ? exchangeDetailsToShow?.orderItem?.client?.bankingDetails?.content : null;
+  const bankingDetailsUrl = !exchangeDetailsToShow?.isBegottening ? exchangeDetailsToShow?.orderItem?.client?.bankingDetails?.documentUrl : null;
 
   const handleDownloadBankingDetailsFile = (documentUrl: string) => {
     const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/upload/file/${documentUrl}`;
@@ -348,13 +348,15 @@ const TransactionCard = ({
       {transaction?.isCompanyTransaction && (
         <div>
           <Select
-            disabled={[
-              'details_sent',
-              'check_uploaded',
-              'paid_uninformed',
-              'paid_informed',
-              'completed',
-            ].includes(transaction.status)}
+            disabled={
+              ([
+                'details_sent',
+                'check_uploaded',
+                'paid_uninformed',
+                'paid_informed',
+              ].includes(transaction.status) && !!transaction.senderId)
+              || ['completed', 'cancelled'].includes(transaction.status)
+            }
             value={currentSenderId}
             onValueChange={(senderId: string) => setCurrentSenderId(senderId)}
           >

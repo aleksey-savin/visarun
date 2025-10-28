@@ -5,6 +5,7 @@ import { SelectValue } from '@radix-ui/react-select';
 import { Label } from '@/components/ui/label';
 import { trpc } from '@/lib/trpc';
 import { UseFormReturn } from 'react-hook-form';
+import {StoreCurrency} from "@/stores/currencyExchange/currency-exchange-store";
 
 interface CurrencyExchange {
   exchangeRate?: number;
@@ -33,6 +34,7 @@ type CurrenciesSelectionRowProps = {
   handleBlur: (fieldName: FieldName, value?: any) => void;
   handleChange: (field: any, value: string) => void;
   handleAmountInSelectedCurrencyToBlur: (value: number) => void;
+  handleCurrencyChange: (currencyType: 'fromCurrency' | 'toCurrency', newCurrency: StoreCurrency) => void;
 };
 
 const CurrenciesSelectionRow = ({
@@ -41,6 +43,7 @@ const CurrenciesSelectionRow = ({
   handleBlur,
   handleChange,
   handleAmountInSelectedCurrencyToBlur,
+  handleCurrencyChange
 }: CurrenciesSelectionRowProps) => {
   const {
     data: currenciesData,
@@ -49,6 +52,30 @@ const CurrenciesSelectionRow = ({
   } = trpc.currency.getAll.useQuery({
     search: '',
   });
+
+  if (currenciesLoading) {
+    return (
+      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+        Loading...
+      </div>
+    )
+  }
+
+  if (currenciesError) {
+    return (
+      <div className="px-2 py-1.5 text-sm text-destructive">
+        Error loading currencies
+      </div>
+    );
+  }
+
+  if (currenciesData?.currencies?.length === 0) {
+    return (
+      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+        No currencies available
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap justify-start items-center gap-6">
@@ -71,7 +98,14 @@ const CurrenciesSelectionRow = ({
                       value={field.value}
                       onValueChange={value => {
                         field.onChange(value);
-                        handleBlur(field.name);
+
+                        const newCurrency: StoreCurrency | undefined = currenciesData.currencies.find((curr: StoreCurrency) => curr.id === value);
+                        if (newCurrency) {
+                          handleCurrencyChange(
+                            'fromCurrency',
+                            newCurrency
+                          );
+                        }
                       }}
                       name={field.name}
                     >
@@ -79,29 +113,15 @@ const CurrenciesSelectionRow = ({
                         <SelectValue placeholder="Select from currency" />
                       </SelectTrigger>
                       <SelectContent>
-                        {currenciesLoading ? (
-                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                            Loading...
-                          </div>
-                        ) : currenciesError ? (
-                          <div className="px-2 py-1.5 text-sm text-destructive">
-                            Error loading currencies
-                          </div>
-                        ) : currenciesData?.currencies?.length === 0 ? (
-                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                            No currencies available
-                          </div>
-                        ) : (
-                          currenciesData?.currencies?.map(
-                            (currency: { id: string; name: string }) => (
-                              <SelectItem
-                                key={currency.id}
-                                disabled={currency.id === currencyExchange.toCurrencyId}
-                                value={currency.id}
-                              >
-                                <div className="flex items-center gap-2">{currency.name}</div>
-                              </SelectItem>
-                            )
+                        {currenciesData?.currencies?.map(
+                          (currency: { id: string; name: string }) => (
+                            <SelectItem
+                              key={currency.id}
+                              disabled={currency.id === currencyExchange.toCurrencyId}
+                              value={currency.id}
+                            >
+                              <div className="flex items-center gap-2">{currency.name}</div>
+                            </SelectItem>
                           )
                         )}
                       </SelectContent>
@@ -154,7 +174,14 @@ const CurrenciesSelectionRow = ({
                       value={field.value}
                       onValueChange={value => {
                         field.onChange(value);
-                        handleBlur(field.name);
+
+                        const newCurrency: StoreCurrency | undefined = currenciesData.currencies.find((curr: StoreCurrency) => curr.id === value);
+                        if (newCurrency) {
+                          handleCurrencyChange(
+                            'toCurrency',
+                            newCurrency
+                          );
+                        }
                       }}
                       name={field.name}
                     >
@@ -162,29 +189,15 @@ const CurrenciesSelectionRow = ({
                         <SelectValue placeholder="Select to currency" />
                       </SelectTrigger>
                       <SelectContent>
-                        {currenciesLoading ? (
-                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                            Loading...
-                          </div>
-                        ) : currenciesError ? (
-                          <div className="px-2 py-1.5 text-sm text-destructive">
-                            Error loading currencies
-                          </div>
-                        ) : currenciesData?.currencies?.length === 0 ? (
-                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                            No currencies available
-                          </div>
-                        ) : (
-                          currenciesData?.currencies?.map(
-                            (currency: { id: string; name: string }) => (
-                              <SelectItem
-                                key={currency.id}
-                                disabled={currency.id === currencyExchange.fromCurrencyId}
-                                value={currency.id}
-                              >
-                                <div className="flex items-center gap-2">{currency.name}</div>
-                              </SelectItem>
-                            )
+                        {currenciesData?.currencies?.map(
+                          (currency: { id: string; name: string }) => (
+                            <SelectItem
+                              key={currency.id}
+                              disabled={currency.id === currencyExchange.fromCurrencyId}
+                              value={currency.id}
+                            >
+                              <div className="flex items-center gap-2">{currency.name}</div>
+                            </SelectItem>
                           )
                         )}
                       </SelectContent>

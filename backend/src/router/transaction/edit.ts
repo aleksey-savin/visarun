@@ -100,13 +100,22 @@ export const editTransactionTrpcRoute = transactionUpdateProcedure
       }
     }
 
-    // amountInSelectedCurrency and senderId can be modified only in draft status
+    // amountInSelectedCurrency can be modified only in draft status
     if (
       ['details_sent', 'check_uploaded', 'paid_uninformed', 'paid_informed', 'completed'].includes(
         existingTransaction.status
       )
     ) {
       updateData.amountInSelectedCurrency = undefined;
+    }
+
+    // senderId can be modified only in draft status or in details_sent, check_uploaded, paid_uninformed, paid_informed if was not sat before
+    if (
+      (['details_sent', 'check_uploaded', 'paid_uninformed', 'paid_informed'].includes(existingTransaction.status)
+        && existingTransaction.senderId !== undefined
+        && existingTransaction.senderId !== null)
+      || ['completed'].includes(existingTransaction.status)
+    ) {
       updateData.senderId = undefined;
     }
 

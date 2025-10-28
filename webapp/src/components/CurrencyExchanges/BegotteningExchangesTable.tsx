@@ -142,8 +142,7 @@ const BegotteningExchangesTable = ({
                         (exchange.begottenTransactions
                           .filter((tr: any) => tr.status === 'completed')
                           .reduce(
-                            ({ acc, tr }: { acc: number; tr: any }) =>
-                              acc + Number(tr.amountInSelectedCurrency),
+                            (acc: number, tr: any) => acc + Number(tr.amountInSelectedCurrency),
                             0
                           ) /
                           exchange.amountInSelectedCurrencyFrom) *
@@ -167,7 +166,7 @@ const BegotteningExchangesTable = ({
                     exchange.begottenTransactions
                       .filter((tr: any) => tr.status === 'completed')
                       .reduce(
-                        ({ acc, tr }: { acc: number; tr: any }) =>
+                        (acc: number, tr: any) =>
                           acc + Number(tr.amountInSelectedCurrency),
                         0
                       ),
@@ -187,7 +186,7 @@ const BegotteningExchangesTable = ({
                   exchange.begottenTransactions
                     .filter((tr: any) => tr.status !== 'completed')
                     .reduce(
-                      ({ acc, tr }: { acc: number; tr: any }) =>
+                      (acc: number, tr: any ) =>
                         acc + Number(tr.amountInSelectedCurrency),
                       0
                     ),

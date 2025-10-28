@@ -241,6 +241,20 @@ export const getOrderTrpcRoute = orderReadProcedure
                     lastName: true,
                   },
                 },
+                fromCurrency: {
+                  select: {
+                    id: true,
+                    name: true,
+                    isBegottening: true,
+                  },
+                },
+                toCurrency: {
+                  select: {
+                    id: true,
+                    name: true,
+                    isBegottening: true,
+                  },
+                },
               },
             })
           : [];

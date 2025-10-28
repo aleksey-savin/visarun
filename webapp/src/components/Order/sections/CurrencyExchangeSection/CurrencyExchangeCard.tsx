@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {StoreCurrency} from "@/stores/currencyExchange/currency-exchange-store.ts";
 
 const formSchema = z.object({
   exchangeRate: z.number().positive().optional(),
@@ -49,6 +50,8 @@ interface CurrencyExchange {
   orderItemId?: string;
   fromCurrencyId?: string;
   toCurrencyId?: string;
+  fromCurrency?: StoreCurrency;
+  toCurrency?: StoreCurrency;
 }
 
 type FieldName =
@@ -112,6 +115,8 @@ const CurrencyExchangeCard = ({
     orderItemId: savedExchange?.orderItemId,
     fromCurrencyId: savedExchange?.fromCurrencyId,
     toCurrencyId: savedExchange?.toCurrencyId,
+    fromCurrency: savedExchange?.fromCurrency,
+    toCurrency: savedExchange?.toCurrency,
   });
 
   const normalizeInput = (input: Record<string, any>) => {
@@ -215,6 +220,22 @@ const CurrencyExchangeCard = ({
       [fieldName]: value ? value : form.getValues(fieldName),
     });
   };
+
+  const handleCurrencyChange = (currencyType: 'fromCurrency' | 'toCurrency', newCurrency: StoreCurrency) => {
+    if (currencyType === 'fromCurrency') {
+      setCurrencyExchange({
+        ...currencyExchange,
+        fromCurrencyId: newCurrency.id,
+        fromCurrency: newCurrency,
+      });
+    } else if (currencyType === 'toCurrency') {
+      setCurrencyExchange({
+        ...currencyExchange,
+        toCurrencyId: newCurrency.id,
+        toCurrency: newCurrency,
+      });
+    }
+  }
 
   const [paymentType, setPaymentType] = useState('partial');
 
@@ -349,6 +370,7 @@ const CurrencyExchangeCard = ({
           currencyExchange={currencyExchange}
           handleBlur={handleBlur}
           handleChange={handleChange}
+          handleCurrencyChange={handleCurrencyChange}
           handleAmountInSelectedCurrencyToBlur={handleAmountInSelectedCurrencyToBlur}
         />
 

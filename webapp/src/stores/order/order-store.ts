@@ -173,6 +173,16 @@ export interface StoreCurrencyExchange {
   minTransactionAmountInSelectedCurrency?: number;
   fromCurrencyId?: string;
   toCurrencyId?: string;
+  fromCurrency?: {
+    id: string;
+    name: string;
+    isBegottening: boolean;
+  };
+  toCurrency?: {
+    id: string;
+    name: string;
+    isBegottening: boolean;
+  };
   createdById: string;
   updatedById: string;
   // fromCurrency: StoreCurrency;
