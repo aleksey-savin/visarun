@@ -296,14 +296,14 @@ const EditOrderPage = () => {
           fromCurrencyId: i.fromCurrencyId ?? undefined,
           toCurrencyId: i.toCurrencyId ?? undefined,
           fromCurrency: {
-            id: i.fromCurrency?.id ?? undefined,
-            name: i.fromCurrency?.name ?? undefined,
-            isBegottening: i.fromCurrency?.isBegottening ?? undefined,
+            id: i.fromCurrency?.id ?? '',
+            name: i.fromCurrency?.name ?? '',
+            isBegottening: i.fromCurrency?.isBegottening ?? false,
           },
           toCurrency: {
-            id: i.toCurrency?.id ?? undefined,
-            name: i.toCurrency?.name ?? undefined,
-            isBegottening: i.toCurrency?.isBegottening ?? undefined,
+            id: i.toCurrency?.id ?? '',
+            name: i.toCurrency?.name ?? '',
+            isBegottening: i.toCurrency?.isBegottening ?? false,
           },
           createdById: i.createdById,
           updatedById: i.updatedById,
@@ -435,19 +435,19 @@ const EditOrderPage = () => {
   ]);
 
   // Check if order contains only acceleration or exchange services
-  const hasOnlyServicesWithoutPersonalDataVerification = orderItems?.every(item =>
-    item.serviceType === 'acceleration' || item.serviceType === 'currencyExchange'
+  const hasOnlyServicesWithoutPersonalDataVerification = orderItems?.every(
+    item => item.serviceType === 'acceleration' || item.serviceType === 'currencyExchange'
   );
 
-  const hasOnlyCurrencyExchangeServices = orderItems?.every(item =>
-    item.serviceType === 'currencyExchange'
+  const hasOnlyCurrencyExchangeServices = orderItems?.every(
+    item => item.serviceType === 'currencyExchange'
   );
 
   //TODO REDO for multiple exchanges in one order
 
   // Check if order contains only RUB -> X exchanges to enable CurrencyExchangePuzzle
-  const begotteningCurrencyExchangeId = currencyExchanges?.find(ex =>
-    ex.fromCurrency?.isBegottening
+  const begotteningCurrencyExchangeId = currencyExchanges?.find(
+    ex => ex.fromCurrency?.isBegottening
   )?.id;
 
   const clientsHaveServicePuzzleErrors = useMemo(
@@ -755,25 +755,21 @@ const EditOrderPage = () => {
         </div>
       </div>
 
-      {begotteningCurrencyExchangeId &&
-        activeStep.status === 'payment_pending' && (
-          <CurrencyExchangePuzzle
-            begotteningCurrencyExchangeId={begotteningCurrencyExchangeId}
-            clientId={
+      {begotteningCurrencyExchangeId && activeStep.status === 'payment_pending' && (
+        <CurrencyExchangePuzzle
+          begotteningCurrencyExchangeId={begotteningCurrencyExchangeId}
+          clientId={
             //TODO redo
-              orderItems?.find(item => item.serviceType === 'currencyExchange')?.clientId ||
-              ''
-            }
-            onEditOrder={() => handleStepClick(steps[0])}
-            handleFinishPuzzling={() => handleNext()}
-          />
-        )}
+            orderItems?.find(item => item.serviceType === 'currencyExchange')?.clientId || ''
+          }
+          onEditOrder={() => handleStepClick(steps[0])}
+          handleFinishPuzzling={() => handleNext()}
+        />
+      )}
 
       <div
         className="p-0 md:p-6"
-        hidden={
-          !!begotteningCurrencyExchangeId && activeStep.status === 'payment_pending'
-        }
+        hidden={!!begotteningCurrencyExchangeId && activeStep.status === 'payment_pending'}
       >
         <div className="grid grid-cols-1 lg:grid-cols-12">
           <div className="flex flex-col lg:col-span-9 gap-2.5">
@@ -874,8 +870,10 @@ const EditOrderPage = () => {
                   : 'secondary'
               }
               disabled={
-                !(activeStep.canProceed &&
-                  (['', '-'].includes(activeClientId) || order.status === 'payment_pending'))
+                !(
+                  activeStep.canProceed &&
+                  (['', '-'].includes(activeClientId) || order.status === 'payment_pending')
+                )
               }
               onClick={handleNext}
               className="flex border-none w-full items-center justify-between text-sm"
