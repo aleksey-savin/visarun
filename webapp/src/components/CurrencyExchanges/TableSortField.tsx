@@ -1,8 +1,8 @@
-import { TableHead } from '@/components/ui/table.tsx';
-import IconArrowsSort from '@/assets/tabler-icons/IconArrowsSort.tsx';
+import { TableHead } from '@/components/ui/table';
+import IconArrowsSort from '@/assets/tabler-icons/IconArrowsSort';
 import { ReactNode } from 'react';
-import IconArrowsSortDown from '@/assets/tabler-icons/IconArrowsSortDown.tsx';
-import IconArrowsSortUp from '@/assets/tabler-icons/IconArrowsSortUp.tsx';
+import IconArrowsSortDown from '@/assets/tabler-icons/IconArrowsSortDown';
+import IconArrowsSortUp from '@/assets/tabler-icons/IconArrowsSortUp';
 
 type SortState = 'asc' | 'desc' | 'none';
 

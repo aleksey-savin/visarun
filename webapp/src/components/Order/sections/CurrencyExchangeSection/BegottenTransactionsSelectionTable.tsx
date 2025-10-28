@@ -5,15 +5,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table.tsx';
+} from '@/components/ui/table';
 import { Link } from 'react-router-dom';
-import { getEditCurrencyExchangeRoute } from '@/lib/routes.ts';
-import { Badge } from '@/components/ui/badge.tsx';
+import { getEditCurrencyExchangeRoute } from '@/lib/routes';
+import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Crown } from 'lucide-react';
-import { formatCurrency } from '@/utils/currency.ts';
-import Summ from '@/components/ui/summ.tsx';
-import { StoreCurrencyExchange } from '@/stores/currencyExchange/currency-exchange-store.ts';
-import { Checkbox } from '@/components/ui/checkbox.tsx';
+import { formatCurrency } from '@/utils/currency';
+import Summ from '@/components/ui/summ';
+import { StoreCurrencyExchange } from '@/stores/currencyExchange/currency-exchange-store';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const BegottenTransactionsSelectionTable = ({
   allCurrencyExchanges,

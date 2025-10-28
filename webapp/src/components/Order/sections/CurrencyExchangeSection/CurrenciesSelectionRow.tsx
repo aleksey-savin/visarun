@@ -1,9 +1,9 @@
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select.tsx';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { SelectValue } from '@radix-ui/react-select';
-import { Label } from '@/components/ui/label.tsx';
-import { trpc } from '@/lib/trpc.ts';
+import { Label } from '@/components/ui/label';
+import { trpc } from '@/lib/trpc';
 import { UseFormReturn } from 'react-hook-form';
 
 interface CurrencyExchange {

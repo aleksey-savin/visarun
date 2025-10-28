@@ -25,7 +25,7 @@ import PersonalData from '@/components/Order/steps/PersonalData';
 import Payment from '@/components/Order/steps/Payment';
 import { cn } from '@/lib/utils';
 import { getAllVisaApplicationsRoute, getAllCurrencyExchangesRoute } from '@/lib/routes';
-import CurrencyExchangePuzzle from '@/components/Order/steps/CurrencyExchangePuzzle.tsx';
+import CurrencyExchangePuzzle from '@/components/Order/steps/CurrencyExchangePuzzle';
 
 // Define the restricted status types that can be used in step navigation
 type StepStatus = 'draft' | 'personal_data_verification' | 'payment_pending' | 'submitted';

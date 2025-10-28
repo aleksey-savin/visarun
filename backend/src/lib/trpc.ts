@@ -42,7 +42,7 @@ const getUserFromRequest = (req: Request): TokenPayload | undefined => {
   const token = authHeader.split(' ')[1]; // Bearer token format
   if (!token) return undefined;
 
-  // Use the existing verifyToken function from utils/jwt.ts
+  // Use the existing verifyToken function from utils/jwt
   const payload = verifyToken(token);
   return payload || undefined;
 };

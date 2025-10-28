@@ -1,10 +1,10 @@
-import { Card } from '@/components/ui/card.tsx';
-import IconLoader from '@/assets/tabler-icons/IconLoader.tsx';
-import { formatCurrency } from '@/utils/currency.ts';
-import Summ from '@/components/ui/summ.tsx';
-import { Badge } from '@/components/ui/badge.tsx';
+import { Card } from '@/components/ui/card';
+import IconLoader from '@/assets/tabler-icons/IconLoader';
+import { formatCurrency } from '@/utils/currency';
+import Summ from '@/components/ui/summ';
+import { Badge } from '@/components/ui/badge';
 import { Check, CircleCheck, Copy, Crown, Download, Trash2 } from 'lucide-react';
-import ContactMethodIcon from '../ContactMethod/ContactMethodIcon.tsx';
+import ContactMethodIcon from '../ContactMethod/ContactMethodIcon';
 import React, { useEffect, useState } from 'react';
 import {
   Select,
@@ -14,10 +14,10 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select.tsx';
-import { Input } from '@/components/ui/input.tsx';
-import { Switch } from '@/components/ui/switch.tsx';
-import TransactionCheckUpload from '@/components/CurrencyExchanges/TransactionCheckUpload.tsx';
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import TransactionCheckUpload from '@/components/CurrencyExchanges/TransactionCheckUpload';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,13 +28,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog.tsx';
-import { Button } from '@/components/ui/button.tsx';
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import useCurrencyExchangeStore, {
   StoreCurrencyExchange,
   StoreTransaction,
-} from '@/stores/currencyExchange/currency-exchange-store.ts';
-import ExchangeTag from '@/components/CurrencyExchanges/ExchangeTag.tsx';
+} from '@/stores/currencyExchange/currency-exchange-store';
+import ExchangeTag from '@/components/CurrencyExchanges/ExchangeTag';
 
 const TransactionCard = ({
   transaction,

@@ -1,7 +1,7 @@
-import { StoreCurrencyExchange } from '@/stores/currencyExchange/currency-exchange-store.ts';
-import { Badge } from '@/components/ui/badge.tsx';
+import { StoreCurrencyExchange } from '@/stores/currencyExchange/currency-exchange-store';
+import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
-import { formatCurrency } from '@/utils/currency.ts';
+import { formatCurrency } from '@/utils/currency';
 
 const ExchangeTag = ({
   currencyExchange,

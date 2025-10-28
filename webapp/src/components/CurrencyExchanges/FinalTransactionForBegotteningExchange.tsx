@@ -6,20 +6,20 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select.tsx';
-import { Input } from '@/components/ui/input.tsx';
-import { Switch } from '@/components/ui/switch.tsx';
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import React, { useEffect, useState } from 'react';
 import useCurrencyExchangeStore, {
   StoreCurrencyExchange,
   StoreTransaction,
-} from '@/stores/currencyExchange/currency-exchange-store.ts';
-import { Button } from '@/components/ui/button.tsx';
-import TransactionCheckUpload from '@/components/CurrencyExchanges/TransactionCheckUpload.tsx';
-import { getCurrencySymbol } from '@/utils/currency.ts';
+} from '@/stores/currencyExchange/currency-exchange-store';
+import { Button } from '@/components/ui/button';
+import TransactionCheckUpload from '@/components/CurrencyExchanges/TransactionCheckUpload';
+import { getCurrencySymbol } from '@/utils/currency';
 import { Check, Copy, Download } from 'lucide-react';
-import { Card } from '@/components/ui/card.tsx';
-import { trpc } from '@/lib/trpc.ts';
+import { Card } from '@/components/ui/card';
+import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 
 const FinalTransactionForBegotteningExchange = ({

@@ -28,8 +28,8 @@ import useOrderStore from '@/stores/order/order-store.js';
 import ClientName from '../sections/ClientSection/ClientName';
 import Comments from '../Comments';
 import VisarunSection from '../sections/VisarunSection/VisarunSection';
-import CurrencyExchangeSection from '../sections/CurrencyExchangeSection/CurrencyExchangeSection.tsx';
-import AddExchangeButton from '@/components/Order/sections/CurrencyExchangeSection/AddExchangeButton.tsx';
+import CurrencyExchangeSection from '../sections/CurrencyExchangeSection/CurrencyExchangeSection';
+import AddExchangeButton from '@/components/Order/sections/CurrencyExchangeSection/AddExchangeButton';
 
 const ServicePuzzle = ({
   client,

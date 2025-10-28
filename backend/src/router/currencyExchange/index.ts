@@ -3,8 +3,8 @@ import { deleteCurrencyExchangeTrpcRoute } from './delete.js';
 import { getAllCurrencyExchangesTrpcRoute } from './getAll.js';
 import { getOneCurrencyExchangeTrpcRoute } from './getOne.js';
 import { editCurrencyExchangeTrpcRoute } from './edit.js';
-import { updateCurrencyExchangeStatusTrpcRoute } from './updateStatus.ts';
-import { getAllCurrencyExchangeCombinationsTrpcRoute } from './getAllCombinations.ts';
+import { updateCurrencyExchangeStatusTrpcRoute } from './updateStatus.js';
+import { getAllCurrencyExchangeCombinationsTrpcRoute } from './getAllCombinations.js';
 
 export const currencyExchangeRoutes = {
   create: createCurrencyExchangeTrpcRoute,

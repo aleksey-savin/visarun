@@ -4,18 +4,18 @@ import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { trpc } from '@/lib/trpc.ts';
+import { trpc } from '@/lib/trpc';
 import { useEffect, useState } from 'react';
-import CurrenciesSelectionRow from '@/components/Order/sections/CurrencyExchangeSection/CurrenciesSelectionRow.tsx';
-import PaymentDetails from '@/components/Order/sections/CurrencyExchangeSection/PaymentDetails.tsx';
-import BankingDetailsCard from '@/components/Order/sections/CurrencyExchangeSection/BankingDetailsCard.tsx';
+import CurrenciesSelectionRow from '@/components/Order/sections/CurrencyExchangeSection/CurrenciesSelectionRow';
+import PaymentDetails from '@/components/Order/sections/CurrencyExchangeSection/PaymentDetails';
+import BankingDetailsCard from '@/components/Order/sections/CurrencyExchangeSection/BankingDetailsCard';
 import useOrderStore, {
   StoreClient,
   StoreCurrencyExchange,
   StoreOrderItem,
-} from '@/stores/order/order-store.ts';
+} from '@/stores/order/order-store';
 import { Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button.tsx';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog.tsx';
+} from '@/components/ui/alert-dialog';
 
 const formSchema = z.object({
   exchangeRate: z.number().positive().optional(),

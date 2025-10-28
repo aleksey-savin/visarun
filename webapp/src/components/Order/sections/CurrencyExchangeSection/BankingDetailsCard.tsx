@@ -1,8 +1,8 @@
-import { Label } from '@/components/ui/label.tsx';
-import { Input } from '@/components/ui/input.tsx';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card.tsx';
-import BankingDetailsUpload from '@/components/Order/sections/CurrencyExchangeSection/BankingDetailsUpload.tsx';
+import { Card } from '@/components/ui/card';
+import BankingDetailsUpload from '@/components/Order/sections/CurrencyExchangeSection/BankingDetailsUpload';
 import { useState } from 'react';
 
 type BankingDetailsProps = {

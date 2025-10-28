@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, Trash2, File } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { FileUpload } from '@/components/ui/file-upload.tsx';
+import { FileUpload } from '@/components/ui/file-upload';
 
 interface UploadedFile {
   name: string;

@@ -1,9 +1,9 @@
 import { AlertTriangle, Search, X } from 'lucide-react';
-import { trpc } from '@/lib/trpc.ts';
-import CurrencyExchangesTable from '@/components/CurrencyExchanges/CurrencyExchangesTable.tsx';
+import { trpc } from '@/lib/trpc';
+import CurrencyExchangesTable from '@/components/CurrencyExchanges/CurrencyExchangesTable';
 import { useEffect, useState } from 'react';
-import { Input } from '@/components/ui/input.tsx';
-import { Button } from '@/components/ui/button.tsx';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -12,10 +12,10 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select.tsx';
-import SelectedCurrencyExchangeDialog from '@/components/CurrencyExchanges/SelectedCurrencyExchangeDialog.tsx';
-import useCurrencyExchangeStore from '@/stores/currencyExchange/currency-exchange-store.ts';
-import BegotteningExchangesTable from '@/components/CurrencyExchanges/BegotteningExchangesTable.tsx';
+} from '@/components/ui/select';
+import SelectedCurrencyExchangeDialog from '@/components/CurrencyExchanges/SelectedCurrencyExchangeDialog';
+import useCurrencyExchangeStore from '@/stores/currencyExchange/currency-exchange-store';
+import BegotteningExchangesTable from '@/components/CurrencyExchanges/BegotteningExchangesTable';
 
 type SortItem = 'asc' | 'desc' | 'none';
 type SortItemName = 'position' | 'inProgress' | 'remains' | 'minTransactionAmount' | 'deadline';

@@ -1,4 +1,4 @@
-import { currencyExchangeReadProcedure } from '../../lib/trpc.ts';
+import { currencyExchangeReadProcedure } from '../../lib/trpc';
 
 export const getAllCurrencyExchangeCombinationsTrpcRoute = currencyExchangeReadProcedure.query(
   async ({ ctx }) => {

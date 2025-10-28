@@ -6,27 +6,27 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog.tsx';
+} from '@/components/ui/dialog';
 import { formatCurrency, getCurrencyAmount, getCurrencySymbol } from '@/utils/currency.js';
-import { Progress } from '@/components/ui/progress.tsx';
-import { Badge } from '@/components/ui/badge.tsx';
-import Summ from '@/components/ui/summ.tsx';
-import IconCoins from '@/assets/tabler-icons/IconCoins.tsx';
-import IconLoader from '@/assets/tabler-icons/IconLoader.tsx';
-import ContactMethodIcon from '@/components/ContactMethod/ContactMethodIcon.tsx';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import Summ from '@/components/ui/summ';
+import IconCoins from '@/assets/tabler-icons/IconCoins';
+import IconLoader from '@/assets/tabler-icons/IconLoader';
+import ContactMethodIcon from '@/components/ContactMethod/ContactMethodIcon';
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { trpc } from '@/lib/trpc.ts';
+import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import TransactionCard from '@/components/CurrencyExchanges/TransactionCard.tsx';
+import TransactionCard from '@/components/CurrencyExchanges/TransactionCard';
 import useCurrencyExchangeStore, {
   StoreTransaction,
-} from '@/stores/currencyExchange/currency-exchange-store.ts';
+} from '@/stores/currencyExchange/currency-exchange-store';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { Card } from '@/components/ui/card.tsx';
-import { Switch } from '@/components/ui/switch.tsx';
-import ExchangeTag from '@/components/CurrencyExchanges/ExchangeTag.tsx';
-import FinalTransactionForBegotteningExchange from '@/components/CurrencyExchanges/FinalTransactionForBegotteningExchange.tsx';
+import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import ExchangeTag from '@/components/CurrencyExchanges/ExchangeTag';
+import FinalTransactionForBegotteningExchange from '@/components/CurrencyExchanges/FinalTransactionForBegotteningExchange';
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {

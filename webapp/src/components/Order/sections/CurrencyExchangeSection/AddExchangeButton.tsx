@@ -1,6 +1,6 @@
-import { trpc } from '@/lib/trpc.ts';
-import useOrderStore, { StoreClient, StoreCurrencyExchange } from '@/stores/order/order-store.ts';
-import { Button } from '@/components/ui/button.tsx';
+import { trpc } from '@/lib/trpc';
+import useOrderStore, { StoreClient, StoreCurrencyExchange } from '@/stores/order/order-store';
+import { Button } from '@/components/ui/button';
 
 const AddExchangeButton = ({
   client,

@@ -1,6 +1,6 @@
-import { Card } from '@/components/ui/card.tsx';
-import CurrencyExchangeCard from '@/components/Order/sections/CurrencyExchangeSection/CurrencyExchangeCard.tsx';
-import useOrderStore, { StoreClient } from '@/stores/order/order-store.ts';
+import { Card } from '@/components/ui/card';
+import CurrencyExchangeCard from '@/components/Order/sections/CurrencyExchangeSection/CurrencyExchangeCard';
+import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 
 const CurrencyExchangeSection = ({
   client,

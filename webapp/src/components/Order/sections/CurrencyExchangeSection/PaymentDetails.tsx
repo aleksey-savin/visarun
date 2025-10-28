@@ -1,15 +1,15 @@
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Label } from '@/components/ui/label.tsx';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs.tsx';
-import { Input } from '@/components/ui/input.tsx';
-import { Switch } from '@/components/ui/switch.tsx';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
-import { Button } from '@/components/ui/button.tsx';
-import { Calendar } from '@/components/ui/calendar.tsx';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { UseFormReturn } from 'react-hook-form';
 import { CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '@/lib/utils.ts';
+import { cn } from '@/lib/utils';
 
 interface CurrencyExchange {
   position: number;

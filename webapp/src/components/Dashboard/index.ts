@@ -1,1 +1,1 @@
-export { CurrencyCalculatorWidget } from './CurrencyCalculatorWidget.tsx';
+export { CurrencyCalculatorWidget } from './CurrencyCalculatorWidget';

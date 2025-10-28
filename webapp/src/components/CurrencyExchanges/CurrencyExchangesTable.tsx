@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button.tsx';
-import { Progress } from '@/components/ui/progress.tsx';
-import IconArrowShuffle from '@/assets/tabler-icons/IconArrowShuffle.tsx';
-import { getEditCurrencyExchangeRoute } from '@/lib/routes.ts';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import IconArrowShuffle from '@/assets/tabler-icons/IconArrowShuffle';
+import { getEditCurrencyExchangeRoute } from '@/lib/routes';
 import {
   Table,
   TableBody,
@@ -9,15 +9,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table.tsx';
-import { Badge } from '@/components/ui/badge.tsx';
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Crown, Eye } from 'lucide-react';
-import { formatCurrency, getCurrencyAmount, getCurrencySymbol } from '@/utils/currency.ts';
-import Summ from '@/components/ui/summ.tsx';
+import { formatCurrency, getCurrencyAmount, getCurrencySymbol } from '@/utils/currency';
+import Summ from '@/components/ui/summ';
 import { Link } from 'react-router-dom';
-import TableSortField from '@/components/CurrencyExchanges/TableSortField.tsx';
+import TableSortField from '@/components/CurrencyExchanges/TableSortField';
 
-// Change according to CurrencyExchanges/index.tsx
+// Change according to CurrencyExchanges/index
 type SortItem = 'asc' | 'desc' | 'none';
 type SortItemName = 'position' | 'inProgress' | 'remains' | 'minTransactionAmount' | 'deadline';
 type SortStates = Record<SortItemName, SortItem>;

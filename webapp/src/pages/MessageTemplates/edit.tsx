@@ -1,4 +1,4 @@
-// src/pages/users/EditUserPage.tsx
+// src/pages/users/EditUserPage
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';

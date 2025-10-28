@@ -44,9 +44,9 @@ function CityCard({ city }) {
         <CardTitle>{city.name}</CardTitle>
       </CardHeader>
       <CardContent>
-        <PickupLocationManager 
-          cityId={city.id} 
-          cityName={city.name} 
+        <PickupLocationManager
+          cityId={city.id}
+          cityName={city.name}
         />
       </CardContent>
     </Card>
@@ -133,7 +133,7 @@ interface PickupLocationFormData {
 
 ## Integration
 
-The component is integrated into the Countries view (`pages/Countries/view.tsx`) within the Cities tab, where each city card includes its own PickupLocationManager instance.
+The component is integrated into the Countries view (`pages/Countries/view`) within the Cities tab, where each city card includes its own PickupLocationManager instance.
 
 ## API Endpoints Used
 

@@ -1,15 +1,15 @@
-import { formatCurrency, getCurrencySymbol } from '@/utils/currency.ts';
-import { Progress } from '@/components/ui/progress.tsx';
-import Summ from '@/components/ui/summ.tsx';
-import IconCoins from '@/assets/tabler-icons/IconCoins.tsx';
-import IconLoader from '@/assets/tabler-icons/IconLoader.tsx';
-import { Card } from '@/components/ui/card.tsx';
-import { Badge } from '@/components/ui/badge.tsx';
+import { formatCurrency, getCurrencySymbol } from '@/utils/currency';
+import { Progress } from '@/components/ui/progress';
+import Summ from '@/components/ui/summ';
+import IconCoins from '@/assets/tabler-icons/IconCoins';
+import IconLoader from '@/assets/tabler-icons/IconLoader';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Check, Copy, Crown, Undo2 } from 'lucide-react';
-import ContactMethodIcon from '../../../ContactMethod/ContactMethodIcon.tsx';
-import { Button } from '@/components/ui/button.tsx';
+import ContactMethodIcon from '../../../ContactMethod/ContactMethodIcon';
+import { Button } from '@/components/ui/button';
 import React, { useState } from 'react';
-import { StoreCurrencyExchange } from '@/stores/currencyExchange/currency-exchange-store.ts';
+import { StoreCurrencyExchange } from '@/stores/currencyExchange/currency-exchange-store';
 
 const BegottenTransactionsSummary = ({
   currencyExchange,

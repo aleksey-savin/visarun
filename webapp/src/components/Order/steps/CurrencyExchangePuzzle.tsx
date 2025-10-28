@@ -1,13 +1,13 @@
 import useCurrencyExchangeStore, {
   StoreTransaction,
-} from '@/stores/currencyExchange/currency-exchange-store.ts';
-import BegottenTransactionsSelectionTable from '@/components/Order/sections/CurrencyExchangeSection/BegottenTransactionsSelectionTable.tsx';
-import BegottenTransactionsSummary from '@/components/Order/sections/CurrencyExchangeSection/BegottenTransactionsSummary.tsx';
+} from '@/stores/currencyExchange/currency-exchange-store';
+import BegottenTransactionsSelectionTable from '@/components/Order/sections/CurrencyExchangeSection/BegottenTransactionsSelectionTable';
+import BegottenTransactionsSummary from '@/components/Order/sections/CurrencyExchangeSection/BegottenTransactionsSummary';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
-import { trpc } from '@/lib/trpc.ts';
+import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
-import { Button } from '@/components/ui/button.tsx';
+import { Button } from '@/components/ui/button';
 
 const CurrencyExchangePuzzle = ({
   begotteningCurrencyExchangeId,
