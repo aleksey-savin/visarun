@@ -4,14 +4,14 @@ import { ReactNode } from 'react';
 import IconArrowsSortDown from '@/assets/tabler-icons/IconArrowsSortDown';
 import IconArrowsSortUp from '@/assets/tabler-icons/IconArrowsSortUp';
 
-type SortState = 'asc' | 'desc' | 'none';
+type SortState = 'asc' | 'desc';
 
 const TableSortFields = ({
   sortState,
   onChange,
   children,
 }: {
-  sortState: SortState;
+  sortState?: SortState;
   onChange: () => void;
   children: ReactNode;
 }) => {
