@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useVisarunTrips } from '@/hooks/useVisarunTrips';
 import useOrderStore, { type StoreClient } from '@/stores/order/order-store';
 import { CircleCheck, MapPinIcon } from 'lucide-react';
-import { trpc } from '@/lib/trpc';
+import { trpc, trpcClient } from '@/lib/trpc';
 import TripCard from './TripCard';
 import CancelBookingDialog from './CancelBookingDialog';
 import SeatSelectionDialog from './SeatSelectionDialog';
@@ -166,6 +166,41 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
           updatedAt: new Date(orderItemData.orderItem.updatedAt),
         },
       ]);
+
+      // Check if trip's transport list is empty and add default transports if needed
+      console.log(trip);
+      const currentTripTransports = trip.transports;
+      if (currentTripTransports.length === 0) {
+        try {
+          // Get default route transports for this trip's route
+          const routeTransportsData = await trpcClient.visarunRouteTransport.getAll.query({
+            routeId: trip.route.id,
+            isActive: true,
+          });
+
+          const defaultRouteTransports =
+            routeTransportsData.routeTransports?.filter((rt: any) => rt.isDefault === true) || [];
+
+          // Create trip transports for each default route transport
+          for (const defaultRouteTransport of defaultRouteTransports) {
+            try {
+              const tripTransportData = await createTripTransportMutation.mutateAsync({
+                tripId: trip.id,
+                transportId: defaultRouteTransport.transport.id,
+              });
+
+              setTripTransports(prev => [...prev, tripTransportData.tripTransport]);
+            } catch (error) {
+              console.error(
+                `Error creating trip transport for default transport ${defaultRouteTransport.transport.id}:`,
+                error
+              );
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching or creating default transports:', error);
+        }
+      }
 
       // Then create VisarunPassenger
       const visarunPassengerData = await createVisarunPassengerMutation.mutateAsync({

@@ -51,27 +51,64 @@ const OrderInfoDialog = ({ isOpen, onClose, orderInfo }: OrderInfoDialogProps) =
             {orderInfo.items && orderInfo.items.length > 0 && (
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">Order Items</h3>
-                <div className="space-y-2">
-                  {orderInfo.items.map((item: any, index: number) => (
-                    <Card key={item.id || index} className="p-3">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-start">
-                          <div className="text-sm">
-                            <div>{`${item.client.lastName} ${item.client.firstName}`}</div>
-                            <div>{item.serviceType || 'N/A'}</div>
-                            {item.service?.serviceType && (
-                              <div>
-                                <span className="font-medium">Type:</span>{' '}
-                                {item.service.serviceType}
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-right text-sm">
-                            {formatCurrency(item.finalPrice || 0, 'VND')}
-                          </div>
-                        </div>
+                <div className="space-y-4">
+                  {Object.entries(
+                    orderInfo.items
+                      .sort((a: any, b: any) => {
+                        // Primary clients first
+                        if (a.client.isPrimary && !b.client.isPrimary) return -1;
+                        if (!a.client.isPrimary && b.client.isPrimary) return 1;
+                        // Then by client name
+                        return `${a.client.lastName} ${a.client.firstName}`.localeCompare(
+                          `${b.client.lastName} ${b.client.firstName}`
+                        );
+                      })
+                      .reduce((groups: any, item: any) => {
+                        const clientKey = `${item.client.id}-${item.client.lastName} ${item.client.firstName}`;
+                        if (!groups[clientKey]) {
+                          groups[clientKey] = {
+                            client: item.client,
+                            items: [],
+                          };
+                        }
+                        groups[clientKey].items.push(item);
+                        return groups;
+                      }, {})
+                  ).map(([clientKey, group]: [string, any]) => (
+                    <div key={clientKey} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium text-sm">
+                          {`${group.client.lastName} ${group.client.firstName}`}
+                        </h4>
+                        {group.client.isPrimary && (
+                          <Badge variant="outline" className="text-xs">
+                            Primary
+                          </Badge>
+                        )}
                       </div>
-                    </Card>
+                      <div className="space-y-2 ml-4">
+                        {group.items.map((item: any, index: number) => (
+                          <Card key={item.id || index} className="p-3">
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-start">
+                                <div className="text-sm">
+                                  <div>{item.serviceType || 'N/A'}</div>
+                                  {item.service?.serviceType && (
+                                    <div>
+                                      <span className="font-medium">Type:</span>{' '}
+                                      {item.service.serviceType}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="text-right text-sm">
+                                  {formatCurrency(item.finalPrice || 0, 'VND')}
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t">

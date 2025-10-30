@@ -53,6 +53,7 @@ export default function CreateVisarunSchedulePage() {
             routeId,
             transportId: transport.transportId,
             isActive: transport.isActive,
+            isDefault: transport.isDefault,
           });
         }
       }

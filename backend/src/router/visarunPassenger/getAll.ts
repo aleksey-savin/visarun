@@ -14,6 +14,7 @@ export const getAllVisarunPassengersTrpcRoute = visarunPassengerReadProcedure
       include: {
         client: {
           select: {
+            id: true,
             firstName: true,
             lastName: true,
             isPrimary: true,
@@ -38,6 +39,8 @@ export const getAllVisarunPassengersTrpcRoute = visarunPassengerReadProcedure
                     finalPrice: true,
                     client: {
                       select: {
+                        id: true,
+                        isPrimary: true,
                         lastName: true,
                         firstName: true,
                       },

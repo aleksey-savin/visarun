@@ -45,6 +45,7 @@ const routeTransportSchema = z.object({
   id: z.string().optional(),
   transportId: z.string().min(1, 'Transport is required'),
   isActive: z.boolean().default(true),
+  isDefault: z.boolean().default(false),
 });
 
 const seatPriceSchema = z.object({
@@ -66,7 +67,13 @@ const formSchema = z.object({
         stops[0].departureTime.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
       'Departure time is required for the first stop'
     ),
-  transports: z.array(routeTransportSchema).min(1, 'At least one transport is required'),
+  transports: z
+    .array(routeTransportSchema)
+    .min(1, 'At least one transport is required')
+    .refine(transports => {
+      const defaultCount = transports.filter(t => t.isDefault).length;
+      return defaultCount <= 1;
+    }, 'Only one transport can be set as default'),
   seatPrices: z.array(seatPriceSchema).optional(),
 
   // Schedule fields
@@ -93,7 +100,13 @@ const editFormSchema = z.object({
         stops[0].departureTime.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
       'Departure time is required for the first stop'
     ),
-  transports: z.array(routeTransportSchema).min(1, 'At least one transport is required'),
+  transports: z
+    .array(routeTransportSchema)
+    .min(1, 'At least one transport is required')
+    .refine(transports => {
+      const defaultCount = transports.filter(t => t.isDefault).length;
+      return defaultCount <= 1;
+    }, 'Only one transport can be set as default'),
   seatPrices: z.array(seatPriceSchema).optional(),
 
   // Schedule fields
@@ -401,44 +414,81 @@ export default function CombinedVisarunForm({
               <div className="md:ms-6">
                 <div className="flex flex-col gap-2">
                   <Label>Available transport</Label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-4">
                     {transports.map(transport => {
                       const currentTransports = form.watch('transports');
-                      const isSelected = currentTransports.some(
+                      const selectedTransport = currentTransports.find(
                         t => t.transportId === transport.id
                       );
+                      const isSelected = !!selectedTransport;
+                      const isDefault = selectedTransport?.isDefault || false;
 
                       return (
-                        <Button
-                          key={transport.id}
-                          type="button"
-                          variant={isSelected ? 'accent' : 'secondary'}
-                          size="sm"
-                          className="flex items-center gap-2 h-10"
-                          onClick={() => {
-                            if (isSelected) {
-                              // Remove transport
-                              const fieldIndex = transportFields.findIndex(
-                                (_, index) =>
-                                  form.getValues(`transports.${index}.transportId`) === transport.id
-                              );
-                              if (fieldIndex !== -1) {
-                                removeTransport(fieldIndex);
+                        <div key={transport.id} className="relative">
+                          <Button
+                            type="button"
+                            variant={isSelected ? 'accent' : 'secondary'}
+                            size="sm"
+                            className="flex items-center gap-2 h-10"
+                            onClick={() => {
+                              if (isSelected) {
+                                // Remove transport
+                                const fieldIndex = transportFields.findIndex(
+                                  (_, index) =>
+                                    form.getValues(`transports.${index}.transportId`) ===
+                                    transport.id
+                                );
+                                if (fieldIndex !== -1) {
+                                  removeTransport(fieldIndex);
+                                }
+                              } else {
+                                // Add transport
+                                appendTransport({
+                                  transportId: transport.id,
+                                  isActive: true,
+                                  isDefault: false,
+                                });
                               }
-                            } else {
-                              // Add transport
-                              appendTransport({ transportId: transport.id, isActive: true });
-                            }
-                          }}
-                        >
-                          <IconDisplay
-                            iconFilename={transport.transportType.icon || undefined}
-                            iconType="transport-type"
-                            alt={transport.transportType.name}
-                            size="md"
-                          />
-                          <span>{transport.seatCount || 0}</span>
-                        </Button>
+                            }}
+                          >
+                            <IconDisplay
+                              iconFilename={transport.transportType.icon || undefined}
+                              iconType="transport-type"
+                              alt={transport.transportType.name}
+                              size="md"
+                            />
+                            <span>{transport.seatCount || 0}</span>
+                          </Button>
+                          {isSelected && (
+                            <Button
+                              type="button"
+                              variant={isDefault ? 'accent' : 'secondary'}
+                              size="sm"
+                              className="absolute -top-2 -right-2 h-6 w-6 p-0 text-xs"
+                              title={isDefault ? 'Default transport' : 'Set as default'}
+                              onClick={() => {
+                                const fieldIndex = transportFields.findIndex(
+                                  (_, index) =>
+                                    form.getValues(`transports.${index}.transportId`) ===
+                                    transport.id
+                                );
+                                if (fieldIndex !== -1) {
+                                  // If setting as default, remove default from all others
+                                  if (!isDefault) {
+                                    const allTransports = form.getValues('transports');
+                                    allTransports.forEach((_, index) => {
+                                      form.setValue(`transports.${index}.isDefault`, false);
+                                    });
+                                  }
+                                  // Toggle default for this transport
+                                  form.setValue(`transports.${fieldIndex}.isDefault`, !isDefault);
+                                }
+                              }}
+                            >
+                              {isDefault ? '★' : '☆'}
+                            </Button>
+                          )}
+                        </div>
                       );
                     })}
                   </div>

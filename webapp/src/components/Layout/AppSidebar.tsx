@@ -385,7 +385,7 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
 
-                  <SidebarMenuItem key="CurrencyExchanges" className="hidden md:block">
+                  <SidebarMenuItem key="CurrencyExchanges">
                     <SidebarMenuButton
                       asChild
                       isActive={

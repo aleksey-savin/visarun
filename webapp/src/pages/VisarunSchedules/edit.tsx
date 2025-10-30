@@ -27,6 +27,7 @@ interface RouteTransport {
   id: string;
   transport: { id: string };
   isActive: boolean;
+  isDefault: boolean;
 }
 
 interface RoutePrice {
@@ -85,6 +86,7 @@ export default function EditVisarunSchedulePage() {
   // Route mutations
   const editRouteMutation = trpc.visarunRoute.edit.useMutation() as any;
   const createRouteTransportMutation = trpc.visarunRouteTransport.create.useMutation() as any;
+  const editRouteTransportMutation = trpc.visarunRouteTransport.edit.useMutation() as any;
   const deleteRouteTransportMutation = trpc.visarunRouteTransport.delete.useMutation() as any;
   const createSeatPriceMutation = trpc.visarunSeatPrice.create.useMutation() as any;
   const editSeatPriceMutation = trpc.visarunSeatPrice.edit.useMutation() as any;
@@ -159,28 +161,44 @@ export default function EditVisarunSchedulePage() {
     existingTransports: RouteTransport[],
     newTransports: CombinedVisarunFormData['transports']
   ) => {
-    const existingTransportIds = new Set(existingTransports.map(t => t.transport.id));
     const newTransportIds = new Set(newTransports.map(t => t.transportId).filter(Boolean));
+    const existingTransportsMap = new Map(existingTransports.map(t => [t.transport.id, t]));
 
     // Delete removed transports
-
     for (const existingTransport of existingTransports) {
       if (!newTransportIds.has(existingTransport.transport.id)) {
         await deleteRouteTransportMutation.mutateAsync({ id: existingTransport.id });
       }
     }
 
-    // Add new transports
-
+    // Add new transports or update existing ones
     for (const newTransport of newTransports) {
-      if (newTransport.transportId && !existingTransportIds.has(newTransport.transportId)) {
-        const createData = {
-          routeId,
-          transportId: newTransport.transportId,
-          isActive: newTransport.isActive,
-        };
+      if (newTransport.transportId) {
+        const existingTransport = existingTransportsMap.get(newTransport.transportId);
 
-        await createRouteTransportMutation.mutateAsync(createData);
+        if (existingTransport) {
+          // Update existing transport if isDefault or isActive changed
+          if (
+            existingTransport.isDefault !== newTransport.isDefault ||
+            existingTransport.isActive !== newTransport.isActive
+          ) {
+            await editRouteTransportMutation.mutateAsync({
+              id: existingTransport.id,
+              isActive: newTransport.isActive,
+              isDefault: newTransport.isDefault,
+            });
+          }
+        } else {
+          // Create new transport
+          const createData = {
+            routeId,
+            transportId: newTransport.transportId,
+            isActive: newTransport.isActive,
+            isDefault: newTransport.isDefault,
+          };
+
+          await createRouteTransportMutation.mutateAsync(createData);
+        }
       }
     }
   };
@@ -285,6 +303,7 @@ export default function EditVisarunSchedulePage() {
             id: rt.id,
             transportId: rt.transport.id,
             isActive: rt.isActive,
+            isDefault: rt.isDefault,
           })) || [],
         seatPrices:
           schedule.route?.prices?.map((price: RoutePrice) => ({

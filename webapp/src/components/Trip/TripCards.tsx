@@ -36,7 +36,8 @@ const TripCards = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
     <Card
       className={cn(
         'flex flex-col justify-between p-2',
-        sortedStops.filter(stop => stop.id === activeTab).length > 0 ? 'bg-secondary' : ''
+        sortedStops.filter(stop => stop.id === activeTab).length > 0 ? 'bg-secondary' : '',
+        trip.status === 'completed' ? 'border-success' : ''
       )}
     >
       <div className="flex flex-wrap gap-2">

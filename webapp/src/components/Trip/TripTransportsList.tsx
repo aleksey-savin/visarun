@@ -15,10 +15,10 @@ import { trpc } from '@/lib/trpc';
 import TransportDropZone from './TransportDropZone';
 import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
-import { FileUpload } from '@/components/ui/file-upload';
+import TransportReportUpload from './TransportReportUpload';
+import OrderPaymentsConfirmationDialog from './OrderPaymentsConfirmationDialog';
 
 import { formatCurrency } from '@/utils/currency';
-import { createDocumentFromFileUrl } from '@/utils/fileUtils';
 
 interface TripTransport {
   id: string;
@@ -49,7 +49,11 @@ interface TripTransportsListProps {
 const TripTransportsList = ({ tripTransports, tripId, tripStatus }: TripTransportsListProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [transportToDelete, setTransportToDelete] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState<Record<string, boolean>>({});
+
+  const [isConfirmPaymentsDialogOpen, setIsConfirmPaymentsDialogOpen] = useState(false);
+  const [selectedTransportForPayments, setSelectedTransportForPayments] = useState<string | null>(
+    null
+  );
 
   const utils = trpc.useContext();
 
@@ -145,98 +149,15 @@ const TripTransportsList = ({ tripTransports, tripId, tripStatus }: TripTranspor
     }
   };
 
-  const getReportDocumentUrl = (tripTransport: TripTransport) => {
-    return tripTransport?.reportUrl
-      ? createDocumentFromFileUrl(tripTransport.id, tripTransport.reportUrl, 'transport-reports')
-      : null;
+  const handleConfirmPayments = (transportId: string) => {
+    setSelectedTransportForPayments(transportId);
+    setIsConfirmPaymentsDialogOpen(true);
   };
 
-  const handleReportUploadSuccess = async (
-    tripTransportId: string,
-    response: { fileUrl?: string }
-  ) => {
-    if (!response.fileUrl) {
-      console.error('No fileUrl in upload response');
-      return;
-    }
-
-    const fileUrl = response.fileUrl;
-
-    try {
-      await editTripTransportMutation.mutateAsync({
-        id: tripTransportId,
-        reportUrl: fileUrl,
-      });
-
-      // Refetch trip transports to update the UI
-      utils.visarunTripTransport.getByTripIds.invalidate();
-    } catch (error) {
-      console.error('Failed to update transport report:', error);
-    }
-  };
-
-  const handleReplaceReportFile = async (tripTransportId: string, file: File) => {
-    // Validate file
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      console.error('File size must be less than 10MB');
-      return;
-    }
-
-    const acceptedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.heic'];
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-    if (!acceptedTypes.includes(fileExtension)) {
-      console.error('File type not supported. Accepted types: PDF, DOC, DOCX, JPG, PNG, HEIC');
-      return;
-    }
-
-    setIsUploading(prev => ({ ...prev, [tripTransportId]: true }));
-    try {
-      const formData = new FormData();
-      formData.append('document', file);
-      formData.append('tripTransportId', tripTransportId);
-
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${baseUrl}/upload/transport-reports`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const result = await response.json();
-      const fileUrl = result.filePath;
-
-      // Update transport with new report URL
-      await editTripTransportMutation.mutateAsync({
-        id: tripTransportId,
-        reportUrl: fileUrl,
-      });
-
-      // Refetch trip transports to update the UI
-      utils.visarunTripTransport.getByTripIds.invalidate();
-    } catch (error) {
-      console.error('Failed to replace report document:', error);
-    } finally {
-      setIsUploading(prev => ({ ...prev, [tripTransportId]: false }));
-    }
-  };
-
-  const handleDeleteReport = async (tripTransportId: string) => {
-    try {
-      // Remove report URL from transport
-      await editTripTransportMutation.mutateAsync({
-        id: tripTransportId,
-        reportUrl: null,
-      });
-
-      // Refetch trip transports to update the UI
-      utils.visarunTripTransport.getByTripIds.invalidate();
-    } catch (error) {
-      console.error('Failed to delete report document:', error);
-    }
+  const handlePaymentsConfirmed = async () => {
+    // This will be called after payments are confirmed
+    setIsConfirmPaymentsDialogOpen(false);
+    setSelectedTransportForPayments(null);
   };
 
   if (!tripTransports || tripTransports.length === 0) {
@@ -355,12 +276,14 @@ const TripTransportsList = ({ tripTransports, tripId, tripStatus }: TripTranspor
 
             <div className="flex items-center gap-2">
               {tripTransport.transport?.seatCount &&
-                getPassengerCountForTripTransport(tripTransport.id) >=
-                  tripTransport.transport.seatCount && (
+                (['completed', 'rented'].includes(tripTransport.status) ||
+                  getPassengerCountForTripTransport(tripTransport.id) >=
+                    tripTransport.transport.seatCount) && (
                   <CircleCheck className="w-6 h-6 text-emerald-600" />
                 )}
 
-              {tripTransport.transport?.seatCount &&
+              {tripTransport.status !== 'completed' &&
+                tripTransport.transport?.seatCount &&
                 getPassengerCountForTripTransport(tripTransport.id) <
                   tripTransport.transport.seatCount && (
                   <LoaderCircle className="w-6 h-6 text-warning" />
@@ -536,36 +459,20 @@ const TripTransportsList = ({ tripTransports, tripId, tripStatus }: TripTranspor
                 {editTripTransportMutation.isPending ? 'Renting...' : 'Rent'}
               </Button>
             )}
+            {tripStatus !== 'scheduled' && tripTransport.status === 'completed' && (
+              <TransportReportUpload tripTransport={tripTransport} />
+            )}
             {tripStatus === 'in_process' && tripTransport.status === 'rented' && (
               <div className="space-y-2">
-                <FileUpload
-                  onChange={filePath => {
-                    if (filePath) {
-                      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                      const response = {
-                        fileUrl: filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`,
-                      };
-                      void handleReportUploadSuccess(tripTransport.id, response);
-                    }
-                  }}
-                  value={getReportDocumentUrl(tripTransport) || ''}
-                  handleReplaceFileSelect={(file: File) =>
-                    handleReplaceReportFile(tripTransport.id, file)
-                  }
-                  handleDeleteDocument={() => handleDeleteReport(tripTransport.id)}
-                  uploadEndpoint="/upload/transport-reports"
-                  fileFieldName="document"
-                  placeholder="Upload transport report"
-                  disabled={isUploading[tripTransport.id] || false}
-                />
-                {isUploading[tripTransport.id] && (
-                  <div className="flex items-center justify-center gap-2 text-sm">
-                    <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Uploading report...</span>
-                  </div>
-                )}
-                <Button size="sm" className="w-full">
-                  Complete
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleConfirmPayments(tripTransport.id)}
+                >
+                  {tripTransports.filter((item: TripTransport) => item.status === 'rented')
+                    .length === 1
+                    ? 'Confirm payments & finish trip'
+                    : ' Confirm payments'}
                 </Button>
               </div>
             )}
@@ -611,6 +518,17 @@ const TripTransportsList = ({ tripTransports, tripId, tripStatus }: TripTranspor
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirm Payments Dialog */}
+      <OrderPaymentsConfirmationDialog
+        isOpen={isConfirmPaymentsDialogOpen}
+        onClose={() => setIsConfirmPaymentsDialogOpen(false)}
+        selectedTransportId={selectedTransportForPayments}
+        tripTransports={tripTransports}
+        passengersData={passengersQuery.data || []}
+        tripId={tripId}
+        onConfirm={handlePaymentsConfirmed}
+      />
     </>
   );
 };

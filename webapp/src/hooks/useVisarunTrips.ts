@@ -46,6 +46,8 @@ export const useVisarunTrips = ({
         preferredDepartureDate: dateOnly.toISOString(),
       });
 
+      console.log(result);
+
       return result;
     },
     enabled:

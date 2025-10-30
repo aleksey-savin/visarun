@@ -5,6 +5,7 @@ export const zCreateVisarunRouteTransportTrpcInput = z.object({
   routeId: z.string().uuid('Invalid route ID'),
   transportId: z.string().uuid('Invalid transport ID'),
   isActive: z.boolean().optional().default(true),
+  isDefault: z.boolean().optional().default(false),
 });
 
 export const createVisarunRouteTransportTrpcRoute = visarunRouteTransportCreateProcedure
@@ -42,12 +43,25 @@ export const createVisarunRouteTransportTrpcRoute = visarunRouteTransportCreateP
       throw new Error('This transport is already assigned to this route');
     }
 
+    // If setting this transport as default, ensure no other transport on the same route is default
+    if (input.isDefault === true) {
+      await ctx.prisma.visarunRouteTransport.updateMany({
+        where: {
+          routeId: input.routeId,
+        },
+        data: {
+          isDefault: false,
+        },
+      });
+    }
+
     // Create the route-transport assignment
     const routeTransport = await ctx.prisma.visarunRouteTransport.create({
       data: {
         routeId: input.routeId,
         transportId: input.transportId,
         isActive: input.isActive,
+        isDefault: input.isDefault,
       },
       include: {
         route: true,

@@ -793,6 +793,7 @@ model VisarunRouteTransport {
   routeId     String
   transportId String
   isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   route     VisarunRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)

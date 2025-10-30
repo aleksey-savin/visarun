@@ -67,6 +67,11 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
         departureDateTime: 'asc',
       },
       include: {
+        transports: {
+          select: {
+            id: true,
+          },
+        },
         route: {
           select: {
             id: true,
@@ -265,6 +270,7 @@ async function getSmartVisarunTrips(params: {
       departureDateTime: 'asc',
     },
     include: {
+      transports: true,
       route: {
         select: {
           id: true,
