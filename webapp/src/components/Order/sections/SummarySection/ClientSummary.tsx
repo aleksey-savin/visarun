@@ -9,9 +9,10 @@ import ClientBadge from '@/components/Order/sections/ClientSection/ClientBadge';
 
 import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 import { Badge } from '@/components/ui/badge';
+import ExchangeTag from "@/components/CurrencyExchanges/ExchangeTag";
 
 const ClientSummary = ({ client }: { client: StoreClient }) => {
-  const { orderItems = [], visaApplications } = useOrderStore();
+  const { orderItems = [], visaApplications, currencyExchanges } = useOrderStore();
 
   const [isCopied, setIsCopied] = useState(false);
 
@@ -120,6 +121,45 @@ const ClientSummary = ({ client }: { client: StoreClient }) => {
                           {isMulti ? '- Multi' : ''}
                         </span>
                         <span className="text-sm">{amount}</span>
+                      </div>
+                    );
+                  } if (item.serviceType === 'currencyExchange' && currencyExchanges[0]) {
+                    // For currency-exchanges services
+
+                    // StoreCurrencyExchange from order-store and currency-exchange-store are incompatible
+                    const currencyExchange = {
+                      id: currencyExchanges[0].id,
+                      amountInSelectedCurrencyFrom: currencyExchanges[0].amountInSelectedCurrencyFrom,
+                      amountInSelectedCurrencyTo: currencyExchanges[0].amountInSelectedCurrencyTo,
+                      exchangeRate: currencyExchanges[0].exchangeRate,
+                      orderItemId: currencyExchanges[0].orderItemId,
+                      position: currencyExchanges[0].position,
+                      status: currencyExchanges[0].status,
+                      createdById: currencyExchanges[0].createdById,
+                      updatedById: currencyExchanges[0].updatedById,
+                      fromCurrency: {
+                        id: currencyExchanges[0].fromCurrency?.id ?? '',
+                        name: currencyExchanges[0].fromCurrency?.name ?? '',
+                        isBegottening: currencyExchanges[0].fromCurrency?.isBegottening ?? false,
+                      },
+                      toCurrency: {
+                        id: currencyExchanges[0].toCurrency?.id ?? '',
+                        name: currencyExchanges[0].toCurrency?.name ?? '',
+                        isBegottening: currencyExchanges[0].toCurrency?.isBegottening ?? false,
+                      },
+                      createdAt: currencyExchanges[0].createdAt,
+                      updatedAt: currencyExchanges[0].updatedAt,
+                      canceledByClient: false, // Doesn't matter here so set to false
+                      isBegottening: false, // Doesn't matter here so set to false
+                      transactions: [], // Doesn't matter here so set to empty array
+                      begottenTransactions: [], // Doesn't matter here so set to empty array
+                    };
+
+                    return (
+                      <div key={item.id || index} className="flex justify-between items-center">
+                        <ExchangeTag
+                          currencyExchange={currencyExchange}
+                        />
                       </div>
                     );
                   } else {

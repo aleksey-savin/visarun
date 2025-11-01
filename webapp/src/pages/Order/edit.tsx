@@ -511,12 +511,27 @@ const EditOrderPage = () => {
     );
   }, [contactMethods, clients, activeClientId]);
 
+  const orderHasCurrencyExchangeErrors = useMemo(() => {
+    // TODO redo for multiple exchanges, add banking details validation
+
+    return (
+      currencyExchanges?.length > 0
+      && (!currencyExchanges[0]?.fromCurrency?.id
+      || !currencyExchanges[0]?.amountInSelectedCurrencyFrom
+      || !currencyExchanges[0]?.toCurrency?.id
+      || !currencyExchanges[0]?.amountInSelectedCurrencyTo
+      || !currencyExchanges[0]?.exchangeRate)
+    );
+  }, [currencyExchanges]);
+
   const steps = useMemo(() => {
     const allSteps = [
       {
         name: 'Service Puzzle',
         status: 'draft',
-        canProceed: !clientsHaveServicePuzzleErrors,
+        canProceed:
+          !clientsHaveServicePuzzleErrors &&
+          !orderHasCurrencyExchangeErrors,
         isCompleted: order.status !== 'draft',
       },
       {
@@ -531,7 +546,8 @@ const EditOrderPage = () => {
         canProceed:
           !clientsHaveServicePuzzleErrors &&
           !clientsHavePersonalDataErrors &&
-          !orderHasPaymentErrors,
+          !orderHasPaymentErrors &&
+          !orderHasCurrencyExchangeErrors,
         isCompleted: !['draft', 'personal_data_verification', 'payment_pending'].includes(
           order.status
         ),
@@ -547,6 +563,7 @@ const EditOrderPage = () => {
   }, [
     clientsHaveServicePuzzleErrors,
     clientsHavePersonalDataErrors,
+    orderHasCurrencyExchangeErrors,
     orderHasPaymentErrors,
     order.status,
     hasOnlyServicesWithoutPersonalDataVerification,
