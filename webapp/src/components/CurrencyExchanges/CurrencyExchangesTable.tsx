@@ -133,7 +133,9 @@ const CurrencyExchangesTable = ({
           .map((exchange: any) => (
             <TableRow key={exchange.id} className="hover:bg-muted/50">
               <TableCell>{exchange.position}</TableCell>
-              <TableCell>
+              <TableCell
+                className="max-w-[200px]"
+              >
                 <Link
                   to={getEditCurrencyExchangeRoute({ id: exchange.id })}
                   className="hover:underline font-medium block"
@@ -141,8 +143,8 @@ const CurrencyExchangesTable = ({
                   {exchange.orderItem?.client ? (
                     <Badge variant="primary" className="w-full justify-start">
                       <Crown />
-                      <span>
-                        {exchange.orderItem?.client?.firstName || '\u00A0'}{' '}
+                      <span className="truncate">
+                        {exchange.orderItem?.client?.firstName || `Item: ${exchange.orderItemId}`}{' '}
                         {exchange.orderItem?.client?.lastName || ''}
                       </span>
                     </Badge>

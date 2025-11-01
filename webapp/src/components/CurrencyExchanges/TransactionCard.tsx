@@ -205,7 +205,7 @@ const TransactionCard = ({
                   <Badge variant="primary" className="justify-start">
                     <Crown />
                     <span>
-                      {exchangeDetailsToShow.orderItem.client.firstName || '\u00A0'}{' '}
+                      {exchangeDetailsToShow.orderItem.client.firstName || `Item: ${exchangeDetailsToShow.orderItemId}`}{' '}
                       {exchangeDetailsToShow.orderItem.client.lastName || ''}
                     </span>
                   </Badge>

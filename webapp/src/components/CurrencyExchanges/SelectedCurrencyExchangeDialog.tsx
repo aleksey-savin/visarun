@@ -858,7 +858,7 @@ const SelectedCurrencyExchangeDialog = ({
                         <Badge variant="primary" className="w-full justify-start">
                           <Crown />
                           <span>
-                            {selectedCurrencyExchange.orderItem.client.firstName || '\u00A0'}{' '}
+                            {selectedCurrencyExchange.orderItem.client.firstName || `Item: ${selectedCurrencyExchange.orderItemId}`}{' '}
                             {selectedCurrencyExchange.orderItem.client.lastName || ''}
                           </span>
                         </Badge>
