@@ -16,7 +16,12 @@ export const deleteOrderTrpcRoute = orderDeleteProcedure
           include: {
             VisaApplication: true,
             VisarunPassenger: true,
-            currencyExchange: true,
+            currencyExchange: {
+              include: {
+                transactions: true,
+                begottenTransactions: true,
+              },
+            },
           },
         },
         orderPayments: true,
@@ -67,7 +72,26 @@ export const deleteOrderTrpcRoute = orderDeleteProcedure
           }
         }
 
-        // 3. Delete all CurrencyExchanges (they have unique orderItemId constraint)
+        // 3. Delete all Transactions related to CurrencyExchanges
+        for (const item of existingOrder.items) {
+          if (item.currencyExchange) {
+            // Delete transactions related to this currency exchange
+            await ctx.prisma.transaction.deleteMany({
+              where: {
+                currencyExchangeId: item.currencyExchange.id,
+              },
+            });
+
+            // Delete transactions begotten by this currency exchange
+            await ctx.prisma.transaction.deleteMany({
+              where: {
+                begottenByCurrencyExchangeId: item.currencyExchange.id,
+              },
+            });
+          }
+        }
+
+        // 4. Delete all CurrencyExchanges (they have unique orderItemId constraint)
         for (const item of existingOrder.items) {
           if (item.currencyExchange) {
             await ctx.prisma.currencyExchange.delete({
@@ -78,35 +102,35 @@ export const deleteOrderTrpcRoute = orderDeleteProcedure
           }
         }
 
-        // 4. Delete all OrderItems
+        // 5. Delete all OrderItems
         await ctx.prisma.orderItem.deleteMany({
           where: {
             orderId: input.id,
           },
         });
 
-        // 5. Delete all OrderPayments
+        // 6. Delete all OrderPayments
         await ctx.prisma.orderPayment.deleteMany({
           where: {
             orderId: input.id,
           },
         });
 
-        // 6. Delete all OrderPickupAddresses
+        // 7. Delete all OrderPickupAddresses
         await ctx.prisma.orderPickupAddress.deleteMany({
           where: {
             orderId: input.id,
           },
         });
 
-        // 7. Delete all OrderClients
+        // 8. Delete all OrderClients
         await ctx.prisma.orderClient.deleteMany({
           where: {
             orderId: input.id,
           },
         });
 
-        // 8. Finally, delete the order itself
+        // 9. Finally, delete the order itself
         await ctx.prisma.order.delete({
           where: { id: input.id },
         });
