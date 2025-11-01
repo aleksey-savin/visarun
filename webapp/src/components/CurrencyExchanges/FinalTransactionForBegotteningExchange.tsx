@@ -17,7 +17,7 @@ import useCurrencyExchangeStore, {
 import { Button } from '@/components/ui/button';
 import TransactionCheckUpload from '@/components/CurrencyExchanges/TransactionCheckUpload';
 import { getCurrencySymbol } from '@/utils/currency';
-import { Check, Copy, Download } from 'lucide-react';
+import {Check, CircleCheck, Copy, Download} from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -29,6 +29,7 @@ const FinalTransactionForBegotteningExchange = ({
   handleEditTransaction,
   copiedText,
   bankingDetailsContent,
+  bankingDetailsUrl,
   handleCopyToClipboard,
   handleDownloadBankingDetailsFile,
   summary,
@@ -42,6 +43,7 @@ const FinalTransactionForBegotteningExchange = ({
   handleEditTransaction: (transaction: StoreTransaction) => void;
   copiedText: string | undefined;
   bankingDetailsContent: string | undefined;
+  bankingDetailsUrl: string | undefined;
   handleCopyToClipboard: (event: React.MouseEvent, text: string) => void;
   handleDownloadBankingDetailsFile: (documentUrl: string) => void;
   summary: string;
@@ -198,15 +200,14 @@ const FinalTransactionForBegotteningExchange = ({
                 : 'bg-muted hover:bg-muted/80'
             } w-full overflow-hidden hover:bg-gray-500`}
             onClick={e => {
-              if (bankingDetailsContent) handleCopyToClipboard(e, bankingDetailsContent);
-              else if (selectedCurrencyExchange?.orderItem?.client.bankingDetails.documentUrl)
-                handleDownloadBankingDetailsFile(
-                  selectedCurrencyExchange?.orderItem?.client.bankingDetails.documentUrl
-                );
+              if (bankingDetailsContent)
+                handleCopyToClipboard(e, bankingDetailsContent);
+              else if (bankingDetailsUrl)
+                handleDownloadBankingDetailsFile(bankingDetailsUrl);
             }}
             variant="secondary"
           >
-            {selectedCurrencyExchange?.orderItem?.client.bankingDetails.content ? (
+            {bankingDetailsContent ? (
               <>
                 {copiedText === bankingDetailsContent ? (
                   <Check className="w-3 h-3 ml-1 animate-pulse" />
@@ -297,21 +298,28 @@ const FinalTransactionForBegotteningExchange = ({
           <div className="flex gap-1 items-center">
             <span>Client informed</span>
             <Switch
+              checked={['paid_informed', 'completed'].includes(transaction.status)}
               onClick={() => handleChangeStatus('paid_informed')}
               disabled={!['paid_uninformed'].includes(transaction.status)}
             />
           </div>
-          <Button
-            className=""
-            variant="accent-green"
-            disabled={!['paid_informed'].includes(transaction.status)}
-            onClick={() => {
-              handleChangeStatus('completed');
-              handleCompleteExchange();
-            }}
-          >
-            Exchange completed
-          </Button>
+          {selectedCurrencyExchange.status === 'finished' ? (
+            <div className="flex gap-2 items-center">
+              <span>Exchange completed</span>
+              <CircleCheck className="w-4 text-success" />
+            </div>
+          ) : (
+            <Button
+              variant="accent-green"
+              disabled={!['paid_informed'].includes(transaction.status)}
+              onClick={() => {
+                handleChangeStatus('completed');
+                handleCompleteExchange();
+              }}
+            >
+              Exchange completed
+            </Button>
+          )}
         </div>
       )}
     </div>

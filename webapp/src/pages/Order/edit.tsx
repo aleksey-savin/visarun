@@ -293,6 +293,7 @@ const EditOrderPage = () => {
           canceledByClient: i.canceledByClient ?? false,
           deadline: i.deadline ? new Date(i.deadline) : undefined,
           minTransactionAmount: i.minTransactionAmount,
+          bankingDetails: i.bankingDetails ?? undefined,
           fromCurrencyId: i.fromCurrencyId ?? undefined,
           toCurrencyId: i.toCurrencyId ?? undefined,
           fromCurrency: {
@@ -512,7 +513,7 @@ const EditOrderPage = () => {
   }, [contactMethods, clients, activeClientId]);
 
   const orderHasCurrencyExchangeErrors = useMemo(() => {
-    // TODO redo for multiple exchanges, add banking details validation
+    // TODO redo for multiple exchanges
 
     return (
       currencyExchanges?.length > 0
@@ -520,7 +521,8 @@ const EditOrderPage = () => {
       || !currencyExchanges[0]?.amountInSelectedCurrencyFrom
       || !currencyExchanges[0]?.toCurrency?.id
       || !currencyExchanges[0]?.amountInSelectedCurrencyTo
-      || !currencyExchanges[0]?.exchangeRate)
+      || !currencyExchanges[0]?.exchangeRate
+      || !currencyExchanges[0]?.bankingDetails?.id)
     );
   }, [currencyExchanges]);
 

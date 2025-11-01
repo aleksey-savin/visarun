@@ -27,6 +27,11 @@ export const getOneBankingDetailsTrpcRoute = bankingDetailsReadProcedure
             lastName: true,
           },
         },
+        currencyExchange: {
+          select: {
+            id: true,
+          },
+        },
         createdAt: true,
         updatedAt: true,
       },

@@ -30,6 +30,11 @@ export const editBankingDetailsTrpcRoute = bankingDetailsUpdateProcedure
       throw new Error('BankingDetails was not found');
     }
 
+    // Content or documentUrl existence validation
+    if (!input.documentUrl && !input.content) {
+      throw new Error('Document url or content must be provided');
+    }
+
     // Update banking details
     const bankingDetails = await ctx.prisma.bankingDetails.update({
       where: { id },

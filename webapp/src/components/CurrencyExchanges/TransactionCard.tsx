@@ -72,8 +72,9 @@ const TransactionCard = ({
   const parentExchange = allCurrencyExchanges.find(
     (ex: StoreCurrencyExchange) => ex.id === transaction.currencyExchangeId
   );
-  const bankingDetailsContent = !exchangeDetailsToShow?.isBegottening ? exchangeDetailsToShow?.orderItem?.client?.bankingDetails?.content : null;
-  const bankingDetailsUrl = !exchangeDetailsToShow?.isBegottening ? exchangeDetailsToShow?.orderItem?.client?.bankingDetails?.documentUrl : null;
+
+  const bankingDetailsContent = !exchangeDetailsToShow?.isBegottening ? exchangeDetailsToShow?.bankingDetails?.content?.split('|').join(' · ') : null;
+  const bankingDetailsUrl = !exchangeDetailsToShow?.isBegottening ? exchangeDetailsToShow?.bankingDetails?.documentUrl : null;
 
   const handleDownloadBankingDetailsFile = (documentUrl: string) => {
     const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/upload/file/${documentUrl}`;

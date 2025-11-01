@@ -19,7 +19,6 @@ type BankingDetailsProps = {
         id: string;
         content?: string | null;
         documentUrl?: string | null;
-        clientId: string;
       }
     | undefined;
 };

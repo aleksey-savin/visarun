@@ -241,6 +241,13 @@ export const getOrderTrpcRoute = orderReadProcedure
                     lastName: true,
                   },
                 },
+                bankingDetails: {
+                  select: {
+                    id: true,
+                    content: true,
+                    documentUrl: true,
+                  },
+                },
                 fromCurrency: {
                   select: {
                     id: true,

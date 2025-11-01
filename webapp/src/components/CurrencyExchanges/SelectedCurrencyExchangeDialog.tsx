@@ -582,10 +582,8 @@ const SelectedCurrencyExchangeDialog = ({
     }
   }, [selectedCurrencyExchange?.finishedBegottenTransactionsAmountInSelectedCurrency]);
 
-  const bankingDetailsContent = selectedCurrencyExchange?.orderItem?.client?.bankingDetails?.content
-    ?.split('|')
-    .join(' · ');
-  // const bankingDetailsUrl = selectedCurrencyExchange?.orderItem?.client.bankingDetails.documentUrl;
+  const bankingDetailsContent = selectedCurrencyExchange?.bankingDetails?.content?.split('|').join(' · ');
+  const bankingDetailsUrl = selectedCurrencyExchange?.bankingDetails?.documentUrl ?? undefined;
 
   const [clientInformed, setClientInformed] = useState<boolean>(false);
   const [summaryIsOpened, setSummaryIsOpened] = useState<boolean>(false);
@@ -904,7 +902,7 @@ const SelectedCurrencyExchangeDialog = ({
                     </div>
                   </div>
 
-                  {!selectedCurrencyExchange?.isBegottening && (
+                  {!selectedCurrencyExchange?.isBegottening && (bankingDetailsContent || bankingDetailsUrl) && (
                     <div className="max-w-1/4">
                       <Button
                         className={`${
@@ -915,16 +913,12 @@ const SelectedCurrencyExchangeDialog = ({
                         onClick={e => {
                           if (bankingDetailsContent)
                             handleCopyToClipboard(e, bankingDetailsContent);
-                          else if (
-                            selectedCurrencyExchange?.orderItem?.client.bankingDetails.documentUrl
-                          )
-                            handleDownloadBankingDetailsFile(
-                              selectedCurrencyExchange?.orderItem?.client.bankingDetails.documentUrl
-                            );
+                          else if (bankingDetailsUrl)
+                            handleDownloadBankingDetailsFile(bankingDetailsUrl);
                         }}
                         variant="secondary"
                       >
-                        {selectedCurrencyExchange?.orderItem?.client.bankingDetails.content ? (
+                        {bankingDetailsContent ? (
                           <>
                             {copiedText === bankingDetailsContent ? (
                               <Check className="w-3 h-3 ml-1 animate-pulse" />
@@ -983,6 +977,7 @@ const SelectedCurrencyExchangeDialog = ({
                         handleCopyToClipboard={handleCopyToClipboard}
                         handleDownloadBankingDetailsFile={handleDownloadBankingDetailsFile}
                         bankingDetailsContent={bankingDetailsContent}
+                        bankingDetailsUrl={bankingDetailsUrl}
                         summary={summary}
                         summaryIsOpened={summaryIsOpened}
                         setSummaryIsOpened={setSummaryIsOpened}
@@ -1047,7 +1042,7 @@ const SelectedCurrencyExchangeDialog = ({
                       />
                     </div>
                     {selectedCurrencyExchange?.status === 'finished' ? (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         <span>Exchange completed</span>
                         <CircleCheck className="w-4 text-success" />
                       </div>

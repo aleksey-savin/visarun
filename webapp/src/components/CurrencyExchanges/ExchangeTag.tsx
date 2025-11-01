@@ -41,6 +41,10 @@ const ExchangeTag = ({
     errors.push('Exchange rate wasn\'t specified');
   }
 
+  if (!currencyExchange.bankingDetails?.id) {
+    errors.push('Banking details wasn\'t specified');
+  }
+
   return (
     <div className="flex gap-1">
       <Badge

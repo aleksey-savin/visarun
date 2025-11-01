@@ -34,6 +34,8 @@ const AddExchangeButton = ({
 
   const createOrderItemMutation = trpc.orderItem.create.useMutation();
 
+  const createBankingDetailsMutation = trpc.bankingDetails.create.useMutation();
+
   const {
     data: currenciesData,
     error: error,
@@ -59,6 +61,27 @@ const AddExchangeButton = ({
       basePrice: 0,
       finalPrice: 0,
     });
+
+    let newBankingDetails: {
+      content?: string | null;
+      documentUrl?: string | null;
+    } | undefined = undefined;
+    let newExchangeBankingDetailsId: string | undefined = undefined;
+
+    if (client.bankingDetails) {
+      newBankingDetails = {
+        content: client.bankingDetails.content,
+        documentUrl: client.bankingDetails.documentUrl,
+      };
+
+      // add new in currencyExchange
+      newExchangeBankingDetailsId = (
+        await createBankingDetailsMutation.mutateAsync({
+          ...newBankingDetails,
+          currencyExchangeId: newData.currencyExchange.id,
+        })
+      ).id;
+    }
 
     if (!newData.orderItem) {
       console.error('Order item was not created');
@@ -89,6 +112,12 @@ const AddExchangeButton = ({
         exchangeRate: Number(newData.currencyExchange.exchangeRate),
         amountInSelectedCurrencyFrom: Number(newData.currencyExchange.amountInSelectedCurrencyFrom),
         amountInSelectedCurrencyTo: Number(newData.currencyExchange.amountInSelectedCurrencyTo),
+        bankingDetails: newBankingDetails && newExchangeBankingDetailsId
+          ? {
+            id: newExchangeBankingDetailsId,
+            ...newBankingDetails,
+          }
+          : undefined,
         minTransactionAmountInSelectedCurrency: Number(
           newData.currencyExchange.minTransactionAmountInSelectedCurrency
         ),

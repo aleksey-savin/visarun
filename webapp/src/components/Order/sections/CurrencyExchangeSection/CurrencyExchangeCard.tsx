@@ -45,6 +45,11 @@ interface CurrencyExchange {
   exchangeRate?: number;
   amountInSelectedCurrencyFrom?: number;
   amountInSelectedCurrencyTo?: number;
+  bankingDetails?: {
+    id: string;
+    content?: string | null;
+    documentUrl?: string | null;
+  };
   deadline?: Date;
   minTransactionAmountInSelectedCurrency?: number;
   orderItemId?: string;
@@ -110,6 +115,7 @@ const CurrencyExchangeCard = ({
     exchangeRate: savedExchange?.exchangeRate,
     amountInSelectedCurrencyFrom: savedExchange?.amountInSelectedCurrencyFrom,
     amountInSelectedCurrencyTo: savedExchange?.amountInSelectedCurrencyTo,
+    bankingDetails: savedExchange?.bankingDetails,
     deadline: savedExchange?.deadline ? new Date(savedExchange.deadline) : undefined,
     minTransactionAmountInSelectedCurrency: savedExchange?.minTransactionAmountInSelectedCurrency,
     orderItemId: savedExchange?.orderItemId,
@@ -150,16 +156,10 @@ const CurrencyExchangeCard = ({
       return;
     }
 
-    const updatedCurrencyExchange = {
+    const updatedCurrencyExchange: StoreCurrencyExchange = {
       ...savedExchange,
       ...currencyExchange,
     };
-
-    setCurrencyExchanges(
-      currencyExchanges.map(ex =>
-        ex.orderItemId === currencyExchange.orderItemId ? updatedCurrencyExchange : ex
-      )
-    );
 
     try {
       await sendNormalizedInput(
@@ -177,6 +177,12 @@ const CurrencyExchangeCard = ({
           fromCurrencyId: updatedCurrencyExchange.fromCurrencyId,
           toCurrencyId: updatedCurrencyExchange.toCurrencyId,
         })
+      );
+
+      setCurrencyExchanges(
+        currencyExchanges.map(ex =>
+          ex.orderItemId === currencyExchange.orderItemId ? updatedCurrencyExchange : ex
+        )
       );
 
       const itemPrice = updatedCurrencyExchange.amountInSelectedCurrencyFrom;
@@ -259,26 +265,31 @@ const CurrencyExchangeCard = ({
     holderSurname: string,
     documentUrl: string | null
   ) => {
-    const content = `${bankName}|${cardOrPhoneNumber}|${holderName}|${holderSurname}`;
+    const content = bankName || cardOrPhoneNumber || holderName || holderSurname
+      ? `${bankName}|${cardOrPhoneNumber}|${holderName}|${holderSurname}`
+      : undefined;
 
     setSaveStatus('saving');
 
-    if (!client?.id) {
+    if (!client?.id && !savedExchange?.id) {
       setSaveStatus('error');
       return;
     }
 
+    const newBankingDetails = {
+      content: bankingDetailsType === 'card' ? content : undefined,
+      documentUrl: bankingDetailsType === 'file' ? documentUrl : undefined,
+    };
+
     try {
       if (!client.bankingDetails) {
-        //add new
-        const newBankingDetails = {
-          content: bankingDetailsType === 'card' ? content : undefined,
-          documentUrl: bankingDetailsType === 'file' ? documentUrl : undefined,
-          clientId: client.id,
-        };
+        //add new in client
 
-        const newBankingDetailsId: string = (
-          await createBankingDetailsMutation.mutateAsync(newBankingDetails)
+        const newClientBankingDetailsId: string = (
+          await createBankingDetailsMutation.mutateAsync({
+            ...newBankingDetails,
+            clientId: client.id,
+          })
         ).id;
 
         setClients(
@@ -287,7 +298,8 @@ const CurrencyExchangeCard = ({
               ? {
                   ...cl,
                   bankingDetails: {
-                    id: newBankingDetailsId,
+                    id: newClientBankingDetailsId,
+                    clientId: client.id,
                     ...newBankingDetails,
                   },
                 }
@@ -295,34 +307,67 @@ const CurrencyExchangeCard = ({
           )
         );
       } else {
-        //edit
-        const newBankingDetails = {
+        //edit in client
+        const editedBankingDetails = {
           content: bankingDetailsType === 'card' ? content : null,
           documentUrl: bankingDetailsType === 'file' ? documentUrl : null,
           clientId: client.id,
           id: client.bankingDetails.id,
         };
 
-        await editBankingDetailsMutation.mutateAsync(newBankingDetails);
+        await editBankingDetailsMutation.mutateAsync(editedBankingDetails);
 
         setClients(
           clients.map(cl =>
             cl.id === client.id
               ? {
                   ...cl,
-                  bankingDetails: newBankingDetails,
+                  bankingDetails: editedBankingDetails,
                 }
               : cl
           )
         );
       }
 
+      if (!currencyExchange.bankingDetails) {
+        // add new in currencyExchange
+        const newExchangeBankingDetailsId: string = (
+          await createBankingDetailsMutation.mutateAsync({
+            ...newBankingDetails,
+            currencyExchangeId: savedExchange.id,
+          })
+        ).id;
+
+        setCurrencyExchange({
+          ...currencyExchange,
+          bankingDetails: {
+            id: newExchangeBankingDetailsId,
+            ...newBankingDetails,
+          }
+        });
+      } else {
+        // edit in currencyExchange
+        const editedBankingDetails = {
+          content: bankingDetailsType === 'card' ? content : null,
+          documentUrl: bankingDetailsType === 'file' ? documentUrl : null,
+          id: currencyExchange.bankingDetails.id,
+          currencyExchangeId: savedExchange.id,
+        };
+
+        await editBankingDetailsMutation.mutateAsync(editedBankingDetails);
+
+        setCurrencyExchange({
+          ...currencyExchange,
+          bankingDetails: {
+            ...editedBankingDetails,
+          }
+        });
+      }
+
       setSaveStatus('saved');
     } catch {
       setSaveStatus('error');
     }
-
-    setSaveStatus('saved');
   };
 
   useEffect(() => {
@@ -388,7 +433,7 @@ const CurrencyExchangeCard = ({
 
         <BankingDetailsCard
           saveBankingDetails={saveBankingDetails}
-          existingBankingDetails={client.bankingDetails}
+          existingBankingDetails={currencyExchange.bankingDetails}
         />
       </Form>
     </Card>

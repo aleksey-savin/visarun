@@ -118,6 +118,13 @@ export const getAllCurrencyExchangesTrpcRoute = currencyExchangeReadProcedure
         updatedById: true,
         canceledByClient: true,
         exchangeRate: true,
+        bankingDetails: {
+          select: {
+            id: true,
+            content: true,
+            documentUrl: true,
+          },
+        },
         orderItem: {
           select: {
             client: {

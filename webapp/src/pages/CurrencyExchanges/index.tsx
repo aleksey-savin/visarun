@@ -88,6 +88,7 @@ const AllCurrencyExchangesPage = () => {
           ? Number(exchange.amountInSelectedCurrencyTo)
           : undefined,
         exchangeRate: exchange.exchangeRate ? Number(exchange.exchangeRate) : undefined,
+        bankingDetails: exchange.bankingDetails,
         minTransactionAmountInSelectedCurrency: exchange.minTransactionAmountInSelectedCurrency
           ? Number(exchange.minTransactionAmountInSelectedCurrency)
           : undefined,

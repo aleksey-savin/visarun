@@ -624,6 +624,7 @@ model CurrencyExchange {
   toCurrencyId                           String?
   createdById                            String
   updatedById                            String
+  bankingDetails                         BankingDetails?
   orderItem                              OrderItem              @relation(fields: [orderItemId], references: [id])
   fromCurrency                           Currency?              @relation("FromCurrency", fields: [fromCurrencyId], references: [id])
   toCurrency                             Currency?              @relation("ToCurrency", fields: [toCurrencyId], references: [id])
@@ -658,13 +659,15 @@ model Transaction {
 }
 
 model BankingDetails {
-  id          String   @id @default(uuid())
-  content     String?
-  documentUrl String?
-  clientId    String   @unique
-  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  id                 String            @id @default(uuid())
+  content            String?
+  documentUrl        String?
+  clientId           String?           @unique
+  client             Client?           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  currencyExchangeId String?           @unique
+  currencyExchange   CurrencyExchange? @relation(fields: [currencyExchangeId], references: [id], onDelete: Cascade)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @default(now()) @updatedAt
 }
 
 // VISARUN

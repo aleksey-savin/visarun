@@ -131,6 +131,7 @@ const ClientSummary = ({ client }: { client: StoreClient }) => {
                       id: currencyExchanges[0].id,
                       amountInSelectedCurrencyFrom: currencyExchanges[0].amountInSelectedCurrencyFrom,
                       amountInSelectedCurrencyTo: currencyExchanges[0].amountInSelectedCurrencyTo,
+                      bankingDetails: currencyExchanges[0].bankingDetails,
                       exchangeRate: currencyExchanges[0].exchangeRate,
                       orderItemId: currencyExchanges[0].orderItemId,
                       position: currencyExchanges[0].position,

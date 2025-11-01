@@ -171,6 +171,11 @@ export interface StoreCurrencyExchange {
   canceledByClient?: boolean;
   deadline?: Date;
   minTransactionAmountInSelectedCurrency?: number;
+  bankingDetails?: {
+    id: string;
+    content?: string | null;
+    documentUrl?: string | null;
+  };
   fromCurrencyId?: string;
   toCurrencyId?: string;
   fromCurrency?: {
