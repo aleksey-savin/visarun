@@ -17,22 +17,11 @@ import SelectedCurrencyExchangeDialog from '@/components/CurrencyExchanges/Selec
 import useCurrencyExchangeStore from '@/stores/currencyExchange/currency-exchange-store';
 import BegotteningExchangesTable from '@/components/CurrencyExchanges/BegotteningExchangesTable';
 
-type SortItem = 'asc' | 'desc' | 'none';
-type SortItemName = 'position' | 'inProgress' | 'remains' | 'minTransactionAmount' | 'deadline';
-type SortStates = Record<SortItemName, SortItem>;
-
 type StatusFilter = 'draft' | 'in_progress' | 'finished' | 'cancelled';
 
 const AllCurrencyExchangesPage = () => {
   const { allCurrencyExchanges, setAllCurrencyExchanges } = useCurrencyExchangeStore();
 
-  const [sortStates, setSortStates] = useState<SortStates>({
-    position: 'asc',
-    inProgress: 'none',
-    remains: 'none',
-    minTransactionAmount: 'none',
-    deadline: 'none',
-  });
   const [searchTerm, setSearchTerm] = useState('');
   // const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('in_progress');
@@ -41,16 +30,6 @@ const AllCurrencyExchangesPage = () => {
     setSearchTerm(value);
     // setCurrentPage(1);
   };
-
-  // const currentSortItem = Object.entries(sortStates).find(([, value]) => value !== 'none');
-
-  // let sortBy: SortItemName | undefined = undefined;
-  // let sortOrder: SortItem | undefined = undefined;
-
-  // if (currentSortItem) {
-  // sortBy = currentSortItem[0];
-  // sortOrder = currentSortItem[1];
-  // }
 
   const { data: combinationsData } = trpc.currencyExchange.getAllCombinations.useQuery();
   const currencyExchangeCombinations = combinationsData?.combinations;
@@ -275,15 +254,11 @@ const AllCurrencyExchangesPage = () => {
                 ?.fromCurrency.id === selectedCombination?.split('|')[0] ? (
                 <BegotteningExchangesTable
                   currencyExchanges={filterExchanges()}
-                  sortStates={sortStates}
-                  setSortStates={setSortStates}
                   handleSelectCurrencyExchange={handleSelectCurrencyExchange}
                 />
               ) : (
                 <CurrencyExchangesTable
                   currencyExchanges={filterExchanges()}
-                  sortStates={sortStates}
-                  setSortStates={setSortStates}
                   handleSelectCurrencyExchange={handleSelectCurrencyExchange}
                 />
               )}

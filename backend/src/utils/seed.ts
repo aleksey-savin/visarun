@@ -145,6 +145,11 @@ async function main() {
     { code: 'orders.read', description: 'View orders', category: 'orders' },
     { code: 'orders.update', description: 'Edit orders', category: 'orders' },
     { code: 'orders.delete', description: 'Delete orders', category: 'orders' },
+    {
+      code: 'orders.forceDelete',
+      description: 'Force delete orders in any state with all related data',
+      category: 'orders',
+    },
 
     // Order items management
     { code: 'orderItems.create', description: 'Create order items', category: 'orderItems' },
