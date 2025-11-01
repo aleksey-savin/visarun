@@ -169,7 +169,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
 
       // Check if trip's transport list is empty and add default transports if needed
       console.log(trip);
-      const currentTripTransports = trip.transports;
+      const currentTripTransports = trip.transports || [];
       if (currentTripTransports.length === 0) {
         try {
           // Get default route transports for this trip's route
