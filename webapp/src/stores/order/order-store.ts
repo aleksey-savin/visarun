@@ -305,6 +305,7 @@ interface OrderStore {
   visaApplications: StoreVisaApplication[];
   visarunPassengers: StoreVisarunPassenger[];
   currencyExchanges: StoreCurrencyExchange[];
+  alreadyAddedCurrencyExchange: boolean;
   orderPayments: StoreOrderPayment[];
   // visarun
   preferredDepartureCity: City | null;
@@ -328,6 +329,7 @@ interface OrderStore {
   setVisaApplications: (visaApplications: StoreVisaApplication[]) => void;
   setVisarunPassengers: (visarunPassengers: StoreVisarunPassenger[]) => void;
   setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) => void;
+  setAlreadyAddedCurrencyExchange: (alreadyAddedCurrencyExchange: boolean) => void;
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => void;
   setActiveServicePuzzleSection: (activeServicePuzzleSection: ActiveServicePuzzleSection) => void;
   reset: () => void;
@@ -371,6 +373,7 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
   visaApplications: [],
   visarunPassengers: [],
   currencyExchanges: [],
+  alreadyAddedCurrencyExchange: false,
   orderPayments: [],
 
   setSaveStatus: async (saveStatus: SaveStatus) => {
@@ -472,6 +475,7 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
     set(() => ({ visarunPassengers })),
   setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) =>
     set(() => ({ currencyExchanges })),
+  setAlreadyAddedCurrencyExchange: (alreadyAddedCurrencyExchange: boolean) => set({ alreadyAddedCurrencyExchange }),
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),
   setPreferredDepartureDate: (date: Date) => set(() => ({ preferredDepartureDate: date })),
   setPreferredDepartureCity: (city: City | null) => set(() => ({ preferredDepartureCity: city })),

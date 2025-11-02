@@ -2,7 +2,10 @@ import { trpc } from '@/lib/trpc';
 import useOrderStore, { StoreClient, StoreCurrencyExchange } from '@/stores/order/order-store';
 import { Button } from '@/components/ui/button';
 import useCurrencyCalculatorStore from "@/stores/currencyCalculator/currency-calculator-store";
-import {useEffect, useRef} from "react";
+import {useEffect} from "react";
+
+const _inProgress = new Map<string, Promise<void>>();
+const _done = new Set<string>();
 
 const AddExchangeButton = ({
   client,
@@ -43,8 +46,6 @@ const AddExchangeButton = ({
   } = trpc.currency.getAll.useQuery({
     search: '',
   });
-
-  const alreadyAddedCurrencyExchange = useRef<boolean>(false);
 
   const handleAddCurrencyExchange = async () => {
     setSaveStatus('saving');
@@ -147,7 +148,33 @@ const AddExchangeButton = ({
     setSaveStatus('saved');
   };
 
-  const handleClickOrAutoAdd = async () => {
+  const runOnceForItem = (orderId: string, fn: () => Promise<void>) : Promise<void> => {
+    // Helping function to run handleAddCurrencyExchange only once
+
+    if (_done.has(orderId)) {
+      // Already done handleAddCurrencyExchange
+      return Promise.resolve();
+    }
+    const existing = _inProgress.get(orderId);
+    if (existing) {
+      // handleAddCurrencyExchange is running right now -> return existing promise
+      return existing;
+    }
+
+    const promise = (async () => {
+      try {
+        await fn();
+        _done.add(orderId);
+      } finally {
+        _inProgress.delete(orderId);
+      }
+    })();
+
+    _inProgress.set(orderId, promise);
+    return promise;
+  };
+
+  const handleClick = async () => {
     setActiveService('currencyExchange');
 
     if (clientOrderItems.length !== 0) return;
@@ -162,13 +189,14 @@ const AddExchangeButton = ({
       || currencyCalculatorResults.exchangeRate === 0
       || currencyCalculatorResults.fromCurrencyName === ''
       || currencyCalculatorResults.toCurrencyName === ''
-      || alreadyAddedCurrencyExchange.current
     ) return;
 
-    alreadyAddedCurrencyExchange.current = true;
+    if (!currenciesData) return;
 
-    handleClickOrAutoAdd();
-  }, []);
+    if (clientOrderItems.length !== 0) return;
+
+    runOnceForItem(order.id, handleAddCurrencyExchange);
+  }, [currenciesData]);
 
   if (loading) {
     return (
@@ -188,8 +216,8 @@ const AddExchangeButton = ({
 
   return (
     <Button
-      disabled={disabled}
-      onClick={() => handleClickOrAutoAdd()}
+      disabled={disabled || !currenciesData}
+      onClick={() => handleClick()}
       variant="secondary"
       size="sm"
       className="border-none"

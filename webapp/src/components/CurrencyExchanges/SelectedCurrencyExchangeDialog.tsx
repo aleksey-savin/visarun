@@ -28,6 +28,9 @@ import { Switch } from '@/components/ui/switch';
 import ExchangeTag from '@/components/CurrencyExchanges/ExchangeTag';
 import FinalTransactionForBegotteningExchange from '@/components/CurrencyExchanges/FinalTransactionForBegotteningExchange';
 
+const _inProgress = new Map<string, Promise<void>>();
+const _done = new Set<string>();
+
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
@@ -118,6 +121,8 @@ const SelectedCurrencyExchangeDialog = ({
           Number(tr.amountInSelectedCurrency)
       )
     : null;
+
+  // console.log("current state", selectedCurrencyExchange, finalTransactionForBegotteningExchange, allCurrencyExchanges)
 
   const updateStatusTransaction = async (id: string, newStatus: any) => {
     try {
@@ -556,6 +561,11 @@ const SelectedCurrencyExchangeDialog = ({
         transactions: newTransactions,
       };
 
+      // console.log("success", [
+      //   ...allCurrencyExchanges.filter(ex => ex.id !== newTransaction.currencyExchangeId),
+      //   updatedExchangeWhereTransactionIs,
+      // ]);
+
       setAllCurrencyExchanges([
         ...allCurrencyExchanges.filter(ex => ex.id !== newTransaction.currencyExchangeId),
         updatedExchangeWhereTransactionIs,
@@ -566,7 +576,34 @@ const SelectedCurrencyExchangeDialog = ({
     }
   };
 
+  const runOnceForExchange = (exchangeId: string, fn: () => Promise<void>) : Promise<void> => {
+    // Helping function to run handleAddCurrencyExchange only once
+
+    if (_done.has(exchangeId)) {
+      // Already done handleAddCurrencyExchange
+      return Promise.resolve();
+    }
+    const existing = _inProgress.get(exchangeId);
+    if (existing) {
+      // handleAddCurrencyExchange is running right now -> return existing promise
+      return existing;
+    }
+
+    const promise = (async () => {
+      try {
+        await fn();
+        _done.add(exchangeId);
+      } finally {
+        _inProgress.delete(exchangeId);
+      }
+    })();
+
+    _inProgress.set(exchangeId, promise);
+    return promise;
+  };
+
   useEffect(() => {
+    // console.log("first", selectedCurrencyExchange);
     if (!selectedCurrencyExchange?.isBegottening) return;
 
     // Condition to create finalTransactionForBegotteningExchange
@@ -574,11 +611,10 @@ const SelectedCurrencyExchangeDialog = ({
       !finalTransactionCreated.current &&
       !finalTransactionForBegotteningExchange &&
       Number(selectedCurrencyExchange?.finishedBegottenTransactionsAmountInSelectedCurrency) > 0 &&
-      selectedCurrencyExchange.finishedBegottenTransactionsAmountInSelectedCurrency ==
-        selectedCurrencyExchange.amountInSelectedCurrencyFrom
+      selectedCurrencyExchange.finishedBegottenTransactionsAmountInSelectedCurrency == selectedCurrencyExchange.amountInSelectedCurrencyFrom
     ) {
-      finalTransactionCreated.current = true;
-      handleAddFinalTransactionForBegotteningExchange();
+      // console.log("try to run")
+      runOnceForExchange(selectedCurrencyExchange?.id, handleAddFinalTransactionForBegotteningExchange);
     }
   }, [selectedCurrencyExchange?.finishedBegottenTransactionsAmountInSelectedCurrency]);
 
@@ -1099,15 +1135,17 @@ const SelectedCurrencyExchangeDialog = ({
                     })}
               </div>
 
-              <div className="flex w-full">
-                <Button
-                  className="w-full border-blue-400 text-blue-400"
-                  variant="secondary"
-                  onClick={handleAddTransaction}
-                >
-                  + Add company transaction
-                </Button>
-              </div>
+              {!selectedCurrencyExchange?.isBegottening && (
+                <div className="flex w-full">
+                  <Button
+                    className="w-full border-blue-400 text-blue-400"
+                    variant="secondary"
+                    onClick={handleAddTransaction}
+                  >
+                    + Add company transaction
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           {/*<DialogFooter>*/}

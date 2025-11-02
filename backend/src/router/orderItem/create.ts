@@ -248,6 +248,22 @@ export const createOrderItemTrpcRoute = orderItemCreateProcedure
 
         currencyExchange = await ctx.prisma.currencyExchange.create({
           data: exchangeData,
+          include: {
+            fromCurrency: {
+              select: {
+                id: true,
+                name: true,
+                isBegottening: true,
+              },
+            },
+            toCurrency: {
+              select: {
+                id: true,
+                name: true,
+                isBegottening: true,
+              },
+            },
+          },
         });
       } catch (error) {
         console.error('Failed to create currency exchange:', error);
