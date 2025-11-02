@@ -302,6 +302,260 @@ async function main() {
       description: 'Confirm payments without requiring a document',
       category: 'orderPayments',
     },
+
+    // Service requirements management
+    {
+      code: 'serviceRequirements.create',
+      description: 'Create service requirements',
+      category: 'serviceRequirements',
+    },
+    {
+      code: 'serviceRequirements.read',
+      description: 'View service requirements',
+      category: 'serviceRequirements',
+    },
+    {
+      code: 'serviceRequirements.update',
+      description: 'Edit service requirements',
+      category: 'serviceRequirements',
+    },
+    {
+      code: 'serviceRequirements.delete',
+      description: 'Delete service requirements',
+      category: 'serviceRequirements',
+    },
+
+    // Transport types management
+    {
+      code: 'transportTypes.create',
+      description: 'Create transport types',
+      category: 'transportTypes',
+    },
+    {
+      code: 'transportTypes.read',
+      description: 'View transport types',
+      category: 'transportTypes',
+    },
+    {
+      code: 'transportTypes.update',
+      description: 'Edit transport types',
+      category: 'transportTypes',
+    },
+    {
+      code: 'transportTypes.delete',
+      description: 'Delete transport types',
+      category: 'transportTypes',
+    },
+
+    // Transports management
+    { code: 'transports.create', description: 'Create transports', category: 'transports' },
+    { code: 'transports.read', description: 'View transports', category: 'transports' },
+    { code: 'transports.update', description: 'Edit transports', category: 'transports' },
+    { code: 'transports.delete', description: 'Delete transports', category: 'transports' },
+
+    // Seat classes management
+    { code: 'seatClasses.create', description: 'Create seat classes', category: 'seatClasses' },
+    { code: 'seatClasses.read', description: 'View seat classes', category: 'seatClasses' },
+    { code: 'seatClasses.update', description: 'Edit seat classes', category: 'seatClasses' },
+    { code: 'seatClasses.delete', description: 'Delete seat classes', category: 'seatClasses' },
+
+    // Transport seat distributions management
+    {
+      code: 'transportSeatDistributions.create',
+      description: 'Create transport seat distributions',
+      category: 'transportSeatDistributions',
+    },
+    {
+      code: 'transportSeatDistributions.read',
+      description: 'View transport seat distributions',
+      category: 'transportSeatDistributions',
+    },
+    {
+      code: 'transportSeatDistributions.update',
+      description: 'Edit transport seat distributions',
+      category: 'transportSeatDistributions',
+    },
+    {
+      code: 'transportSeatDistributions.delete',
+      description: 'Delete transport seat distributions',
+      category: 'transportSeatDistributions',
+    },
+
+    // Visarun routes management
+    {
+      code: 'visarunRoutes.create',
+      description: 'Create visarun routes',
+      category: 'visarunRoutes',
+    },
+    {
+      code: 'visarunRoutes.read',
+      description: 'View visarun routes',
+      category: 'visarunRoutes',
+    },
+    {
+      code: 'visarunRoutes.update',
+      description: 'Edit visarun routes',
+      category: 'visarunRoutes',
+    },
+    {
+      code: 'visarunRoutes.delete',
+      description: 'Delete visarun routes',
+      category: 'visarunRoutes',
+    },
+
+    // Visarun route transports management
+    {
+      code: 'visarunRouteTransports.create',
+      description: 'Create visarun route transports',
+      category: 'visarunRouteTransports',
+    },
+    {
+      code: 'visarunRouteTransports.read',
+      description: 'View visarun route transports',
+      category: 'visarunRouteTransports',
+    },
+    {
+      code: 'visarunRouteTransports.update',
+      description: 'Edit visarun route transports',
+      category: 'visarunRouteTransports',
+    },
+    {
+      code: 'visarunRouteTransports.delete',
+      description: 'Delete visarun route transports',
+      category: 'visarunRouteTransports',
+    },
+
+    // Visarun route stops management
+    {
+      code: 'visarunRouteStops.create',
+      description: 'Create visarun route stops',
+      category: 'visarunRouteStops',
+    },
+    {
+      code: 'visarunRouteStops.read',
+      description: 'View visarun route stops',
+      category: 'visarunRouteStops',
+    },
+    {
+      code: 'visarunRouteStops.update',
+      description: 'Edit visarun route stops',
+      category: 'visarunRouteStops',
+    },
+    {
+      code: 'visarunRouteStops.delete',
+      description: 'Delete visarun route stops',
+      category: 'visarunRouteStops',
+    },
+
+    // Pickup locations management
+    {
+      code: 'pickupLocations.create',
+      description: 'Create pickup locations',
+      category: 'pickupLocations',
+    },
+    {
+      code: 'pickupLocations.read',
+      description: 'View pickup locations',
+      category: 'pickupLocations',
+    },
+    {
+      code: 'pickupLocations.update',
+      description: 'Edit pickup locations',
+      category: 'pickupLocations',
+    },
+    {
+      code: 'pickupLocations.delete',
+      description: 'Delete pickup locations',
+      category: 'pickupLocations',
+    },
+
+    // Visarun schedules management
+    {
+      code: 'visarunSchedules.create',
+      description: 'Create visarun schedules',
+      category: 'visarunSchedules',
+    },
+    {
+      code: 'visarunSchedules.read',
+      description: 'View visarun schedules',
+      category: 'visarunSchedules',
+    },
+    {
+      code: 'visarunSchedules.update',
+      description: 'Edit visarun schedules',
+      category: 'visarunSchedules',
+    },
+    {
+      code: 'visarunSchedules.delete',
+      description: 'Delete visarun schedules',
+      category: 'visarunSchedules',
+    },
+
+    // Visarun seat prices management
+    {
+      code: 'visarunSeatPrices.create',
+      description: 'Create visarun seat prices',
+      category: 'visarunSeatPrices',
+    },
+    {
+      code: 'visarunSeatPrices.read',
+      description: 'View visarun seat prices',
+      category: 'visarunSeatPrices',
+    },
+    {
+      code: 'visarunSeatPrices.update',
+      description: 'Edit visarun seat prices',
+      category: 'visarunSeatPrices',
+    },
+    {
+      code: 'visarunSeatPrices.delete',
+      description: 'Delete visarun seat prices',
+      category: 'visarunSeatPrices',
+    },
+
+    // Visarun trips management
+    {
+      code: 'visarunTrips.create',
+      description: 'Create visarun trips',
+      category: 'visarunTrips',
+    },
+    {
+      code: 'visarunTrips.read',
+      description: 'View visarun trips',
+      category: 'visarunTrips',
+    },
+    {
+      code: 'visarunTrips.update',
+      description: 'Edit visarun trips',
+      category: 'visarunTrips',
+    },
+    {
+      code: 'visarunTrips.delete',
+      description: 'Delete visarun trips',
+      category: 'visarunTrips',
+    },
+
+    // Visarun passengers management
+    {
+      code: 'visarunPassengers.create',
+      description: 'Create visarun passengers',
+      category: 'visarunPassengers',
+    },
+    {
+      code: 'visarunPassengers.read',
+      description: 'View visarun passengers',
+      category: 'visarunPassengers',
+    },
+    {
+      code: 'visarunPassengers.update',
+      description: 'Edit visarun passengers',
+      category: 'visarunPassengers',
+    },
+    {
+      code: 'visarunPassengers.delete',
+      description: 'Delete visarun passengers',
+      category: 'visarunPassengers',
+    },
   ];
 
   // Create permissions with duplicate checking

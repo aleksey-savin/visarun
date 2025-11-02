@@ -4,11 +4,22 @@ import { trpc } from '../../lib/trpc.js';
 const zGetAllUsersTrpcInput = z.object({
   search: z.string().optional(),
   canAcceptPayments: z.boolean().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+  offset: z.number().int().min(0).default(0),
+  excludeRoles: z.array(z.string()).optional(),
+  includeRoles: z.array(z.string()).optional(),
 });
 
 export const getAllUsersTrpcRoute = trpc.procedure
   .input(zGetAllUsersTrpcInput.optional())
-  .query(async ({ ctx, input = {} }) => {
+  .query(async ({ ctx, input }) => {
+    const limit = input?.limit;
+    const offset = input?.offset ?? 0;
+    const search = input?.search;
+    const canAcceptPayments = input?.canAcceptPayments;
+    const excludeRoles = input?.excludeRoles;
+    const includeRoles = input?.includeRoles;
+
     const whereClause: {
       OR?: Array<{
         firstName?: { contains: string; mode: 'insensitive' };
@@ -16,9 +27,9 @@ export const getAllUsersTrpcRoute = trpc.procedure
         email?: { contains: string; mode: 'insensitive' };
       }>;
       roleAssignments?: {
-        some: {
+        some?: {
           role: {
-            permissions: {
+            permissions?: {
               some: {
                 permission: {
                   code: {
@@ -27,22 +38,32 @@ export const getAllUsersTrpcRoute = trpc.procedure
                 };
               };
             };
+            name?: {
+              in: string[];
+            };
+          };
+        };
+        none?: {
+          role: {
+            name: {
+              in: string[];
+            };
           };
         };
       };
     } = {};
 
     // Add search filter
-    if (input.search) {
+    if (search) {
       whereClause.OR = [
-        { firstName: { contains: input.search, mode: 'insensitive' } },
-        { lastName: { contains: input.search, mode: 'insensitive' } },
-        { email: { contains: input.search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
       ];
     }
 
     // Add payment permission filter
-    if (input.canAcceptPayments) {
+    if (canAcceptPayments) {
       whereClause.roleAssignments = {
         some: {
           role: {
@@ -59,6 +80,39 @@ export const getAllUsersTrpcRoute = trpc.procedure
         },
       };
     }
+
+    // Add role exclusion filter
+    if (excludeRoles && excludeRoles.length > 0) {
+      if (!whereClause.roleAssignments) {
+        whereClause.roleAssignments = {};
+      }
+      whereClause.roleAssignments.none = {
+        role: {
+          name: {
+            in: excludeRoles,
+          },
+        },
+      };
+    }
+
+    // Add role inclusion filter
+    if (includeRoles && includeRoles.length > 0) {
+      if (!whereClause.roleAssignments) {
+        whereClause.roleAssignments = {};
+      }
+      whereClause.roleAssignments.some = {
+        role: {
+          name: {
+            in: includeRoles,
+          },
+        },
+      };
+    }
+
+    // Get total count
+    const total = await ctx.prisma.user.count({
+      where: whereClause,
+    });
 
     const users = await ctx.prisma.user.findMany({
       where: whereClause,
@@ -103,7 +157,17 @@ export const getAllUsersTrpcRoute = trpc.procedure
         },
         Client: true,
       },
+      ...(limit && { take: limit }),
+      skip: offset,
     });
 
-    return { users };
+    return {
+      users,
+      pagination: {
+        total,
+        limit: limit || total,
+        offset,
+        hasMore: limit ? offset + limit < total : false,
+      },
+    };
   });

@@ -9,7 +9,8 @@ function generateTripsFromSchedule(
   departureTime: string,
   validFrom: Date,
   validTo: Date | null,
-  periodMonths: number
+  periodMonths: number,
+  existingTrips?: Array<{ routeId: string; departureDateTime: Date }>
 ) {
   const trips: Array<{
     scheduleId: string;
@@ -18,6 +19,16 @@ function generateTripsFromSchedule(
     status: 'scheduled';
     isFromSchedule: boolean;
   }> = [];
+
+  // Create a set of existing departure datetimes for this route for quick lookup
+  const existingDepartureTimes = new Set<string>();
+  if (existingTrips) {
+    for (const trip of existingTrips) {
+      if (trip.routeId === routeId) {
+        existingDepartureTimes.add(trip.departureDateTime.toISOString());
+      }
+    }
+  }
 
   // Calculate end date - either validTo or validFrom + autoGeneratePeriodMonths
   const endDate =
@@ -36,13 +47,19 @@ function generateTripsFromSchedule(
     const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
 
     if (daysOfWeek.includes(dayOfWeek)) {
-      trips.push({
-        scheduleId,
-        routeId,
-        departureDateTime: new Date(currentDate),
-        status: 'scheduled',
-        isFromSchedule: true,
-      });
+      const departureDateTime = new Date(currentDate);
+
+      // Check if trip with same routeId and departureDateTime already exists
+      if (!existingDepartureTimes.has(departureDateTime.toISOString())) {
+        trips.push({
+          scheduleId,
+          routeId,
+          departureDateTime,
+          status: 'scheduled',
+          isFromSchedule: true,
+        });
+        existingDepartureTimes.add(departureDateTime.toISOString());
+      }
     }
 
     // Move to next day
@@ -236,17 +253,31 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
           },
         });
 
-        // Process each route stop
+        // First pass: Update all existing stops with temporary high stopOrder values to avoid unique constraint conflicts
+        const existingStopsToUpdate = Array.from(existingStopsByCityId.values());
+        for (let i = 0; i < existingStopsToUpdate.length; i++) {
+          const existingStop = existingStopsToUpdate[i];
+          // Use a temporary stopOrder starting from 1000 to avoid conflicts
+          await tx.visarunRouteStop.update({
+            where: { id: existingStop.id },
+            data: {
+              stopOrder: 1000 + i,
+            },
+          });
+        }
+
+        // Second pass: Process each route stop and assign correct stopOrder
         for (let i = 0; i < routeStops.length; i++) {
           const stop = routeStops[i];
+          const expectedStopOrder = i + 1;
           const existingStop = existingStopsByCityId.get(stop.cityId);
 
           if (existingStop) {
-            // Update existing stop
+            // Update existing stop with correct order and other fields
             await tx.visarunRouteStop.update({
               where: { id: existingStop.id },
               data: {
-                stopOrder: i + 1, // Sequential order based on array position
+                stopOrder: expectedStopOrder,
                 stopType: stop.stopType,
                 pickupMode: stop.pickupMode,
                 arrivalTime: stop.arrivalTime,
@@ -282,7 +313,7 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
               data: {
                 routeId: existingSchedule.routeId,
                 cityId: stop.cityId,
-                stopOrder: i + 1, // Sequential order based on array position
+                stopOrder: expectedStopOrder,
                 stopType: stop.stopType,
                 pickupMode: stop.pickupMode,
                 arrivalTime: stop.arrivalTime,
@@ -343,6 +374,17 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
         const today = new Date();
         const startDate = finalValidFrom > today ? finalValidFrom : today;
 
+        // Fetch existing trips for this route to avoid duplicates
+        const existingTripsForRoute = await tx.visarunTrip.findMany({
+          where: {
+            routeId: existingSchedule.routeId,
+          },
+          select: {
+            routeId: true,
+            departureDateTime: true,
+          },
+        });
+
         const tripsData = generateTripsFromSchedule(
           id,
           existingSchedule.routeId,
@@ -350,7 +392,8 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
           finalDepartureTime,
           startDate,
           finalValidTo,
-          finalAutoGeneratePeriodMonths
+          finalAutoGeneratePeriodMonths,
+          existingTripsForRoute
         );
 
         // Create all trips in bulk

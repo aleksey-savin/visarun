@@ -383,7 +383,21 @@ export default function CombinedVisarunForm({
         <form onSubmit={form.handleSubmit(handleSubmit as any)}>
           <Card className="bg-secondary mb-4">
             <CardContent className="space-y-5">
-              <div className="md:ms-6">
+              <div className="flex flex-col gap-2 md:ms-6">
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control as any}
+                    name="isActive"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Label>Is active</Label>
+                </div>
                 <div className="flex gap-2 mt-2">
                   <Button
                     type="button"
@@ -649,23 +663,6 @@ export default function CombinedVisarunForm({
                       </FormItem>
                     )}
                   />
-                </div>
-              </div>
-              <Separator />
-              <div className="ms-6">
-                <div className="flex gap-2">
-                  <FormField
-                    control={form.control as any}
-                    name="isActive"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <Label>Is active</Label>
                 </div>
               </div>
               <div className="ms-6">

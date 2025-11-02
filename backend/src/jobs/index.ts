@@ -12,12 +12,20 @@ import {
   runArchiveVisaApplicationsManually,
 } from './archiveVisaApplications.js';
 
+import {
+  startMaintainVisarunSchedulesJob,
+  stopMaintainVisarunSchedulesJob,
+  setupGracefulShutdown as setupMaintainVisarunSchedulesGracefulShutdown,
+  runMaintainVisarunSchedulesManually,
+} from './maintainVisarunSchedules.js';
+
 /**
  * Start all cron jobs
  */
 export const startAllJobs = () => {
   startAutoCompleteOrdersJob();
   startArchiveVisaApplicationsJob();
+  startMaintainVisarunSchedulesJob();
   console.log('✅ All cron jobs started');
 };
 
@@ -27,6 +35,7 @@ export const startAllJobs = () => {
 export const stopAllJobs = () => {
   stopAutoCompleteOrdersJob();
   stopArchiveVisaApplicationsJob();
+  stopMaintainVisarunSchedulesJob();
   console.log('🛑 All cron jobs stopped');
 };
 
@@ -36,6 +45,7 @@ export const stopAllJobs = () => {
 export const setupAllGracefulShutdowns = () => {
   setupAutoCompleteGracefulShutdown();
   setupArchiveGracefulShutdown();
+  setupMaintainVisarunSchedulesGracefulShutdown();
   console.log('🔄 Graceful shutdown handlers set up for all jobs');
 };
 
@@ -49,4 +59,8 @@ export {
   stopArchiveVisaApplicationsJob,
   setupArchiveGracefulShutdown,
   runArchiveVisaApplicationsManually,
+  startMaintainVisarunSchedulesJob,
+  stopMaintainVisarunSchedulesJob,
+  setupMaintainVisarunSchedulesGracefulShutdown,
+  runMaintainVisarunSchedulesManually,
 };

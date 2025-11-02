@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { trpc } from '../../lib/trpcProvider';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { FilterContainer, FilterFields, FilterField } from '@/components/Filters
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -14,6 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 import {
   Table,
@@ -84,9 +94,40 @@ const AllUsersPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
+  const [showClients, setShowClients] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
 
-  const { data, error, isLoading, isError, refetch } = trpc.user.getAll.useQuery();
+  const offset = (currentPage - 1) * pageSize;
+
+  // Build query parameters based on filters
+  const getQueryParams = () => {
+    const params: Record<string, unknown> = {
+      limit: pageSize,
+      offset,
+    };
+
+    if (searchTerm) {
+      params.search = searchTerm;
+    }
+
+    if (selectedRoleFilter === 'client') {
+      params.includeRoles = ['client'];
+    } else if (selectedRoleFilter === 'no-roles') {
+      params.excludeRoles = ['client', 'admin', 'manager', 'employee'];
+    } else if (selectedRoleFilter !== 'all') {
+      params.includeRoles = [selectedRoleFilter];
+    } else if (!showClients) {
+      params.excludeRoles = ['client'];
+    }
+
+    return params;
+  };
+
+  const { data, error, isLoading, isError, refetch } = trpc.user.getAll.useQuery(getQueryParams());
+
+  const { data: rolesData } = trpc.role.getAll.useQuery();
 
   const deleteMutation = trpc.user.delete.useMutation({
     onSuccess: () => {
@@ -106,33 +147,38 @@ const AllUsersPage = () => {
     deleteMutation.mutate({ id: userId });
   };
 
-  // Filter users on the frontend
+  // Automatically enable showClients if client role is selected
+  useEffect(() => {
+    if (selectedRoleFilter === 'client') {
+      setShowClients(true);
+    }
+  }, [selectedRoleFilter]);
+
+  // Backend handles filtering now
   const users = data?.users || [];
-  const filteredUsers = users.filter(user => {
-    const fullName = formatName(user);
-    const matchesSearch =
-      searchTerm === '' ||
-      fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
+  const pagination = data?.pagination;
+  const totalPages = pagination ? Math.ceil(pagination.total / pageSize) : 0;
 
-    const userRoles = user.roleAssignments.map(assignment => assignment.role.name);
-    const matchesRole =
-      selectedRoleFilter === 'all' ||
-      (selectedRoleFilter === 'no-roles' && userRoles.length === 0) ||
-      userRoles.includes(selectedRoleFilter);
-
-    return matchesSearch && matchesRole;
-  });
-
-  // Get unique roles for filter dropdown
-  const allRoles = users.flatMap(user =>
-    user.roleAssignments.map(assignment => assignment.role.name)
-  );
-  const uniqueRoles = [...new Set(allRoles)];
+  // Get unique roles for filter dropdown from roles query
+  const uniqueRoles = useMemo(() => {
+    return (rolesData?.roles || []).map(role => role.name).sort();
+  }, [rolesData]);
 
   const resetFilters = () => {
     setSearchTerm('');
     setSelectedRoleFilter('all');
+    setShowClients(false);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleRoleFilterChange = (value: string) => {
+    setSelectedRoleFilter(value);
+    setCurrentPage(1);
   };
 
   return (
@@ -145,14 +191,14 @@ const AllUsersPage = () => {
               <Input
                 placeholder="Search by name or email..."
                 value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={e => handleSearchChange(e.target.value)}
                 className="pl-10"
               />
             </div>
           </FilterField>
 
           <FilterField label="Role">
-            <Select value={selectedRoleFilter} onValueChange={setSelectedRoleFilter}>
+            <Select value={selectedRoleFilter} onValueChange={handleRoleFilterChange}>
               <SelectTrigger>
                 <SelectValue placeholder="All roles" />
               </SelectTrigger>
@@ -161,11 +207,25 @@ const AllUsersPage = () => {
                 <SelectItem value="no-roles">No roles</SelectItem>
                 {uniqueRoles.map(role => (
                   <SelectItem key={role} value={role}>
-                    {role}
+                    {role.charAt(0).toUpperCase() + role.slice(1)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </FilterField>
+
+          <FilterField label="">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="show-clients"
+                checked={showClients}
+                onCheckedChange={checked => setShowClients(checked as boolean)}
+                disabled={selectedRoleFilter === 'client'}
+              />
+              <Label htmlFor="show-clients" className="text-sm font-medium cursor-pointer">
+                Show clients
+              </Label>
+            </div>
           </FilterField>
         </FilterFields>
       </FilterContainer>
@@ -183,9 +243,9 @@ const AllUsersPage = () => {
         </div>
       )}
 
-      {filteredUsers.length === 0 && !isLoading && !isError ? (
+      {users.length === 0 && !isLoading && !isError ? (
         <div className="text-center py-8 text-muted-foreground">
-          {users.length === 0
+          {pagination?.total === 0
             ? 'No users found. Create one to get started.'
             : 'No users match your current filters.'}
         </div>
@@ -204,7 +264,7 @@ const AllUsersPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user: User) => (
+                  {users.map((user: User) => (
                     <TableRow key={user.id} className="hover:bg-muted/50">
                       <TableCell>
                         <Link to={`/users/${user.id}`} className="hover:underline font-medium">
@@ -261,7 +321,7 @@ const AllUsersPage = () => {
 
           {/* Mobile Card View */}
           <div className="lg:hidden space-y-4">
-            {filteredUsers.map((user: User) => (
+            {users.map((user: User) => (
               <Card key={user.id} className="border border-muted">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -332,6 +392,67 @@ const AllUsersPage = () => {
             ))}
           </div>
         </>
+      )}
+
+      {/* Pagination */}
+      {pagination && totalPages > 1 && (
+        <div className="mt-6 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
+          <div className="text-sm text-muted-foreground text-center sm:text-left">
+            Showing {offset + 1} to {Math.min(offset + pageSize, pagination.total)} of{' '}
+            {pagination.total} results
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  className={`w-auto ${
+                    currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'
+                  }`}
+                />
+              </PaginationItem>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(pageNum => {
+                  const distanceFromCurrent = Math.abs(pageNum - currentPage);
+                  return (
+                    distanceFromCurrent === 0 ||
+                    distanceFromCurrent === 1 ||
+                    pageNum === 1 ||
+                    pageNum === totalPages
+                  );
+                })
+                .map((pageNum, index, array) => {
+                  const prevPageNum = array[index - 1];
+                  const showEllipsis = prevPageNum && prevPageNum !== pageNum - 1;
+
+                  return (
+                    <div key={pageNum}>
+                      {showEllipsis && <span className="text-muted-foreground">...</span>}
+                      <PaginationItem>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(pageNum)}
+                          isActive={currentPage === pageNum}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    </div>
+                  );
+                })}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  className={`w-auto ${
+                    currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'
+                  }`}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       )}
 
       {/* Delete Confirmation Dialog */}

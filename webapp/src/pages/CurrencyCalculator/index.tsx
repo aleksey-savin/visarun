@@ -112,7 +112,7 @@ const CurrencyCalculatorPage = () => {
   // If we have rates, show the full content, otherwise just show the appropriate message
   if (rates) {
     return (
-      <div className="container mx-auto max-w-4xl md:mt-6 ">
+      <div className="container mx-auto max-w-4xl md:mt-6">
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-4">
           <div className="bg-card md:rounded-lg shadow-md md:p-6 p-2 md:border md:border-border/50 md:hover:border-border/90 transition-colors">
             <h2 className="md:text-2xl text-lg font-semibold md:mb-6 mb-2 text-center">
@@ -215,7 +215,7 @@ const CurrencyCalculatorPage = () => {
     // Show only header and error/setup message when no rates
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <div className="container mx-auto px-4 py-8 max-w-6xl">{mainContent}</div>
+        <div className="container mx-auto py-8 max-w-6xl">{mainContent}</div>
       </div>
     );
   }

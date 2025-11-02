@@ -4,6 +4,7 @@ import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import FormPageLayout from '@/components/Layout/Form';
 import CombinedVisarunForm, { CombinedVisarunFormData } from '@/components/VisarunSchedule/Form';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Define interfaces to avoid deep type recursion issues
 interface RouteStop {
@@ -66,6 +67,7 @@ type QueryResult = {
 export default function EditVisarunSchedulePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isEditing = !!id;
 
   // Use unknown type assertion to bypass deep type recursion
@@ -78,6 +80,10 @@ export default function EditVisarunSchedulePage() {
 
   // Schedule mutation
   const editScheduleMutation = trpc.visarunSchedule.edit.useMutation({
+    onSuccess: () => {
+      // Invalidate the query cache so fresh data is fetched on next edit
+      queryClient.invalidateQueries();
+    },
     onError: (error: any) => {
       toast.error(`Error updating schedule: ${error.message}`);
     },
