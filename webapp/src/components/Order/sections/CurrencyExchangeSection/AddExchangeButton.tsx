@@ -1,8 +1,8 @@
 import { trpc } from '@/lib/trpc';
 import useOrderStore, { StoreClient, StoreCurrencyExchange } from '@/stores/order/order-store';
 import { Button } from '@/components/ui/button';
-import useCurrencyCalculatorStore from "@/stores/currencyCalculator/currency-calculator-store";
-import {useEffect} from "react";
+import useCurrencyCalculatorStore from '@/stores/currencyCalculator/currency-calculator-store';
+import { useEffect } from 'react';
 
 const _inProgress = new Map<string, Promise<void>>();
 const _done = new Set<string>();
@@ -25,10 +25,7 @@ const AddExchangeButton = ({
     currencyExchanges,
   } = useOrderStore();
 
-  const {
-    currencyCalculatorResults,
-    setCurrencyCalculatorResults,
-  } = useCurrencyCalculatorStore();
+  const { currencyCalculatorResults, setCurrencyCalculatorResults } = useCurrencyCalculatorStore();
 
   const clientOrderItems =
     orderItems?.filter(
@@ -54,8 +51,14 @@ const AddExchangeButton = ({
       amountInSelectedCurrencyFrom: currencyCalculatorResults.amountInSelectedCurrencyFrom,
       amountInSelectedCurrencyTo: currencyCalculatorResults.amountInSelectedCurrencyTo,
       exchangeRate: currencyCalculatorResults.exchangeRate,
-      fromCurrencyId: currenciesData?.currencies?.find((curr: any) => curr.name === currencyCalculatorResults.fromCurrencyName)?.id ?? undefined,
-      toCurrencyId: currenciesData?.currencies?.find((curr: any) => curr.name === currencyCalculatorResults.toCurrencyName)?.id ?? undefined,
+      fromCurrencyId:
+        currenciesData?.currencies?.find(
+          (curr: any) => curr.name === currencyCalculatorResults.fromCurrencyName
+        )?.id ?? undefined,
+      toCurrencyId:
+        currenciesData?.currencies?.find(
+          (curr: any) => curr.name === currencyCalculatorResults.toCurrencyName
+        )?.id ?? undefined,
       orderId: order.id || '',
       clientId: client.id,
       serviceType: 'currencyExchange',
@@ -63,10 +66,12 @@ const AddExchangeButton = ({
       finalPrice: 0,
     });
 
-    let newBankingDetails: {
-      content?: string | null;
-      documentUrl?: string | null;
-    } | undefined = undefined;
+    let newBankingDetails:
+      | {
+          content?: string | null;
+          documentUrl?: string | null;
+        }
+      | undefined = undefined;
     let newExchangeBankingDetailsId: string | undefined = undefined;
 
     if (client.bankingDetails) {
@@ -79,7 +84,7 @@ const AddExchangeButton = ({
       newExchangeBankingDetailsId = (
         await createBankingDetailsMutation.mutateAsync({
           ...newBankingDetails,
-          currencyExchangeId: newData.currencyExchange.id,
+          currencyExchangeId: newData.currencyExchange?.id,
         })
       ).id;
     }
@@ -113,12 +118,13 @@ const AddExchangeButton = ({
         exchangeRate: Number(newData.currencyExchange.exchangeRate),
         amountInSelectedCurrencyFrom: Number(newData.currencyExchange.amountInSelectedCurrencyFrom),
         amountInSelectedCurrencyTo: Number(newData.currencyExchange.amountInSelectedCurrencyTo),
-        bankingDetails: newBankingDetails && newExchangeBankingDetailsId
-          ? {
-            id: newExchangeBankingDetailsId,
-            ...newBankingDetails,
-          }
-          : undefined,
+        bankingDetails:
+          newBankingDetails && newExchangeBankingDetailsId
+            ? {
+                id: newExchangeBankingDetailsId,
+                ...newBankingDetails,
+              }
+            : undefined,
         minTransactionAmountInSelectedCurrency: Number(
           newData.currencyExchange.minTransactionAmountInSelectedCurrency
         ),
@@ -148,7 +154,7 @@ const AddExchangeButton = ({
     setSaveStatus('saved');
   };
 
-  const runOnceForItem = (orderId: string, fn: () => Promise<void>) : Promise<void> => {
+  const runOnceForItem = (orderId: string, fn: () => Promise<void>): Promise<void> => {
     // Helping function to run handleAddCurrencyExchange only once
 
     if (_done.has(orderId)) {
@@ -184,12 +190,13 @@ const AddExchangeButton = ({
 
   useEffect(() => {
     if (
-      currencyCalculatorResults.amountInSelectedCurrencyTo === 0
-      || currencyCalculatorResults.amountInSelectedCurrencyFrom === 0
-      || currencyCalculatorResults.exchangeRate === 0
-      || currencyCalculatorResults.fromCurrencyName === ''
-      || currencyCalculatorResults.toCurrencyName === ''
-    ) return;
+      currencyCalculatorResults.amountInSelectedCurrencyTo === 0 ||
+      currencyCalculatorResults.amountInSelectedCurrencyFrom === 0 ||
+      currencyCalculatorResults.exchangeRate === 0 ||
+      currencyCalculatorResults.fromCurrencyName === '' ||
+      currencyCalculatorResults.toCurrencyName === ''
+    )
+      return;
 
     if (!currenciesData) return;
 
@@ -199,19 +206,11 @@ const AddExchangeButton = ({
   }, [currenciesData]);
 
   if (loading) {
-    return (
-      <div>
-        Loading...
-      </div>
-    )
+    return <div>Loading...</div>;
   }
 
   if (error) {
-    return (
-      <div>
-        Error: {error.message}
-      </div>
-    )
+    return <div>Error: {error.message}</div>;
   }
 
   return (

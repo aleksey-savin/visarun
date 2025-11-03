@@ -91,11 +91,13 @@ const CurrencyExchangePuzzle = ({
               ...exchange.orderItem,
               client: {
                 ...exchange.orderItem.client,
-                bankingDetails: exchange.orderItem.client.bankingDetails || {
-                  id: '',
-                  content: '',
-                  documentUrl: '',
-                },
+                bankingDetails: exchange.orderItem.client.bankingDetails
+                  ? {
+                      id: exchange.orderItem.client.bankingDetails.id,
+                      content: exchange.orderItem.client.bankingDetails.content || null,
+                      documentUrl: exchange.orderItem.client.bankingDetails.documentUrl || null,
+                    }
+                  : undefined,
                 firstName: exchange.orderItem.client.firstName || '',
                 lastName: exchange.orderItem.client.lastName || '',
               },
@@ -146,6 +148,13 @@ const CurrencyExchangePuzzle = ({
             ...exchange.orderItem,
             client: {
               ...exchange.orderItem.client,
+              bankingDetails: exchange.orderItem.client.bankingDetails
+                ? {
+                    id: exchange.orderItem.client.bankingDetails.id,
+                    content: exchange.orderItem.client.bankingDetails.content || null,
+                    documentUrl: exchange.orderItem.client.bankingDetails.documentUrl || null,
+                  }
+                : undefined,
               firstName: exchange.orderItem.client.firstName || '',
               lastName: exchange.orderItem.client.lastName || '',
             },

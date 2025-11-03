@@ -44,7 +44,7 @@ export interface StoreCurrencyExchange {
   exchangeRate?: number | null;
   amountInSelectedCurrencyFrom?: number;
   amountInSelectedCurrencyTo?: number;
-  bankingDetails?: StoreBankingDetails;
+  bankingDetails?: StoreBankingDetails | null;
   status: CurrencyExchangeStatus;
   cancelReason?: string;
   canceledByClient: boolean;
