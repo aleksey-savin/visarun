@@ -374,7 +374,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                                 'md:h-10 h-8'
                               )}
                             />
-                            {isAuthenticated && direction === 'usToClient' && field.value && (
+                            {direction === 'usToClient' && field.value && (
                               <button
                                 type="button"
                                 onClick={async () => {
@@ -439,7 +439,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                                 'md:h-10 h-8'
                               )}
                             />
-                            {isAuthenticated && direction === 'usToClient' && field.value && (
+                            {direction === 'usToClient' && field.value && (
                               <button
                                 type="button"
                                 onClick={async () => {
@@ -504,7 +504,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                                 'md:h-10 h-8'
                               )}
                             />
-                            {isAuthenticated && direction === 'usToClient' && field.value && (
+                            {direction === 'usToClient' && field.value && (
                               <button
                                 type="button"
                                 onClick={async () => {
@@ -582,7 +582,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                                 'md:h-10 h-8'
                               )}
                             />
-                            {isAuthenticated && direction === 'clientToUs' && field.value && (
+                            {direction === 'clientToUs' && field.value && (
                               <button
                                 type="button"
                                 onClick={async () => {
@@ -655,7 +655,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                                 'md:h-10 h-8'
                               )}
                             />
-                            {isAuthenticated && direction === 'clientToUs' && field.value && (
+                            {direction === 'clientToUs' && field.value && (
                               <button
                                 type="button"
                                 onClick={async () => {
@@ -728,7 +728,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                                 'md:h-10 h-8'
                               )}
                             />
-                            {isAuthenticated && direction === 'clientToUs' && field.value && (
+                            {direction === 'clientToUs' && field.value && (
                               <button
                                 type="button"
                                 onClick={async () => {
@@ -855,7 +855,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           >
                             RUB
                           </button>
-                          {isAuthenticated && direction === 'usToClient' && field.value && (
+                          {direction === 'usToClient' && field.value && (
                             <button
                               type="button"
                               onClick={async () => {
@@ -944,7 +944,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           >
                             VND
                           </button>
-                          {isAuthenticated && direction === 'usToClient' && field.value && (
+                          {direction === 'usToClient' && field.value && (
                             <button
                               type="button"
                               onClick={async () => {
@@ -1033,7 +1033,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           >
                             USDT
                           </button>
-                          {isAuthenticated && direction === 'usToClient' && field.value && (
+                          {direction === 'usToClient' && field.value && (
                             <button
                               type="button"
                               onClick={async () => {
@@ -1136,7 +1136,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           >
                             RUB
                           </button>
-                          {isAuthenticated && direction === 'clientToUs' && field.value && (
+                          {direction === 'clientToUs' && field.value && (
                             <button
                               type="button"
                               onClick={async () => {
@@ -1241,7 +1241,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           >
                             VND
                           </button>
-                          {isAuthenticated && direction === 'clientToUs' && field.value && (
+                          {direction === 'clientToUs' && field.value && (
                             <button
                               type="button"
                               onClick={async () => {
@@ -1346,7 +1346,7 @@ export function CurrencyCalculatorForm({ isClient, rates }: CurrencyCalcFormProp
                           >
                             USDT
                           </button>
-                          {isAuthenticated && direction === 'clientToUs' && field.value && (
+                          {direction === 'clientToUs' && field.value && (
                             <button
                               type="button"
                               onClick={async () => {

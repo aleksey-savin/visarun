@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { Calendar } from '@/components/ui/calendar';
+import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Form,
@@ -471,7 +472,8 @@ export default function CombinedVisarunForm({
                               alt={transport.transportType.name}
                               size="md"
                             />
-                            <span>{transport.seatCount || 0}</span>
+                            <span>{transport.name}</span>
+                            <Badge className="rounded-full">{transport.seatCount || 0}</Badge>
                           </Button>
                           {isSelected && (
                             <Button

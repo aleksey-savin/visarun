@@ -72,6 +72,11 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
             id: true,
           },
         },
+        passengers: {
+          select: {
+            id: true,
+          },
+        },
         route: {
           select: {
             id: true,
@@ -111,6 +116,35 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
                       select: {
                         id: true,
                         transportId: true,
+                        transport: true,
+                        floors: {
+                          select: {
+                            id: true,
+                            floorNumber: true,
+                            name: true,
+                            rows: {
+                              select: {
+                                id: true,
+                                floorId: true,
+                                rowNumber: true,
+                                rowLabel: true,
+                                seats: {
+                                  select: {
+                                    rowId: true,
+                                    seatLabel: true,
+                                    seatClassId: true,
+                                    isAvailable: true,
+                                    isAisle: true,
+                                    isWindow: true,
+                                    isEmergency: true,
+                                    driverSeat: true,
+                                    seatClass: true,
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
                       },
                     },
                   },
@@ -165,12 +199,15 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
       },
     });
 
-    // Flatten transports array to remove nested structure
+    // Flatten transports array to remove nested structure but preserve seatingChart
     const flattenedTrips = trips.map(trip => ({
       ...trip,
       route: {
         ...trip.route,
-        transports: trip.route.transports.map(t => t.transport),
+        transports: trip.route.transports.map(t => ({
+          ...t.transport,
+          seatingChart: t.transport.seatingChart,
+        })),
       },
     }));
 
@@ -271,6 +308,11 @@ async function getSmartVisarunTrips(params: {
     },
     include: {
       transports: true,
+      passengers: {
+        select: {
+          id: true,
+        },
+      },
       route: {
         select: {
           id: true,
@@ -309,6 +351,35 @@ async function getSmartVisarunTrips(params: {
                     select: {
                       id: true,
                       transportId: true,
+                      transport: true,
+                      floors: {
+                        select: {
+                          id: true,
+                          floorNumber: true,
+                          name: true,
+                          rows: {
+                            select: {
+                              id: true,
+                              floorId: true,
+                              rowNumber: true,
+                              rowLabel: true,
+                              seats: {
+                                select: {
+                                  rowId: true,
+                                  seatLabel: true,
+                                  seatClassId: true,
+                                  isAvailable: true,
+                                  isAisle: true,
+                                  isWindow: true,
+                                  isEmergency: true,
+                                  driverSeat: true,
+                                  seatClass: true,
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -368,7 +439,10 @@ async function getSmartVisarunTrips(params: {
     ...trip,
     route: {
       ...trip.route,
-      transports: trip.route.transports.map(t => t.transport),
+      transports: trip.route.transports.map(t => ({
+        ...t.transport,
+        seatingChart: t.transport.seatingChart,
+      })),
     },
   }));
 
@@ -393,6 +467,11 @@ async function getSmartVisarunTrips(params: {
       departureDateTime: 'desc', // Ближайшая к дате (самая поздняя из тех что раньше)
     },
     include: {
+      passengers: {
+        select: {
+          id: true,
+        },
+      },
       route: {
         select: {
           id: true,
@@ -431,6 +510,35 @@ async function getSmartVisarunTrips(params: {
                     select: {
                       id: true,
                       transportId: true,
+                      transport: true,
+                      floors: {
+                        select: {
+                          id: true,
+                          floorNumber: true,
+                          name: true,
+                          rows: {
+                            select: {
+                              id: true,
+                              floorId: true,
+                              rowNumber: true,
+                              rowLabel: true,
+                              seats: {
+                                select: {
+                                  rowId: true,
+                                  seatLabel: true,
+                                  seatClassId: true,
+                                  isAvailable: true,
+                                  isAisle: true,
+                                  isWindow: true,
+                                  isEmergency: true,
+                                  driverSeat: true,
+                                  seatClass: true,
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -501,6 +609,11 @@ async function getSmartVisarunTrips(params: {
     },
     take: 2,
     include: {
+      passengers: {
+        select: {
+          id: true,
+        },
+      },
       route: {
         select: {
           id: true,
@@ -539,6 +652,35 @@ async function getSmartVisarunTrips(params: {
                     select: {
                       id: true,
                       transportId: true,
+                      transport: true,
+                      floors: {
+                        select: {
+                          id: true,
+                          floorNumber: true,
+                          name: true,
+                          rows: {
+                            select: {
+                              id: true,
+                              floorId: true,
+                              rowNumber: true,
+                              rowLabel: true,
+                              seats: {
+                                select: {
+                                  rowId: true,
+                                  seatLabel: true,
+                                  seatClassId: true,
+                                  isAvailable: true,
+                                  isAisle: true,
+                                  isWindow: true,
+                                  isEmergency: true,
+                                  driverSeat: true,
+                                  seatClass: true,
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -600,7 +742,10 @@ async function getSmartVisarunTrips(params: {
       ...tripBefore,
       route: {
         ...tripBefore.route,
-        transports: tripBefore.route.transports.map(t => t.transport),
+        transports: tripBefore.route.transports.map(t => ({
+          ...t.transport,
+          seatingChart: t.transport.seatingChart,
+        })),
       },
     });
   }
@@ -609,7 +754,10 @@ async function getSmartVisarunTrips(params: {
       ...trip,
       route: {
         ...trip.route,
-        transports: trip.route.transports.map(t => t.transport),
+        transports: trip.route.transports.map(t => ({
+          ...t.transport,
+          seatingChart: t.transport.seatingChart,
+        })),
       },
     }))
   );

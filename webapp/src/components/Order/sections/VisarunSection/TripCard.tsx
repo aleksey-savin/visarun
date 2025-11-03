@@ -41,12 +41,16 @@ const TripCard = ({
       <div className="flex flex-col space-y-3">
         <div className="flex flex-col space-y-3">
           <div className="flex justify-between">
-            <IconDisplay
-              iconFilename={seatClass?.icon}
-              iconType="transport-seat"
-              alt={seatClass?.name}
-              fallback={<Armchair className="h-6 w-6" />}
-            />
+            <div className="flex gap-2">
+              <IconDisplay
+                iconFilename={seatClass?.icon}
+                iconType="transport-seat"
+                alt={seatClass?.name}
+                fallback={<Armchair className="h-6 w-6" />}
+              />
+              <span>{seatClass?.name}</span>
+            </div>
+
             <Badge variant="default" className="rounded-xl">
               {badgeContent}
             </Badge>

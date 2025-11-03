@@ -93,10 +93,10 @@ const SeatSelectionDialog: React.FC<SeatSelectionDialogProps> = ({
 
   // Get occupied seats for the trip transport
   const { data: occupiedSeats, isLoading: occupiedSeatsLoading } =
-    trpc.visarunPassenger.getOccupiedSeats.useQuery(
-      { tripTransportId: availableTripTransport?.id },
+    trpc.visarunPassenger.getOccupiedSeatsByTripTransport.useQuery(
+      { tripId: trip?.id, transportId: transport?.id },
       {
-        enabled: !!availableTripTransport?.id,
+        enabled: !!trip?.id && !!transport?.id,
       }
     );
 

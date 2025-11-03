@@ -28,10 +28,15 @@ const AllVisarunTripsPage = () => {
   const [activeTab, setActiveTab] = useState('');
 
   // Query trips for the specific date range
-  const { data: trips } = trpc.visarunTrip.getAll.useQuery({
-    departureFrom: fromDate,
-    departureTo: toDate,
-  });
+  const { data: trips } = trpc.visarunTrip.getAll.useQuery(
+    {
+      departureFrom: fromDate,
+      departureTo: toDate,
+    },
+    {
+      refetchInterval: 30000, // Refetch every 30 seconds (30000ms)
+    }
+  );
 
   // Group trips by date
   const tripsByDate = useMemo(() => {

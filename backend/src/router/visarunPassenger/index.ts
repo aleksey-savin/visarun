@@ -1,7 +1,10 @@
 import { createVisarunPassengerTrpcRoute } from './create.js';
 import { deleteVisarunPassengerTrpcRoute } from './delete.js';
 import { updateVisarunPassengerTrpcRoute } from './update.js';
-import { getOccupiedSeatsTrpcRoute } from './getOccupiedSeats.js';
+import {
+  getOccupiedSeatsTrpcRoute,
+  getOccupiedSeatsByTripTransportTrpcRoute,
+} from './getOccupiedSeats.js';
 import { getAllVisarunPassengersTrpcRoute } from './getAll.js';
 
 export const visarunPassengerRouter = {
@@ -10,4 +13,5 @@ export const visarunPassengerRouter = {
   update: updateVisarunPassengerTrpcRoute,
   delete: deleteVisarunPassengerTrpcRoute,
   getOccupiedSeats: getOccupiedSeatsTrpcRoute,
+  getOccupiedSeatsByTripTransport: getOccupiedSeatsByTripTransportTrpcRoute,
 };

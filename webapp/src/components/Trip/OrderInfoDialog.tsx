@@ -161,7 +161,7 @@ const OrderInfoDialog = ({ isOpen, onClose, orderInfo }: OrderInfoDialogProps) =
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose}>
             Close
           </Button>
         </DialogFooter>

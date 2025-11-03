@@ -25,6 +25,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
     data: trips,
     isLoading,
     error,
+    refetch,
   } = useVisarunTrips({
     preferredDepartureCityId: preferredDepartureCity?.id,
     preferredVisarunCountryId: preferredVisarunCountry?.id,
@@ -94,7 +95,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
       );
 
       setSelectedTripForSeat(trip);
-      setSelectedTransportForSeat(transportWithSeatingChart.transport);
+      setSelectedTransportForSeat(transportWithSeatingChart);
       setSelectedSeatClassForSeat(seatClass);
       setSeatSelectionDialogOpen(true);
       return;
@@ -112,7 +113,6 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
     seatClass: any,
     price: any,
     selectedSeat: any,
-    tripTransport: any,
     pickupData?: {
       pickupLocationId?: string;
       pickupAddress?: string;
@@ -123,25 +123,6 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
     setSaveStatus('saving');
 
     try {
-      let tripTransportId = tripTransport?.id;
-
-      // Create trip transport if needed and seat is selected
-      if (selectedSeat && !tripTransport) {
-        const transportWithSeatingChart = trip.route.transports.find(
-          (routeTransport: any) => routeTransport.transport.seatingChart?.id
-        );
-
-        if (transportWithSeatingChart) {
-          const tripTransportData = await createTripTransportMutation.mutateAsync({
-            tripId: trip.id,
-            transportId: transportWithSeatingChart.transport.id,
-          });
-
-          tripTransportId = tripTransportData.tripTransport.id;
-          setTripTransports(prev => [...prev, tripTransportData.tripTransport]);
-        }
-      }
-
       // First create OrderItem
       const orderItemData = await createOrderItemMutation.mutateAsync({
         orderId: order.id || '',
@@ -168,8 +149,11 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
       ]);
 
       // Check if trip's transport list is empty and add default transports if needed
-      console.log(trip);
       const currentTripTransports = trip.transports || [];
+      const transportsWithSeatChart = currentTripTransports.filter(
+        (transport: any) => transport.seatChart?.id
+      );
+
       if (currentTripTransports.length === 0) {
         try {
           // Get default route transports for this trip's route
@@ -206,7 +190,10 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
       const visarunPassengerData = await createVisarunPassengerMutation.mutateAsync({
         orderItemId: orderItemData.orderItem.id,
         tripId: trip.id,
-        tripTransportId: tripTransportId,
+        tripTransportId:
+          transportsWithSeatChart.length > 0
+            ? transportsWithSeatChart[transportsWithSeatChart.length - 1].id
+            : undefined,
         seatClassId: seatClass?.id,
         seatNumber: selectedSeat?.seatLabel,
         serviceType: 'visa',
@@ -265,7 +252,6 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
       selectedSeatClassForBooking,
       selectedPriceForBooking,
       selectedSeatForBooking,
-      selectedTripTransportForBooking,
       bookingData
     );
 
@@ -276,6 +262,8 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
     ) {
       setTripTransports(prev => [...prev, selectedTripTransportForBooking]);
     }
+
+    await refetch();
 
     // Reset booking state
     setSelectedSeatForBooking(null);
@@ -379,43 +367,12 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
     );
 
     // Check if any transport has seating chart
+    console.log(trip.route?.transports);
     const hasTransportWithSeatingChart = trip.route?.transports?.some(
-      (routeTransport: any) => routeTransport.seatingChart?.id
+      (transport: any) => transport.seatingChart?.id
     );
 
-    // Count passengers for trip transports if seating chart exists
-    let badgeContent: string | number = 0;
-    if (hasTransportWithSeatingChart) {
-      const transportWithSeatingChart = trip.route.transports.find(
-        (routeTransport: any) => routeTransport.transport.seatingChart?.id
-      );
-
-      // Get all trip transports for this specific transport
-      const currentTripTransports = tripTransports.filter(
-        tt => tt.tripId === trip.id && tt.transportId === transportWithSeatingChart.transport.id
-      );
-
-      // Count total occupied seats across all trip transports for this transport type
-      const passengersInTransport = visarunPassengers.filter(
-        passenger =>
-          passenger.tripId === trip.id &&
-          passenger.seatNumber &&
-          passenger.seatClassId === seatClass?.id &&
-          currentTripTransports.some(tt => tt.id === passenger.tripTransportId)
-      ).length;
-
-      // Calculate total available seats (transport capacity * number of trip transports)
-      const singleTransportSeats = transportWithSeatingChart?.transport?.seatCount || 0;
-      const totalAvailableSeats = singleTransportSeats * Math.max(1, currentTripTransports.length);
-
-      badgeContent =
-        totalAvailableSeats > 0
-          ? `${passengersInTransport} / ${totalAvailableSeats}`
-          : passengersInTransport;
-    } else {
-      // Count total passengers for this trip (old behavior)
-      badgeContent = visarunPassengers.filter(passenger => passenger.tripId === trip.id).length;
-    }
+    const badgeContent: string | number = trip.passengers?.length || 0;
 
     return (
       <TripCard
