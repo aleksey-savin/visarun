@@ -10,15 +10,10 @@ function generateTripsFromSchedule(
   validFrom: Date,
   validTo: Date | null,
   periodMonths: number,
-  existingTrips?: Array<{ routeId: string; departureDateTime: Date }>
+  existingTrips?: Array<{ routeId: string; departureDateTime: Date }>,
+  defaultTransportId?: string
 ) {
-  const trips: Array<{
-    scheduleId: string;
-    routeId: string;
-    departureDateTime: Date;
-    status: 'scheduled';
-    isFromSchedule: boolean;
-  }> = [];
+  const trips: TripData[] = [];
 
   // Create a set of existing departure datetimes for this route for quick lookup
   const existingDepartureTimes = new Set<string>();
@@ -51,13 +46,27 @@ function generateTripsFromSchedule(
 
       // Check if trip with same routeId and departureDateTime already exists
       if (!existingDepartureTimes.has(departureDateTime.toISOString())) {
-        trips.push({
+        const tripData: TripData = {
           scheduleId,
           routeId,
           departureDateTime,
           status: 'scheduled',
           isFromSchedule: true,
-        });
+        };
+
+        // Add default transport if available
+        if (defaultTransportId) {
+          tripData.transports = {
+            create: [
+              {
+                transportId: defaultTransportId,
+                status: 'added',
+              },
+            ],
+          };
+        }
+
+        trips.push(tripData);
         existingDepartureTimes.add(departureDateTime.toISOString());
       }
     }
@@ -67,6 +76,21 @@ function generateTripsFromSchedule(
   }
 
   return trips;
+}
+
+// Interface for trip data with optional transports
+interface TripData {
+  scheduleId: string;
+  routeId: string;
+  departureDateTime: Date;
+  status: 'scheduled';
+  isFromSchedule: boolean;
+  transports?: {
+    create: Array<{
+      transportId: string;
+      status: 'added';
+    }>;
+  };
 }
 
 export const zEditVisarunScheduleTrpcInput = z.object({
@@ -374,6 +398,22 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
         const today = new Date();
         const startDate = finalValidFrom > today ? finalValidFrom : today;
 
+        // Get the default transport for this route
+        const routeWithTransports = await tx.visarunRoute.findUnique({
+          where: { id: existingSchedule.routeId },
+          include: {
+            transports: {
+              where: {
+                isActive: true,
+                isDefault: true,
+              },
+            },
+          },
+        });
+
+        const defaultTransport = routeWithTransports?.transports.find(rt => rt.isDefault);
+        const defaultTransportId = defaultTransport?.transportId;
+
         // Fetch existing trips for this route to avoid duplicates
         const existingTripsForRoute = await tx.visarunTrip.findMany({
           where: {
@@ -393,14 +433,32 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
           startDate,
           finalValidTo,
           finalAutoGeneratePeriodMonths,
-          existingTripsForRoute
+          existingTripsForRoute,
+          defaultTransportId
         );
 
-        // Create all trips in bulk
+        // Create all trips with transports if available
         if (tripsData.length > 0) {
-          await tx.visarunTrip.createMany({
-            data: tripsData,
-          });
+          if (defaultTransportId) {
+            // Create trips individually with transports
+            for (const tripData of tripsData) {
+              await tx.visarunTrip.create({
+                data: {
+                  scheduleId: tripData.scheduleId,
+                  routeId: tripData.routeId,
+                  departureDateTime: tripData.departureDateTime,
+                  status: tripData.status,
+                  isFromSchedule: tripData.isFromSchedule,
+                  transports: tripData.transports,
+                },
+              });
+            }
+          } else {
+            // Create trips in bulk without transports
+            await tx.visarunTrip.createMany({
+              data: tripsData,
+            });
+          }
         }
       }
 

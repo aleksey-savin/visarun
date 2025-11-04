@@ -17,6 +17,21 @@ export const zCreateVisarunScheduleTrpcInput = z.object({
   isActive: z.boolean().optional().default(true),
 });
 
+// Interface for trip data with optional transports
+interface TripData {
+  scheduleId: string;
+  routeId: string;
+  departureDateTime: Date;
+  status: 'scheduled';
+  isFromSchedule: boolean;
+  transports?: {
+    create: Array<{
+      transportId: string;
+      status: 'added';
+    }>;
+  };
+}
+
 // Helper function to generate trips based on schedule
 function generateTripsFromSchedule(
   scheduleId: string,
@@ -25,15 +40,10 @@ function generateTripsFromSchedule(
   departureTime: string,
   validFrom: Date,
   validTo: Date | null,
-  periodMonths: number
+  periodMonths: number,
+  defaultTransportId?: string
 ) {
-  const trips: Array<{
-    scheduleId: string;
-    routeId: string;
-    departureDateTime: Date;
-    status: 'scheduled';
-    isFromSchedule: boolean;
-  }> = [];
+  const trips: TripData[] = [];
 
   // Calculate end date - either validTo or validFrom + autoGeneratePeriodMonths
   const endDate =
@@ -52,13 +62,27 @@ function generateTripsFromSchedule(
     const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
 
     if (daysOfWeek.includes(dayOfWeek)) {
-      trips.push({
+      const tripData: TripData = {
         scheduleId,
         routeId,
         departureDateTime: new Date(currentDate),
         status: 'scheduled',
         isFromSchedule: true,
-      });
+      };
+
+      // Add default transport if available
+      if (defaultTransportId) {
+        tripData.transports = {
+          create: [
+            {
+              transportId: defaultTransportId,
+              status: 'added',
+            },
+          ],
+        };
+      }
+
+      trips.push(tripData);
     }
 
     // Move to next day
@@ -71,14 +95,29 @@ function generateTripsFromSchedule(
 export const createVisarunScheduleTrpcRoute = visarunScheduleCreateProcedure
   .input(zCreateVisarunScheduleTrpcInput)
   .mutation(async ({ input, ctx }) => {
-    // Check if route exists
+    // Check if route exists and get default transport
     const route = await ctx.prisma.visarunRoute.findUnique({
       where: { id: input.routeId },
+      include: {
+        transports: {
+          where: {
+            isActive: true,
+            isDefault: true,
+          },
+          include: {
+            transport: true,
+          },
+        },
+      },
     });
 
     if (!route) {
       throw new Error('Route not found');
     }
+
+    // Get the default transport ID if available
+    const defaultTransport = route.transports.find(rt => rt.isDefault);
+    const defaultTransportId = defaultTransport?.transportId;
 
     // Validate date range
     if (input.validTo && input.validFrom >= input.validTo) {
@@ -115,14 +154,32 @@ export const createVisarunScheduleTrpcRoute = visarunScheduleCreateProcedure
         input.departureTime,
         input.validFrom,
         input.validTo,
-        input.autoGeneratePeriodMonths
+        input.autoGeneratePeriodMonths,
+        defaultTransportId
       );
 
-      // Create all trips in bulk
+      // Create all trips with transports if available
       if (tripsData.length > 0) {
-        await tx.visarunTrip.createMany({
-          data: tripsData,
-        });
+        if (defaultTransportId) {
+          // Create trips individually with transports
+          for (const tripData of tripsData) {
+            await tx.visarunTrip.create({
+              data: {
+                scheduleId: tripData.scheduleId,
+                routeId: tripData.routeId,
+                departureDateTime: tripData.departureDateTime,
+                status: tripData.status,
+                isFromSchedule: tripData.isFromSchedule,
+                transports: tripData.transports,
+              },
+            });
+          }
+        } else {
+          // Create trips in bulk without transports
+          await tx.visarunTrip.createMany({
+            data: tripsData,
+          });
+        }
       }
 
       // Return the schedule with related data

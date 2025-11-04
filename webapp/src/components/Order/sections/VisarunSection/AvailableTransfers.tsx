@@ -5,7 +5,6 @@ import { CircleCheck, MapPinIcon } from 'lucide-react';
 import { trpc, trpcClient } from '@/lib/trpc';
 import TripCard from './TripCard';
 import CancelBookingDialog from './CancelBookingDialog';
-import SeatSelectionDialog from './SeatSelectionDialog';
 import BookingConfirmationDialog from './BookingConfirmationDialog';
 
 const AvailableTransfers = ({ client }: { client: StoreClient }) => {
@@ -40,17 +39,12 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [passengerToCancel, setPassengerToCancel] = useState<any>(null);
-  const [seatSelectionDialogOpen, setSeatSelectionDialogOpen] = useState(false);
-  const [selectedTripForSeat, setSelectedTripForSeat] = useState<any>(null);
-  const [selectedTransportForSeat, setSelectedTransportForSeat] = useState<any>(null);
-  const [selectedSeatClassForSeat, setSelectedSeatClassForSeat] = useState<any>(null);
   const [tripTransports, setTripTransports] = useState<any[]>([]);
   const [bookingConfirmationDialogOpen, setBookingConfirmationDialogOpen] = useState(false);
   const [selectedTripForBooking, setSelectedTripForBooking] = useState<any>(null);
+  const [selectedTransportForBooking, setSelectedTransportForBooking] = useState<any>(null);
   const [selectedSeatClassForBooking, setSelectedSeatClassForBooking] = useState<any>(null);
   const [selectedPriceForBooking, setSelectedPriceForBooking] = useState<any>(null);
-  const [selectedSeatForBooking, setSelectedSeatForBooking] = useState<any>(null);
-  const [selectedTripTransportForBooking, setSelectedTripTransportForBooking] = useState<any>(null);
 
   // Get all trip transports for the current trips
   const tripIds = trips?.map((trip: any) => trip.id) || [];
@@ -88,21 +82,17 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
       (routeTransport: any) => routeTransport.seatingChart?.id
     );
 
+    // Get transport with seating chart if available
+    let transportWithSeatingChart = null;
     if (hasTransportWithSeatingChart) {
-      // Open seat selection dialog
-      const transportWithSeatingChart = trip.route.transports.find(
+      transportWithSeatingChart = trip.route.transports.find(
         (routeTransport: any) => routeTransport.seatingChart?.id
       );
-
-      setSelectedTripForSeat(trip);
-      setSelectedTransportForSeat(transportWithSeatingChart);
-      setSelectedSeatClassForSeat(seatClass);
-      setSeatSelectionDialogOpen(true);
-      return;
     }
 
-    // Show booking confirmation dialog
+    // Show booking confirmation dialog (which will include seat selection if needed)
     setSelectedTripForBooking(trip);
+    setSelectedTransportForBooking(transportWithSeatingChart);
     setSelectedSeatClassForBooking(seatClass);
     setSelectedPriceForBooking(price);
     setBookingConfirmationDialogOpen(true);
@@ -112,12 +102,12 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
     trip: any,
     seatClass: any,
     price: any,
-    selectedSeat: any,
-    pickupData?: {
+    bookingData: {
       pickupLocationId?: string;
       pickupAddress?: string;
       specifyLater?: boolean;
       routeStopId?: string;
+      selectedSeat?: any;
     }
   ) => {
     setSaveStatus('saving');
@@ -150,8 +140,9 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
 
       // Check if trip's transport list is empty and add default transports if needed
       const currentTripTransports = trip.transports || [];
+
       const transportsWithSeatChart = currentTripTransports.filter(
-        (transport: any) => transport.seatChart?.id
+        (t: any) => t.transport.seatingChart?.id
       );
 
       if (currentTripTransports.length === 0) {
@@ -186,6 +177,8 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
         }
       }
 
+      console.log(transportsWithSeatChart);
+
       // Then create VisarunPassenger
       const visarunPassengerData = await createVisarunPassengerMutation.mutateAsync({
         orderItemId: orderItemData.orderItem.id,
@@ -195,11 +188,11 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
             ? transportsWithSeatChart[transportsWithSeatChart.length - 1].id
             : undefined,
         seatClassId: seatClass?.id,
-        seatNumber: selectedSeat?.seatLabel,
+        seatNumber: bookingData.selectedSeat?.seatLabel,
         serviceType: 'visa',
-        pickupLocationId: pickupData?.pickupLocationId,
-        pickupAddress: pickupData?.specifyLater ? undefined : pickupData?.pickupAddress,
-        routeStopId: pickupData?.routeStopId,
+        pickupLocationId: bookingData.pickupLocationId,
+        pickupAddress: bookingData.specifyLater ? undefined : bookingData?.pickupAddress,
+        routeStopId: bookingData?.routeStopId,
       });
 
       if (!visarunPassengerData.visarunPassenger) {
@@ -238,6 +231,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
     pickupAddress?: string;
     specifyLater?: boolean;
     routeStopId?: string;
+    selectedSeat?: any;
   }) => {
     if (
       !selectedTripForBooking ||
@@ -251,44 +245,16 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
       selectedTripForBooking,
       selectedSeatClassForBooking,
       selectedPriceForBooking,
-      selectedSeatForBooking,
       bookingData
     );
-
-    // Update tripTransports if new one was created
-    if (
-      selectedTripTransportForBooking &&
-      !tripTransports.find(tt => tt.id === selectedTripTransportForBooking.id)
-    ) {
-      setTripTransports(prev => [...prev, selectedTripTransportForBooking]);
-    }
 
     await refetch();
 
     // Reset booking state
-    setSelectedSeatForBooking(null);
-    setSelectedTripTransportForBooking(null);
-  };
-
-  const handleSeatSelect = async (seat: any, tripTransport: any) => {
-    // Store selected seat and tripTransport for later use
-    setSelectedSeatForBooking(seat);
-    setSelectedTripTransportForBooking(tripTransport);
-
-    // Set trip data for booking confirmation
-    setSelectedTripForBooking(selectedTripForSeat);
-    setSelectedSeatClassForBooking(selectedSeatClassForSeat);
-
-    // Find the original price from the trip data
-    const originalPrice =
-      selectedTripForSeat?.route?.prices?.find(
-        (p: any) => p.seatClass?.id === selectedSeatClassForSeat?.id
-      )?.price || 0;
-    setSelectedPriceForBooking(originalPrice);
-
-    // Close seat selection dialog and open booking confirmation
-    setSeatSelectionDialogOpen(false);
-    setBookingConfirmationDialogOpen(true);
+    setSelectedTripForBooking(null);
+    setSelectedTransportForBooking(null);
+    setSelectedSeatClassForBooking(null);
+    setSelectedPriceForBooking(null);
   };
 
   const handleCancelClick = (passenger: any) => {
@@ -313,6 +279,7 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
       setOrderItems(orderItems.filter(item => item.id !== passengerToCancel.orderItemId));
 
       setSaveStatus('saved');
+      refetch();
     } catch (error) {
       console.error('Error canceling booking:', error);
       setSaveStatus('error');
@@ -367,12 +334,34 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
     );
 
     // Check if any transport has seating chart
-    console.log(trip.route?.transports);
-    const hasTransportWithSeatingChart = trip.route?.transports?.some(
-      (transport: any) => transport.seatingChart?.id
+    const hasTransportWithSeatingChart = trip.transports?.some(
+      (t: any) => t.transport.seatingChart?.id
     );
 
-    const badgeContent: string | number = trip.passengers?.length || 0;
+    const transportsWithSeatingChart = trip.transports?.filter(
+      (t: any) => t.transport.seatingChart?.id
+    );
+
+    const currentTransportWithSeatingChart =
+      transportsWithSeatingChart[transportsWithSeatingChart.length - 1];
+
+    const { data: occupiedSeats } = trpc.visarunPassenger.getOccupiedSeatsByTripTransport.useQuery(
+      {
+        tripId: trip?.id,
+        transportId: currentTransportWithSeatingChart?.id,
+      },
+      {
+        enabled: Boolean(
+          !!trip?.id && !!currentTransportWithSeatingChart?.id && hasTransportWithSeatingChart
+        ),
+      }
+    );
+
+    let badgeContent: string | number = trip.passengers?.length || 0;
+
+    if (hasTransportWithSeatingChart) {
+      badgeContent = `${occupiedSeats?.length || 0} / ${currentTransportWithSeatingChart.transport?.seatCount}`;
+    }
 
     return (
       <TripCard
@@ -456,24 +445,16 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
           )}
         </div>
 
-        <SeatSelectionDialog
-          open={seatSelectionDialogOpen}
-          onOpenChange={setSeatSelectionDialogOpen}
-          trip={selectedTripForSeat}
-          transport={selectedTransportForSeat}
-          seatClass={selectedSeatClassForSeat}
-          onSeatSelect={handleSeatSelect}
-          tripTransports={tripTransports.filter(tt => tt.tripId === selectedTripForSeat?.id)}
-        />
-
         <BookingConfirmationDialog
           isOpen={bookingConfirmationDialogOpen}
           onOpenChange={setBookingConfirmationDialogOpen}
           trip={selectedTripForBooking}
+          transport={selectedTransportForBooking}
           seatClass={selectedSeatClassForBooking}
           price={selectedPriceForBooking || 0}
           onConfirm={handleBookingConfirm}
           preferredDepartureCity={preferredDepartureCity}
+          tripTransports={tripTransports.filter(tt => tt.tripId === selectedTripForBooking?.id)}
         />
 
         <CancelBookingDialog
@@ -601,16 +582,6 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
       )}
 
       {/* Global dialogs - available for all return paths */}
-      <SeatSelectionDialog
-        open={seatSelectionDialogOpen}
-        onOpenChange={setSeatSelectionDialogOpen}
-        trip={selectedTripForSeat}
-        transport={selectedTransportForSeat}
-        seatClass={selectedSeatClassForSeat}
-        onSeatSelect={handleSeatSelect}
-        tripTransports={tripTransports.filter(tt => tt.tripId === selectedTripForSeat?.id)}
-      />
-
       <BookingConfirmationDialog
         isOpen={bookingConfirmationDialogOpen}
         onOpenChange={setBookingConfirmationDialogOpen}

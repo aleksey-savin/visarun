@@ -729,6 +729,7 @@ model TransportSeat {
   rowId       String
   seatLabel   String // Display label like "1A", "2B", "22B"
   seatClassId String
+  position    Int                 @default(0) // Position within the row for ordering
   isAvailable Boolean             @default(true) // Can be disabled for maintenance, blocked seats, etc.
   isAisle     Boolean             @default(false) // True if this is an aisle seat
   isWindow    Boolean             @default(false) // True if this is a window seat

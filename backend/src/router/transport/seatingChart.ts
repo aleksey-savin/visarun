@@ -178,9 +178,10 @@ export const createSeatingChartTrpcRoute = transportCreateProcedure
                 rowNumber: row.rowNumber,
                 rowLabel: row.rowLabel,
                 seats: {
-                  create: row.seats.map(seat => ({
+                  create: row.seats.map((seat, index) => ({
                     seatLabel: seat.seatLabel,
                     seatClassId: seat.seatClassId,
+                    position: index,
                     isAvailable: seat.driverSeat ? false : seat.isAvailable,
                     isAisle: seat.isAisle,
                     isWindow: seat.isWindow,
@@ -201,7 +202,7 @@ export const createSeatingChartTrpcRoute = transportCreateProcedure
               orderBy: { rowNumber: 'asc' },
               include: {
                 seats: {
-                  orderBy: { seatLabel: 'asc' },
+                  orderBy: { position: 'asc' },
                   include: {
                     seatClass: true,
                   },
@@ -248,9 +249,10 @@ export const updateSeatingChartTrpcRoute = transportUpdateProcedure
                 rowNumber: row.rowNumber,
                 rowLabel: row.rowLabel,
                 seats: {
-                  create: row.seats.map(seat => ({
+                  create: row.seats.map((seat, index) => ({
                     seatLabel: seat.seatLabel,
                     seatClassId: seat.seatClassId,
+                    position: index,
                     isAvailable: seat.driverSeat ? false : seat.isAvailable,
                     isAisle: seat.isAisle,
                     isWindow: seat.isWindow,
@@ -271,7 +273,7 @@ export const updateSeatingChartTrpcRoute = transportUpdateProcedure
               orderBy: { rowNumber: 'asc' },
               include: {
                 seats: {
-                  orderBy: { seatLabel: 'asc' },
+                  orderBy: { position: 'asc' },
                   include: {
                     seatClass: true,
                   },

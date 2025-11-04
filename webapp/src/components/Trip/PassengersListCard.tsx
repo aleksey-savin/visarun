@@ -2,6 +2,7 @@ import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Info, CheckCircle, AlertCircle, XCircle, X } from 'lucide-react';
 import ClientBadge from '../Client/ClientBadge';
+import { Badge } from '../ui/badge';
 
 interface PassengersListCardProps {
   passengers: any[];
@@ -107,10 +108,13 @@ const PassengersListCard = ({
                           isDraggable={isDraggable}
                         />
                       </div>
-                      {showRemoveButton && (
+                      {showRemoveButton && !passenger.seatNumber && (
                         <Button variant="ghost" size="sm" onClick={() => onRemove?.(passenger.id)}>
                           <X className="h-3 w-3" />
                         </Button>
+                      )}
+                      {passenger.seatNumber && (
+                        <Badge variant="warning">{passenger.seatNumber}</Badge>
                       )}
                     </div>
                   ))}

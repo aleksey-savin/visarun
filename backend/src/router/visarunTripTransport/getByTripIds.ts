@@ -32,6 +32,7 @@ export const getByTripIdsTrpcRoute = visarunTripTransportReadProcedure
             id: true,
             name: true,
             seatCount: true,
+            seatingChart: true,
             transportType: {
               select: {
                 id: true,

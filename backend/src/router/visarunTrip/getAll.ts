@@ -112,41 +112,6 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
                         name: true,
                       },
                     },
-                    seatingChart: {
-                      select: {
-                        id: true,
-                        transportId: true,
-                        transport: true,
-                        floors: {
-                          select: {
-                            id: true,
-                            floorNumber: true,
-                            name: true,
-                            rows: {
-                              select: {
-                                id: true,
-                                floorId: true,
-                                rowNumber: true,
-                                rowLabel: true,
-                                seats: {
-                                  select: {
-                                    rowId: true,
-                                    seatLabel: true,
-                                    seatClassId: true,
-                                    isAvailable: true,
-                                    isAisle: true,
-                                    isWindow: true,
-                                    isEmergency: true,
-                                    driverSeat: true,
-                                    seatClass: true,
-                                  },
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
                   },
                 },
               },
@@ -206,7 +171,6 @@ export const getAllVisarunTripsTrpcRoute = visarunTripReadProcedure
         ...trip.route,
         transports: trip.route.transports.map(t => ({
           ...t.transport,
-          seatingChart: t.transport.seatingChart,
         })),
       },
     }));
@@ -307,7 +271,53 @@ async function getSmartVisarunTrips(params: {
       departureDateTime: 'asc',
     },
     include: {
-      transports: true,
+      transports: {
+        select: {
+          id: true,
+          transport: {
+            select: {
+              seatCount: true,
+              seatingChart: {
+                select: {
+                  id: true,
+                  transportId: true,
+                  transport: true,
+                  floors: {
+                    select: {
+                      id: true,
+                      floorNumber: true,
+                      name: true,
+                      rows: {
+                        select: {
+                          id: true,
+                          floorId: true,
+                          rowNumber: true,
+                          rowLabel: true,
+                          seats: {
+                            select: {
+                              id: true,
+                              rowId: true,
+                              seatLabel: true,
+                              seatClassId: true,
+                              isAvailable: true,
+                              isAisle: true,
+                              isWindow: true,
+                              isEmergency: true,
+                              driverSeat: true,
+                              seatClass: true,
+                              position: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       passengers: {
         select: {
           id: true,
@@ -345,41 +355,6 @@ async function getSmartVisarunTrips(params: {
                     select: {
                       id: true,
                       name: true,
-                    },
-                  },
-                  seatingChart: {
-                    select: {
-                      id: true,
-                      transportId: true,
-                      transport: true,
-                      floors: {
-                        select: {
-                          id: true,
-                          floorNumber: true,
-                          name: true,
-                          rows: {
-                            select: {
-                              id: true,
-                              floorId: true,
-                              rowNumber: true,
-                              rowLabel: true,
-                              seats: {
-                                select: {
-                                  rowId: true,
-                                  seatLabel: true,
-                                  seatClassId: true,
-                                  isAvailable: true,
-                                  isAisle: true,
-                                  isWindow: true,
-                                  isEmergency: true,
-                                  driverSeat: true,
-                                  seatClass: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
                     },
                   },
                 },
@@ -441,7 +416,6 @@ async function getSmartVisarunTrips(params: {
       ...trip.route,
       transports: trip.route.transports.map(t => ({
         ...t.transport,
-        seatingChart: t.transport.seatingChart,
       })),
     },
   }));
@@ -467,6 +441,53 @@ async function getSmartVisarunTrips(params: {
       departureDateTime: 'desc', // Ближайшая к дате (самая поздняя из тех что раньше)
     },
     include: {
+      transports: {
+        select: {
+          id: true,
+          transport: {
+            select: {
+              seatCount: true,
+              seatingChart: {
+                select: {
+                  id: true,
+                  transportId: true,
+                  transport: true,
+                  floors: {
+                    select: {
+                      id: true,
+                      floorNumber: true,
+                      name: true,
+                      rows: {
+                        select: {
+                          id: true,
+                          floorId: true,
+                          rowNumber: true,
+                          rowLabel: true,
+                          seats: {
+                            select: {
+                              id: true,
+                              rowId: true,
+                              seatLabel: true,
+                              seatClassId: true,
+                              isAvailable: true,
+                              isAisle: true,
+                              isWindow: true,
+                              isEmergency: true,
+                              driverSeat: true,
+                              seatClass: true,
+                              position: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       passengers: {
         select: {
           id: true,
@@ -504,41 +525,6 @@ async function getSmartVisarunTrips(params: {
                     select: {
                       id: true,
                       name: true,
-                    },
-                  },
-                  seatingChart: {
-                    select: {
-                      id: true,
-                      transportId: true,
-                      transport: true,
-                      floors: {
-                        select: {
-                          id: true,
-                          floorNumber: true,
-                          name: true,
-                          rows: {
-                            select: {
-                              id: true,
-                              floorId: true,
-                              rowNumber: true,
-                              rowLabel: true,
-                              seats: {
-                                select: {
-                                  rowId: true,
-                                  seatLabel: true,
-                                  seatClassId: true,
-                                  isAvailable: true,
-                                  isAisle: true,
-                                  isWindow: true,
-                                  isEmergency: true,
-                                  driverSeat: true,
-                                  seatClass: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
                     },
                   },
                 },
@@ -609,6 +595,53 @@ async function getSmartVisarunTrips(params: {
     },
     take: 2,
     include: {
+      transports: {
+        select: {
+          id: true,
+          transport: {
+            select: {
+              seatCount: true,
+              seatingChart: {
+                select: {
+                  id: true,
+                  transportId: true,
+                  transport: true,
+                  floors: {
+                    select: {
+                      id: true,
+                      floorNumber: true,
+                      name: true,
+                      rows: {
+                        select: {
+                          id: true,
+                          floorId: true,
+                          rowNumber: true,
+                          rowLabel: true,
+                          seats: {
+                            select: {
+                              id: true,
+                              rowId: true,
+                              seatLabel: true,
+                              seatClassId: true,
+                              isAvailable: true,
+                              isAisle: true,
+                              isWindow: true,
+                              isEmergency: true,
+                              driverSeat: true,
+                              seatClass: true,
+                              position: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       passengers: {
         select: {
           id: true,
@@ -646,41 +679,6 @@ async function getSmartVisarunTrips(params: {
                     select: {
                       id: true,
                       name: true,
-                    },
-                  },
-                  seatingChart: {
-                    select: {
-                      id: true,
-                      transportId: true,
-                      transport: true,
-                      floors: {
-                        select: {
-                          id: true,
-                          floorNumber: true,
-                          name: true,
-                          rows: {
-                            select: {
-                              id: true,
-                              floorId: true,
-                              rowNumber: true,
-                              rowLabel: true,
-                              seats: {
-                                select: {
-                                  rowId: true,
-                                  seatLabel: true,
-                                  seatClassId: true,
-                                  isAvailable: true,
-                                  isAisle: true,
-                                  isWindow: true,
-                                  isEmergency: true,
-                                  driverSeat: true,
-                                  seatClass: true,
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
                     },
                   },
                 },
@@ -744,7 +742,6 @@ async function getSmartVisarunTrips(params: {
         ...tripBefore.route,
         transports: tripBefore.route.transports.map(t => ({
           ...t.transport,
-          seatingChart: t.transport.seatingChart,
         })),
       },
     });
@@ -756,7 +753,6 @@ async function getSmartVisarunTrips(params: {
         ...trip.route,
         transports: trip.route.transports.map(t => ({
           ...t.transport,
-          seatingChart: t.transport.seatingChart,
         })),
       },
     }))

@@ -76,7 +76,7 @@ const TripCard = ({
             </div>
           )}
 
-          <div className="flex gap-3 items-center">
+          <div className="flex flex-wrap gap-3 items-center">
             <div className="font-semibold text-primary flex-shrink-0">{formatCurrency(price)}</div>
             <div className="flex-1 flex gap-2">
               <Button

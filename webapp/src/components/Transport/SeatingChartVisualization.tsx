@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,11 +19,13 @@ interface Seat {
   seatLabel: string;
   seatClassId: string;
   isAvailable: boolean;
+  isOccupied?: boolean;
   isAisle: boolean;
   isWindow: boolean;
   isEmergency: boolean;
   driverSeat: boolean;
   seatClass: SeatClass;
+  position: number;
 }
 
 interface Row {
@@ -82,50 +84,38 @@ export default function SeatingChartVisualization({
 
   const renderSeat = (seat: Seat) => {
     const isSelected = selectedSeatId === seat.id;
-
     return (
       <div
         key={seat.id}
         onClick={() => onSeatClick?.(seat)}
         className={cn(
-          'relative w-16 h-9 border-2 rounded-lg flex items-center justify-center text-xs font-medium transition-all duration-200',
+          'w-full h-12 border-2 rounded-lg flex items-center justify-center text-lg font-medium transition-all duration-200',
           getSeatColor(seat),
           onSeatClick && seat.isAvailable && !seat.driverSeat
             ? 'cursor-pointer hover:scale-105 hover:shadow-md'
             : seat.driverSeat
               ? 'cursor-default'
               : 'cursor-not-allowed opacity-60',
+          seat.isOccupied && 'bg-amber-600 cursor-not-allowed',
           isSelected && 'ring-2 ring-primary ring-offset-2',
-          seat.isEmergency && 'border-dashed',
           className
         )}
         title={`${seat.seatLabel}${seat.driverSeat ? ' (Driver)' : ''} - ${seat.seatClass.name}`}
       >
         {seat.driverSeat ? <WheelIcon /> : <span className="font-bold">{seat.seatLabel}</span>}
-
-        {/* Seat property indicators */}
-        <div className="absolute -top-1 -right-1 flex gap-0.5">
-          {seat.isWindow && (
-            <div className="w-2 h-2 bg-blue-500 rounded-full" title="Window seat" />
-          )}
-          {seat.isAisle && <div className="w-2 h-2 bg-green-500 rounded-full" title="Aisle seat" />}
-          {seat.isEmergency && (
-            <div className="w-2 h-2 bg-red-500 rounded-full" title="Emergency exit" />
-          )}
-        </div>
       </div>
     );
   };
 
   const renderRow = (row: Row) => {
-    // Group seats by position for better visualization
-    // This is a simple layout - in reality you might want more sophisticated positioning
     return (
-      <div key={row.id} className="flex items-center justify-center gap-1 mb-2">
-        <div className="flex gap-4 flex-wrap justify-center">
-          {row.seats.map(seat => (
-            <React.Fragment key={seat.id}>{renderSeat(seat)}</React.Fragment>
-          ))}
+      <div key={row.id} className="flex items-center justify-center mb-4">
+        <div className="flex gap-4 justify-center w-full">
+          {row.seats
+            .sort((a, b) => a.position - b.position)
+            .map(seat => (
+              <React.Fragment key={seat.id}>{renderSeat(seat)}</React.Fragment>
+            ))}
         </div>
       </div>
     );
@@ -133,14 +123,10 @@ export default function SeatingChartVisualization({
 
   const renderFloor = (floor: Floor) => {
     return (
-      <Card key={floor.id} className="w-full">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center justify-center">
-            {floor.name || `Floor ${floor.floorNumber}`}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="space-y-1">{floor.rows.map(row => renderRow(row))}</div>
+      <Card key={floor.id} className="w-full p-2">
+        <CardContent className="flex flex-col gap-4">
+          <div className="text-center text-lg">{floor.name || `Floor ${floor.floorNumber}`}</div>
+          <div>{floor.rows.map(row => renderRow(row))}</div>
         </CardContent>
       </Card>
     );
@@ -152,35 +138,6 @@ export default function SeatingChartVisualization({
       <div className="grid gap-4 lg:grid-cols-2">
         {seatingChart.floors.map(floor => renderFloor(floor))}
       </div>
-      {/* Legend */}
-      <Card>
-        <CardContent className="flex flex-col gap-4 ">
-          <div>Legend</div>
-          <div className="flex flex-wrap gap-4 text-xs">
-            <div className="flex items-center gap-2">
-              <WheelIcon />
-              <span>Driver</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-500 rounded-full" />
-              <span>Window</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-green-500 rounded-full" />
-              <span>Aisle</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full" />
-              <span>Emergency</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6  bg-gray-400 rounded-full" />
-              <span>Unavailable</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

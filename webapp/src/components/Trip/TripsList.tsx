@@ -59,6 +59,7 @@ const TripsList = ({ trips }: TripsListProps) => {
     },
     {
       enabled: !!selectedTripAndStop?.trip.id,
+      refetchInterval: 5000,
     }
   );
 
@@ -68,6 +69,7 @@ const TripsList = ({ trips }: TripsListProps) => {
     },
     {
       enabled: !!selectedTripAndStop?.trip.id,
+      refetchInterval: 5000,
     }
   );
 

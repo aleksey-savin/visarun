@@ -52,9 +52,7 @@ export const getOccupiedSeatsByTripTransportTrpcRoute = visarunPassengerReadProc
     const occupiedSeats = await ctx.prisma.visarunPassenger.findMany({
       where: {
         tripId: input.tripId,
-        tripTransport: {
-          transportId: input.transportId,
-        },
+        tripTransportId: input.transportId,
         status: {
           in: ['confirmed', 'checked_in'],
         },

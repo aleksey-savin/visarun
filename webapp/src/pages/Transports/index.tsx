@@ -268,7 +268,7 @@ export default function TransportsPage() {
                             </Button>
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="primary"
                               onClick={() => {
                                 setSelectedTransportForChart(transport.id);
                                 setChartViewMode(transport.seatingChart ? 'view' : 'presets');
@@ -501,11 +501,7 @@ export default function TransportsPage() {
                   : 'Create Seating Chart'}
             </DialogTitle>
             <DialogDescription>
-              {chartViewMode === 'view'
-                ? 'View the seating layout for this transport'
-                : chartViewMode === 'edit'
-                  ? 'Modify the seating chart configuration'
-                  : 'Choose a template or create a custom seating chart'}
+              {transportsData?.transports.find(t => t.id === selectedTransportForChart)?.name}
             </DialogDescription>
           </DialogHeader>
 
@@ -551,15 +547,8 @@ export default function TransportsPage() {
 
               {chartViewMode === 'view' && (
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-muted-foreground">
-                      Transport:{' '}
-                      {
-                        transportsData?.transports.find(t => t.id === selectedTransportForChart)
-                          ?.name
-                      }
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setChartViewMode('edit')}>
+                  <div className="flex justify-end items-center">
+                    <Button size="sm" onClick={() => setChartViewMode('edit')}>
                       Edit Chart
                     </Button>
                   </div>
