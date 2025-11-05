@@ -15,6 +15,20 @@ interface TripCardProps {
 }
 
 const TripCards = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'in_process':
+        return 'In process';
+      case 'completed':
+        return 'Completed';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'scheduled':
+        return 'Scheduled';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
   // Sort route stops by arrival time
   const sortedStops = [...trip.route.routeStops].sort((a, b) => {
     const timeA = a.departureTime || a.arrivalTime;
@@ -37,14 +51,16 @@ const TripCards = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
       className={cn(
         'flex flex-col justify-between p-2',
         sortedStops.filter(stop => stop.id === activeTab).length > 0 ? 'bg-secondary' : '',
-        trip.status === 'completed' ? 'border-success' : ''
+        trip.status === 'completed' && 'border-success',
+        trip.status === 'cancelled' && 'border-destructive',
+        trip.status === 'in_process' && 'border-warning'
       )}
     >
       <div className="flex flex-wrap gap-2">
         <RouteStopsBadges trip={trip} />
       </div>
 
-      <div className="flex flex-wrap justify-between items-end">
+      <div className="flex flex-wrap gap-2 justify-between items-center">
         <div className="space-y-2">
           <Label>Passengers seating</Label>
           <Tabs value={activeTab} onValueChange={tabValueChangeHandler}>
@@ -64,7 +80,15 @@ const TripCards = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
           </Tabs>
         </div>
         <div className="self-end">
-          <Badge>{trip.status}</Badge>
+          <Badge
+            className={cn(
+              trip.status === 'completed' && 'bg-success',
+              trip.status === 'cancelled' && 'bg-destructive',
+              trip.status === 'in_process' && 'bg-warning'
+            )}
+          >
+            {getStatusLabel(trip.status)}
+          </Badge>
         </div>
       </div>
     </Card>

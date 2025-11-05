@@ -58,43 +58,6 @@ export const deleteVisarunRouteTransportTrpcRoute = visarunRouteTransportDeleteP
       });
     }
 
-    // Check if route has any trips with actual data (passengers or transport assignments) that must be preserved
-    const tripsWithData = await ctx.prisma.visarunTrip.findMany({
-      where: {
-        schedule: {
-          route: {
-            id: existingRouteTransport.route.id,
-          },
-        },
-        OR: [
-          // Trips with passengers
-          {
-            passengers: {
-              some: {},
-            },
-          },
-          // Trips with transport assignments
-          {
-            transports: {
-              some: {},
-            },
-          },
-          // Completed or in-progress trips
-          {
-            status: {
-              in: ['in_process', 'completed'],
-            },
-          },
-        ],
-      },
-    });
-
-    if (tripsWithData.length > 0) {
-      throw new Error(
-        'Cannot remove transport from route with existing trips that have passengers, transport assignments, or are completed. This assignment has historical data that must be preserved.'
-      );
-    }
-
     // Delete the route transport assignment
     await ctx.prisma.visarunRouteTransport.delete({
       where: { id },

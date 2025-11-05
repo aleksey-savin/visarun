@@ -261,74 +261,76 @@ export const editVisarunScheduleTrpcRoute = visarunScheduleUpdateProcedure
           },
         });
 
-        // Create a map of existing stops by cityId
-        const existingStopsByCityId = new Map(existingStops.map(stop => [stop.cityId, stop]));
+        // Create a map of existing stops by ID
+        const existingStopsById = new Map(existingStops.map(stop => [stop.id, stop]));
 
-        // Track which cityIds are in the new route stops
-        const newCityIds = new Set(routeStops.map(stop => stop.cityId));
+        // Track which stop IDs are in the new route stops
+        const newStopIds = new Set(routeStops.filter(stop => stop.id).map(stop => stop.id!));
 
         // Delete stops that are no longer in the route
         await tx.visarunRouteStop.deleteMany({
           where: {
             routeId: existingSchedule.routeId,
-            cityId: {
-              notIn: Array.from(newCityIds),
+            id: {
+              notIn: Array.from(newStopIds),
             },
           },
         });
 
-        // First pass: Update all existing stops with temporary high stopOrder values to avoid unique constraint conflicts
-        const existingStopsToUpdate = Array.from(existingStopsByCityId.values());
-        for (let i = 0; i < existingStopsToUpdate.length; i++) {
-          const existingStop = existingStopsToUpdate[i];
-          // Use a temporary stopOrder starting from 1000 to avoid conflicts
-          await tx.visarunRouteStop.update({
-            where: { id: existingStop.id },
-            data: {
-              stopOrder: 1000 + i,
+        // First, delete all existing pickup locations for stops we're going to update
+        const stopIdsToUpdate = routeStops.filter(stop => stop.id).map(stop => stop.id!);
+        if (stopIdsToUpdate.length > 0) {
+          await tx.visarunStopPickupLocation.deleteMany({
+            where: {
+              routeStopId: {
+                in: stopIdsToUpdate,
+              },
             },
           });
         }
 
-        // Second pass: Process each route stop and assign correct stopOrder
+        // First pass: Update existing stops with temporary high stopOrder to avoid conflicts
+        const existingStopsToUpdate = routeStops.filter(
+          stop => stop.id && existingStopsById.has(stop.id)
+        );
+        for (let i = 0; i < existingStopsToUpdate.length; i++) {
+          const stop = existingStopsToUpdate[i];
+          await tx.visarunRouteStop.update({
+            where: { id: stop.id! },
+            data: {
+              stopOrder: 10000 + i, // Use very high temporary values
+              cityId: stop.cityId,
+              stopType: stop.stopType,
+              pickupMode: stop.pickupMode,
+              arrivalTime: stop.arrivalTime,
+              departureTime: stop.departureTime,
+              arrivalNextDay: stop.arrivalNextDay,
+              waitingDuration: stop.waitingDuration,
+            },
+          });
+        }
+
+        // Second pass: Create new stops and update existing stops with final stopOrder
         for (let i = 0; i < routeStops.length; i++) {
           const stop = routeStops[i];
           const expectedStopOrder = i + 1;
-          const existingStop = existingStopsByCityId.get(stop.cityId);
 
-          if (existingStop) {
-            // Update existing stop with correct order and other fields
+          if (stop.id && existingStopsById.has(stop.id)) {
+            // Update existing stop with final stopOrder
             await tx.visarunRouteStop.update({
-              where: { id: existingStop.id },
+              where: { id: stop.id },
               data: {
                 stopOrder: expectedStopOrder,
-                stopType: stop.stopType,
-                pickupMode: stop.pickupMode,
-                arrivalTime: stop.arrivalTime,
-                departureTime: stop.departureTime,
-                arrivalNextDay: stop.arrivalNextDay,
-                waitingDuration: stop.waitingDuration,
               },
             });
 
             // Handle pickup location updates
             if (stop.pickupLocationId) {
-              // Remove existing pickup locations
-              await tx.visarunStopPickupLocation.deleteMany({
-                where: { routeStopId: existingStop.id },
-              });
-
-              // Add new pickup location
               await tx.visarunStopPickupLocation.create({
                 data: {
-                  routeStopId: existingStop.id,
+                  routeStopId: stop.id,
                   pickupLocationId: stop.pickupLocationId,
                 },
-              });
-            } else {
-              // Remove pickup locations if none specified
-              await tx.visarunStopPickupLocation.deleteMany({
-                where: { routeStopId: existingStop.id },
               });
             }
           } else {

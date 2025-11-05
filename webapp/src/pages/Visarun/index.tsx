@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import TripsList from '@/components/Trip/TripsList';
 
 const AllVisarunTripsPage = () => {
@@ -131,6 +131,9 @@ const AllVisarunTripsPage = () => {
                     {formatDateTab(dateKey)}
                     <Badge variant="secondary" className="rounded-full text-xs bg-secondary">
                       {tripsByDate[dateKey].length}
+                      {tripsByDate[dateKey]?.filter(t => t.status === 'in_process').length > 0 && (
+                        <AlertTriangle className="text-warning" />
+                      )}
                     </Badge>
                   </TabsTrigger>
                 ))}
@@ -157,7 +160,24 @@ const AllVisarunTripsPage = () => {
                 id="fromDate"
                 type="date"
                 value={fromDate}
-                onChange={e => setFromDate(e.target.value)}
+                onChange={e => {
+                  const newFromDate = e.target.value;
+                  setFromDate(newFromDate);
+
+                  // If toDate is earlier than fromDate, adjust toDate
+                  if (newFromDate > toDate) {
+                    setToDate(newFromDate);
+                  }
+
+                  // If period exceeds 10 days, adjust toDate
+                  const maxToDate = new Date(newFromDate);
+                  maxToDate.setDate(maxToDate.getDate() + 10);
+                  const maxToDateString = maxToDate.toISOString().split('T')[0];
+
+                  if (toDate > maxToDateString) {
+                    setToDate(maxToDateString);
+                  }
+                }}
               />
             </div>
             <div className="flex gap-2 items-center">
@@ -166,7 +186,30 @@ const AllVisarunTripsPage = () => {
                   id="toDate"
                   type="date"
                   value={toDate}
-                  onChange={e => setToDate(e.target.value)}
+                  onChange={e => {
+                    const newToDate = e.target.value;
+
+                    // Ensure toDate is not earlier than fromDate
+                    if (newToDate < fromDate) {
+                      return; // Don't allow setting toDate earlier than fromDate
+                    }
+
+                    // Ensure period doesn't exceed 10 days
+                    const fromDateObj = new Date(fromDate);
+                    const toDateObj = new Date(newToDate);
+                    const diffTime = Math.abs(toDateObj.getTime() - fromDateObj.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays <= 10) {
+                      setToDate(newToDate);
+                    }
+                  }}
+                  min={fromDate} // HTML validation to prevent selecting dates before fromDate
+                  max={(() => {
+                    const maxDate = new Date(fromDate);
+                    maxDate.setDate(maxDate.getDate() + 10);
+                    return maxDate.toISOString().split('T')[0];
+                  })()}
                 />
               </div>
             </div>
