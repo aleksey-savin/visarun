@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, X } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 
 import { IconDisplay } from '../ui/icon-display';
@@ -268,6 +268,8 @@ export default function CombinedVisarunForm({
   mode = 'create',
 }: CombinedVisarunFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validFromOpen, setValidFromOpen] = useState(false);
+  const [validToOpen, setValidToOpen] = useState(false);
 
   const form = useForm<CombinedVisarunFormData>({
     resolver: zodResolver(mode === 'edit' ? editFormSchema : formSchema) as any,
@@ -604,29 +606,54 @@ export default function CombinedVisarunForm({
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Set from</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="secondary"
-                                className={cn(
-                                  'justify-start text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {field.value ? format(field.value, 'dd.MM.yyyy') : 'Select Date'}
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <div className="flex gap-1">
+                          <Popover open={validFromOpen} onOpenChange={setValidFromOpen}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="secondary"
+                                  className={cn(
+                                    'justify-start text-left font-normal flex-1',
+                                    !field.value && 'text-muted-foreground'
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {form.watch('validFrom')
+                                    ? format(form.watch('validFrom')!, 'dd.MM.yyyy')
+                                    : 'Select Date'}
+                                  {form.watch('validFrom') && (
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size={null}
+                                      className="border-none"
+                                      onClick={() => {
+                                        // Don't allow clearing required validFrom field
+                                        form.setValue('validFrom', new Date(), {
+                                          shouldValidate: true,
+                                          shouldDirty: true,
+                                        });
+                                      }}
+                                      title="Clear date"
+                                    >
+                                      <X className="h-1 w-1" />
+                                    </Button>
+                                  )}
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={date => {
+                                  field.onChange(date);
+                                  setValidFromOpen(false);
+                                }}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -638,57 +665,83 @@ export default function CombinedVisarunForm({
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>to</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="secondary"
-                                className={cn(
-                                  'justify-start text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {field.value ? format(field.value, 'dd.MM.yyyy') : 'Select Date'}
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <div className="flex gap-1">
+                          <Popover open={validToOpen} onOpenChange={setValidToOpen}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="secondary"
+                                  className={cn(
+                                    'justify-start text-left font-normal flex-1',
+                                    !field.value && 'text-muted-foreground'
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {form.watch('validTo')
+                                    ? format(form.watch('validTo')!, 'dd.MM.yyyy')
+                                    : 'Select Date'}
+                                  {form.watch('validTo') && (
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size={null}
+                                      className="border-none"
+                                      onClick={() => {
+                                        form.setValue('validTo', undefined, {
+                                          shouldValidate: true,
+                                          shouldDirty: true,
+                                        });
+                                      }}
+                                      title="Clear date"
+                                    >
+                                      <X className="h-2 w-2" />
+                                    </Button>
+                                  )}
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={date => {
+                                  field.onChange(date);
+                                  setValidToOpen(false);
+                                }}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
               </div>
-              <div className="ms-6">
-                <FormField
-                  control={form.control as any}
-                  name="autoGeneratePeriodMonths"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Auto-generation period (months)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="24"
-                          className="w-24"
-                          {...field}
-                          onChange={e => field.onChange(parseInt(e.target.value) || 12)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              {!form.watch('validTo') && (
+                <div className="ms-6">
+                  <FormField
+                    control={form.control as any}
+                    name="autoGeneratePeriodMonths"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Auto-generation period (months)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="24"
+                            className="w-24"
+                            {...field}
+                            onChange={e => field.onChange(parseInt(e.target.value) || 12)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
               <Separator />
               {/* Actions */}
               <div className="flex justify-end gap-4">

@@ -32,6 +32,8 @@ interface BookingConfirmationDialogProps {
   price: number;
   preferredDepartureCity?: any;
   tripTransports?: any[];
+  visarunPassengers?: any[];
+  currentClientId?: string;
   onConfirm: (bookingData: {
     pickupLocationId?: string;
     pickupAddress?: string;
@@ -67,6 +69,8 @@ const BookingConfirmationDialog = ({
   trip,
   seatClass,
   preferredDepartureCity,
+  visarunPassengers = [],
+  currentClientId,
   onConfirm,
 }: BookingConfirmationDialogProps) => {
   const transports = trip ? trip.transports : [];
@@ -142,12 +146,62 @@ const BookingConfirmationDialog = ({
     return allPickupLocations;
   }, [trip?.route?.routeStops, selectedDepartureStop?.city.id]);
 
-  // Set default pickup location to first element
+  // Set default pickup location to first element or from existing bookings
   useEffect(() => {
-    if (departureCityPickupLocations.length > 0) {
-      setSelectedPickupLocationId(departureCityPickupLocations[0].id);
+    if (!isOpen || !trip?.id) return;
+
+    // Check if there are existing passengers from other clients on the same trip
+    const existingPassengers = visarunPassengers.filter(
+      passenger => passenger.tripId === trip.id && passenger.clientId !== currentClientId
+    );
+
+    if (existingPassengers.length > 0) {
+      // Use pickup info from the first existing passenger as default
+      const existingPassenger = existingPassengers[0];
+
+      // Handle pickup location (for location-based pickup)
+      if (existingPassenger.pickupLocationId && departureCityPickupLocations.length > 0) {
+        // Check if the existing pickup location is available in current departure city
+        const matchingLocation = departureCityPickupLocations.find(
+          loc => loc.id === existingPassenger.pickupLocationId
+        );
+        if (matchingLocation) {
+          setSelectedPickupLocationId(existingPassenger.pickupLocationId);
+        } else {
+          setSelectedPickupLocationId(departureCityPickupLocations[0].id);
+        }
+      } else if (departureCityPickupLocations.length > 0) {
+        setSelectedPickupLocationId(departureCityPickupLocations[0].id);
+      }
+
+      // Handle pickup address (for address-based pickup)
+      if (existingPassenger.pickupAddress && existingPassenger.pickupAddress.trim()) {
+        setPickupAddress(existingPassenger.pickupAddress);
+        setSpecifyLater(false); // If we have an address, don't specify later
+      }
+    } else {
+      // No existing passengers, set defaults
+      if (departureCityPickupLocations.length > 0) {
+        setSelectedPickupLocationId(departureCityPickupLocations[0].id);
+      }
     }
-  }, [departureCityPickupLocations]);
+  }, [isOpen, departureCityPickupLocations, trip?.id, visarunPassengers, currentClientId]);
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      // Only reset if no existing passengers to copy from
+      const existingPassengers = visarunPassengers.filter(
+        passenger => passenger.tripId === trip?.id && passenger.clientId !== currentClientId
+      );
+
+      if (existingPassengers.length === 0) {
+        setPickupAddress('');
+        setSpecifyLater(false);
+        setSelectedSeat(null);
+      }
+    }
+  }, [isOpen, trip?.id, visarunPassengers, currentClientId]);
 
   // Update seat availability based on occupied seats
   const updateSeatingChartAvailability = (chart: any) => {

@@ -282,7 +282,7 @@ const TripTransportsList = ({ tripTransports, tripId, tripStatus }: TripTranspor
                   <CircleCheck className="w-6 h-6 text-emerald-600" />
                 )}
 
-              {tripTransport.status !== 'completed' &&
+              {!['completed', 'rented'].includes(tripTransport.status) &&
                 tripTransport.transport?.seatCount &&
                 getPassengerCountForTripTransport(tripTransport.id) <
                   tripTransport.transport.seatCount && (

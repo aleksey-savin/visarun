@@ -56,8 +56,19 @@ const TripCards = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
         trip.status === 'in_process' && 'border-warning'
       )}
     >
-      <div className="flex flex-wrap gap-2">
-        <RouteStopsBadges trip={trip} />
+      <div className="flex justify-between gap-4 items-start">
+        <div className="flex flex-wrap gap-2">
+          <RouteStopsBadges trip={trip} />
+        </div>
+        <Badge
+          className={cn(
+            trip.status === 'completed' && 'bg-success',
+            trip.status === 'cancelled' && 'bg-destructive',
+            trip.status === 'in_process' && 'bg-warning'
+          )}
+        >
+          {getStatusLabel(trip.status)}
+        </Badge>
       </div>
 
       <div className="flex flex-wrap gap-2 justify-between items-center">
@@ -78,17 +89,6 @@ const TripCards = ({ trip, activeTab, setActiveTab }: TripCardProps) => {
                 ))}
             </TabsList>
           </Tabs>
-        </div>
-        <div className="self-end">
-          <Badge
-            className={cn(
-              trip.status === 'completed' && 'bg-success',
-              trip.status === 'cancelled' && 'bg-destructive',
-              trip.status === 'in_process' && 'bg-warning'
-            )}
-          >
-            {getStatusLabel(trip.status)}
-          </Badge>
         </div>
       </div>
     </Card>

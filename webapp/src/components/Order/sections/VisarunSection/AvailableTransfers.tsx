@@ -455,6 +455,8 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
           onConfirm={handleBookingConfirm}
           preferredDepartureCity={preferredDepartureCity}
           tripTransports={tripTransports.filter(tt => tt.tripId === selectedTripForBooking?.id)}
+          visarunPassengers={visarunPassengers}
+          currentClientId={client.id}
         />
 
         <CancelBookingDialog
@@ -589,6 +591,8 @@ const AvailableTransfers = ({ client }: { client: StoreClient }) => {
         seatClass={selectedSeatClassForBooking}
         price={selectedPriceForBooking || 0}
         preferredDepartureCity={preferredDepartureCity}
+        visarunPassengers={visarunPassengers}
+        currentClientId={client.id}
         onConfirm={handleBookingConfirm}
       />
 

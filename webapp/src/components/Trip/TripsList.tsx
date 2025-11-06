@@ -135,9 +135,16 @@ const TripsList = ({ trips }: TripsListProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {trips.map(trip => (
-          <TripCards key={trip.id} trip={trip} activeTab={activeTab} setActiveTab={setActiveTab} />
-        ))}
+        {trips
+          .sort((a: any, b: any) => a.id - b.id)
+          .map(trip => (
+            <TripCards
+              key={trip.id}
+              trip={trip}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+            />
+          ))}
       </div>
       <Separator />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -166,8 +173,9 @@ const TripsList = ({ trips }: TripsListProps) => {
                     );
 
                   return Object.keys(groupedPassengers).length > 0 ? (
-                    Object.entries(groupedPassengers).map(
-                      ([seatClassKey, { seatClass, passengers }]) => (
+                    Object.entries(groupedPassengers)
+                      .sort((a, b) => a[0].localeCompare(b[0]))
+                      .map(([seatClassKey, { seatClass, passengers }]) => (
                         <Card key={seatClassKey} className="p-3 h-80 flex flex-col bg-secondary">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -202,8 +210,7 @@ const TripsList = ({ trips }: TripsListProps) => {
                             </div>
                           </ScrollArea>
                         </Card>
-                      )
-                    )
+                      ))
                   ) : (
                     <Card>
                       <CardContent className="p-3">
