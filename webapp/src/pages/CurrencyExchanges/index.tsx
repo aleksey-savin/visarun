@@ -16,10 +16,13 @@ import {
 import SelectedCurrencyExchangeDialog from '@/components/CurrencyExchanges/SelectedCurrencyExchangeDialog';
 import useCurrencyExchangeStore from '@/stores/currencyExchange/currency-exchange-store';
 import BegotteningExchangesTable from '@/components/CurrencyExchanges/BegotteningExchangesTable';
+import {useNavigate} from "react-router-dom";
+import {getEditOrderRoute} from "@/lib/routes";
 
 type StatusFilter = 'draft' | 'in_progress' | 'finished' | 'cancelled';
 
 const AllCurrencyExchangesPage = () => {
+  const navigate = useNavigate();
   const { allCurrencyExchanges, setAllCurrencyExchanges } = useCurrencyExchangeStore();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,13 +130,12 @@ const AllCurrencyExchangesPage = () => {
               },
             }
           : undefined,
+        orderId: exchange.orderItem.orderId,
       })) || []
     );
   }, [allCurrencyExchangesData]);
 
-  const [selectedCurrencyExchangeId, setSelectedCurrencyExchangeId] = useState<
-    string | undefined
-  >();
+  const [selectedCurrencyExchangeId, setSelectedCurrencyExchangeId] = useState<string | undefined>();
   const handleSelectCurrencyExchange = (id: string) => {
     const foundExchange = allCurrencyExchanges?.find(ex => ex.id === id);
 
@@ -141,6 +143,10 @@ const AllCurrencyExchangesPage = () => {
       setSelectedCurrencyExchangeId(id);
     }
   };
+
+  const handleOrderEdit = (orderId: string) => {
+    navigate(getEditOrderRoute({id: orderId}));
+  }
 
   const filterExchanges = () => {
     let filtered = allCurrencyExchanges;
@@ -185,7 +191,7 @@ const AllCurrencyExchangesPage = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                {currencyExchangeCombinations?.map((combination, index) => (
+                {currencyExchangeCombinations?.map((combination: any, index: any) => (
                   <SelectItem
                     key={index}
                     value={`${combination.fromCurrency.id}|${combination.toCurrency.id}`}
@@ -251,16 +257,18 @@ const AllCurrencyExchangesPage = () => {
           {/* Desktop Table View */}
           <div className="hidden lg:block text-gray-400">
             <div className="overflow-x-auto rounded-md border border-muted">
-              {currencyExchangeCombinations?.find(comb => comb.fromCurrency.isBegottening)
+              {currencyExchangeCombinations?.find((comb: any) => comb.fromCurrency.isBegottening)
                 ?.fromCurrency.id === selectedCombination?.split('|')[0] ? (
                 <BegotteningExchangesTable
                   currencyExchanges={filterExchanges()}
                   handleSelectCurrencyExchange={handleSelectCurrencyExchange}
+                  handleOrderEdit={handleOrderEdit}
                 />
               ) : (
                 <CurrencyExchangesTable
                   currencyExchanges={filterExchanges()}
                   handleSelectCurrencyExchange={handleSelectCurrencyExchange}
+                  handleOrderEdit={handleOrderEdit}
                 />
               )}
             </div>

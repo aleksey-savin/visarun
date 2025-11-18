@@ -3,7 +3,7 @@ import IconLoader from '@/assets/tabler-icons/IconLoader';
 import { formatCurrency } from '@/utils/currency';
 import Summ from '@/components/ui/summ';
 import { Badge } from '@/components/ui/badge';
-import { Check, CircleCheck, Copy, Crown, Download, Trash2 } from 'lucide-react';
+import { Check, CircleCheck, Copy, Crown, Trash2 } from 'lucide-react';
 import ContactMethodIcon from '../ContactMethod/ContactMethodIcon';
 import React, { useEffect, useState } from 'react';
 import {
@@ -35,6 +35,7 @@ import useCurrencyExchangeStore, {
   StoreTransaction,
 } from '@/stores/currencyExchange/currency-exchange-store';
 import ExchangeTag from '@/components/CurrencyExchanges/ExchangeTag';
+import BankingDetailsButton from "@/components/CurrencyExchanges/BankingDetailsButton";
 
 const TransactionCard = ({
   transaction,
@@ -73,8 +74,8 @@ const TransactionCard = ({
     (ex: StoreCurrencyExchange) => ex.id === transaction.currencyExchangeId
   );
 
-  const bankingDetailsContent = !exchangeDetailsToShow?.isBegottening ? exchangeDetailsToShow?.bankingDetails?.content?.split('|').join(' · ') : null;
-  const bankingDetailsUrl = !exchangeDetailsToShow?.isBegottening ? exchangeDetailsToShow?.bankingDetails?.documentUrl : null;
+  const bankingDetailsContent = !exchangeDetailsToShow?.isBegottening ? exchangeDetailsToShow?.bankingDetails?.content?.split('|').filter(part => part?.trim()).join(' · ') : undefined;
+  const bankingDetailsUrl = !exchangeDetailsToShow?.isBegottening ? (exchangeDetailsToShow?.bankingDetails?.documentUrl ?? undefined) : undefined;
 
   const handleDownloadBankingDetailsFile = (documentUrl: string) => {
     const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/upload/file/${documentUrl}`;
@@ -312,36 +313,13 @@ const TransactionCard = ({
 
           {(bankingDetailsUrl || bankingDetailsContent) && (
             <div className="max-w-1/4">
-              <Button
-                className={`${
-                  copiedText === bankingDetailsContent && bankingDetailsContent
-                    ? 'bg-green-500/20 text-green-300'
-                    : 'bg-muted hover:bg-muted/80'
-                } w-full overflow-hidden hover:bg-gray-500`}
-                onClick={e => {
-                  if (bankingDetailsContent) handleCopyToClipboard(e, bankingDetailsContent);
-                  else if (bankingDetailsUrl) handleDownloadBankingDetailsFile(bankingDetailsUrl);
-                }}
-                variant="secondary"
-              >
-                {bankingDetailsContent ? (
-                  <>
-                    {copiedText === bankingDetailsContent ? (
-                      <Check className="w-3 h-3 ml-1 animate-pulse" />
-                    ) : (
-                      <Copy className="w-3 h-3 ml-1" />
-                    )}
-                    <span className="block truncate text-ellipsis">{bankingDetailsContent}</span>
-                  </>
-                ) : (
-                  <div className="flex gap-1">
-                    <Download />
-                    <span className="block truncate text-ellipsis">
-                      Download Banking Details File
-                    </span>
-                  </div>
-                )}
-              </Button>
+              <BankingDetailsButton
+                copiedText={copiedText}
+                bankingDetailsContent={bankingDetailsContent}
+                bankingDetailsUrl={bankingDetailsUrl}
+                handleCopyToClipboard={handleCopyToClipboard}
+                handleDownloadBankingDetailsFile={handleDownloadBankingDetailsFile}
+              />
             </div>
           )}
         </div>

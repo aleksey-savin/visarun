@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronUp, CircleCheck, Copy, Crown, Download } from 'lucide-react';
+import {Check, ChevronDown, ChevronUp, CircleCheck, Copy, Crown, Edit} from 'lucide-react';
 
 import {
   Dialog,
@@ -27,6 +27,9 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import ExchangeTag from '@/components/CurrencyExchanges/ExchangeTag';
 import FinalTransactionForBegotteningExchange from '@/components/CurrencyExchanges/FinalTransactionForBegotteningExchange';
+import BankingDetailsButton from "@/components/CurrencyExchanges/BankingDetailsButton";
+import {getEditOrderRoute} from "@/lib/routes";
+import {useNavigate} from "react-router-dom";
 
 const _inProgress = new Map<string, Promise<void>>();
 const _done = new Set<string>();
@@ -48,6 +51,8 @@ const SelectedCurrencyExchangeDialog = ({
   selectedCurrencyExchangeId: string | undefined;
   setSelectedCurrencyExchangeId: (newId: string | undefined) => void;
 }) => {
+  const navigate = useNavigate();
+
   const { allCurrencyExchanges, setAllCurrencyExchanges } = useCurrencyExchangeStore();
 
   const {
@@ -618,7 +623,7 @@ const SelectedCurrencyExchangeDialog = ({
     }
   }, [selectedCurrencyExchange?.finishedBegottenTransactionsAmountInSelectedCurrency]);
 
-  const bankingDetailsContent = selectedCurrencyExchange?.bankingDetails?.content?.split('|').join(' · ');
+  const bankingDetailsContent = selectedCurrencyExchange?.bankingDetails?.content?.split('|').filter(part => part?.trim()).join(' · ');
   const bankingDetailsUrl = selectedCurrencyExchange?.bankingDetails?.documentUrl ?? undefined;
 
   const [clientInformed, setClientInformed] = useState<boolean>(false);
@@ -690,6 +695,10 @@ const SelectedCurrencyExchangeDialog = ({
         <p>{errorUsers.message}</p>
       </div>
     );
+  }
+
+  const handleEditOrder = (orderId: string) => {
+    navigate(getEditOrderRoute({id: orderId}));
   }
 
   return (
@@ -938,44 +947,35 @@ const SelectedCurrencyExchangeDialog = ({
                     </div>
                   </div>
 
-                  {!selectedCurrencyExchange?.isBegottening && (bankingDetailsContent || bankingDetailsUrl) && (
-                    <div className="max-w-1/4">
+
+
+                  <div className="flex gap-2 max-w-1/4">
+                    {!selectedCurrencyExchange?.isBegottening && (bankingDetailsContent || bankingDetailsUrl) && (
+                      <div>
+                        <BankingDetailsButton
+                          copiedText={copiedText}
+                          bankingDetailsContent={bankingDetailsContent}
+                          bankingDetailsUrl={bankingDetailsUrl}
+                          handleCopyToClipboard={handleCopyToClipboard}
+                          handleDownloadBankingDetailsFile={handleDownloadBankingDetailsFile}
+                        />
+                      </div>
+                    )}
+
+                    <div>
                       <Button
-                        className={`${
-                          copiedText === bankingDetailsContent && bankingDetailsContent
-                            ? 'bg-green-500/20 text-green-300'
-                            : 'bg-muted hover:bg-muted/80'
-                        } w-full overflow-hidden hover:bg-gray-500`}
-                        onClick={e => {
-                          if (bankingDetailsContent)
-                            handleCopyToClipboard(e, bankingDetailsContent);
-                          else if (bankingDetailsUrl)
-                            handleDownloadBankingDetailsFile(bankingDetailsUrl);
-                        }}
                         variant="secondary"
+                        onClick={() => {
+                          if (selectedCurrencyExchange?.orderId) {
+                            handleEditOrder(selectedCurrencyExchange.orderId);
+                          }
+                        }}
                       >
-                        {bankingDetailsContent ? (
-                          <>
-                            {copiedText === bankingDetailsContent ? (
-                              <Check className="w-3 h-3 ml-1 animate-pulse" />
-                            ) : (
-                              <Copy className="w-3 h-3 ml-1" />
-                            )}
-                            <span className="block truncate text-ellipsis">
-                              {bankingDetailsContent}
-                            </span>
-                          </>
-                        ) : (
-                          <div className="flex gap-1">
-                            <Download />
-                            <span className="block truncate text-ellipsis">
-                              Download Banking Details File
-                            </span>
-                          </div>
-                        )}
+                        Edit
+                        <Edit />
                       </Button>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 

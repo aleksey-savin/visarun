@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Eye, Trash2, File } from 'lucide-react';
+import {Eye, Trash2, File, Download} from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { FileUpload } from '@/components/ui/file-upload';
@@ -88,6 +88,13 @@ const TransactionCheckUpload = ({
     handleCheckDelete();
   };
 
+  const handleDownloadFile = async (file: UploadedFile) => {
+    const a = document.createElement('a');
+    a.href = file.url;
+    a.download = file.name;
+    a.click();
+  }
+
   return (
     <div className={`w-full space-y-4`}>
       {file ? (
@@ -107,10 +114,18 @@ const TransactionCheckUpload = ({
             </div>
             <div className="flex items-center gap-2">
               <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleDownloadFile(file)}
                 disabled={!file.url}
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+              <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => setPreviewOpen(true)}
+                disabled={!file.url}
               >
                 <Eye className="w-4 h-4" />
               </Button>

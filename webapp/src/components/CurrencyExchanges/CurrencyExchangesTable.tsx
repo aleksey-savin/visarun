@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import IconArrowShuffle from '@/assets/tabler-icons/IconArrowShuffle';
-import { getEditCurrencyExchangeRoute } from '@/lib/routes';
 import {
   Table,
   TableBody,
@@ -11,10 +10,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Crown, Eye } from 'lucide-react';
+import {AlertCircle, Crown, Edit, Eye} from 'lucide-react';
 import { formatCurrency, getCurrencyAmount, getCurrencySymbol } from '@/utils/currency';
 import Summ from '@/components/ui/summ';
-import { Link } from 'react-router-dom';
 import TableSortField from '@/components/CurrencyExchanges/TableSortField';
 import {useState} from "react";
 
@@ -28,9 +26,11 @@ interface SortBy {
 const CurrencyExchangesTable = ({
   currencyExchanges,
   handleSelectCurrencyExchange,
+  handleOrderEdit,
 }: {
   currencyExchanges: any;
   handleSelectCurrencyExchange: (currencyExchangeId: string) => void;
+  handleOrderEdit: (orderId: string) => void;
 }) => {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -136,22 +136,17 @@ const CurrencyExchangesTable = ({
               <TableCell
                 className="max-w-[200px]"
               >
-                <Link
-                  to={getEditCurrencyExchangeRoute({ id: exchange.id })}
-                  className="hover:underline font-medium block"
-                >
-                  {exchange.orderItem?.client ? (
-                    <Badge variant="primary" className="w-full justify-start">
-                      <Crown />
-                      <span className="truncate">
+                {exchange.orderItem?.client ? (
+                  <Badge variant="primary" className="w-full justify-start">
+                    <Crown />
+                    <span className="truncate">
                         {exchange.orderItem?.client?.firstName || `Item: ${exchange.orderItemId}`}{' '}
-                        {exchange.orderItem?.client?.lastName || ''}
+                      {exchange.orderItem?.client?.lastName || ''}
                       </span>
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">No user</span>
-                  )}
-                </Link>
+                  </Badge>
+                ) : (
+                  <span className="text-muted-foreground">No user</span>
+                )}
               </TableCell>
               <TableCell>
                 {exchange.amountInSelectedCurrencyFrom && exchange.fromCurrency
@@ -250,13 +245,27 @@ const CurrencyExchangesTable = ({
 
                     <Button
                       className={`${
-                        exchange.status === 'finished' ? 'bg-gray-50' : 'bg-fuchsia-300'
+                        exchange.status === 'finished' 
+                          ? 'bg-gray-50' 
+                        : exchange.status === 'draft'
+                          ? 'bg-gray-50' 
+                          : 'bg-fuchsia-300'
                       } cursor-pointer`}
                       onClick={() => {
-                        handleSelectCurrencyExchange(exchange.id);
+                        if (exchange.status === 'draft') {
+                          handleOrderEdit(exchange.orderId)
+                        } else {
+                          handleSelectCurrencyExchange(exchange.id);
+                        }
                       }}
                     >
-                      {exchange.status === 'finished' ? <Eye /> : <IconArrowShuffle />}
+                      {
+                        exchange.status === 'finished'
+                          ? <Eye />
+                        : exchange.status === 'draft'
+                          ? <Edit />
+                          : <IconArrowShuffle />
+                      }
                     </Button>
                   </div>
                 ) : (

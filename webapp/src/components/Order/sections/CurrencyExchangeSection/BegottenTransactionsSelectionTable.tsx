@@ -6,8 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Link } from 'react-router-dom';
-import { getEditCurrencyExchangeRoute } from '@/lib/routes';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Crown } from 'lucide-react';
 import { formatCurrency } from '@/utils/currency';
@@ -140,22 +138,17 @@ const BegottenTransactionsSelectionTable = ({
             <TableRow key={exchange.id} className="hover:bg-muted/50">
               <TableCell>{exchange.position}</TableCell>
               <TableCell className="max-w-[200px]">
-                <Link
-                  to={getEditCurrencyExchangeRoute({ id: exchange.id })}
-                  className="hover:underline font-medium block"
-                >
-                  {exchange.orderItem?.client ? (
-                    <Badge variant="primary" className="w-full justify-start">
-                      <Crown />
-                      <span className="truncate">
+                {exchange.orderItem?.client ? (
+                  <Badge variant="primary" className="w-full justify-start">
+                    <Crown />
+                    <span className="truncate">
                         {exchange.orderItem?.client?.firstName || `Item: ${exchange.orderItemId}`}{' '}
-                        {exchange.orderItem?.client?.lastName || ''}
+                      {exchange.orderItem?.client?.lastName || ''}
                       </span>
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">No user</span>
-                  )}
-                </Link>
+                  </Badge>
+                ) : (
+                  <span className="text-muted-foreground">No user</span>
+                )}
               </TableCell>
               <TableCell>
                 {exchange.amountInSelectedCurrencyFrom && exchange.fromCurrency

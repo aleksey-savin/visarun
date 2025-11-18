@@ -39,6 +39,7 @@ export interface StoreClient {
 export interface StoreCurrencyExchange {
   id: string;
   isBegottening: boolean;
+  orderId: string;
   orderItemId: string;
   position: number;
   exchangeRate?: number | null;

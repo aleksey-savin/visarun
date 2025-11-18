@@ -119,7 +119,7 @@ const BankingDetailsCard = ({
           {/*Card section*/}
           <div>
             <Label htmlFor="card-input" className="mb-2">
-              Card / phone number
+              Card / phone number / bank account
             </Label>
             <div className="flex flex-wrap gap-1.5">
               <Input

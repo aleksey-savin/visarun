@@ -127,6 +127,7 @@ export const getAllCurrencyExchangesTrpcRoute = currencyExchangeReadProcedure
         },
         orderItem: {
           select: {
+            orderId: true,
             client: {
               select: {
                 firstName: true,

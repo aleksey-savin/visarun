@@ -17,10 +17,11 @@ import useCurrencyExchangeStore, {
 import { Button } from '@/components/ui/button';
 import TransactionCheckUpload from '@/components/CurrencyExchanges/TransactionCheckUpload';
 import { getCurrencySymbol } from '@/utils/currency';
-import {Check, CircleCheck, Copy, Download} from 'lucide-react';
+import {CircleCheck} from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
+import BankingDetailsButton from "@/components/CurrencyExchanges/BankingDetailsButton";
 
 const FinalTransactionForBegotteningExchange = ({
   selectedCurrencyExchange,
@@ -193,36 +194,13 @@ const FinalTransactionForBegotteningExchange = ({
         </Select>
 
         <div className="max-w-1/4">
-          <Button
-            className={`${
-              copiedText === bankingDetailsContent && bankingDetailsContent
-                ? 'bg-green-500/20 text-green-300'
-                : 'bg-muted hover:bg-muted/80'
-            } w-full overflow-hidden hover:bg-gray-500`}
-            onClick={e => {
-              if (bankingDetailsContent)
-                handleCopyToClipboard(e, bankingDetailsContent);
-              else if (bankingDetailsUrl)
-                handleDownloadBankingDetailsFile(bankingDetailsUrl);
-            }}
-            variant="secondary"
-          >
-            {bankingDetailsContent ? (
-              <>
-                {copiedText === bankingDetailsContent ? (
-                  <Check className="w-3 h-3 ml-1 animate-pulse" />
-                ) : (
-                  <Copy className="w-3 h-3 ml-1" />
-                )}
-                <span className="block truncate text-ellipsis">{bankingDetailsContent}</span>
-              </>
-            ) : (
-              <div className="flex gap-1">
-                <Download />
-                <span className="block truncate text-ellipsis">Download Banking Details File</span>
-              </div>
-            )}
-          </Button>
+          <BankingDetailsButton
+            copiedText={copiedText}
+            bankingDetailsContent={bankingDetailsContent}
+            bankingDetailsUrl={bankingDetailsUrl}
+            handleCopyToClipboard={handleCopyToClipboard}
+            handleDownloadBankingDetailsFile={handleDownloadBankingDetailsFile}
+          />
         </div>
       </div>
 
