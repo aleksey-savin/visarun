@@ -15,8 +15,10 @@ export const clientHasServicePuzzleErrors = (
   const clientOrderItems = orderItems.filter(item => item.clientId === client.id);
   const errors = new Set(client.errors || []);
 
+  const hasOnlyCurrencyExchangeServices = clientOrderItems.every((item: any) => item.serviceType === 'currencyExchange');
+
   // 1. Passport expires
-  if (!client.preConfirmPassportIsValid) {
+  if (!client.preConfirmPassportIsValid && !hasOnlyCurrencyExchangeServices) {
     errors.add('Passport expires within 6 months');
   }
 

@@ -164,12 +164,16 @@ const ServicePuzzle = ({
         />
       )}
 
+      {servicePuzzleIsActive && ['visa', 'acceleration'].includes(activeService) && (
+        <AddVisa activeService={activeService} client={client} />
+      )}
+
+      {(servicePuzzleIsActive || activeService === 'currencyExchange') && (
+        <ClientName client={client} />
+      )}
+
       {servicePuzzleIsActive && (
         <>
-          {['visa', 'acceleration'].includes(activeService) && (
-            <AddVisa activeService={activeService} client={client} />
-          )}
-          <ClientName client={client} />
           {activeService === 'visarun' && <VisarunSection client={client} />}
           <Comments />
           <hr />
