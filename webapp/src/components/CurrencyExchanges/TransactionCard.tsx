@@ -70,6 +70,8 @@ const TransactionCard = ({
   const [summaryIsOpened, setSummaryIsOpened] = useState<boolean>(false);
   const [isShowMore, setIsShowMore] = useState<boolean>(false);
 
+  const [clientsInformed, setClientsInformed] = useState<boolean>(false);
+
   const parentExchange = allCurrencyExchanges.find(
     (ex: StoreCurrencyExchange) => ex.id === transaction.currencyExchangeId
   );
@@ -122,6 +124,14 @@ const TransactionCard = ({
   useEffect(() => {
     handleSave();
   }, [currentSenderId, currentIsInCash, currentCheckUrl]);
+
+  useEffect(() => {
+    if (['paid_uninformed'].includes(transaction.status) && clientsInformed) {
+      handleChangeStatus('paid_informed')
+    } else if (['paid_informed'].includes(transaction.status) && !clientsInformed) {
+      handleChangeStatus('paid_uninformed')
+    }
+  }, [clientsInformed]);
 
   if (!exchangeDetailsToShow && !transaction.isCompanyTransaction) {
     return <div>Error: parent exchange was not found</div>;
@@ -329,7 +339,6 @@ const TransactionCard = ({
           <Select
             disabled={
               ([
-                'details_sent',
                 'check_uploaded',
                 'paid_uninformed',
                 'paid_informed',
@@ -380,7 +389,13 @@ const TransactionCard = ({
             setCurrentCheckUrl(checkUrl);
             handleChangeStatus('check_uploaded');
           }}
-          handleCheckDelete={() => setCurrentCheckUrl(null)}
+          handleCheckDelete={() => {
+            if (transaction.status === 'check_uploaded') {
+              handleChangeStatus('details_sent');
+            }
+
+            setCurrentCheckUrl(null)
+          }}
           existingTransaction={transaction}
           disableDelete={transaction.status === 'completed'}
         />
@@ -463,7 +478,8 @@ const TransactionCard = ({
             <span>Both parties to the transaction are informed</span>
             <Switch
               checked={['paid_informed', 'completed'].includes(transaction.status)}
-              onClick={() => handleChangeStatus('paid_informed')}
+              onClick={() => setClientsInformed(prevState => !prevState)}
+              disabled={['completed'].includes(transaction.status)}
             />
           </div>
           <Button

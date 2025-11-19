@@ -56,9 +56,9 @@ const FinalTransactionForBegotteningExchange = ({
 
   const [currentSenderId, setCurrentSenderId] = useState<string | undefined>(transaction.senderId);
   const [currentIsInCash, setCurrentIsInCash] = useState(transaction.isInCash || false);
-  const [currentCheckUrl, setCurrentCheckUrl] = useState<string | undefined | null>(
-    transaction.checkUrl
-  );
+  const [currentCheckUrl, setCurrentCheckUrl] = useState<string | undefined | null>(transaction.checkUrl);
+
+  const [clientInformed, setClientInformed] = useState<boolean>(false);
 
   const [isShowMore, setIsShowMore] = useState<boolean>(false);
 
@@ -77,6 +77,18 @@ const FinalTransactionForBegotteningExchange = ({
   useEffect(() => {
     handleSave();
   }, [currentSenderId, currentIsInCash, currentCheckUrl]);
+
+  useEffect(() => {
+    if (selectedCurrencyExchange?.status === 'finished') {
+      return;
+    }
+
+    if (['paid_uninformed'].includes(transaction.status) && clientInformed) {
+      handleChangeStatus('paid_informed')
+    } else if (['paid_informed'].includes(transaction.status) && !clientInformed) {
+      handleChangeStatus('paid_uninformed')
+    }
+  }, [clientInformed]);
 
   const updateStatusCurrencyExchangeMutation = trpc.currencyExchange.updateStatus.useMutation({
     onError: (error: any) => {
@@ -163,13 +175,14 @@ const FinalTransactionForBegotteningExchange = ({
 
       <div className="flex justify-between">
         <Select
-          disabled={[
-            'details_sent',
-            'check_uploaded',
-            'paid_uninformed',
-            'paid_informed',
-            'completed',
-          ].includes(transaction.status)}
+          disabled={
+            ([
+              'check_uploaded',
+              'paid_uninformed',
+              'paid_informed',
+            ].includes(transaction.status) && !!transaction.senderId)
+            || ['completed', 'cancelled'].includes(transaction.status)
+          }
           value={currentSenderId}
           onValueChange={(senderId: string) => setCurrentSenderId(senderId)}
         >
@@ -223,7 +236,14 @@ const FinalTransactionForBegotteningExchange = ({
             setCurrentCheckUrl(checkUrl);
             handleChangeStatus('check_uploaded');
           }}
-          handleCheckDelete={() => setCurrentCheckUrl(null)}
+          handleCheckDelete={() => {
+            if (transaction.status === 'check_uploaded') {
+              handleChangeStatus('details_sent');
+              console.log("deleted")
+            }
+
+            setCurrentCheckUrl(null)
+          }}
           existingTransaction={transaction}
           disableDelete={transaction.status === 'completed'}
         />
@@ -276,9 +296,9 @@ const FinalTransactionForBegotteningExchange = ({
           <div className="flex gap-1 items-center">
             <span>Client informed</span>
             <Switch
-              checked={['paid_informed', 'completed'].includes(transaction.status)}
-              onClick={() => handleChangeStatus('paid_informed')}
-              disabled={!['paid_uninformed'].includes(transaction.status)}
+              checked={clientInformed}
+              onClick={() => setClientInformed(prevState => !prevState)}
+              disabled={['completed'].includes(transaction.status) || selectedCurrencyExchange.status === 'finished'}
             />
           </div>
           {selectedCurrencyExchange.status === 'finished' ? (
