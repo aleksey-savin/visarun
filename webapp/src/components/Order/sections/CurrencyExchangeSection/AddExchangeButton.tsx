@@ -10,10 +10,12 @@ const _done = new Set<string>();
 const AddExchangeButton = ({
   client,
   disabled,
+  activeService,
   setActiveService,
 }: {
   client: StoreClient;
   disabled: boolean;
+  activeService: string;
   setActiveService: (type: string) => void;
 }) => {
   const {
@@ -217,7 +219,7 @@ const AddExchangeButton = ({
     <Button
       disabled={disabled || !currenciesData}
       onClick={() => handleClick()}
-      variant="secondary"
+      variant={activeService === 'currencyExchange' ? 'accent' : 'secondary'}
       size="sm"
       className="border-none"
     >

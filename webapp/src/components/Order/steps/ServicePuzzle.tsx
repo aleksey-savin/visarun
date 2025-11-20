@@ -254,6 +254,7 @@ const ServicePuzzle = ({
               <AddExchangeButton
                 client={client}
                 disabled={!hasContactMethod}
+                activeService={activeService}
                 setActiveService={setActiveService}
               />
             </div>

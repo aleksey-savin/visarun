@@ -419,7 +419,16 @@ const EditOrderPage = () => {
       );
     }
 
-    setActiveServicePuzzleSection('visa');
+    const detectActiveService =
+      orderData.visarunPassengers.length > 0
+        ? 'visarun'
+        : orderItems.filter(i => i.serviceType === 'acceleration').length > 0
+          ? 'acceleration'
+          : orderItems.filter(i => i.serviceType === 'visa').length > 0
+            ? 'visa'
+            : 'currencyExchange';
+
+    setActiveServicePuzzleSection(detectActiveService);
   }, [
     orderData,
     setContactMethods,

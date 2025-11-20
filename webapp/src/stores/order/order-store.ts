@@ -291,7 +291,7 @@ export interface StoreOrderPayment {
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-type ActiveServicePuzzleSection = 'visa' | 'visarun';
+type ActiveServicePuzzleSection = 'visa' | 'visarun' | 'acceleration' | 'currencyExchange';
 
 interface OrderStore {
   saveStatus: SaveStatus;
@@ -475,7 +475,8 @@ const useOrderStore = create<OrderStore>((set, get, store) => ({
     set(() => ({ visarunPassengers })),
   setCurrencyExchanges: (currencyExchanges: StoreCurrencyExchange[]) =>
     set(() => ({ currencyExchanges })),
-  setAlreadyAddedCurrencyExchange: (alreadyAddedCurrencyExchange: boolean) => set({ alreadyAddedCurrencyExchange }),
+  setAlreadyAddedCurrencyExchange: (alreadyAddedCurrencyExchange: boolean) =>
+    set({ alreadyAddedCurrencyExchange }),
   setOrderPayments: (orderPayments: StoreOrderPayment[]) => set(() => ({ orderPayments })),
   setPreferredDepartureDate: (date: Date) => set(() => ({ preferredDepartureDate: date })),
   setPreferredDepartureCity: (city: City | null) => set(() => ({ preferredDepartureCity: city })),

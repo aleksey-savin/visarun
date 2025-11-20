@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { Send, Edit2, Trash2, FileText, User, Calendar } from 'lucide-react';
+import { Send, /** Edit2, Trash2, FileText, **/ User, Calendar } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-import {
+/** import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -17,11 +15,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from '@/components/ui/alert-dialog'; **/
+
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupTextarea,
+} from '@/components/ui/input-group';
 
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/auth';
 
 interface CommentsProps {
   orderId?: string;
@@ -66,9 +73,11 @@ const Comments: React.FC<CommentsProps> = ({
 }) => {
   const [showComments, setShowComments] = useState(isExpanded);
   const [newComment, setNewComment] = useState('');
-  const [editingComment, setEditingComment] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
-  const [documentUrl, setDocumentUrl] = useState('');
+  // const [editingComment, setEditingComment] = useState<string | null>(null);
+  // const [editContent, setEditContent] = useState('');
+  // const [documentUrl, setDocumentUrl] = useState('');
+
+  const authedUserId = useAuth().user?.id;
 
   // TRPC queries and mutations
   const { data: commentsData, refetch } = trpc.comment.getAll.useQuery(
@@ -87,7 +96,7 @@ const Comments: React.FC<CommentsProps> = ({
     onSuccess: () => {
       toast.success('Comment added successfully');
       setNewComment('');
-      setDocumentUrl('');
+      // setDocumentUrl('');
       refetch();
     },
     onError: error => {
@@ -95,7 +104,7 @@ const Comments: React.FC<CommentsProps> = ({
     },
   });
 
-  const editCommentMutation = trpc.comment.edit.useMutation({
+  /* const editCommentMutation = trpc.comment.edit.useMutation({
     onSuccess: () => {
       toast.success('Comment updated successfully');
       setEditingComment(null);
@@ -105,17 +114,7 @@ const Comments: React.FC<CommentsProps> = ({
     onError: error => {
       toast.error(error.message || 'Failed to update comment');
     },
-  });
-
-  const deleteCommentMutation = trpc.comment.delete.useMutation({
-    onSuccess: () => {
-      toast.success('Comment deleted successfully');
-      refetch();
-    },
-    onError: error => {
-      toast.error(error.message || 'Failed to delete comment');
-    },
-  });
+  }); */
 
   const handleToggle = (checked: boolean) => {
     setShowComments(checked);
@@ -130,11 +129,22 @@ const Comments: React.FC<CommentsProps> = ({
       clientId: clientId || undefined,
       orderItemId: orderItemId || undefined,
       content: newComment.trim(),
-      documentUrl: documentUrl.trim() || undefined,
+      // documentUrl: documentUrl.trim() || undefined,
     });
   };
 
-  const handleEditComment = (comment: Comment) => {
+  /**const deleteCommentMutation = trpc.comment.delete.useMutation({
+    onSuccess: () => {
+      toast.success('Comment deleted successfully');
+      refetch();
+    },
+    onError: error => {
+      toast.error(error.message || 'Failed to delete comment');
+    },
+  });
+  **/
+
+  /** const handleEditComment = (comment: Comment) => {
     setEditingComment(comment.id);
     setEditContent(comment.content);
   };
@@ -146,11 +156,11 @@ const Comments: React.FC<CommentsProps> = ({
       id: commentId,
       content: editContent.trim(),
     });
-  };
+  }; **/
 
-  const handleDeleteComment = (commentId: string) => {
+  /** const handleDeleteComment = (commentId: string) => {
     deleteCommentMutation.mutate({ id: commentId });
-  };
+  }; **/
 
   const formatUserName = (user: Comment['user']) => {
     if (!user) return 'Unknown User';
@@ -177,47 +187,23 @@ const Comments: React.FC<CommentsProps> = ({
       </div>
 
       {showComments && (
-        <Card className="p-4 space-y-4">
-          {/* Add new comment */}
-          <div className="space-y-3">
-            <Textarea
-              placeholder="Write your comment here..."
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              className="min-h-[80px]"
-            />
-
-            <div className="flex justify-end">
-              <Button
-                onClick={handleAddComment}
-                disabled={!newComment.trim() || createCommentMutation.isPending}
-                size="sm"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                {createCommentMutation.isPending ? 'Adding...' : 'Add Comment'}
-              </Button>
-            </div>
-          </div>
+        <>
           {comments.length > 0 && (
             <>
               {/* Comments list */}
               <div className="space-y-4">
                 {comments.map(comment => (
-                  <Card key={comment.id} className="p-4 bg-muted/30">
+                  <Card
+                    key={comment.id}
+                    className={cn(
+                      'p-2 rounded-md border-none',
+                      comment.user?.id === authedUserId ? 'bg-accent ms-20 me-10' : ' ms-10 me-20'
+                    )}
+                  >
                     <div className="space-y-3">
                       {/* Comment header */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <User className="w-4 h-4" />
-                          <span className="font-medium">{formatUserName(comment.user)}</span>
-                          <Calendar className="w-4 h-4" />
-                          <span>{format(new Date(comment.createdAt), 'MMM dd, yyyy HH:mm')}</span>
-                          {comment.updatedAt !== comment.createdAt && (
-                            <span className="text-xs">(edited)</span>
-                          )}
-                        </div>
 
-                        <div className="flex items-center gap-1">
+                      {/** <div className="flex items-center gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -251,66 +237,86 @@ const Comments: React.FC<CommentsProps> = ({
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        </div>
-                      </div>
+                        </div>**/}
 
                       {/* Comment content */}
-                      {editingComment === comment.id ? (
-                        <div className="space-y-2">
-                          <Textarea
-                            value={editContent}
-                            onChange={e => setEditContent(e.target.value)}
-                            className="min-h-[60px]"
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => {
-                                setEditingComment(null);
-                                setEditContent('');
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleSaveEdit(comment.id)}
-                              disabled={!editContent.trim() || editCommentMutation.isPending}
-                            >
-                              {editCommentMutation.isPending ? 'Saving...' : 'Save'}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="prose prose-sm max-w-none">
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                            {comment.content}
-                          </p>
-                        </div>
-                      )}
 
-                      {/* Document link */}
-                      {comment.documentUrl && (
-                        <div className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800">
-                          <FileText className="w-4 h-4" />
-                          <a
-                            href={comment.documentUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline"
-                          >
-                            View attached document
-                          </a>
-                        </div>
-                      )}
+                      <>
+                        {/*  <div className="space-y-2">
+                            <Textarea
+                              value={editContent}
+                              onChange={e => setEditContent(e.target.value)}
+                              className="min-h-[60px]"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingComment(null);
+                                  setEditContent('');
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveEdit(comment.id)}
+                                disabled={!editContent.trim() || editCommentMutation.isPending}
+                              >
+                                {editCommentMutation.isPending ? 'Saving...' : 'Save'}
+                              </Button>
+                            </div>
+                          </div> */}
+                      </>
+                      <div className="prose prose-sm max-w-none">
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {comment.content}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-end gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-end">
+                        {comment.updatedAt !== comment.createdAt && <span>Edited</span>}
+                      </div>
+                      <div className="flex items-end justify-end gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{format(new Date(comment.createdAt), 'MMM dd, yyyy HH:mm')}</span>
+                        <User className="w-4 h-4" />
+                        <span className="font-medium">{formatUserName(comment.user)}</span>
+                      </div>
                     </div>
                   </Card>
                 ))}
               </div>
             </>
           )}
-        </Card>
+          {/* Add new comment */}
+          <div className="relative">
+            <InputGroup>
+              <InputGroupTextarea
+                placeholder="Write your comment here..."
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment();
+                  }
+                }}
+              />
+              <InputGroupAddon align="block-end" className="flex justify-end">
+                <InputGroupButton
+                  variant="default"
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim() || createCommentMutation.isPending}
+                >
+                  <Send className="w-4 h-4" />
+                </InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
+          </div>
+        </>
       )}
     </div>
   );
