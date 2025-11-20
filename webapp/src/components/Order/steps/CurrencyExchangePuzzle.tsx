@@ -1,6 +1,7 @@
 import useCurrencyExchangeStore, {
   StoreTransaction,
 } from '@/stores/currencyExchange/currency-exchange-store';
+import useOrderStore from '@/stores/order/order-store';
 import BegottenTransactionsSelectionTable from '@/components/Order/sections/CurrencyExchangeSection/BegottenTransactionsSelectionTable';
 import BegottenTransactionsSummary from '@/components/Order/sections/CurrencyExchangeSection/BegottenTransactionsSummary';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
@@ -20,6 +21,8 @@ const CurrencyExchangePuzzle = ({
   onEditOrder: () => void;
   handleFinishPuzzling: () => void;
 }) => {
+  const { order } = useOrderStore();
+
   const {
     currencyExchanges,
     setCurrencyExchanges,
@@ -86,6 +89,7 @@ const CurrencyExchangePuzzle = ({
           })) || [],
 
         canceledByClient: exchange.canceledByClient || false,
+        orderId: order?.id,
         orderItem: exchange.orderItem
           ? {
               ...exchange.orderItem,
@@ -160,6 +164,7 @@ const CurrencyExchangePuzzle = ({
             },
           }
         : undefined,
+      orderId: order?.id,
     });
   }, [begotteningCurrencyExchangeData]);
 

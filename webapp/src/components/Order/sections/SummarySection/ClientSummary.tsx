@@ -9,10 +9,10 @@ import ClientBadge from '@/components/Order/sections/ClientSection/ClientBadge';
 
 import useOrderStore, { StoreClient } from '@/stores/order/order-store';
 import { Badge } from '@/components/ui/badge';
-import ExchangeTag from "@/components/CurrencyExchanges/ExchangeTag";
+import ExchangeTag from '@/components/CurrencyExchanges/ExchangeTag';
 
 const ClientSummary = ({ client }: { client: StoreClient }) => {
-  const { orderItems = [], visaApplications, currencyExchanges } = useOrderStore();
+  const { order, orderItems = [], visaApplications, currencyExchanges } = useOrderStore();
 
   const [isCopied, setIsCopied] = useState(false);
 
@@ -123,16 +123,19 @@ const ClientSummary = ({ client }: { client: StoreClient }) => {
                         <span className="text-sm">{amount}</span>
                       </div>
                     );
-                  } if (item.serviceType === 'currencyExchange' && currencyExchanges[0]) {
+                  }
+                  if (item.serviceType === 'currencyExchange' && currencyExchanges[0]) {
                     // For currency-exchanges services
 
                     // StoreCurrencyExchange from order-store and currency-exchange-store are incompatible
                     const currencyExchange = {
                       id: currencyExchanges[0].id,
-                      amountInSelectedCurrencyFrom: currencyExchanges[0].amountInSelectedCurrencyFrom,
+                      amountInSelectedCurrencyFrom:
+                        currencyExchanges[0].amountInSelectedCurrencyFrom,
                       amountInSelectedCurrencyTo: currencyExchanges[0].amountInSelectedCurrencyTo,
                       bankingDetails: currencyExchanges[0].bankingDetails,
                       exchangeRate: currencyExchanges[0].exchangeRate,
+                      orderId: order?.id,
                       orderItemId: currencyExchanges[0].orderItemId,
                       position: currencyExchanges[0].position,
                       status: currencyExchanges[0].status,
@@ -158,9 +161,7 @@ const ClientSummary = ({ client }: { client: StoreClient }) => {
 
                     return (
                       <div key={item.id || index} className="flex justify-between items-center">
-                        <ExchangeTag
-                          currencyExchange={currencyExchange}
-                        />
+                        <ExchangeTag currencyExchange={currencyExchange} />
                       </div>
                     );
                   } else {
