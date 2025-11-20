@@ -556,6 +556,27 @@ async function main() {
       description: 'Delete visarun passengers',
       category: 'visarunPassengers',
     },
+    // Comments
+    {
+      code: 'comments.create',
+      description: 'Create comments',
+      category: 'comments',
+    },
+    {
+      code: 'comments.read',
+      description: 'View comments',
+      category: 'comments',
+    },
+    {
+      code: 'comments.update',
+      description: 'Edit comments',
+      category: 'comments',
+    },
+    {
+      code: 'comments.delete',
+      description: 'Delete comments',
+      category: 'comments',
+    },
   ];
 
   // Create permissions with duplicate checking

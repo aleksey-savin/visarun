@@ -516,13 +516,13 @@ const EditOrderPage = () => {
     // TODO redo for multiple exchanges
 
     return (
-      currencyExchanges?.length > 0
-      && (!currencyExchanges[0]?.fromCurrency?.id
-      || !currencyExchanges[0]?.amountInSelectedCurrencyFrom
-      || !currencyExchanges[0]?.toCurrency?.id
-      || !currencyExchanges[0]?.amountInSelectedCurrencyTo
-      || !currencyExchanges[0]?.exchangeRate
-      || !currencyExchanges[0]?.bankingDetails?.id)
+      currencyExchanges?.length > 0 &&
+      (!currencyExchanges[0]?.fromCurrency?.id ||
+        !currencyExchanges[0]?.amountInSelectedCurrencyFrom ||
+        !currencyExchanges[0]?.toCurrency?.id ||
+        !currencyExchanges[0]?.amountInSelectedCurrencyTo ||
+        !currencyExchanges[0]?.exchangeRate ||
+        !currencyExchanges[0]?.bankingDetails?.id)
     );
   }, [currencyExchanges]);
 
@@ -531,9 +531,7 @@ const EditOrderPage = () => {
       {
         name: 'Service Puzzle',
         status: 'draft',
-        canProceed:
-          !clientsHaveServicePuzzleErrors &&
-          !orderHasCurrencyExchangeErrors,
+        canProceed: !clientsHaveServicePuzzleErrors && !orderHasCurrencyExchangeErrors,
         isCompleted: order.status !== 'draft',
       },
       {
@@ -829,6 +827,7 @@ const EditOrderPage = () => {
                         {activeStep.status === 'personal_data_verification' && (
                           <PersonalData client={client} />
                         )}
+
                         {activeStep.status === 'draft' && (
                           <ServicePuzzle
                             client={client}

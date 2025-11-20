@@ -76,7 +76,7 @@ const Payment = () => {
     } else if (paymentType === 'full-payment' && !canSwitchToFull) {
       setPaymentType('partial-payment');
     }
-  }, [paymentType, canSwitchToPartial, canSwitchToFull]);
+  }, [canSwitchToPartial, canSwitchToFull]);
 
   const paymentTypeChangeHandler = (value: string) => {
     // Check restrictions before allowing the change
@@ -158,9 +158,7 @@ const Payment = () => {
 
       {!isPostPaymentActive && <AddPayment paymentType={paymentType} />}
       <Separator />
-      <div className="flex flex-wrap justify-between align-center">
-        <Comments />
-      </div>
+      <Comments orderId={order.id} />
     </>
   );
 };

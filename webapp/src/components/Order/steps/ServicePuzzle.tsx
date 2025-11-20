@@ -175,8 +175,8 @@ const ServicePuzzle = ({
       {servicePuzzleIsActive && (
         <>
           {activeService === 'visarun' && <VisarunSection client={client} />}
-          <Comments />
           <hr />
+          <Comments clientId={client.id} orderId={order.id} />
         </>
       )}
 

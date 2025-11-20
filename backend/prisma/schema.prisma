@@ -127,6 +127,7 @@ model Client {
   OrderItem                 OrderItem[]
   VisarunPassenger          VisarunPassenger[]
   transactionsSent          Transaction[]
+  comments                  Comment[]
 
   @@index([userId])
   @@index([citizenshipId])
@@ -287,6 +288,7 @@ model Order {
   items              OrderItem[]
   orderPayments      OrderPayment[]
   OrderPickupAddress OrderPickupAddress[]
+  comments           Comment[]
 }
 
 model OrderClient {
@@ -322,6 +324,7 @@ model OrderItem {
   VisaApplication     VisaApplication[]
   VisarunPassenger    VisarunPassenger[]
   currencyExchange    CurrencyExchange?
+  comments            Comment[]
 
   @@index([orderId])
   @@index([clientId])
@@ -994,12 +997,18 @@ model City {
 
 model Comment {
   id          String     @id @default(uuid())
-  entityType  EntityType
-  entityId    String
+  clientId    String?
+  orderId     String?
+  orderItemId String?
   content     String
   documentUrl String?
   userId      String?
   user        User?      @relation(fields: [userId], references: [id])
+  client      Client?    @relation(fields: [clientId], references: [id])
+  order       Order?     @relation(fields: [orderId], references: [id])
+  orderItem   OrderItem? @relation(fields: [orderItemId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 enum VisarunTripTransportStatus {

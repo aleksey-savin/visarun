@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 
 const PersonalData = ({ client }: { client: StoreClient }) => {
-  const { setActiveClientId, orderItems } = useOrderStore();
+  const { setActiveClientId, orderItems, order } = useOrderStore();
 
   const visaRequirementsDocuments = client.visaRequirements
     ? client.visaRequirements.filter((item: any) => item.inputType === 'document')
@@ -48,9 +48,8 @@ const PersonalData = ({ client }: { client: StoreClient }) => {
           <OtherRequirements client={client} requirements={otherVisaRequirements} /> <Separator />
         </>
       )}
-
+      <Comments clientId={client.id} orderId={order.id} />
       <div className="flex flex-wrap justify-between align-center">
-        <Comments />
         <Button type="button" onClick={handleConfirm}>
           Save & close
         </Button>
