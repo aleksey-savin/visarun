@@ -6,9 +6,32 @@ import { Card, CardContent } from './card';
 import { Dialog, DialogContent } from './dialog';
 import { ImageViewer } from '@/components/ui/image-viewer';
 
-import { Upload, AlertCircle, Loader2, FileX, File, Eye, Replace, Trash2 } from 'lucide-react';
+import { Upload, AlertCircle, Loader2, FileX, File as FileIcon, Eye, Replace, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getFullFileUrl, isImageFile } from '@/utils/fileUtils';
+
+const alphabet: Record<string, string> = {
+  "Ё": "YO", "Й": "I", "Ц": "TS", "У": "U", "К": "K",
+  "Е": "E", "Н": "N", "Г": "G", "Ш": "SH", "Щ": "SCH",
+  "З": "Z", "Х": "H", "Ъ": "'", "ё": "yo", "й": "i",
+  "ц": "ts", "у": "u", "к": "k", "е": "e", "н": "n",
+  "г": "g", "ш": "sh", "щ": "sch", "з": "z", "х": "h",
+  "ъ": "'", "Ф": "F", "Ы": "I", "В": "V", "А": "A",
+  "П": "P", "Р": "R", "О": "O", "Л": "L", "Д": "D",
+  "Ж": "ZH", "Э": "E", "ф": "f", "ы": "i", "в": "v",
+  "а": "a", "п": "p", "р": "r", "о": "o", "л": "l",
+  "д": "d", "ж": "zh", "э": "e", "Я": "Ya", "Ч": "CH",
+  "С": "S", "М": "M", "И": "I", "Т": "T", "Ь": "'",
+  "Б": "B", "Ю": "YU", "я": "ya", "ч": "ch", "с": "s",
+  "м": "m", "и": "i", "т": "t", "ь": "'", "б": "b",
+  "ю": "yu"
+};
+
+function sanitizeFileName(name: string) {
+  return name.split('').map(function (char) {
+    return (alphabet[char] || char).normalize('NFC').replace(/[^a-zA-Z0-9._-]+/g, '-');
+  }).join("");
+}
 
 interface FileUploadProps {
   value?: string | { id: string; originalName: string; fileUrl: string };
@@ -216,7 +239,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    const file = files[0];
+    const file = new File([files[0]], sanitizeFileName(files[0].name), {
+      type: files[0].type,
+      lastModified: files[0].lastModified,
+    });
+
     uploadFile(file);
   };
 
@@ -299,7 +326,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                   )}
                 </div>
               ) : (
-                <File className="w-6 h-6" />
+                <FileIcon className="w-6 h-6" />
               )}
               <div className="flex items-center gap-2">
                 {typeof value === 'object' && !imageLoadErrors?.has(value.fileUrl) && (

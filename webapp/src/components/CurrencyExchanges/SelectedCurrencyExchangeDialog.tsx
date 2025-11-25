@@ -949,7 +949,7 @@ const SelectedCurrencyExchangeDialog = ({
 
 
 
-                  <div className="flex gap-2 max-w-1/4">
+                  <div className="flex gap-2 max-w-2/4">
                     {!selectedCurrencyExchange?.isBegottening && (bankingDetailsContent || bankingDetailsUrl) && (
                       <div>
                         <BankingDetailsButton
