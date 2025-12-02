@@ -14,7 +14,9 @@ const formatCurrency = (amount: number, currency?: string) => {
         currency: currency,
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
-      }).format(amount);
+      })
+        .format(amount)
+        .replace(/[\u00A0\u202F]/g, ' ');
     }
   } catch {
     // If currency is invalid, fall back to number formatting with currency symbol
@@ -28,7 +30,9 @@ const formatCurrency = (amount: number, currency?: string) => {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
-    }).format(amount) + ` ${currencySymbol}`
+    })
+      .format(amount)
+      .replace(/[\u00A0\u202F]/g, ' ') + ` ${currencySymbol}`
   );
 };
 
